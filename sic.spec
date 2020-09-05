@@ -25,6 +25,7 @@ cp -pv init/sic.service %{buildroot}/usr/lib/systemd/system/
 %clean
 
 %files
+%license LICENSE
 %defattr(-,root,root)
 /root/bin/sic-init.sh
 /usr/lib/systemd/system/sic.service

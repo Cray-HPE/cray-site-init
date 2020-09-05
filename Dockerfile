@@ -1,5 +1,5 @@
 # Build...
-FROM        golang:1.14 as builder
+FROM        golang:1.15 as builder
 # Copy the Go Modules manifests and all third-party libraries that are unlikely to change frequently
 WORKDIR     /workspace
 COPY        go.mod go.mod
