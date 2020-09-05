@@ -3,6 +3,6 @@ rpmBuild (
     specfile : "sic.spec",
     product : "shasta-premium",
     target_node : "ncn",
-    fanout_params: ["sle15sp2"],
-    slackNotification = ["", "", false, true, true, true]
+    fanout_params : ["sle15sp2"],
+    slackNotification : ["", "", false, true, true, true]
 )

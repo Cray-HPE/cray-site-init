@@ -15,6 +15,5 @@ RUN         CGO_ENABLED=0 \
 FROM        dtr.dev.cray.com/baseos/alpine:3.12.0
 WORKDIR     /app
 RUN         mkdir configs/
-COPY        static/ static/
 COPY        --from=builder /workspace/sic .
 ENTRYPOINT  ["/app/sic"]
