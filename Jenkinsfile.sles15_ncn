@@ -1,8 +1,9 @@
 @Library("dst-shared@master") _
-rpmBuild (
+rpmBuild(
     specfile : "sic.spec",
     product : "shasta-premium",
     target_node : "ncn",
     fanout_params : ["sle15sp2"],
+    channel : "metal-build",
     slackNotification : ["", "", false, true, true, true]
 )
