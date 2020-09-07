@@ -4,6 +4,8 @@ rpmBuild(
     product : "shasta-premium",
     target_node : "ncn",
     fanout_params : ["sle15sp2"],
+    lintScript : 'noop.sh',
+    unitTestScript : 'noop.sh',
     channel : "metal-build",
-    slackNotification : ["", "", false, true, true, true]
+    slack_notify : ['', 'SUCCESS', 'FAILURE', 'FIXED']
 )
