@@ -1,6 +1,6 @@
-module stash.us.cray.com/MTL/sictl
+module stash.us.cray.com/MTL/sic
 
-go 1.13
+go 1.15
 
 require (
 	github.com/mitchellh/go-homedir v1.1.0

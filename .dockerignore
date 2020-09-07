@@ -1,0 +1,7 @@
+.gitignore
+.git/
+.version
+Jenkinsfile
+README.md
+# Do not include this, it is installed by the RPM.
+init/

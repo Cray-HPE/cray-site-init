@@ -1,0 +1,11 @@
+@Library("dst-shared@master") _
+rpmBuild(
+    specfile : "sic.spec",
+    product : "shasta-premium",
+    target_node : "ncn",
+    fanout_params : ["sle15sp2"],
+    lintScript : 'noop.sh',
+    unitTestScript : 'noop.sh',
+    channel : "metal-build",
+    slack_notify : ['', 'SUCCESS', 'FAILURE', 'FIXED']
+)

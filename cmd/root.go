@@ -1,6 +1,7 @@
 /*
 Copyright 2020 Hewlett Packard Enterprise Development LP
 */
+
 package cmd
 
 import (
@@ -17,7 +18,7 @@ var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "sictl",
+	Use:   "sic",
 	Short: "A brief description of your application",
 	Long: `A longer description that spans multiple lines and likely contains
 examples and usage of using your application. For example:
@@ -46,7 +47,7 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.sictl.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.sic.yaml)")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -66,9 +67,9 @@ func initConfig() {
 			os.Exit(1)
 		}
 
-		// Search config in home directory with name ".sictl" (without extension).
+		// Search config in home directory with name ".sic" (without extension).
 		viper.AddConfigPath(home)
-		viper.SetConfigName(".sictl")
+		viper.SetConfigName(".sic")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
