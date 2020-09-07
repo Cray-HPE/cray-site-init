@@ -1,6 +1,6 @@
 # Shasta Install Control
 
-A Go application for controling the state of a shasta install.
+A Go application for controlling the state of a shasta install.
 
 ### Builds
 
