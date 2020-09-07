@@ -65,6 +65,8 @@ test: build
 
 tools:
 	go get -u golang.org/x/lint/golint
+	go get github.com/axw/gocov/gocov
+	go get github.com/AlekSi/gocov-xml
 
 vet:
 	go vet -v ./...
