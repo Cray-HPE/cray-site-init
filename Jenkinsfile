@@ -1,8 +1,8 @@
 @Library('dst-shared@master') _
 dockerBuildPipeline {
      app = "sic"
-     name = "shasta-install-control"
-     description = "Container for controlling the state of a Shasta install on metal or virtual."
+     name = "shasta-instance-control"
+     description = "Container for controlling the state of a Shasta instance, on bare-metal or virtual platforms."
      dockerfile = "Dockerfile"
      repository = "metal"
      imagePrefix = "cloud"

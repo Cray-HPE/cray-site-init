@@ -1,7 +1,7 @@
 # Copyright 2020 Cray Inc. All Rights Reserved.
 Name: cray-metal-sic
 License: Cray Software License Agreement
-Summary: Shasta Install Control
+Summary: Control shasta instances; bare-metal and deployed.
 Version: %(cat .version)
 Release: %(echo ${BUILD_METADATA})
 Source: %{name}-%{version}.tar.bz2
