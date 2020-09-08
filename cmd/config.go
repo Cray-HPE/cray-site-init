@@ -60,10 +60,9 @@ func LoadConfig() {
 
 }
 
-// MergeNetworksDerived : Search reasonable places and read the networks_derived as a config
-func MergeNetworksDerived() {
-	// Read in the configfile
-	viper.SetConfigName("networks_derived")
+//mergeConfig : Merge a configuration file from the local directory.  It will try all known extensions added to the configName
+func mergeConfig(configName string) {
+	viper.SetConfigName(configName)
 	viper.AddConfigPath(".")
 
 	if err := viper.MergeInConfig(); err != nil {
@@ -73,17 +72,14 @@ func MergeNetworksDerived() {
 	}
 }
 
+// MergeNetworksDerived : Search reasonable places and read the networks_derived as a config
+func MergeNetworksDerived() {
+	mergeConfig("networks_derived")
+}
+
 // MergeCustomerNetwork : Search reasonable places and read the site_networking as a config
 func MergeCustomerNetwork() {
-	// Read in the configfile
-	viper.SetConfigName("site_networking")
-	viper.AddConfigPath(".")
-
-	if err := viper.MergeInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			panic(fmt.Errorf("fatal error config file: %s", err))
-		}
-	}
+	mergeConfig("site_networking")
 }
 
 // MergeNCNMetadata : Search reasonable places and read the ncn_metadata.yaml
