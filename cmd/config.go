@@ -1,25 +1,16 @@
 /*
-Copyright © 2020 NAME HERE <EMAIL ADDRESS>
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+Copyright 2020 Hewlett Packard Enterprise Development LP
 */
 
 package cmd
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"gopkg.in/yaml.v2"
 )
 
 // configCmd represents the config command
@@ -49,4 +40,87 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// configCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+}
+
+// LoadConfig : Search reasonable places and read the installer configuration file
+func LoadConfig() {
+	// Read in the configfile
+	viper.SetConfigName("config")
+	viper.AddConfigPath(".")
+
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			panic(fmt.Errorf("fatal error config file: %s", err))
+		}
+	}
+
+	viper.SetEnvPrefix("csm")
+	viper.AutomaticEnv()
+	viper.WatchConfig()
+
+}
+
+// MergeNetworksDerived : Search reasonable places and read the networks_derived as a config
+func MergeNetworksDerived() {
+	// Read in the configfile
+	viper.SetConfigName("networks_derived")
+	viper.AddConfigPath(".")
+
+	if err := viper.MergeInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			panic(fmt.Errorf("fatal error config file: %s", err))
+		}
+	}
+}
+
+// MergeNCNMetadata : Search reasonable places and read the ncn_metadata.yaml
+func MergeNCNMetadata() {
+	// Read in the configfile
+	bootstrapNodes := ReadCSV("ncn_metadata.csv")
+	// Add it to the configuration
+	viper.Set("ncn_metadata", bootstrapNodes)
+}
+
+// InitializeConfiguration : Set defaults and load from config files.
+func InitializeConfiguration() {
+	// System Networking
+	viper.SetDefault("system.machine_name", "shasta")
+	viper.SetDefault("system.network.site.NTP_POOL_HOSTNAME", "")
+	viper.SetDefault("system.network.site.DNS_RESOLVER", "")
+
+	// Authentication and Security
+	viper.SetDefault("system.auth.SITE_LDAP_SERVER_HOSTNAME", "")
+	viper.SetDefault("system.auth.SITE_LDAP_SERVER_CREDENTIALS_FILE", "")
+	viper.SetDefault("system.auth.CERTIFICATE_AUTHORITY_CERT", "ca-cert.pem")
+	viper.SetDefault("system.auth.CERTIFICATE_AUTHORITY_KEY", "ca-cert.key")
+
+	// Default Credentials
+	viper.SetDefault("system.credentials.NCN_BMC_USERNAME", "")
+	viper.SetDefault("system.credentials.NCN_BMC_PASSWORD", "")
+	viper.SetDefault("system.credentials.CN_BMC_USERNAME", "")
+	viper.SetDefault("system.credentials.CN_BMC_PASSWORD", "")
+	viper.SetDefault("system.credentials.REDFISH_USERNAME", "")
+	viper.SetDefault("system.credentials.REDFISH_PASSWORD", "")
+	viper.SetDefault("system.credentials.LINUX_ROOT_PASSWORD", "initial0")
+
+}
+
+// PrintConfig : Dump all configuration information as a yaml file on stdout
+func PrintConfig(v *viper.Viper) {
+	log.Print(" == Viper configdump == \n" + yamlStringSettings(v))
+}
+
+func yamlStringSettings(v *viper.Viper) string {
+	c := v.AllSettings()
+	bs, err := yaml.Marshal(c)
+	if err != nil {
+		log.Fatalf("unable to marshal config to YAML: %v", err)
+	}
+	return string(bs)
+}
+
+// WriteConfigFile : Capture viper config and writes to config.yaml
+func WriteConfigFile() {
+	log.Println("Writing configuration to config.yaml")
+	viper.WriteConfigAs("config.yaml")
 }
