@@ -1,6 +1,16 @@
 # Shasta Instance Control
 
-A Go application for controlling the state of a Shasta instance, metal or virtual.
+sic is a tool for managing install, upgrade, and disaster recovery of a Cray System Management cluster.
+
+## Commands
+
+### sic config init
+
+Initialize the main configuration by sourcing upstream config files.
+
+### sic config dump
+
+Print sections of the configuration object or the whole thing
 
 ### Artifacts
 
