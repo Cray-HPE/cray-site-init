@@ -6,6 +6,6 @@ rpmBuild(
     fanout_params : ["sle15sp2"],
     lintScript : 'noop.sh',
     unitTestScript : 'noop.sh',
-    channel : "metal-build",
+    channel : "metal-ci-alerts",
     slack_notify : ['', 'SUCCESS', 'FAILURE', 'FIXED']
 )
