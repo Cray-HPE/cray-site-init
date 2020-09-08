@@ -73,6 +73,19 @@ func MergeNetworksDerived() {
 	}
 }
 
+// MergeCustomerNetwork : Search reasonable places and read the site_networking as a config
+func MergeCustomerNetwork() {
+	// Read in the configfile
+	viper.SetConfigName("site_networking")
+	viper.AddConfigPath(".")
+
+	if err := viper.MergeInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			panic(fmt.Errorf("fatal error config file: %s", err))
+		}
+	}
+}
+
 // MergeNCNMetadata : Search reasonable places and read the ncn_metadata.yaml
 func MergeNCNMetadata() {
 	// Read in the configfile
@@ -83,14 +96,8 @@ func MergeNCNMetadata() {
 
 // InitializeConfiguration : Set defaults and load from config files.
 func InitializeConfiguration() {
-	// System Networking
-	viper.SetDefault("system.machine_name", "shasta")
-	viper.SetDefault("system.network.site.NTP_POOL_HOSTNAME", "")
-	viper.SetDefault("system.network.site.DNS_RESOLVER", "")
 
 	// Authentication and Security
-	viper.SetDefault("system.auth.SITE_LDAP_SERVER_HOSTNAME", "")
-	viper.SetDefault("system.auth.SITE_LDAP_SERVER_CREDENTIALS_FILE", "")
 	viper.SetDefault("system.auth.CERTIFICATE_AUTHORITY_CERT", "ca-cert.pem")
 	viper.SetDefault("system.auth.CERTIFICATE_AUTHORITY_KEY", "ca-cert.key")
 

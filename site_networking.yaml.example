@@ -1,0 +1,29 @@
+system:
+  machine_name: "shasta"
+  site_services:
+    ntp_pool_hostname: "pool.ntp.org"
+    ipv4_resolvers: "8.8.8.8, 9.9.9.9"
+    ldap_server: "ldaps://ldap_server:port/dn?attributes?scope?filter?extensions"
+    ldap_bind_dn: CN=username,CN=Users,DC=yourdomain,DC=com
+    ldap_bind_password: "initial0"
+site_networks:
+  can_admin:
+    full_name: Customer Access Network (Administrator)
+    ip_reservations:
+    - ip: 192.168.10.5
+      name: dns
+    name: CANA
+    network_cidr: 192.168.10.1/24
+    type: ethernet
+    vlan: 7
+    mtu: 9000
+  can_user:
+    full_name: Customer Access Network (User)
+    ip_reservations:
+    - ip: 192.168.10.5
+      name: dns
+    name: CANU
+    network_cidr: 192.168.20.1/24
+    type: ethernet
+    vlan: 14
+    mtu: 9000

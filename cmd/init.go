@@ -23,6 +23,7 @@ to quickly create a Cobra application.`,
 		// LoadConfig()
 		MergeNetworksDerived()
 		MergeNCNMetadata()
+		MergeCustomerNetwork()
 		// PrintConfig(viper.GetViper())
 		WriteConfigFile()
 	},
