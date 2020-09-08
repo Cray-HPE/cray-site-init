@@ -4,7 +4,6 @@ Copyright 2020 Hewlett Packard Enterprise Development LP
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/gocarina/gocsv"
@@ -35,9 +34,5 @@ func ReadCSV(filename string) []*BootstrapNCNMetadata {
 	if err := gocsv.UnmarshalFile(ncnMetadataFile, &nodes); err != nil { // Load nodes from file
 		panic(err)
 	}
-	for _, node := range nodes {
-		fmt.Println("Hello", node.Xname)
-	}
-
 	return nodes
 }
