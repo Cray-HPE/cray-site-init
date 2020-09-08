@@ -2,10 +2,21 @@ system:
   machine_name: "shasta"
   site_services:
     ntp_pool_hostname: "pool.ntp.org"
-    ipv4_resolvers: "8.8.8.8, 9.9.9.9"
-    ldap_server: "ldaps://ldap_server:port/dn?attributes?scope?filter?extensions"
-    ldap_bind_dn: CN=username,CN=Users,DC=yourdomain,DC=com
-    ldap_bind_password: "initial0"
+    ipv4_resolvers: 
+      - "8.8.8.8"
+      - "9.9.9.9"
+    ldap:
+      bind_dn: CN=username,CN=Users,DC=yourdomain,DC=com
+      servers:
+        - "ldaps://ldap_server:port/dn?attributes?scope?filter?extensions"
+      bind_password: "initial0"
+      ad_groups:
+        - { name: admin_grp, origin: ALL }
+        - { name: dev_users, origin: ALL }
+      search_base: "dc=datacenter,dc=cray,dc=com"
+      domain: "Cray_DC"
+      user_attribute_mappers_to_remove: ['email']
+
 site_networks:
   can_admin:
     full_name: Customer Access Network (Administrator)
@@ -14,6 +25,7 @@ site_networks:
       name: dns
     name: CANA
     network_cidr: 192.168.10.1/24
+    gateway: 192.168.10.254
     type: ethernet
     vlan: 7
     mtu: 9000
@@ -24,6 +36,7 @@ site_networks:
       name: dns
     name: CANU
     network_cidr: 192.168.20.1/24
+    gateway: 192.168.20.254
     type: ethernet
     vlan: 14
     mtu: 9000
