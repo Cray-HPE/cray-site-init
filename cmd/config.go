@@ -45,7 +45,7 @@ func init() {
 // LoadConfig : Search reasonable places and read the installer configuration file
 func LoadConfig() {
 	// Read in the configfile
-	viper.SetConfigName("config")
+	viper.SetConfigName("system_config")
 	viper.AddConfigPath(".")
 
 	if err := viper.ReadInConfig(); err != nil {
@@ -53,11 +53,9 @@ func LoadConfig() {
 			panic(fmt.Errorf("fatal error config file: %s", err))
 		}
 	}
-
 	viper.SetEnvPrefix("csm")
 	viper.AutomaticEnv()
 	viper.WatchConfig()
-
 }
 
 //mergeConfig : Merge a configuration file from the local directory.  It will try all known extensions added to the configName
@@ -77,9 +75,14 @@ func MergeNetworksDerived() {
 	mergeConfig("networks_derived")
 }
 
-// MergeCustomerNetwork : Search reasonable places and read the site_networking as a config
-func MergeCustomerNetwork() {
+// MergeSiteNetwork : Search reasonable places and read the site_networking as a config
+func MergeSiteNetwork() {
 	mergeConfig("site_networking")
+}
+
+// MergeSystemNetwork : Search reasonable places and read the site_networking as a config
+func MergeSystemNetwork() {
+	mergeConfig("system_networking")
 }
 
 // MergeNCNMetadata : Search reasonable places and read the ncn_metadata.yaml
@@ -94,17 +97,17 @@ func MergeNCNMetadata() {
 func InitializeConfiguration() {
 
 	// Authentication and Security
-	viper.SetDefault("system.auth.CERTIFICATE_AUTHORITY_CERT", "ca-cert.pem")
-	viper.SetDefault("system.auth.CERTIFICATE_AUTHORITY_KEY", "ca-cert.key")
+	viper.SetDefault("system_settings.auth.CERTIFICATE_AUTHORITY_CERT", "ca-cert.pem")
+	viper.SetDefault("system_settings.auth.CERTIFICATE_AUTHORITY_KEY", "ca-cert.key")
 
 	// Default Credentials
-	viper.SetDefault("system.credentials.NCN_BMC_USERNAME", "")
-	viper.SetDefault("system.credentials.NCN_BMC_PASSWORD", "")
-	viper.SetDefault("system.credentials.CN_BMC_USERNAME", "")
-	viper.SetDefault("system.credentials.CN_BMC_PASSWORD", "")
-	viper.SetDefault("system.credentials.REDFISH_USERNAME", "")
-	viper.SetDefault("system.credentials.REDFISH_PASSWORD", "")
-	viper.SetDefault("system.credentials.LINUX_ROOT_PASSWORD", "initial0")
+	viper.SetDefault("system_settings.credentials.NCN_BMC_USERNAME", "")
+	viper.SetDefault("system_settings.credentials.NCN_BMC_PASSWORD", "")
+	viper.SetDefault("system_settings.credentials.CN_BMC_USERNAME", "")
+	viper.SetDefault("system_settings.credentials.CN_BMC_PASSWORD", "")
+	viper.SetDefault("system_settings.credentials.REDFISH_USERNAME", "")
+	viper.SetDefault("system_settings.credentials.REDFISH_PASSWORD", "")
+	viper.SetDefault("system_settings.credentials.LINUX_ROOT_PASSWORD", "initial0")
 
 }
 

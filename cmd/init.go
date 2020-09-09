@@ -21,10 +21,11 @@ to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// fmt.Println("init called")
 		InitializeConfiguration()
-		// LoadConfig()
-		MergeNetworksDerived()
-		MergeNCNMetadata()
-		MergeCustomerNetwork()
+		LoadConfig()
+		// MergeNetworksDerived()
+		// MergeNCNMetadata()
+		MergeSiteNetwork()
+		MergeSystemNetwork()
 		// PrintConfig(viper.GetViper())
 		WriteConfigFile()
 	},
