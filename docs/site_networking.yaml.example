@@ -2,14 +2,14 @@ system:
   machine_name: "shasta"
   site_services:
     ntp_pool_hostname: "pool.ntp.org"
-    ipv4_resolvers: 
+    ipv4_resolvers:
       - "8.8.8.8"
       - "9.9.9.9"
     ldap:
       bind_dn: CN=username,CN=Users,DC=yourdomain,DC=com
       servers:
         - "ldaps://ldap_server:port/dn?attributes?scope?filter?extensions"
-      bind_password: "initial0"
+      bind_password: "drowssap"
       ad_groups:
         - { name: admin_grp, origin: ALL }
         - { name: dev_users, origin: ALL }

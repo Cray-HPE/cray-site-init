@@ -1,0 +1,152 @@
+/*
+Copyright 2020 Hewlett Packard Enterprise Development LP
+*/
+
+package cmd
+
+import (
+	"stash.us.cray.com/MTL/sic/pkg/shasta"
+)
+
+var DefaultSystemConfigYamlTemplate = []byte(`
+---
+system_settings:
+  system_name: {{.SystemName}}
+  domain_name: {{.SiteDomain}}
+  internal_domain: {{.InternalDomain}}
+  site_services:
+    {{if .IPV4Resolvers}}
+	ipv4_resolvers:
+	{{range .IPV4Resolvers}}
+	- {{.}}
+	{{end}}
+	{{end -}}
+	{{if .NtpPoolHostname}}
+	ntp_pool_hostname: {{.NtpPoolHostname}}
+	{{else if .Services.NtpHosts}}
+	upstream_ntp:
+	{{range .Services.NtpHosts}}
+	  - {{.}}
+	{{end}}
+	{{end}}
+    ldap:
+      ad_groups:
+      - name: admin_grp
+        origin: ALL
+      - name: dev_users
+        origin: ALL
+      bind_dn: CN=username,CN=Users,DC=yourdomain,DC=com
+      bind_password: initial0
+      domain: Cray_DC
+      search_base: dc=datacenter,dc=cray,dc=com
+      servers:
+      - ldaps://ldap_server:port/dn?attributes?scope?filter?extensions
+      user_attribute_mappers_to_remove:
+	  - email
+
+
+manufacturing_details:
+  shcd_revision: D
+  mountain_starting_nid: 20000
+  river_layout:
+    - cabinet_id: x3001
+      compute_nodes: []
+      worker: [14,16,18]
+      master: [8,10,12]
+      storage: [2,4,6]
+  mountain_layout:
+    number_of_cabinets: {{.MountainCabinets}}
+    starting_cabinet: 1004
+	last_address_gateway: True
+	`)
+
+var DefaultSwitchConfigYaml = []byte(`
+  # Do sw-100g01, and sw-100g02 need to be represented here?
+  management_switches:
+    -  {'ID': 'x3001c0w38R', 'NAME': 'sw-spine01'}  # sw-40g01
+    -  {'ID': 'x3001c0w34', 'NAME': 'sw-leaf01', 'Brand': 'Dell', 'OS': 'OS10', 'Model': 'S3048-ON', "DHCP Relay": True}
+    -  {'ID': 'x3001c0w38L', 'NAME': 'sw-spine02'}  # sw-40g02
+    -  {'ID': 'x3001c0w35', 'NAME': 'sw-leaf02', 'Brand': 'Dell', 'OS': 'OS10', 'Model': 'S3048-ON', "DHCP Relay": True}
+    -  {'ID': 'd0w1', 'NAME': 'sw-cdu01', 'Brand': 'Dell', 'OS': 'OS10', 'Model': 'S4148T', "DHCP Relay": True}
+    -  {'ID': 'd0w2', 'NAME': 'sw-cdu02', 'Brand': 'Dell', 'OS': 'OS10', 'Model': 'S4148T', "DHCP Relay": True}
+
+  columbia_switches:
+    -  {'ID': 'x3001c0r39b0', 'NAME': 'sw-hsn01'}
+    -  {'ID': 'x3001c0r40b0', 'NAME': 'sw-hsn02'}
+    -  {'ID': 'x3001c0r41b0', 'NAME': 'sw-hsn03'}
+    -  {'ID': 'x3001c0r42b0', 'NAME': 'sw-hsn04'}
+`)
+
+var DefaultNetworkConfigYamlTemplate = []byte(`
+full_name: {{.FullName}}
+cidr: {{.CIDR}}
+name: {{.Name}}
+vlan_id: {{.Vlan}}
+mtu: {{.MTU}}
+type: {{.NetType}}
+comment: {{.Comment}}
+{{if .Subnets}}
+subnets:
+{{range .Subnets}}
+{{if .Name}}
+  - name: {{.Name}}
+{{else}}
+- name: default
+{{end}}
+    cidr: {{.CIDR}}
+	{{if .Gateway}}
+    gateway: {{.Gateway}}
+	{{end}}
+{{end}}
+{{end}}
+`)
+
+var DefaultHMN = shasta.IPV4Network{
+	FullName: "Hardware Management Network",
+	CIDR:     "10.254.0.0/17",
+	Name:     "hmn",
+	Vlan:     6,
+	MTU:      9000,
+	NetType:  "ethernet",
+	Comment:  "",
+}
+
+var DefaultNMN = shasta.IPV4Network{
+	FullName: "Node Management Network",
+	CIDR:     "10.242.0.0/17",
+	Name:     "nmn",
+	Vlan:     7,
+	MTU:      9000,
+	NetType:  "ethernet",
+	Comment:  "",
+}
+
+var DefaultHSN = shasta.IPV4Network{
+	FullName: "High Speed Network",
+	CIDR:     "10.253.0.0/16",
+	Name:     "hsn",
+	Vlan:     8,
+	MTU:      9000,
+	NetType:  "slingshot10",
+	Comment:  "",
+}
+
+var DefaultCAN = shasta.IPV4Network{
+	FullName: "High Speed Network",
+	CIDR:     "192.168.20.0/24",
+	Name:     "can",
+	Vlan:     9,
+	MTU:      9000,
+	NetType:  "ethernet",
+	Comment:  "",
+}
+
+var DefaultMTL = shasta.IPV4Network{
+	FullName: "Provisioning Network (untagged)",
+	CIDR:     "192.168.1.0/24",
+	Name:     "mtl",
+	Vlan:     9,
+	MTU:      9000,
+	NetType:  "ethernet",
+	Comment:  "This network is only valid for the NCNs",
+}

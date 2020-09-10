@@ -57,7 +57,7 @@ type shastaIPV4NetworkFields struct {
 // ShastaIPV4Network is a type for managing IPv4 Networks
 type ShastaIPV4Network struct {
 	FullName       string             `yaml:"full_name"`
-	CIDR           net.IPNet          `yaml:"cidr"`
+	CIDR           *net.IPNet         `yaml:"cidr"`
 	IPReservations []IPReservation    `yaml:"ip_reservations"`
 	Subnets        []ShastaIPV4Subnet `yaml:"subnets"`
 	Name           string             `yaml:"name"`
@@ -72,7 +72,7 @@ func NewShastaIPV4Network(fields shastaIPV4NetworkFields) ShastaIPV4Network {
 	_, net, _ := net.ParseCIDR(fields.CIDR)
 	n := ShastaIPV4Network{
 		FullName: fields.FullName,
-		CIDR:     *net,
+		CIDR:     net,
 		Name:     fields.Name,
 		Vlan:     fields.Vlan,
 		MTU:      fields.MTU,
@@ -85,7 +85,7 @@ func NewShastaIPV4Network(fields shastaIPV4NetworkFields) ShastaIPV4Network {
 // AddSubnet attempts to safely add a subnet to an existing Network definition
 func (network ShastaIPV4Network) AddSubnet(subnet ShastaIPV4Subnet) error {
 	// test to see if the overall network can contain the CIDR
-	if Contains(network.CIDR, subnet.CIDR) {
+	if Contains(*network.CIDR, subnet.CIDR) {
 		// Check to see if the subnet is already contained in any of the existing subnets
 		// This not only tests for duplicates, but also for potential overlap problems
 		for _, s := range network.Subnets {
