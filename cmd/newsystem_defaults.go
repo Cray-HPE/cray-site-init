@@ -8,6 +8,7 @@ import (
 	"stash.us.cray.com/MTL/sic/pkg/shasta"
 )
 
+// DefaultSystemConfigYamlTemplate is the go template for the Default System Config
 var DefaultSystemConfigYamlTemplate = []byte(`
 ---
 system_settings:
@@ -60,6 +61,7 @@ manufacturing_details:
 	last_address_gateway: True
 	`)
 
+// DefaultSwitchConfigYaml is the default yaml for Switch Configuration
 var DefaultSwitchConfigYaml = []byte(`
   # Do sw-100g01, and sw-100g02 need to be represented here?
   management_switches:
@@ -77,11 +79,12 @@ var DefaultSwitchConfigYaml = []byte(`
     -  {'ID': 'x3001c0r42b0', 'NAME': 'sw-hsn04'}
 `)
 
+// DefaultNetworkConfigYamlTemplate is the go template for default network configuration yaml
 var DefaultNetworkConfigYamlTemplate = []byte(`
 full_name: {{.FullName}}
 cidr: {{.CIDR}}
 name: {{.Name}}
-vlan_id: {{.Vlan}}
+vlan_range: {{.VlanRange}}
 mtu: {{.MTU}}
 type: {{.NetType}}
 comment: {{.Comment}}
@@ -101,52 +104,57 @@ subnets:
 {{end}}
 `)
 
+// DefaultHMN is the default structure for templating initial HMN configuration
 var DefaultHMN = shasta.IPV4Network{
-	FullName: "Hardware Management Network",
-	CIDR:     "10.254.0.0/17",
-	Name:     "hmn",
-	Vlan:     6,
-	MTU:      9000,
-	NetType:  "ethernet",
-	Comment:  "",
+	FullName:  "Hardware Management Network",
+	CIDR:      "10.254.0.0/17",
+	Name:      "hmn",
+	VlanRange: []int16{60, 100},
+	MTU:       9000,
+	NetType:   "ethernet",
+	Comment:   "",
 }
 
+// DefaultNMN is the default structure for templating initial NMN configuration
 var DefaultNMN = shasta.IPV4Network{
-	FullName: "Node Management Network",
-	CIDR:     "10.242.0.0/17",
-	Name:     "nmn",
-	Vlan:     7,
-	MTU:      9000,
-	NetType:  "ethernet",
-	Comment:  "",
+	FullName:  "Node Management Network",
+	CIDR:      "10.242.0.0/17",
+	Name:      "nmn",
+	VlanRange: []int16{60, 100},
+	MTU:       9000,
+	NetType:   "ethernet",
+	Comment:   "",
 }
 
+// DefaultHSN is the default structure for templating initial HSN configuration
 var DefaultHSN = shasta.IPV4Network{
-	FullName: "High Speed Network",
-	CIDR:     "10.253.0.0/16",
-	Name:     "hsn",
-	Vlan:     8,
-	MTU:      9000,
-	NetType:  "slingshot10",
-	Comment:  "",
+	FullName:  "High Speed Network",
+	CIDR:      "10.253.0.0/16",
+	Name:      "hsn",
+	VlanRange: []int16{60, 100},
+	MTU:       9000,
+	NetType:   "slingshot10",
+	Comment:   "",
 }
 
+// DefaultCAN is the default structure for templating initial CAN configuration
 var DefaultCAN = shasta.IPV4Network{
-	FullName: "High Speed Network",
-	CIDR:     "192.168.20.0/24",
-	Name:     "can",
-	Vlan:     9,
-	MTU:      9000,
-	NetType:  "ethernet",
-	Comment:  "",
+	FullName:  "High Speed Network",
+	CIDR:      "192.168.20.0/24",
+	Name:      "can",
+	VlanRange: []int16{60, 100},
+	MTU:       9000,
+	NetType:   "ethernet",
+	Comment:   "",
 }
 
+// DefaultMTL is the default structure for templating initial MTL configuration
 var DefaultMTL = shasta.IPV4Network{
-	FullName: "Provisioning Network (untagged)",
-	CIDR:     "192.168.1.0/24",
-	Name:     "mtl",
-	Vlan:     9,
-	MTU:      9000,
-	NetType:  "ethernet",
-	Comment:  "This network is only valid for the NCNs",
+	FullName:  "Provisioning Network (untagged)",
+	CIDR:      "192.168.1.0/24",
+	Name:      "mtl",
+	VlanRange: []int16{60, 100},
+	MTU:       9000,
+	NetType:   "ethernet",
+	Comment:   "This network is only valid for the NCNs",
 }

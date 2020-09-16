@@ -75,6 +75,16 @@ func MergeNetworksDerived() {
 	mergeConfig("networks_derived")
 }
 
+// MergeCustomerVar : Search reasonable places and read the customer_var as a config
+func MergeCustomerVar() {
+	mergeConfig("customer_var")
+}
+
+// MergeSLSInput : Search reasonable places and read the customer_var as a config
+func MergeSLSInput() {
+	mergeConfig("sls_input_file")
+}
+
 // MergeSiteNetwork : Search reasonable places and read the site_networking as a config
 func MergeSiteNetwork() {
 	mergeConfig("site_networking")

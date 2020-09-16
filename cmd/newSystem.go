@@ -61,9 +61,8 @@ var newSystemCmd = &cobra.Command{
 }
 
 func init() {
-	configCmd.AddCommand(newSystemCmd)
+	initCmd.AddCommand(newSystemCmd)
 
-	// newSystemCmd.Flags().Int16("river_cabinets", 5, "Number of Mountain Cabinets")
 	newSystemCmd.Flags().Int16("mountain_cabinets", 5, "Number of Mountain Cabinets")
 	viper.BindPFlag("MountainCabinets", newSystemCmd.Flags().Lookup("mountain_cabinets"))
 
@@ -104,6 +103,7 @@ func writeFile(path string, contents string) {
 	jww.FEEDBACK.Printf("wrote %d bytes to %s\n", size, path)
 }
 
+// WriteSystemConfig applies a SystemConfig Struct to the Yaml Template and writes the result to the path indicated
 func WriteSystemConfig(path string, conf shasta.SystemConfig) {
 	tmpl, err := template.New("config").Parse(string(DefaultSystemConfigYamlTemplate))
 	if err != nil {
@@ -117,6 +117,7 @@ func WriteSystemConfig(path string, conf shasta.SystemConfig) {
 	writeFile(path, buff.String())
 }
 
+// WriteNetworkConfig applies a IPV4Network Struct to the Yaml Template and writes the result to the path indicated
 func WriteNetworkConfig(path string, network shasta.IPV4Network) {
 	tmpl, err := template.New("config").Parse(string(DefaultNetworkConfigYamlTemplate))
 	if err != nil {
