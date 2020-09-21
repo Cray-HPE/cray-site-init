@@ -20,13 +20,13 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on make build
 
 %install
 mkdir -pv ${RPM_BUILD_ROOT}/usr/bin/
-cp -pvrR bin/* ${RPM_BUILD_ROOT}/usr/bin | tee -a INSTALLED_FILES
-cat INSTALLED_FILES | xargs -i sh -c 'test -L {} && exit || test -f $RPM_BUILD_ROOT/{} && echo {} || echo %dir {}' > INSTALLED_FILES_2
+cp -pv bin/sic ${RPM_BUILD_ROOT}/usr/bin/sic
 
 %clean
 
-%files -f INSTALLED_FILES_2
+%files
 %license LICENSE
 %defattr(755,root,root)
+/usr/bin/sic
 
 %changelog
