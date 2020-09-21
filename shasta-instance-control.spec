@@ -16,7 +16,7 @@ This tool enables control of a shasta instance by local or remote access. See us
 %setup -q
 
 %build
-make
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on make
 
 %install
 mkdir -p ${RPM_BUILD_ROOT}/usr/bin
