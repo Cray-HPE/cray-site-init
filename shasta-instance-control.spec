@@ -27,7 +27,6 @@ cat INSTALLED_FILES | xargs -i sh -c 'test -L {} && exit || test -f $RPM_BUILD_R
 
 %files -f INSTALLED_FILES_2
 %license LICENSE
-/usr/bin/
-%defattr(-,root,root)
+%defattr(755,root,root)
 
 %changelog
