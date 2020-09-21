@@ -16,11 +16,18 @@ This tool enables control of a shasta instance by local or remote access. See us
 %setup -q
 
 %build
+make
 
 %install
+mkdir -p ${RPM_BUILD_ROOT}/usr/bin
+cp -vr bin/* ${RPM_BUILD_ROOT}/usr/bin | tee -a INSTALLED_FILES
+cat INSTALLED_FILES | xargs -i sh -c 'test -L {} && exit || test -f $RPM_BUILD_ROOT/{} && echo {} || echo %dir {}' > INSTALLED_FILES_2
 
 %clean
 
-%files
+%files -f INSTALLED_FILES_2
 %license LICENSE
+/usr/bin/
 %defattr(-,root,root)
+
+%changelog
