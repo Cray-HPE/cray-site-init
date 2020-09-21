@@ -1,11 +1,9 @@
-@Library('dst-shared@master') _
-dockerBuildPipeline {
-     app = "sic"
-     name = "shasta-instance-control"
-     description = "Container for controlling the state of a Shasta instance, on bare-metal or virtual platforms."
-     dockerfile = "Dockerfile"
-     repository = "metal"
-     imagePrefix = "cloud"
-     product = "shasta-standard,shasta-premium"
-     slackNotification = ["", "", false, true, true, true]
-}
+@Library("dst-shared@master") _
+rpmBuild(
+    specfile : "shasta-instance-control.spec",
+    product : "shasta-premium",
+    target_node : "ncn",
+    fanout_params : ["sle15sp2"],
+    channel : "metal-ci-alerts",
+    slack_notify : ['', 'SUCCESS', 'FAILURE', 'FIXED']
+)
