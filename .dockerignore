@@ -1,6 +1,0 @@
-.gitignore
-.git/
-run*.sh
-Jenkinsfile
-# Do not include this, it is installed by the RPM - Never should need to run in the container.
-init/
