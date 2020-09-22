@@ -46,7 +46,10 @@ var initCmd = &cobra.Command{
 			// At this point, we should have a valid slsState
 			networks := shasta.ConvertSLSNetworks(slsState)
 			fmt.Println(networks)
+			ncns := shasta.ExtractNCNBMCInfo(slsState)
+			fmt.Println(ncns)
 		}
+
 		if viper.GetString("oldconfigdir") != "" {
 			LoadConfig()
 			MergeNCNMetadata()

@@ -4,7 +4,9 @@ Copyright 2020 Hewlett Packard Enterprise Development LP
 
 package shasta
 
-import "net"
+import (
+	"net"
+)
 
 // BootstrapNCNMetadata is a type that matches the ncn_metadata.csv file as
 // NCN xname,NCN Role,NCN Subrole,BMC MAC,BMC Switch Port,NMN MAC,NMN Switch Port

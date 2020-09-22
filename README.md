@@ -24,6 +24,11 @@ Print sections of the configuration object or the whole thing
 
 ### Artifacts
 
-##### RPM: 
-The RPM installs the application binary into a Linux system.
+#### RPM
 
+The RPM installs a system daemon for running the application container.
+The RPM build does not run Go lint or Go unit tests.
+
+### Docker Container
+
+The container wraps build and test dependencies for repeatable builds.  All linting and tests run inside the container.

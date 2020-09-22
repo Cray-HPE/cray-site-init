@@ -7,7 +7,9 @@ package cmd
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"text/template"
@@ -56,6 +58,9 @@ var newSystemCmd = &cobra.Command{
 		WriteNetworkConfig(filepath.Join(basepath, "internal_networks/hmn.yaml"), DefaultHMN)
 		WriteNetworkConfig(filepath.Join(basepath, "internal_networks/hsn.yaml"), DefaultHSN)
 		WriteNetworkConfig(filepath.Join(basepath, "internal_networks/mtl.yaml"), DefaultMTL)
+		WritePasswordCredential(filepath.Join(basepath, "credentials/root_password.json"), DefaultRootPW)
+		WritePasswordCredential(filepath.Join(basepath, "credentials/bmc_password.json"), DefaultBMCPW)
+		WritePasswordCredential(filepath.Join(basepath, "credentials/mgmt_switch_password.json"), DefaultNetPW)
 
 	},
 }
@@ -129,4 +134,10 @@ func WriteNetworkConfig(path string, network shasta.IPV4Network) {
 		panic(err)
 	}
 	writeFile(path, buff.String())
+}
+
+//WritePasswordCredential applies a PasswordCredential to the Yaml Template and writes the result to the path indicated
+func WritePasswordCredential(path string, pw shasta.PasswordCredential) error {
+	creds, _ := json.Marshal(pw)
+	return ioutil.WriteFile(path, creds, 0644)
 }

@@ -158,3 +158,21 @@ var DefaultMTL = shasta.IPV4Network{
 	NetType:   "ethernet",
 	Comment:   "This network is only valid for the NCNs",
 }
+
+// DefaultRootPW is the default root password
+var DefaultRootPW = shasta.PasswordCredential{
+	Username: "root",
+	Password: "changem3",
+}
+
+// DefaultBMCPW is the default root password
+var DefaultBMCPW = shasta.PasswordCredential{
+	Username: "root",
+	Password: "changem3",
+}
+
+// DefaultNetPW is the default root password
+var DefaultNetPW = shasta.PasswordCredential{
+	Username: "root",
+	Password: "changem3",
+}

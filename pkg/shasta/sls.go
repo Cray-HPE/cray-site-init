@@ -17,6 +17,7 @@ the SLS structure.
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -25,6 +26,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mitchellh/mapstructure"
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
 )
 
@@ -88,4 +90,52 @@ func ConvertSLSNetworks(sls sls_common.SLSState) []IPV4Network {
 		ourNetworks = append(ourNetworks, *tempNetwork)
 	}
 	return ourNetworks
+}
+
+// ExtractNCNBMCInfo pulls the port information for the BMCs of all Management Nodes
+func ExtractNCNBMCInfo(sls sls_common.SLSState) []BootstrapNCNMetadata {
+	var ncns []BootstrapNCNMetadata
+	for key, node := range sls.Hardware {
+		if node.Type == sls_common.Node {
+			var extra sls_common.ComptypeNode
+			err := mapstructure.Decode(node.ExtraPropertiesRaw, &extra)
+			if err != nil {
+				fmt.Printf("got data of type %T but wanted sls_common.ComptypeNode. \n", extra)
+				fmt.Println(extra)
+			} else {
+				if extra.Role == "Management" {
+					//fmt.Println("Adding ", key, " to the list with Parent = ", node.Parent)
+					fmt.Println("Xname is", node.Xname, "Parent is", node.Parent)
+					parent, err := nodeForXname(sls.Hardware, node.Parent)
+					if err != nil {
+						fmt.Println(err, parent)
+					}
+					ncns = append(ncns, BootstrapNCNMetadata{
+						Xname:   key,
+						Role:    extra.Role,
+						Subrole: extra.SubRole,
+					})
+				}
+			}
+		}
+	}
+	return ncns
+}
+
+// Return a GeneicHardware struct for a particular xname
+func nodeForXname(hardware map[string]sls_common.GenericHardware, xname string) (sls_common.GenericHardware, error) {
+	var thing sls_common.GenericHardware
+	for key, node := range hardware {
+		err := mapstructure.Decode(node, &thing)
+		if err != nil {
+			return thing, err
+		}
+		fmt.Println(thing.Xname, "!=", xname)
+		if key == xname {
+			fmt.Println("Found ", thing)
+			return thing, nil
+		}
+	}
+	fmt.Println("Couldn't find", xname)
+	return sls_common.GenericHardware{}, errors.New(" not found" + xname)
 }
