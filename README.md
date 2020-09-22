@@ -5,10 +5,5 @@ A Go application for controlling the state of a Shasta instance, metal or virtua
 ### Artifacts
 
 ##### RPM: 
-The RPM installs a system daemon for running the application container.
-The RPM build does not run Go lint or Go unit tests.
-
-##### Docker:
-
-Unit tests and lint are ran here.
+The RPM installs the application binary into a Linux system.
 
