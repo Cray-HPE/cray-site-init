@@ -82,10 +82,10 @@ env:
 
 # Run against the configured Kubernetes cluster in ~/.kube/configs
 run: build
-	go run ./cmd/main.go(TARGET)" .
+	go run ./main.go$(TARGET) $>
 
 build: fmt vet
-	go build -o bin/sic ./cmd/root.go
+	go build -o bin/sic ./main.go
 
 doc:
 	godoc -http=:8080 -index
