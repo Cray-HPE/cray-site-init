@@ -130,7 +130,7 @@ func nodeForXname(hardware map[string]sls_common.GenericHardware, xname string) 
 		if err != nil {
 			return thing, err
 		}
-		fmt.Println(thing.Xname, "!=", xname)
+		// fmt.Println(thing.Xname, "!=", xname)
 		if key == xname {
 			fmt.Println("Found ", thing)
 			return thing, nil

@@ -28,34 +28,34 @@ var slash23 = net.IPv4Mask(255, 255, 254, 0)
 var slash17 = net.IPv4Mask(255, 255, 128, 0)
 var slash16 = net.IPv4Mask(255, 255, 0, 0)
 
-var NmnCIDR = net.IPNet{
+var DefaultNmnCIDR = net.IPNet{
 	IP:   net.ParseIP("10.242.0.0"),
 	Mask: slash17,
 }
 
-var HmnCIDR = net.IPNet{
+var DefaultHmnCIDR = net.IPNet{
 	IP:   net.ParseIP("10.254.0.0"),
 	Mask: slash17,
 }
 
-var HsnCIDR = net.IPNet{
+var DefaultHsnCIDR = net.IPNet{
 	IP:   net.ParseIP("10.253.0.0"),
 	Mask: slash16,
 }
 
-var CanCIDR = net.IPNet{
+var DefaultCanCIDR = net.IPNet{
 	IP:   net.ParseIP("192.168.20.0/24"),
 	Mask: slash24,
 }
 
-var MtlCIDR = net.IPNet{
+var DefaultMtlCIDR = net.IPNet{
 	IP:   net.ParseIP("192.168.1.0/24"),
 	Mask: slash24,
 }
 
 var DefaultNodeManagementNetwork = ShastaIPV4Network{
 	FullName: "Node Management Network",
-	CIDR:     &NmnCIDR,
+	CIDR:     &DefaultNmnCIDR,
 	Name:     "nmn",
 	Vlan:     5,
 	MTU:      9000,
@@ -65,7 +65,7 @@ var DefaultNodeManagementNetwork = ShastaIPV4Network{
 
 var DefaultHardwareManagementNetwork = ShastaIPV4Network{
 	FullName: "Hardware Management Network",
-	CIDR:     &HmnCIDR,
+	CIDR:     &DefaultHmnCIDR,
 	Name:     "hmn",
 	Vlan:     6,
 	MTU:      9000,
@@ -75,7 +75,7 @@ var DefaultHardwareManagementNetwork = ShastaIPV4Network{
 
 var DefaultHighSpeedNetwork = ShastaIPV4Network{
 	FullName: "High Speed Network",
-	CIDR:     &HsnCIDR,
+	CIDR:     &DefaultHsnCIDR,
 	Name:     "hsn",
 	Vlan:     7,
 	MTU:      9000,
@@ -85,7 +85,7 @@ var DefaultHighSpeedNetwork = ShastaIPV4Network{
 
 var DefaultCanNetwork = ShastaIPV4Network{
 	FullName: "Customer Access Network",
-	CIDR:     &CanCIDR,
+	CIDR:     &DefaultCanCIDR,
 	Name:     "can",
 	Vlan:     8,
 	MTU:      9000,
@@ -95,7 +95,7 @@ var DefaultCanNetwork = ShastaIPV4Network{
 
 var DefaultMTLNetwork = ShastaIPV4Network{
 	FullName: "Untagged MTL Network",
-	CIDR:     &MtlCIDR,
+	CIDR:     &DefaultMtlCIDR,
 	Name:     "mtl",
 	Vlan:     8,
 	MTU:      9000,
