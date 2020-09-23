@@ -43,7 +43,7 @@ var initCmd = &cobra.Command{
 
 		// After processing all the flags in init,
 		// if the user has an old configuration dir, use that
-		if viper.GetString("oldconfigdir") != "" {
+		if viper.GetString("OldConfigDir") != "" {
 			LoadConfig()
 			MergeNCNMetadata()
 			MergeNetworksDerived()
@@ -81,17 +81,22 @@ var initCmd = &cobra.Command{
 
 		// Handle an SLSFile if one is provided
 		var slsState sls_common.SLSState
-		if viper.GetString("slsfilepath") != "" {
-			slsState = loadFromSLS("file://" + viper.GetString("slsfilepath"))
-		} else if viper.GetString("slsurl") != "" {
-			slsState = loadFromSLS(viper.GetString("slsurl"))
+		if viper.GetString("SLSFilePath") != "" {
+			slsState = loadFromSLS("file://" + viper.GetString("SLSFilePath"))
+		} else if viper.GetString("SLSUrl") != "" {
+			slsState = loadFromSLS(viper.GetString("SLSUrl"))
 		}
 
 		networks := shasta.ConvertSLSNetworks(slsState)
 		fmt.Println("The networks are: ", networks)
 
+		viper.Set("networks.from_sls", networks)
+
 		var conf shasta.SystemConfig
-		viper.Unmarshal(&conf)
+		err = viper.Unmarshal(&conf)
+		if err != nil {
+			panic(err)
+		}
 
 		WriteSystemConfig(filepath.Join(basepath, "system_config.yaml"), conf)
 		DefaultNMN.CIDR = viper.GetString("NMNCidr")
@@ -122,7 +127,7 @@ func init() {
 	// Flags to deal with 1.3 configuration directories
 
 	initCmd.Flags().String("from-1.3-dir", "", "Shasta 1.3 Configuration Directory")
-	viper.BindPFlag("oldconfigdir", initCmd.Flags().Lookup("from-1.3-dir"))
+	viper.BindPFlag("OldConfigDir", initCmd.Flags().Lookup("from-1.3-dir"))
 
 	// System Configuration Flags based on previous system_config.yml and networks_derived.yml
 	initCmd.Flags().String("system_name", "sn-2024", "Name of the System")
@@ -136,6 +141,12 @@ func init() {
 
 	initCmd.Flags().String("ntp_pool", "time.nist.gov", "Hostname for Upstream NTP Pool")
 	viper.BindPFlag("NtpPoolHostname", initCmd.Flags().Lookup("ntp_pool"))
+
+	initCmd.Flags().String("v2_registry", "https://packages.local/", "URL for default v2 registry (helm and containers)")
+	viper.BindPFlag("V2Registry", initCmd.Flags().Lookup("v2_registry"))
+
+	initCmd.Flags().String("rpm_repository", "https://packages.local/repository/shasta-master", "URL for default rpm repository")
+	viper.BindPFlag("RpmRegistry", initCmd.Flags().Lookup("rpm_registry"))
 
 	initCmd.Flags().StringArray("ipv4_resolvers", []string{"8.8.8.8", "9.9.9.9"}, "List of IP Addresses for DNS")
 	viper.BindPFlag("IPV4Resolvers", initCmd.Flags().Lookup("ipv4_resolvers"))
@@ -162,10 +173,10 @@ func init() {
 
 	// Dealing with an SLS file
 	initCmd.Flags().String("from-sls-file", "", "SLS File Location")
-	viper.BindPFlag("slsfilepath", initCmd.Flags().Lookup("from-sls-file"))
+	viper.BindPFlag("SLSFilePath", initCmd.Flags().Lookup("from-sls-file"))
 
 	initCmd.Flags().String("from-sls", "", "Shasta 1.3 SLS dumpstate url")
-	viper.BindPFlag("slsurl", initCmd.Flags().Lookup("from-sls"))
+	viper.BindPFlag("SLSUrl", initCmd.Flags().Lookup("from-sls"))
 
 	// Loftsman Manifest Shasta-CFG
 	initCmd.Flags().String("manifest-release", "", "Loftsman Manifest Release Version (leave blank to prevent manifest generation")
@@ -193,7 +204,7 @@ func loadFromSLS(source string) sls_common.SLSState {
 		// networks := shasta.ConvertSLSNetworks(slsState)
 		// fmt.Println(networks)
 		ncns := shasta.ExtractNCNBMCInfo(slsState)
-		fmt.Println(ncns)
+		fmt.Println("The NCNs are:", ncns)
 	}
 	return slsState
 }
@@ -269,10 +280,10 @@ func initiailzeManifestDir(branch, destination string) {
 			panic(err)
 		}
 	}
-	initCmd := exec.Command("./meta/init.sh", destination)
-	initCmd.Dir = dir
-	out, err = initCmd.Output()
+	packageCmd := exec.Command("./package/package.sh", "1.4.0")
+	packageCmd.Dir = dir
+	out, err = packageCmd.Output()
 	if err != nil {
-		fmt.Printf("initCommand ffinished with error: %s (%v)\n", out, err)
+		fmt.Printf("packageCommand finished with error: %s (%v)\n", out, err)
 	}
 }

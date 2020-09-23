@@ -13,7 +13,6 @@ replace (
 
 require (
 	github.com/gocarina/gocsv v0.0.0-20200827134620-49f5c3fa2b3e
-	github.com/manifoldco/promptui v0.7.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.3.0
 	github.com/spf13/cobra v1.0.0

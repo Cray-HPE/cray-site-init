@@ -28,6 +28,13 @@ type SystemConfig struct {
 	MountainCabinets int16
 	NtpPoolHostname  string
 	IPV4Resolvers    []string
+	V2Registry       string
+	RpmRegistry      string
+	NMNCidr          net.IPNet
+	HMNCidr          net.IPNet
+	CANCidr          net.IPNet
+	MTLCidr          net.IPNet
+	HSNCidr          net.IPNet
 }
 
 // SiteServices stores identity information for system services

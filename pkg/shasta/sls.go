@@ -22,7 +22,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"reflect"
 	"strings"
 	"time"
 
@@ -79,8 +78,8 @@ func ParseSLSfromURL(url string) (sls_common.SLSState, error) {
 func ConvertSLSNetworks(sls sls_common.SLSState) []IPV4Network {
 	var ourNetworks []IPV4Network
 	for key, element := range sls.Networks {
-		fmt.Println("Key:", key, "=>", "Element:", element, "(", reflect.TypeOf(element), ")")
-		fmt.Println("Extra Properties:", element.ExtraPropertiesRaw)
+		// fmt.Println("Key:", key, "=>", "Element:", element, "(", reflect.TypeOf(element), ")")
+		// fmt.Println("Extra Properties:", element.ExtraPropertiesRaw)
 		tempNetwork := new(IPV4Network)
 		tempNetwork.FullName = element.FullName
 		tempNetwork.CIDR = strings.Join(element.IPRanges, ",")
@@ -105,15 +104,15 @@ func ExtractNCNBMCInfo(sls sls_common.SLSState) []BootstrapNCNMetadata {
 			} else {
 				if extra.Role == "Management" {
 					//fmt.Println("Adding ", key, " to the list with Parent = ", node.Parent)
-					fmt.Println("Xname is", node.Xname, "Parent is", node.Parent)
-					parent, err := nodeForXname(sls.Hardware, node.Parent)
+					mgmtSwitch, port, err := portForXname(sls.Hardware, node.Parent)
 					if err != nil {
-						fmt.Println(err, parent)
+						fmt.Println(err, port)
 					}
 					ncns = append(ncns, BootstrapNCNMetadata{
 						Xname:   key,
 						Role:    extra.Role,
 						Subrole: extra.SubRole,
+						BmcPort: mgmtSwitch + ":" + port,
 					})
 				}
 			}
@@ -123,19 +122,24 @@ func ExtractNCNBMCInfo(sls sls_common.SLSState) []BootstrapNCNMetadata {
 }
 
 // Return a GeneicHardware struct for a particular xname
-func nodeForXname(hardware map[string]sls_common.GenericHardware, xname string) (sls_common.GenericHardware, error) {
-	var thing sls_common.GenericHardware
-	for key, node := range hardware {
-		err := mapstructure.Decode(node, &thing)
-		if err != nil {
-			return thing, err
-		}
-		// fmt.Println(thing.Xname, "!=", xname)
-		if key == xname {
-			fmt.Println("Found ", thing)
-			return thing, nil
+func portForXname(hardware map[string]sls_common.GenericHardware, xname string) (string, string, error) {
+	for _, node := range hardware {
+		if node.Type == "comptype_mgmt_switch_connector" {
+			var extra sls_common.ComptypeMgmtSwitchConnector
+			err := mapstructure.Decode(node.ExtraPropertiesRaw, &extra)
+			if err != nil {
+				return "", "", err
+			}
+			for _, nodeNIC := range extra.NodeNics {
+				if xname == nodeNIC {
+					networkSwitch := node.Parent
+					networkPort := extra.VendorName
+					return networkSwitch, networkPort, nil
+
+				}
+			}
 		}
 	}
-	fmt.Println("Couldn't find", xname)
-	return sls_common.GenericHardware{}, errors.New(" not found" + xname)
+	// fmt.Println("Couldn't find", xname)
+	return "", "", errors.New(" not found" + xname)
 }
