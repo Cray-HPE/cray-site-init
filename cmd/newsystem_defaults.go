@@ -24,9 +24,9 @@ system_settings:
 	{{end -}}
 	{{if .NtpPoolHostname}}
 	ntp_pool_hostname: {{.NtpPoolHostname}}
-	{{else if .Services.NtpHosts}}
+	{{else if .NtpHosts}}
 	upstream_ntp:
-	{{range .Services.NtpHosts}}
+	{{range .NtpHosts}}
 	  - {{.}}
 	{{end}}
 	{{end}}
@@ -62,6 +62,7 @@ manufacturing_details:
 	`)
 
 // DefaultSwitchConfigYaml is the default yaml for Switch Configuration
+// Manually from the River Rack Diagram
 var DefaultSwitchConfigYaml = []byte(`
   # Do sw-100g01, and sw-100g02 need to be represented here?
   management_switches:

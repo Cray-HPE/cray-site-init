@@ -42,3 +42,11 @@ type IPV4Subnet struct {
 	DHCPStart      net.IPAddr      `yaml:"iprange"`
 	DHCPEnd        net.IPAddr      `yaml:"iprange"`
 }
+
+// ManagementSwitch holds information about the Management Switches
+type ManagementSwitch struct {
+	XName               string
+	Name                string
+	SwitchType          string //"CDU/Leaf/Spine"
+	ManagementInterface net.IPAddr
+}

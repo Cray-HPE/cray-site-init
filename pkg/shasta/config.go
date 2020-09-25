@@ -22,19 +22,20 @@ type BootstrapNCNMetadata struct {
 
 // SystemConfig stores the overall set of system configuration parameters
 type SystemConfig struct {
-	SystemName       string
-	SiteDomain       string
-	InternalDomain   string
-	MountainCabinets int16
-	NtpPoolHostname  string
-	IPV4Resolvers    []string
-	V2Registry       string
-	RpmRegistry      string
-	NMNCidr          net.IPNet
-	HMNCidr          net.IPNet
-	CANCidr          net.IPNet
-	MTLCidr          net.IPNet
-	HSNCidr          net.IPNet
+	SystemName       string   `form:"system-name"`
+	SiteDomain       string   `form:"site-domain"`
+	InternalDomain   string   `form:"internal-domain"`
+	MountainCabinets int16    `form:"mountain-cabinets"`
+	NtpPoolHostname  string   `form:"ntp-pool"`
+	NtpHosts         []string `form:"ntp-hosts"`
+	IPV4Resolvers    []string `form:"ipv4-resolvers"`
+	V2Registry       string   `form:"v2-registry"`
+	RpmRegistry      string   `form:"rpm-registry"`
+	NMNCidr          string   `form:"nmn-cidr"`
+	HMNCidr          string   `form:"hmn-cidr"`
+	CANCidr          string   `form:"can-cidr"`
+	MTLCidr          string   `form:"mtl-cidr"`
+	HSNCidr          string   `form:"hsn-cidr"`
 }
 
 // SiteServices stores identity information for system services

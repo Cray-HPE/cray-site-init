@@ -121,7 +121,7 @@ func ExtractNCNBMCInfo(sls sls_common.SLSState) []BootstrapNCNMetadata {
 	return ncns
 }
 
-// Return a GeneicHardware struct for a particular xname
+// Return a tuple of strings that match switch and switchport for the BMC
 func portForXname(hardware map[string]sls_common.GenericHardware, xname string) (string, string, error) {
 	for _, node := range hardware {
 		if node.Type == "comptype_mgmt_switch_connector" {
@@ -141,5 +141,18 @@ func portForXname(hardware map[string]sls_common.GenericHardware, xname string) 
 		}
 	}
 	// fmt.Println("Couldn't find", xname)
-	return "", "", errors.New(" not found" + xname)
+	return "", "", errors.New("Couldn't find switch port for NCN:" + xname)
+}
+
+func ExtractSwitches(sls sls_common.SLSState) {
+	for _, node := range sls.Hardware {
+		if node.Type == sls_common.MgmtSwitch {
+			var extra sls_common.ComptypeMgmtSwitch
+			err := mapstructure.Decode(node.ExtraPropertiesRaw, &extra)
+			if err != nil {
+				fmt.Printf("got data of type %T but wanted sls_common.ComptypeMgmtSwitch. \n", extra)
+				fmt.Println(extra)
+			}
+		}
+	}
 }

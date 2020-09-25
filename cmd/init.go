@@ -40,78 +40,94 @@ var initCmd = &cobra.Command{
 	 - customer_var.yml`,
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
+		v := viper.GetViper()
+		viperWiper(v)
+		var conf shasta.SystemConfig
 
+		// LoadConfig()
+		// fmt.Println("Initial Config Loaded")
 		// After processing all the flags in init,
 		// if the user has an old configuration dir, use that
-		if viper.GetString("OldConfigDir") != "" {
-			LoadConfig()
+		if v.GetString("from-1.3-dir") != "" {
+			// LoadConfig()
 			MergeNCNMetadata()
 			MergeNetworksDerived()
 			MergeSLSInput()
 			MergeCustomerVar()
 		}
 
+		if v.GetString("system-name") == "" {
+			fmt.Println("system-name is not set")
+			os.Exit(1)
+		}
 		// Set up the path for our base directory using our systemname
-		basepath, err := filepath.Abs(filepath.Clean(viper.GetString("SystemName")))
+		basepath, err := filepath.Abs(filepath.Clean(v.GetString("system-name")))
 		if err != nil {
 			panic(err)
 		}
 		// Create our base directory
 		if err := os.Mkdir(basepath, 0777); err != nil {
+			fmt.Println("Can't create directory", basepath)
 			panic(err)
 		}
 
 		// These Directories make up the overall structure for the Configuration Payload
 		dirs := []string{
-			filepath.Join(basepath, "internal_networks"),
+			filepath.Join(basepath, "networks"),
 			filepath.Join(basepath, "manufacturing"),
 			filepath.Join(basepath, "credentials"),
 			filepath.Join(basepath, "certificates"),
 		}
 		// Add the Manifest directory if needed
-		if viper.GetString("ManifestRelease") != "" {
+		if v.GetString("manifest-release") != "" {
 			dirs = append(dirs, filepath.Join(basepath, "loftsman-manifests"))
 		}
 		// Iterate through the directories and create them
 		for _, dir := range dirs {
 			if err := os.Mkdir(dir, 0777); err != nil {
+				fmt.Println("Can't create directory", dir)
 				panic(err)
 			}
 		}
 
+		fmt.Println("Directory Stuctures Initialized")
+
 		// Handle an SLSFile if one is provided
 		var slsState sls_common.SLSState
-		if viper.GetString("SLSFilePath") != "" {
-			slsState = loadFromSLS("file://" + viper.GetString("SLSFilePath"))
-		} else if viper.GetString("SLSUrl") != "" {
-			slsState = loadFromSLS(viper.GetString("SLSUrl"))
+		if v.GetString("sls-file-path") != "" {
+			slsState = loadFromSLS("file://" + v.GetString("sls-file-path"))
+		} else if v.GetString("sls-url") != "" {
+			slsState = loadFromSLS(v.GetString("sls-url"))
 		}
+		fmt.Println("SLS File Loaded")
 
 		networks := shasta.ConvertSLSNetworks(slsState)
-		fmt.Println("The networks are: ", networks)
+		// fmt.Println("The networks are: ", networks)
+		v.Set("networks.from_sls", networks)
+		fmt.Println("Networks Loaded from SLS")
+		shasta.ExtractSwitches(slsState)
 
-		viper.Set("networks.from_sls", networks)
-
-		var conf shasta.SystemConfig
-		err = viper.Unmarshal(&conf)
+		err = v.Unmarshal(&conf)
 		if err != nil {
-			panic(err)
+			fmt.Printf("unable to decode into struct, %v /n", err)
 		}
 
 		WriteSystemConfig(filepath.Join(basepath, "system_config.yaml"), conf)
-		DefaultNMN.CIDR = viper.GetString("NMNCidr")
-		WriteNetworkConfig(filepath.Join(basepath, "internal_networks/nmn.yaml"), DefaultNMN)
-		DefaultHMN.CIDR = viper.GetString("HMNCidr")
-		WriteNetworkConfig(filepath.Join(basepath, "internal_networks/hmn.yaml"), DefaultHMN)
-		DefaultHSN.CIDR = viper.GetString("HSNCidr")
-		WriteNetworkConfig(filepath.Join(basepath, "internal_networks/hsn.yaml"), DefaultHSN)
-		DefaultMTL.CIDR = viper.GetString("MTLCidr")
-		WriteNetworkConfig(filepath.Join(basepath, "internal_networks/mtl.yaml"), DefaultMTL)
+		DefaultNMN.CIDR = v.GetString("nmn-cidr")
+		WriteNetworkConfig(filepath.Join(basepath, "networks/nmn.yaml"), DefaultNMN)
+		DefaultHMN.CIDR = v.GetString("hmn-cidr")
+		WriteNetworkConfig(filepath.Join(basepath, "networks/hmn.yaml"), DefaultHMN)
+		DefaultHSN.CIDR = v.GetString("hsn-cidr")
+		WriteNetworkConfig(filepath.Join(basepath, "networks/hsn.yaml"), DefaultHSN)
+		DefaultMTL.CIDR = v.GetString("mtl-cidr")
+		WriteNetworkConfig(filepath.Join(basepath, "networks/mtl.yaml"), DefaultMTL)
+		DefaultCAN.CIDR = v.GetString("can-cidr")
+		WriteNetworkConfig(filepath.Join(basepath, "networks/can.yaml"), DefaultCAN)
 		WritePasswordCredential(filepath.Join(basepath, "credentials/root_password.json"), DefaultRootPW)
 		WritePasswordCredential(filepath.Join(basepath, "credentials/bmc_password.json"), DefaultBMCPW)
 		WritePasswordCredential(filepath.Join(basepath, "credentials/mgmt_switch_password.json"), DefaultNetPW)
 
-		if viper.GetString("ManifestRelease") != "" {
+		if v.GetString("manifest-release") != "" {
 			initiailzeManifestDir("release/shasta-1.4", filepath.Join(basepath, "loftsman-manifests"))
 		}
 		// InitializeConfiguration()
@@ -127,61 +143,30 @@ func init() {
 	// Flags to deal with 1.3 configuration directories
 
 	initCmd.Flags().String("from-1.3-dir", "", "Shasta 1.3 Configuration Directory")
-	viper.BindPFlag("OldConfigDir", initCmd.Flags().Lookup("from-1.3-dir"))
 
 	// System Configuration Flags based on previous system_config.yml and networks_derived.yml
-	initCmd.Flags().String("system_name", "sn-2024", "Name of the System")
-	viper.BindPFlag("SystemName", initCmd.Flags().Lookup("system_name"))
-
-	initCmd.Flags().String("site_domain", "cray.io", "Site Domain Name")
-	viper.BindPFlag("SiteDomain", initCmd.Flags().Lookup("site_domain"))
-
-	initCmd.Flags().String("internal_domain", "unicos.shasta", "Internal Domain Name")
-	viper.BindPFlag("InternalDomain", initCmd.Flags().Lookup("internal_domain"))
-
-	initCmd.Flags().String("ntp_pool", "time.nist.gov", "Hostname for Upstream NTP Pool")
-	viper.BindPFlag("NtpPoolHostname", initCmd.Flags().Lookup("ntp_pool"))
-
-	initCmd.Flags().String("v2_registry", "https://packages.local/", "URL for default v2 registry (helm and containers)")
-	viper.BindPFlag("V2Registry", initCmd.Flags().Lookup("v2_registry"))
-
-	initCmd.Flags().String("rpm_repository", "https://packages.local/repository/shasta-master", "URL for default rpm repository")
-	viper.BindPFlag("RpmRegistry", initCmd.Flags().Lookup("rpm_registry"))
-
-	initCmd.Flags().StringArray("ipv4_resolvers", []string{"8.8.8.8", "9.9.9.9"}, "List of IP Addresses for DNS")
-	viper.BindPFlag("IPV4Resolvers", initCmd.Flags().Lookup("ipv4_resolvers"))
+	initCmd.Flags().String("system-name", "sn-2024", "Name of the System")
+	initCmd.Flags().String("site-domain", "cray.io", "Site Domain Name")
+	initCmd.Flags().String("internal-domain", "unicos.shasta", "Internal Domain Name")
+	initCmd.Flags().String("ntp-pool", "time.nist.gov", "Hostname for Upstream NTP Pool")
+	initCmd.Flags().StringArray("ipv4-resolvers", []string{"8.8.8.8", "9.9.9.9"}, "List of IP Addresses for DNS")
+	initCmd.Flags().String("v2-registry", "https://packages.local/", "URL for default v2 registry (helm and containers)")
+	initCmd.Flags().String("rpm-repository", "https://packages.local/repository/shasta-master", "URL for default rpm repository")
 
 	// Default IPv4 Networks
-	initCmd.Flags().IPNet("nmn_cidr", ipam.DefaultNmnCIDR, "Overall IPv4 CIDR for all Node Management subnets")
-	viper.BindPFlag("NMNCidr", initCmd.Flags().Lookup("nmn_cidr"))
-
-	initCmd.Flags().IPNet("hmn_cidr", ipam.DefaultHmnCIDR, "Overall IPv4 CIDR for all Hardware Management subnets")
-	viper.BindPFlag("HMNCidr", initCmd.Flags().Lookup("hmn_cidr"))
-
-	initCmd.Flags().IPNet("can_cidr", ipam.DefaultCanCIDR, "Overall IPv4 CIDR for all Customer Access subnets")
-	viper.BindPFlag("CANCidr", initCmd.Flags().Lookup("can_cidr"))
-
-	initCmd.Flags().IPNet("mtl_cidr", ipam.DefaultMtlCIDR, "Overall IPv4 CIDR for all Provisioning subnets")
-	viper.BindPFlag("MTLCidr", initCmd.Flags().Lookup("mtl_cidr"))
-
-	initCmd.Flags().IPNet("hsn_cidr", ipam.DefaultHsnCIDR, "Overall IPv4 CIDR for all HSN subnets")
-	viper.BindPFlag("HSNCidr", initCmd.Flags().Lookup("hsn_cidr"))
+	initCmd.Flags().String("nmn-cidr", ipam.DefaultNMN, "Overall IPv4 CIDR for all Node Management subnets")
+	initCmd.Flags().String("hmn-cidr", ipam.DefaultHMN, "Overall IPv4 CIDR for all Hardware Management subnets")
+	initCmd.Flags().String("can-cidr", ipam.DefaultCAN, "Overall IPv4 CIDR for all Customer Access subnets")
+	initCmd.Flags().String("mtl-cidr", ipam.DefaultMTL, "Overall IPv4 CIDR for all Provisioning subnets")
+	initCmd.Flags().String("hsn-cidr", ipam.DefaultHSN, "Overall IPv4 CIDR for all HSN subnets")
 
 	// Hardware Details
-	initCmd.Flags().Int16("mountain_cabinets", 5, "Number of Mountain Cabinets")
-	viper.BindPFlag("MountainCabinets", initCmd.Flags().Lookup("mountain_cabinets"))
-
+	initCmd.Flags().Int16("mountain-cabinets", 5, "Number of Mountain Cabinets")
 	// Dealing with an SLS file
 	initCmd.Flags().String("from-sls-file", "", "SLS File Location")
-	viper.BindPFlag("SLSFilePath", initCmd.Flags().Lookup("from-sls-file"))
-
 	initCmd.Flags().String("from-sls", "", "Shasta 1.3 SLS dumpstate url")
-	viper.BindPFlag("SLSUrl", initCmd.Flags().Lookup("from-sls"))
-
 	// Loftsman Manifest Shasta-CFG
 	initCmd.Flags().String("manifest-release", "", "Loftsman Manifest Release Version (leave blank to prevent manifest generation")
-	viper.BindPFlag("ManifestRelease", initCmd.Flags().Lookup("manifest-release"))
-
 }
 
 func loadFromSLS(source string) sls_common.SLSState {
@@ -226,6 +211,7 @@ func writeFile(path string, contents string) {
 
 // WriteSystemConfig applies a SystemConfig Struct to the Yaml Template and writes the result to the path indicated
 func WriteSystemConfig(path string, conf shasta.SystemConfig) {
+	fmt.Println(conf)
 	tmpl, err := template.New("config").Parse(string(DefaultSystemConfigYamlTemplate))
 	if err != nil {
 		panic(err)
@@ -265,25 +251,37 @@ func initiailzeManifestDir(branch, destination string) {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println("Adding a temp directory for the git checkout:", dir)
 	defer os.RemoveAll(dir)
 	cloneCmd := exec.Command("git", "clone", url, dir)
-	err = cloneCmd.Run()
+	out, err := cloneCmd.Output()
 	if err != nil {
-		fmt.Printf("cloneCommand finished with error: %v", err)
+		fmt.Printf("cloneCommand finished with error: %s (%v)\n", out, err)
 	}
+	fmt.Printf("cloneCommand finished without error: %s \n", out)
 	checkoutCmd := exec.Command("git", "checkout", branch)
 	checkoutCmd.Dir = dir
-	out, err := checkoutCmd.Output()
+	out, err = checkoutCmd.Output()
 	if err != nil {
 		if err.Error() != "exit status 1" {
 			fmt.Printf("checkoutCommand finished with error: %s (%v)\n", out, err)
 			panic(err)
 		}
 	}
+	fmt.Printf("checkoutCommand finished without error: %s \n", out)
 	packageCmd := exec.Command("./package/package.sh", "1.4.0")
 	packageCmd.Dir = dir
 	out, err = packageCmd.Output()
 	if err != nil {
 		fmt.Printf("packageCommand finished with error: %s (%v)\n", out, err)
 	}
+	fmt.Printf("package finished without error: %s \n", out)
+	targz, err := filepath.Abs(filepath.Clean(dir + "/dist/shasta-cfg-1.4.0.tgz"))
+	untarCmd := exec.Command("tar", "-zxvvf", targz)
+	untarCmd.Dir = destination
+	out, err = untarCmd.Output()
+	if err != nil {
+		fmt.Printf("untarCmd finished with error: %s (%v)\n", out, err)
+	}
+	fmt.Printf("untarCmd finished without error: %s \n", out)
 }
