@@ -39,14 +39,18 @@ type IPV4Subnet struct {
 	VlanID         int16           `yaml:"vlan_id"`
 	Comment        string          `yaml:"comment"`
 	Gateway        string          `yaml:"gateway"` // Convert to net.IPAddr on use
-	DHCPStart      net.IPAddr      `yaml:"iprange"`
-	DHCPEnd        net.IPAddr      `yaml:"iprange"`
+	DHCPStart      net.IP          `yaml:"iprange-start"`
+	DHCPEnd        net.IP          `yaml:"iprange-end"`
 }
 
-// ManagementSwitch holds information about the Management Switches
+// ManagementSwitch is a type for managing Management switches
 type ManagementSwitch struct {
-	XName               string
-	Name                string
+	Xname               string `form:"xname" mapstructure:"xname"`
+	Name                string `form:"name" mapstructure:"name"`
+	Brand               string `form:"brand" mapstructure:"brand"`
+	Model               string `form:"model" mapstructure:"model"`
+	Os                  string `form:"operating-system" mapstructure:"operating-system"`
+	Firmware            string `form:"firmware" mapstructure:"firmware"`
 	SwitchType          string //"CDU/Leaf/Spine"
 	ManagementInterface net.IPAddr
 }

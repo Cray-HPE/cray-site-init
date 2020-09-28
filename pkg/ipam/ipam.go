@@ -97,7 +97,7 @@ func CanonicalizeSubnets(networkRange net.IPNet, subnets []net.IPNet) []net.IPNe
 // Contains returns true when the subnet is a part of the network, false
 // otherwise.
 func Contains(network, subnet net.IPNet) bool {
-	subnetRange := newIPRange(subnet)
+	subnetRange := NewIPRange(subnet)
 	return network.Contains(subnetRange.start) && network.Contains(subnetRange.end)
 }
 
@@ -204,7 +204,7 @@ func Split(network net.IPNet, n uint) ([]net.IPNet, error) {
 // add increments the given IP by the number.
 // e.g: add(10.0.4.0, 1) -> 10.0.4.1.
 // Negative values are allowed for decrementing.
-func add(ip net.IP, number int) net.IP {
+func Add(ip net.IP, number int) net.IP {
 	return decimalToIP(ipToDecimal(ip) + number)
 }
 
@@ -220,7 +220,7 @@ func decimalToIP(ip int) net.IP {
 // It calculates available IPRanges, within the original network.
 func freeIPRanges(network net.IPNet, subnets []net.IPNet) ([]IPRange, error) {
 	freeSubnets := []IPRange{}
-	networkRange := newIPRange(network)
+	networkRange := NewIPRange(network)
 
 	if len(subnets) == 0 {
 		freeSubnets = append(freeSubnets, networkRange)
@@ -229,13 +229,13 @@ func freeIPRanges(network net.IPNet, subnets []net.IPNet) ([]IPRange, error) {
 
 	{
 		// Check space between start of network and first subnet.
-		firstSubnetRange := newIPRange(subnets[0])
+		firstSubnetRange := NewIPRange(subnets[0])
 
 		// Check the first subnet doesn't start at the start of the network.
 		if !networkRange.start.Equal(firstSubnetRange.start) {
 			// It doesn't, so we have a free range between the start
 			// of the network, and the start of the first subnet.
-			end := add(firstSubnetRange.start, -1)
+			end := Add(firstSubnetRange.start, -1)
 			freeSubnets = append(freeSubnets,
 				IPRange{start: networkRange.start, end: end},
 			)
@@ -245,14 +245,14 @@ func freeIPRanges(network net.IPNet, subnets []net.IPNet) ([]IPRange, error) {
 	{
 		// Check space between each subnet.
 		for i := 0; i < len(subnets)-1; i++ {
-			currentSubnetRange := newIPRange(subnets[i])
-			nextSubnetRange := newIPRange(subnets[i+1])
+			currentSubnetRange := NewIPRange(subnets[i])
+			nextSubnetRange := NewIPRange(subnets[i+1])
 
 			// If the two subnets are not contiguous,
 			if ipToDecimal(currentSubnetRange.end)+1 != ipToDecimal(nextSubnetRange.start) {
 				// Then there is a free range between them.
-				start := add(currentSubnetRange.end, 1)
-				end := add(nextSubnetRange.start, -1)
+				start := Add(currentSubnetRange.end, 1)
+				end := Add(nextSubnetRange.start, -1)
 				freeSubnets = append(freeSubnets, IPRange{start: start, end: end})
 			}
 		}
@@ -260,13 +260,13 @@ func freeIPRanges(network net.IPNet, subnets []net.IPNet) ([]IPRange, error) {
 
 	{
 		// Check space between last subnet and end of network.
-		lastSubnetRange := newIPRange(subnets[len(subnets)-1])
+		lastSubnetRange := NewIPRange(subnets[len(subnets)-1])
 
 		// Check the last subnet doesn't end at the end of the network.
 		if !lastSubnetRange.end.Equal(networkRange.end) {
 			// It doesn't, so we have a free range between the end of the
 			// last subnet, and the end of the network.
-			start := add(lastSubnetRange.end, 1)
+			start := Add(lastSubnetRange.end, 1)
 			freeSubnets = append(freeSubnets,
 				IPRange{start: start, end: networkRange.end},
 			)
@@ -286,10 +286,10 @@ func ipToDecimal(ip net.IP) int {
 	return int(binary.BigEndian.Uint32(t))
 }
 
-// newIPRange takes an IPNet, and returns the ipRange of the network.
-func newIPRange(network net.IPNet) IPRange {
+// NewIPRange takes an IPNet, and returns the ipRange of the network.
+func NewIPRange(network net.IPNet) IPRange {
 	start := network.IP
-	end := add(network.IP, size(network.Mask)-1)
+	end := Add(network.IP, size(network.Mask)-1)
 
 	return IPRange{start: start, end: end}
 }

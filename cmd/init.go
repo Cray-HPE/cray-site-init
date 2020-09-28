@@ -6,20 +6,20 @@ package cmd
 
 import (
 	"bufio"
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"text/template"
 	"unsafe"
 
 	"github.com/spf13/cobra"
 	jww "github.com/spf13/jwalterweatherman"
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v2"
 
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
 	"stash.us.cray.com/MTL/sic/pkg/ipam"
@@ -41,7 +41,7 @@ var initCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 		v := viper.GetViper()
-		viperWiper(v)
+		// viperWiper(v)
 		var conf shasta.SystemConfig
 
 		// LoadConfig()
@@ -105,20 +105,65 @@ var initCmd = &cobra.Command{
 		// fmt.Println("The networks are: ", networks)
 		v.Set("networks.from_sls", networks)
 		fmt.Println("Networks Loaded from SLS")
-		shasta.ExtractSwitches(slsState)
+		// shasta.ExtractSwitches(slsState)
 
 		err = v.Unmarshal(&conf)
 		if err != nil {
-			fmt.Printf("unable to decode into struct, %v /n", err)
+			fmt.Printf("unable to decode into struct, %v \n", err)
 		}
 
+		// PrintConfig(v)
+
+		conf.IPV4Resolvers = strings.Split(viper.GetString("ipv4-resolvers"), ",")
+		conf.SiteServices.NtpPoolHostname = conf.NtpPoolHostname
+
 		WriteSystemConfig(filepath.Join(basepath, "system_config.yaml"), conf)
+
+		// our primitive ipam uses the number of cabinets to lay out a network for each one.
+		var cabinets = uint(conf.MountainCabinets)
+
+		// Merge configs with the NMN Defaults to create a yaml with our subnets in it
 		DefaultNMN.CIDR = v.GetString("nmn-cidr")
+		_, myNet, _ := net.ParseCIDR(DefaultNMN.CIDR)
+		nmnSubnets, err := ipam.Split(*myNet, 32) // 32 allows for a /22 per cabinet
+		for k, v := range nmnSubnets[0:cabinets] {
+			DefaultNMN.Subnets = append(DefaultNMN.Subnets, shasta.IPV4Subnet{
+				CIDR:    v.String(),
+				Name:    fmt.Sprintf("cabinet_%v_nmn", int(conf.StartingCabinet)+k),
+				Gateway: ipam.Add(v.IP, 1).String(),
+				VlanID:  DefaultNMN.VlanRange[0] + int16(k),
+			})
+		}
 		WriteNetworkConfig(filepath.Join(basepath, "networks/nmn.yaml"), DefaultNMN)
+
+		// Merge configs with the HMN Defaults to create a yaml with our subnets in it
 		DefaultHMN.CIDR = v.GetString("hmn-cidr")
+		_, myNet, _ = net.ParseCIDR(DefaultHMN.CIDR)
+		hmnSubnets, err := ipam.Split(*myNet, 32) // 32 allows for a /22 per cabinet
+		for k, v := range hmnSubnets[0:cabinets] {
+			DefaultHMN.Subnets = append(DefaultHMN.Subnets, shasta.IPV4Subnet{
+				CIDR:    v.String(),
+				Name:    fmt.Sprintf("cabinet_%v_hmn", int(conf.StartingCabinet)+k),
+				Gateway: ipam.Add(v.IP, 1).String(),
+				VlanID:  DefaultHMN.VlanRange[0] + int16(k),
+			})
+		}
 		WriteNetworkConfig(filepath.Join(basepath, "networks/hmn.yaml"), DefaultHMN)
+
+		// Merge configs with the HSN Defaults to create a yaml with our subnets in it
 		DefaultHSN.CIDR = v.GetString("hsn-cidr")
+		_, myNet, _ = net.ParseCIDR(DefaultHSN.CIDR)
+		hsnSubnets, err := ipam.Split(*myNet, 32) // 32 allows for a /22 per cabinet
+		for k, v := range hsnSubnets[0:cabinets] {
+			DefaultHSN.Subnets = append(DefaultHSN.Subnets, shasta.IPV4Subnet{
+				CIDR:    v.String(),
+				Name:    fmt.Sprintf("cabinet_%v_hsn", int(conf.StartingCabinet)+k),
+				Gateway: ipam.Add(v.IP, 1).String(),
+				VlanID:  DefaultHMN.VlanRange[0] + int16(k),
+			})
+		}
 		WriteNetworkConfig(filepath.Join(basepath, "networks/hsn.yaml"), DefaultHSN)
+
 		DefaultMTL.CIDR = v.GetString("mtl-cidr")
 		WriteNetworkConfig(filepath.Join(basepath, "networks/mtl.yaml"), DefaultMTL)
 		DefaultCAN.CIDR = v.GetString("can-cidr")
@@ -149,7 +194,7 @@ func init() {
 	initCmd.Flags().String("site-domain", "cray.io", "Site Domain Name")
 	initCmd.Flags().String("internal-domain", "unicos.shasta", "Internal Domain Name")
 	initCmd.Flags().String("ntp-pool", "time.nist.gov", "Hostname for Upstream NTP Pool")
-	initCmd.Flags().StringArray("ipv4-resolvers", []string{"8.8.8.8", "9.9.9.9"}, "List of IP Addresses for DNS")
+	initCmd.Flags().String("ipv4-resolvers", "8.8.8.8, 9.9.9.9", "List of IP Addresses for DNS")
 	initCmd.Flags().String("v2-registry", "https://packages.local/", "URL for default v2 registry (helm and containers)")
 	initCmd.Flags().String("rpm-repository", "https://packages.local/repository/shasta-master", "URL for default rpm repository")
 
@@ -162,6 +207,9 @@ func init() {
 
 	// Hardware Details
 	initCmd.Flags().Int16("mountain-cabinets", 5, "Number of Mountain Cabinets")
+	initCmd.Flags().Int16("starting-cabinet", 1004, "Starting ID number for Mountain Cabinets")
+	initCmd.Flags().Int16("starting-NID", 20000, "Starting NID for Compute Nodes")
+
 	// Dealing with an SLS file
 	initCmd.Flags().String("from-sls-file", "", "SLS File Location")
 	initCmd.Flags().String("from-sls", "", "Shasta 1.3 SLS dumpstate url")
@@ -211,31 +259,27 @@ func writeFile(path string, contents string) {
 
 // WriteSystemConfig applies a SystemConfig Struct to the Yaml Template and writes the result to the path indicated
 func WriteSystemConfig(path string, conf shasta.SystemConfig) {
-	fmt.Println(conf)
-	tmpl, err := template.New("config").Parse(string(DefaultSystemConfigYamlTemplate))
+	// fmt.Println("Configuration in WriteSystemConfig is:", conf)
+	// tmpl, err := template.New("config").Parse(string(DefaultSystemConfigYamlTemplate))
+	// if err != nil {
+	// panic(err)
+	// }
+	bs, err := yaml.Marshal(conf)
+	// fmt.Print(string(bs))
 	if err != nil {
 		panic(err)
 	}
-	buff := &bytes.Buffer{}
-	err = tmpl.Execute(buff, conf)
-	if err != nil {
-		panic(err)
-	}
-	writeFile(path, buff.String())
+	writeFile(path, string(bs))
 }
 
 // WriteNetworkConfig applies a IPV4Network Struct to the Yaml Template and writes the result to the path indicated
 func WriteNetworkConfig(path string, network shasta.IPV4Network) {
-	tmpl, err := template.New("config").Parse(string(DefaultNetworkConfigYamlTemplate))
+	bs, err := yaml.Marshal(network)
+	// fmt.Print(string(bs))
 	if err != nil {
 		panic(err)
 	}
-	buff := &bytes.Buffer{}
-	err = tmpl.Execute(buff, network)
-	if err != nil {
-		panic(err)
-	}
-	writeFile(path, buff.String())
+	writeFile(path, string(bs))
 }
 
 // WritePasswordCredential applies a PasswordCredential to the Yaml Template and writes the result to the path indicated

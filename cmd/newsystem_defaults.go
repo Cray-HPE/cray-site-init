@@ -16,14 +16,14 @@ system_settings:
   domain_name: {{.SiteDomain}}
   internal_domain: {{.InternalDomain}}
   site_services:
-    {{if .IPV4Resolvers}}
+    {{if .IPV4Resolvers -}}
 	ipv4_resolvers:
-	{{range .IPV4Resolvers}}
+	{{range .IPV4Resolvers -}}
 	- {{.}}
 	{{end}}
 	{{end -}}
-	{{if .NtpPoolHostname}}
-	ntp_pool_hostname: {{.NtpPoolHostname}}
+	{{if .NtpPoolHostname -}}
+    ntp_pool_hostname: {{.NtpPoolHostname}}
 	{{else if .NtpHosts}}
 	upstream_ntp:
 	{{range .NtpHosts}}
@@ -88,21 +88,24 @@ name: {{.Name}}
 vlan_range: {{.VlanRange}}
 mtu: {{.MTU}}
 type: {{.NetType}}
-comment: {{.Comment}}
+comment: {{.Comment -}}
 {{if .Subnets}}
 subnets:
-{{range .Subnets}}
+{{- range .Subnets -}}
 {{if .Name}}
   - name: {{.Name}}
 {{else}}
-- name: default
-{{end}}
-    cidr: {{.CIDR}}
+  - name: default
+{{- end -}}
+    cidr: {{.CIDR -}}
 	{{if .Gateway}}
-    gateway: {{.Gateway}}
-	{{end}}
-{{end}}
-{{end}}
+	gateway: {{.Gateway}}
+	{{- end}}
+	{{if .VlanID}}
+	vlan-id: {{.VlanID}}
+	{{- end}}
+{{end -}}
+{{end -}}
 `)
 
 // DefaultHMN is the default structure for templating initial HMN configuration

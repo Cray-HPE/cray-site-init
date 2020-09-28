@@ -30,20 +30,19 @@ const (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "sic",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Shasta Instance Configurator",
+	Long: `SIC is a tool for creating and validating the configuration of a Shasta system.
+	
+	It supports initializing a set of configuration from a variety of inputs including 
+	flags and/or Shasta 1.3 configuration files.  It can also validate that a set of 
+	configuration details are accurate before attempting to use them for installation`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	//	Run: func(cmd *cobra.Command, args []string) { },
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Println("Inside PersistentPreRunE")
+		// fmt.Println("Inside PersistentPreRunE")
 		// You can bind cobra and viper in a few locations, but PersistencePreRunE on the root command works well
-		viperWiper(viper.GetViper())
+		// viperWiper(viper.GetViper())
 		return initializeFlagswithViper(cmd)
 	},
 	Run: func(cmd *cobra.Command, args []string) {

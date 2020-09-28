@@ -144,14 +144,16 @@ func portForXname(hardware map[string]sls_common.GenericHardware, xname string) 
 	return "", "", errors.New("Couldn't find switch port for NCN:" + xname)
 }
 
+// ExtractSwitches reads the SLSState object and finds any switches
 func ExtractSwitches(sls sls_common.SLSState) {
 	for _, node := range sls.Hardware {
 		if node.Type == sls_common.MgmtSwitch {
+			fmt.Println("Found Switch", node)
 			var extra sls_common.ComptypeMgmtSwitch
 			err := mapstructure.Decode(node.ExtraPropertiesRaw, &extra)
 			if err != nil {
 				fmt.Printf("got data of type %T but wanted sls_common.ComptypeMgmtSwitch. \n", extra)
-				fmt.Println(extra)
+				fmt.Println("Found Switch: ", node, extra)
 			}
 		}
 	}
