@@ -5,8 +5,11 @@ Copyright 2020 Hewlett Packard Enterprise Development LP
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"log"
+	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -15,16 +18,25 @@ import (
 
 // configCmd represents the config command
 var configCmd = &cobra.Command{
-	Use:   "config",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Use:   "config [directory]",
+	Short: "Interact with a config in a named directory",
+	Long:  `Interact with a config in a named directory`,
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) < 1 {
+			return errors.New("requires a named config directory")
+		}
+		info, err := os.Stat(args[0])
+		if err != nil {
+			return err
+		}
+		if !info.Mode().IsDir() {
+			return fmt.Errorf("%v is not a directory", args[0])
+		}
+		return nil
+	},
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("config called")
+		fmt.Println("config called with", len(args), "arguments")
+		fmt.Println("Echo: " + strings.Join(args, " "))
 	},
 }
 

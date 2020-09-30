@@ -7,11 +7,14 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
+	"stash.us.cray.com/MTL/sic/pkg/shasta"
 )
 
 // loadCmd represents the load command
@@ -28,29 +31,14 @@ var loadCmd = &cobra.Command{
 		if err != nil {
 			panic(err)
 		}
-		// This is copied from newSystem.go.  Is it worth abstracting it?
-		// Likely more code, but harder to get them out of sync.
-		dirs := []string{
-			filepath.Join(basepath, "internal_networks"),
-			filepath.Join(basepath, "manufacturing"),
-			filepath.Join(basepath, "credentials"),
-			filepath.Join(basepath, "certificates"),
+		sysconfig, err := loadSystemConfig(filepath.Join(basepath, "system_config.yaml"))
+		networks, err := extractNetworks(filepath.Join(basepath, "networks"))
+
+		fmt.Println("Loaded ", sysconfig.SystemName, sysconfig.SiteDomain)
+		for _, v := range networks {
+			fmt.Println(v.Name, ":", v.CIDR, len(v.Subnets), "Subnets")
 		}
 
-		for _, dir := range dirs {
-
-			err := filepath.Walk(dir,
-				func(path string, info os.FileInfo, err error) error {
-					if err != nil {
-						return err
-					}
-					fmt.Println(path, info.Size())
-					return nil
-				})
-			if err != nil {
-				log.Println(err)
-			}
-		}
 	},
 }
 
@@ -66,4 +54,49 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// loadCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+}
+
+func extractNetworks(basepath string) ([]shasta.IPV4Network, error) {
+	var networks []shasta.IPV4Network
+	err := filepath.Walk(basepath,
+		func(path string, info os.FileInfo, err error) error {
+			if info.Mode().IsRegular() {
+				fmt.Println("Processing", path, "as IPV4Network -", info.Size())
+				network := loadNetwork(path)
+				// fmt.Println("Network is", network.Name)
+				networks = append(networks, network)
+			}
+			return nil
+		})
+	return networks, err
+}
+
+func loadSystemConfig(path string) (shasta.SystemConfig, error) {
+	var c shasta.SystemConfig
+	info, err := os.Stat(path)
+	fmt.Println("Processing", path, "as SystemConfig -", info.Size())
+	yamlFile, err := ioutil.ReadFile(path)
+	if err != nil {
+		log.Printf("yamlFile.Get err   #%v ", err)
+		return c, err
+	}
+	err = yaml.Unmarshal(yamlFile, &c)
+	if err != nil {
+		log.Fatalf("Unmarshal: %v", err)
+		return c, err
+	}
+	return c, nil
+}
+
+func loadNetwork(path string) shasta.IPV4Network {
+	var c shasta.IPV4Network
+	yamlFile, err := ioutil.ReadFile(path)
+	if err != nil {
+		log.Printf("yamlFile.Get err   #%v ", err)
+	}
+	err = yaml.Unmarshal(yamlFile, &c)
+	if err != nil {
+		log.Fatalf("Unmarshal: %v", err)
+	}
+	return c
 }

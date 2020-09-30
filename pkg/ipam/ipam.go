@@ -338,3 +338,45 @@ func space(freeIPRanges []IPRange, mask net.IPMask) (net.IP, error) {
 
 	return nil, fmt.Errorf("tried to fit: %v", mask)
 }
+
+// SubnetWithin returns the smallest subnet than can contain (size) hosts
+func SubnetWithin(network net.IPNet, hostNumber int) (net.IPNet, error) {
+	var n net.IPNet
+	ip := network.IP.String()
+
+	// sort the map
+	keys := make([]int, 0)
+	for k := range netmasks {
+		keys = append(keys, k)
+	}
+	sort.Ints(keys)
+	// run through the sorted map
+	for _, k := range keys {
+		subnet := netmasks[k]
+		if k > hostNumber {
+			_, mynet, err := net.ParseCIDR(fmt.Sprintf("%v%v", ip, subnet))
+			return *mynet, err
+		}
+	}
+	return n, nil
+}
+
+// Quick const map for mapping the number of hosts to the netmask shorthand
+// I'm bad at math.
+var netmasks = map[int]string{
+	2:     "/30",
+	6:     "/29",
+	14:    "/28",
+	30:    "/27",
+	62:    "/26",
+	126:   "/25",
+	254:   "/24",
+	510:   "/23",
+	1022:  "/22",
+	2046:  "/21",
+	4094:  "/20",
+	8190:  "/19",
+	16382: "/18",
+	32766: "/17",
+	65534: "/16",
+}

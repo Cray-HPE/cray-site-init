@@ -12,9 +12,9 @@ import (
 
 // IPReservation is a type for managing IP Reservations
 type IPReservation struct {
-	IPAddress net.IPAddr
-	Name      string
-	Comment   string
+	IPAddress net.IPAddr `yaml:"ip_address"`
+	Name      string     `yaml:"name"`
+	Comment   string     `yaml:"comment"`
 }
 
 // IPV4Network is a type for managing IPv4 Networks
@@ -32,13 +32,13 @@ type IPV4Network struct {
 
 // IPV4Subnet is a type for managing IPv4 Subnets
 type IPV4Subnet struct {
-	FullName       string          `yaml:"full_name"`
-	CIDR           string          `yaml:"cidr"` // Convert to net.IPNet on use
+	FullName       string          `yaml:"full_name" form:"full_name" mapstructure:"full_name"`
+	CIDR           net.IPNet       `yaml:"cidr"` // Convert to net.IPNet on use
 	IPReservations []IPReservation `yaml:"ip_reservations"`
-	Name           string          `yaml:"name"`
-	VlanID         int16           `yaml:"vlan_id"`
+	Name           string          `yaml:"name" form:"name" mapstructure:"name"`
+	VlanID         int16           `yaml:"vlan_id" form:"vlan_id" mapstructure:"vlan_id"`
 	Comment        string          `yaml:"comment"`
-	Gateway        string          `yaml:"gateway"` // Convert to net.IPAddr on use
+	Gateway        net.IP          `yaml:"gateway"`
 	DHCPStart      net.IP          `yaml:"iprange-start"`
 	DHCPEnd        net.IP          `yaml:"iprange-end"`
 }

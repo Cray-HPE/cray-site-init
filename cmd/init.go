@@ -128,9 +128,9 @@ var initCmd = &cobra.Command{
 		nmnSubnets, err := ipam.Split(*myNet, 32) // 32 allows for a /22 per cabinet
 		for k, v := range nmnSubnets[0:cabinets] {
 			DefaultNMN.Subnets = append(DefaultNMN.Subnets, shasta.IPV4Subnet{
-				CIDR:    v.String(),
+				CIDR:    v,
 				Name:    fmt.Sprintf("cabinet_%v_nmn", int(conf.StartingCabinet)+k),
-				Gateway: ipam.Add(v.IP, 1).String(),
+				Gateway: ipam.Add(v.IP, 1),
 				VlanID:  DefaultNMN.VlanRange[0] + int16(k),
 			})
 		}
@@ -142,9 +142,9 @@ var initCmd = &cobra.Command{
 		hmnSubnets, err := ipam.Split(*myNet, 32) // 32 allows for a /22 per cabinet
 		for k, v := range hmnSubnets[0:cabinets] {
 			DefaultHMN.Subnets = append(DefaultHMN.Subnets, shasta.IPV4Subnet{
-				CIDR:    v.String(),
+				CIDR:    v,
 				Name:    fmt.Sprintf("cabinet_%v_hmn", int(conf.StartingCabinet)+k),
-				Gateway: ipam.Add(v.IP, 1).String(),
+				Gateway: ipam.Add(v.IP, 1),
 				VlanID:  DefaultHMN.VlanRange[0] + int16(k),
 			})
 		}
@@ -156,9 +156,9 @@ var initCmd = &cobra.Command{
 		hsnSubnets, err := ipam.Split(*myNet, 32) // 32 allows for a /22 per cabinet
 		for k, v := range hsnSubnets[0:cabinets] {
 			DefaultHSN.Subnets = append(DefaultHSN.Subnets, shasta.IPV4Subnet{
-				CIDR:    v.String(),
+				CIDR:    v,
 				Name:    fmt.Sprintf("cabinet_%v_hsn", int(conf.StartingCabinet)+k),
-				Gateway: ipam.Add(v.IP, 1).String(),
+				Gateway: ipam.Add(v.IP, 1),
 				VlanID:  DefaultHMN.VlanRange[0] + int16(k),
 			})
 		}
