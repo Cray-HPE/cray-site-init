@@ -201,7 +201,7 @@ func Split(network net.IPNet, n uint) ([]net.IPNet, error) {
 	return subnets, nil
 }
 
-// add increments the given IP by the number.
+// Add increments the given IP by the number.
 // e.g: add(10.0.4.0, 1) -> 10.0.4.1.
 // Negative values are allowed for decrementing.
 func Add(ip net.IP, number int) net.IP {
