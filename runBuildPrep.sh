@@ -1,3 +1,5 @@
+#!/bin/bash
+
 set -e
 
 if [[ "$1" != "binary-only" ]]; then
