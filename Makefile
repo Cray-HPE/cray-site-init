@@ -68,7 +68,7 @@ tools:
 	go get github.com/axw/gocov/gocov
 	go get github.com/AlekSi/gocov-xml
 
-vet:
+vet: version
 	go vet -v ./...
 
 lint: tools
@@ -84,7 +84,7 @@ env:
 run: build
 	go run ./main.go$(TARGET) $>
 
-build: fmt vet version
+build: fmt vet
 	go build -o bin/sic ./main.go
 
 doc:
