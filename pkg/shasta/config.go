@@ -5,6 +5,8 @@ Copyright 2020 Hewlett Packard Enterprise Development LP
 package shasta
 
 import (
+	"crypto/rand"
+	"fmt"
 	"net"
 )
 
@@ -91,7 +93,7 @@ type MetaData struct {
 	InstanceID       string `form:"instance-id" json:"instance-id"`             // should be unique for the life of the image
 	Region           string `form:"region" json:"region"`                       // unused currently
 	AvailabilityZone string `form:"availability-zone" json:"availability-zone"` // unused currently
-	ShastaRole       string `form:"shasta-role" json:"shasta-role"`             //map to HSM role
+	ShastaRole       string `form:"shasta-role" json:"shasta-role"`             // map to HSM role
 }
 
 // CloudInit is the main cloud-init struct. Leave the meta-data, user-data, and phone home
@@ -100,4 +102,11 @@ type CloudInit struct {
 	MetaData  map[string]interface{} `form:"meta-data" json:"meta-data"`
 	UserData  map[string]interface{} `form:"user-data" json:"user-data"`
 	PhoneHome PhoneHome              `form:"phone-home" json:"phone-home" binding:"omitempty"`
+}
+
+// GenerateInstanceID creates an instance-id fit for use in the instance metadata
+func GenerateInstanceID() string {
+	b := make([]byte, 4)
+	rand.Read(b)
+	return fmt.Sprintf("i-%X", b)
 }

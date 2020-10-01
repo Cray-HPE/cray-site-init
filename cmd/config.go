@@ -55,6 +55,7 @@ func init() {
 }
 
 // LoadConfig : Search reasonable places and read the installer configuration file
+// Possibly no longer relevant
 func LoadConfig() {
 	// Read in the configfile
 	viper.SetConfigName("system_config")
@@ -113,24 +114,6 @@ func MergeNCNMetadata() {
 	bootstrapNodes := ReadCSV("ncn_metadata.csv")
 	// Add it to the configuration
 	viper.Set("ncn_metadata", bootstrapNodes)
-}
-
-// InitializeConfiguration : Set defaults and load from config files.
-func InitializeConfiguration() {
-
-	// Authentication and Security
-	viper.SetDefault("system_settings.auth.CERTIFICATE_AUTHORITY_CERT", "ca-cert.pem")
-	viper.SetDefault("system_settings.auth.CERTIFICATE_AUTHORITY_KEY", "ca-cert.key")
-
-	// Default Credentials
-	viper.SetDefault("system_settings.credentials.NCN_BMC_USERNAME", "")
-	viper.SetDefault("system_settings.credentials.NCN_BMC_PASSWORD", "")
-	viper.SetDefault("system_settings.credentials.CN_BMC_USERNAME", "")
-	viper.SetDefault("system_settings.credentials.CN_BMC_PASSWORD", "")
-	viper.SetDefault("system_settings.credentials.REDFISH_USERNAME", "")
-	viper.SetDefault("system_settings.credentials.REDFISH_PASSWORD", "")
-	viper.SetDefault("system_settings.credentials.LINUX_ROOT_PASSWORD", "initial0")
-
 }
 
 // PrintConfig : Dump all configuration information as a yaml file on stdout

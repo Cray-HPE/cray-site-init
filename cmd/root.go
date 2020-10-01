@@ -89,6 +89,7 @@ func viperWiper(v *viper.Viper) {
 	fmt.Print("\n === Viper Wiper Done === \n\n")
 }
 
+// This function maps all pflags to strings in viper
 func initializeFlagswithViper(cmd *cobra.Command) error {
 	v := viper.GetViper()
 

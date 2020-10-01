@@ -19,14 +19,9 @@ import (
 // subnetCmd represents the subnet command
 var subnetCmd = &cobra.Command{
 	Use:   "subnet [name]",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Args: cobra.MinimumNArgs(1),
+	Short: "Build the yaml for a Shasta Subnet",
+	Long:  `Build the yaml for a Shasta Subnet`,
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		v := viper.GetViper()
 		var n shasta.IPV4Subnet

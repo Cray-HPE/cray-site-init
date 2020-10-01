@@ -41,21 +41,15 @@ var initCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 		v := viper.GetViper()
-		// viperWiper(v)
 		var conf shasta.SystemConfig
-
-		// LoadConfig()
-		// fmt.Println("Initial Config Loaded")
-		// After processing all the flags in init,
 		// if the user has an old configuration dir, use that
 		if v.GetString("from-1.3-dir") != "" {
-			// LoadConfig()
 			MergeNCNMetadata()
 			MergeNetworksDerived()
 			MergeSLSInput()
 			MergeCustomerVar()
 		}
-
+		// We use the system-name for a directory.  Make sure it is set.
 		if v.GetString("system-name") == "" {
 			fmt.Println("system-name is not set")
 			os.Exit(1)
@@ -90,8 +84,6 @@ var initCmd = &cobra.Command{
 			}
 		}
 
-		fmt.Println("Directory Stuctures Initialized")
-
 		// Handle an SLSFile if one is provided
 		var slsState sls_common.SLSState
 		if v.GetString("sls-file-path") != "" {
@@ -99,20 +91,16 @@ var initCmd = &cobra.Command{
 		} else if v.GetString("sls-url") != "" {
 			slsState = loadFromSLS(v.GetString("sls-url"))
 		}
-		fmt.Println("SLS File Loaded")
 
 		networks := shasta.ConvertSLSNetworks(slsState)
 		// fmt.Println("The networks are: ", networks)
 		v.Set("networks.from_sls", networks)
-		fmt.Println("Networks Loaded from SLS")
 		// shasta.ExtractSwitches(slsState)
 
 		err = v.Unmarshal(&conf)
 		if err != nil {
-			fmt.Printf("unable to decode into struct, %v \n", err)
+			fmt.Printf("unable to decode configuration into struct, %v \n", err)
 		}
-
-		// PrintConfig(v)
 
 		conf.IPV4Resolvers = strings.Split(viper.GetString("ipv4-resolvers"), ",")
 		conf.SiteServices.NtpPoolHostname = conf.NtpPoolHostname
@@ -123,60 +111,58 @@ var initCmd = &cobra.Command{
 		var cabinets = uint(conf.MountainCabinets)
 
 		// Merge configs with the NMN Defaults to create a yaml with our subnets in it
-		DefaultNMN.CIDR = v.GetString("nmn-cidr")
-		_, myNet, _ := net.ParseCIDR(DefaultNMN.CIDR)
+		shasta.DefaultNMN.CIDR = v.GetString("nmn-cidr")
+		_, myNet, _ := net.ParseCIDR(shasta.DefaultNMN.CIDR)
 		nmnSubnets, err := ipam.Split(*myNet, 32) // 32 allows for a /22 per cabinet
 		for k, v := range nmnSubnets[0:cabinets] {
-			DefaultNMN.Subnets = append(DefaultNMN.Subnets, shasta.IPV4Subnet{
+			shasta.DefaultNMN.Subnets = append(shasta.DefaultNMN.Subnets, shasta.IPV4Subnet{
 				CIDR:    v,
 				Name:    fmt.Sprintf("cabinet_%v_nmn", int(conf.StartingCabinet)+k),
 				Gateway: ipam.Add(v.IP, 1),
-				VlanID:  DefaultNMN.VlanRange[0] + int16(k),
+				VlanID:  shasta.DefaultNMN.VlanRange[0] + int16(k),
 			})
 		}
-		WriteNetworkConfig(filepath.Join(basepath, "networks/nmn.yaml"), DefaultNMN)
+		WriteNetworkConfig(filepath.Join(basepath, "networks/nmn.yaml"), shasta.DefaultNMN)
 
 		// Merge configs with the HMN Defaults to create a yaml with our subnets in it
-		DefaultHMN.CIDR = v.GetString("hmn-cidr")
-		_, myNet, _ = net.ParseCIDR(DefaultHMN.CIDR)
+		shasta.DefaultHMN.CIDR = v.GetString("hmn-cidr")
+		_, myNet, _ = net.ParseCIDR(shasta.DefaultHMN.CIDR)
 		hmnSubnets, err := ipam.Split(*myNet, 32) // 32 allows for a /22 per cabinet
 		for k, v := range hmnSubnets[0:cabinets] {
-			DefaultHMN.Subnets = append(DefaultHMN.Subnets, shasta.IPV4Subnet{
+			shasta.DefaultHMN.Subnets = append(shasta.DefaultHMN.Subnets, shasta.IPV4Subnet{
 				CIDR:    v,
 				Name:    fmt.Sprintf("cabinet_%v_hmn", int(conf.StartingCabinet)+k),
 				Gateway: ipam.Add(v.IP, 1),
-				VlanID:  DefaultHMN.VlanRange[0] + int16(k),
+				VlanID:  shasta.DefaultHMN.VlanRange[0] + int16(k),
 			})
 		}
-		WriteNetworkConfig(filepath.Join(basepath, "networks/hmn.yaml"), DefaultHMN)
+		WriteNetworkConfig(filepath.Join(basepath, "networks/hmn.yaml"), shasta.DefaultHMN)
 
 		// Merge configs with the HSN Defaults to create a yaml with our subnets in it
-		DefaultHSN.CIDR = v.GetString("hsn-cidr")
-		_, myNet, _ = net.ParseCIDR(DefaultHSN.CIDR)
+		shasta.DefaultHSN.CIDR = v.GetString("hsn-cidr")
+		_, myNet, _ = net.ParseCIDR(shasta.DefaultHSN.CIDR)
 		hsnSubnets, err := ipam.Split(*myNet, 32) // 32 allows for a /22 per cabinet
 		for k, v := range hsnSubnets[0:cabinets] {
-			DefaultHSN.Subnets = append(DefaultHSN.Subnets, shasta.IPV4Subnet{
+			shasta.DefaultHSN.Subnets = append(shasta.DefaultHSN.Subnets, shasta.IPV4Subnet{
 				CIDR:    v,
 				Name:    fmt.Sprintf("cabinet_%v_hsn", int(conf.StartingCabinet)+k),
 				Gateway: ipam.Add(v.IP, 1),
-				VlanID:  DefaultHMN.VlanRange[0] + int16(k),
+				VlanID:  shasta.DefaultHMN.VlanRange[0] + int16(k),
 			})
 		}
-		WriteNetworkConfig(filepath.Join(basepath, "networks/hsn.yaml"), DefaultHSN)
+		WriteNetworkConfig(filepath.Join(basepath, "networks/hsn.yaml"), shasta.DefaultHSN)
 
-		DefaultMTL.CIDR = v.GetString("mtl-cidr")
-		WriteNetworkConfig(filepath.Join(basepath, "networks/mtl.yaml"), DefaultMTL)
-		DefaultCAN.CIDR = v.GetString("can-cidr")
-		WriteNetworkConfig(filepath.Join(basepath, "networks/can.yaml"), DefaultCAN)
-		WritePasswordCredential(filepath.Join(basepath, "credentials/root_password.json"), DefaultRootPW)
-		WritePasswordCredential(filepath.Join(basepath, "credentials/bmc_password.json"), DefaultBMCPW)
-		WritePasswordCredential(filepath.Join(basepath, "credentials/mgmt_switch_password.json"), DefaultNetPW)
+		shasta.DefaultMTL.CIDR = v.GetString("mtl-cidr")
+		WriteNetworkConfig(filepath.Join(basepath, "networks/mtl.yaml"), shasta.DefaultMTL)
+		shasta.DefaultCAN.CIDR = v.GetString("can-cidr")
+		WriteNetworkConfig(filepath.Join(basepath, "networks/can.yaml"), shasta.DefaultCAN)
+		WritePasswordCredential(filepath.Join(basepath, "credentials/root_password.json"), shasta.DefaultRootPW)
+		WritePasswordCredential(filepath.Join(basepath, "credentials/bmc_password.json"), shasta.DefaultBMCPW)
+		WritePasswordCredential(filepath.Join(basepath, "credentials/mgmt_switch_password.json"), shasta.DefaultNetPW)
 
 		if v.GetString("manifest-release") != "" {
 			initiailzeManifestDir("release/shasta-1.4", filepath.Join(basepath, "loftsman-manifests"))
 		}
-		// InitializeConfiguration()
-		// WriteConfigFile()
 	},
 }
 
@@ -195,26 +181,31 @@ func init() {
 	initCmd.Flags().String("internal-domain", "unicos.shasta", "Internal Domain Name")
 	initCmd.Flags().String("ntp-pool", "time.nist.gov", "Hostname for Upstream NTP Pool")
 	initCmd.Flags().String("ipv4-resolvers", "8.8.8.8, 9.9.9.9", "List of IP Addresses for DNS")
-	initCmd.Flags().String("v2-registry", "https://packages.local/", "URL for default v2 registry (helm and containers)")
+	initCmd.Flags().String("v2-registry", "https://packages.local/", "URL for default v2 registry used for both helm and containers")
 	initCmd.Flags().String("rpm-repository", "https://packages.local/repository/shasta-master", "URL for default rpm repository")
 
 	// Default IPv4 Networks
-	initCmd.Flags().String("nmn-cidr", ipam.DefaultNMN, "Overall IPv4 CIDR for all Node Management subnets")
-	initCmd.Flags().String("hmn-cidr", ipam.DefaultHMN, "Overall IPv4 CIDR for all Hardware Management subnets")
-	initCmd.Flags().String("can-cidr", ipam.DefaultCAN, "Overall IPv4 CIDR for all Customer Access subnets")
-	initCmd.Flags().String("mtl-cidr", ipam.DefaultMTL, "Overall IPv4 CIDR for all Provisioning subnets")
-	initCmd.Flags().String("hsn-cidr", ipam.DefaultHSN, "Overall IPv4 CIDR for all HSN subnets")
+	initCmd.Flags().String("nmn-cidr", shasta.DefaultNMNString, "Overall IPv4 CIDR for all Node Management subnets")
+	initCmd.Flags().String("hmn-cidr", shasta.DefaultHMNString, "Overall IPv4 CIDR for all Hardware Management subnets")
+	initCmd.Flags().String("can-cidr", shasta.DefaultCANString, "Overall IPv4 CIDR for all Customer Access subnets")
+	initCmd.Flags().String("mtl-cidr", shasta.DefaultMTLString, "Overall IPv4 CIDR for all Provisioning subnets")
+	initCmd.Flags().String("hsn-cidr", shasta.DefaultHSNString, "Overall IPv4 CIDR for all HSN subnets")
 
 	// Hardware Details
 	initCmd.Flags().Int16("mountain-cabinets", 5, "Number of Mountain Cabinets")
 	initCmd.Flags().Int16("starting-cabinet", 1004, "Starting ID number for Mountain Cabinets")
 	initCmd.Flags().Int16("starting-NID", 20000, "Starting NID for Compute Nodes")
+	// Use these flags to prepare the basecamp metadata json
+	initCmd.Flags().String("ncn-worker-xnames", "", "Comma separated list of xnames for ncn workers nodes")
+	initCmd.Flags().String("ncn-master-xnames", "", "Comma separated list of xnames for ncn master nodes")
+	initCmd.Flags().String("ncn-storage-xnames", "", "Comma separated list of xnames for ncn storage nodes")
 
 	// Dealing with an SLS file
 	initCmd.Flags().String("from-sls-file", "", "SLS File Location")
 	initCmd.Flags().String("from-sls", "", "Shasta 1.3 SLS dumpstate url")
 	// Loftsman Manifest Shasta-CFG
-	initCmd.Flags().String("manifest-release", "", "Loftsman Manifest Release Version (leave blank to prevent manifest generation")
+	initCmd.Flags().String("manifest-release", "", "Loftsman Manifest Release Version (leave blank to prevent manifest generation)")
+	initCmd.Flags().SortFlags = false
 }
 
 func loadFromSLS(source string) sls_common.SLSState {
@@ -259,11 +250,6 @@ func writeFile(path string, contents string) {
 
 // WriteSystemConfig applies a SystemConfig Struct to the Yaml Template and writes the result to the path indicated
 func WriteSystemConfig(path string, conf shasta.SystemConfig) {
-	// fmt.Println("Configuration in WriteSystemConfig is:", conf)
-	// tmpl, err := template.New("config").Parse(string(DefaultSystemConfigYamlTemplate))
-	// if err != nil {
-	// panic(err)
-	// }
 	bs, err := yaml.Marshal(conf)
 	// fmt.Print(string(bs))
 	if err != nil {
