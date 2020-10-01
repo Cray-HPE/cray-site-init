@@ -32,3 +32,9 @@ The RPM build does not run Go lint or Go unit tests.
 ### Docker Container
 
 The container wraps build and test dependencies for repeatable builds.  All linting and tests run inside the container.
+
+### Reminder for using GOPRIVATE
+
+`GOPRIVATE=*.us.cray.com go mod tidy`
+
+<https://golang.org/cmd/go/#hdr-Module_configuration_for_non_public_modules>
