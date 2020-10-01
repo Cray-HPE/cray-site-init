@@ -28,10 +28,15 @@ Handy Netmask Cheet Sheet
 */
 
 const (
+	// DefaultHMNString is the Default HMN String
 	DefaultHMNString = "10.254.0.0/16"
+	// DefaultNMNString is the Default NMN String
 	DefaultNMNString = "10.242.0.0/17"
+	// DefaultHSNString is the Default HSN String
 	DefaultHSNString = "10.253.0.0/16"
+	// DefaultCANString is the Default CAN String
 	DefaultCANString = "192.168.20.0/24"
+	// DefaultMTLString is the Default MTL String
 	DefaultMTLString = "192.168.1.0/24"
 )
 
