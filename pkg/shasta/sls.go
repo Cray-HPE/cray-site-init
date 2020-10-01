@@ -158,3 +158,8 @@ func ExtractSwitches(sls sls_common.SLSState) {
 		}
 	}
 }
+
+// func GenerateSLSState(hmn_connections_path string, sls_basic_info sls_common.SLSStateInput) {
+// 	// TODO : or not TODO
+// 	//
+// }

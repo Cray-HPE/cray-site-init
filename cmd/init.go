@@ -196,9 +196,7 @@ func init() {
 	initCmd.Flags().Int16("starting-cabinet", 1004, "Starting ID number for Mountain Cabinets")
 	initCmd.Flags().Int16("starting-NID", 20000, "Starting NID for Compute Nodes")
 	// Use these flags to prepare the basecamp metadata json
-	initCmd.Flags().String("ncn-worker-xnames", "", "Comma separated list of xnames for ncn workers nodes")
-	initCmd.Flags().String("ncn-master-xnames", "", "Comma separated list of xnames for ncn master nodes")
-	initCmd.Flags().String("ncn-storage-xnames", "", "Comma separated list of xnames for ncn storage nodes")
+	initCmd.Flags().String("switch-xnames", "", "Comma separated list of xnames for management switches")
 
 	// Dealing with an SLS file
 	initCmd.Flags().String("from-sls-file", "", "SLS File Location")

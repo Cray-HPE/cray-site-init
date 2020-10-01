@@ -45,12 +45,12 @@ type IPV4Subnet struct {
 
 // ManagementSwitch is a type for managing Management switches
 type ManagementSwitch struct {
-	Xname               string `form:"xname" mapstructure:"xname"`
-	Name                string `form:"name" mapstructure:"name"`
-	Brand               string `form:"brand" mapstructure:"brand"`
-	Model               string `form:"model" mapstructure:"model"`
-	Os                  string `form:"operating-system" mapstructure:"operating-system"`
-	Firmware            string `form:"firmware" mapstructure:"firmware"`
-	SwitchType          string //"CDU/Leaf/Spine"
-	ManagementInterface net.IPAddr
+	Xname               string     `form:"xname" mapstructure:"xname"` // Required for SLS
+	Name                string     `form:"name" mapstructure:"name"`   // Required for SLS to update DNS
+	Brand               string     `form:"brand" mapstructure:"brand"`
+	Model               string     `form:"model" mapstructure:"model"`
+	Os                  string     `form:"operating-system" mapstructure:"operating-system"`
+	Firmware            string     `form:"firmware" mapstructure:"firmware"`
+	SwitchType          string     //"CDU/Leaf/Spine"
+	ManagementInterface net.IPAddr // SNMP/REST interface IP (not a distinct BMC)  // Required for SLS
 }
