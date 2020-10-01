@@ -84,7 +84,7 @@ env:
 run: build
 	go run ./main.go$(TARGET) $>
 
-build: fmt vet
+build: fmt vet version
 	go build -o bin/sic ./main.go
 
 doc:
