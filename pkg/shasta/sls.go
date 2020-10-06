@@ -100,21 +100,21 @@ func ExtractNCNBMCInfo(sls sls_common.SLSState) ([]BootstrapNCNMetadata, error) 
 			err := mapstructure.Decode(node.ExtraPropertiesRaw, &extra)
 			if err != nil {
 				return ncns, err
-			} else {
-				if extra.Role == "Management" {
-					//log.Printf("Adding ", key, " to the list with Parent = ", node.Parent)
-					mgmtSwitch, port, err := portForXname(sls.Hardware, node.Parent)
-					if err != nil { // Sometimes the port is not available.  We *should* be able to continue
-						log.Printf("%v %v\n", err, port)
-					}
-					ncns = append(ncns, BootstrapNCNMetadata{
-						Xname:   key,
-						Role:    extra.Role,
-						Subrole: extra.SubRole,
-						BmcPort: mgmtSwitch + ":" + port,
-					})
-				}
 			}
+			if extra.Role == "Management" {
+				//log.Printf("Adding ", key, " to the list with Parent = ", node.Parent)
+				mgmtSwitch, port, err := portForXname(sls.Hardware, node.Parent)
+				if err != nil { // Sometimes the port is not available.  We *should* be able to continue
+					log.Printf("%v %v\n", err, port)
+				}
+				ncns = append(ncns, BootstrapNCNMetadata{
+					Xname:   key,
+					Role:    extra.Role,
+					Subrole: extra.SubRole,
+					BmcPort: mgmtSwitch + ":" + port,
+				})
+			}
+
 		}
 	}
 	return ncns, nil

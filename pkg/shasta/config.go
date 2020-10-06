@@ -54,7 +54,7 @@ type BGPPeering struct {
 	// the two ends of the turtle
 }
 
-// PointToPoint
+// PointToPoint is a structure for storing the Basics of Network Management
 type PointToPoint struct {
 }
 

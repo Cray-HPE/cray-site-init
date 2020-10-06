@@ -329,7 +329,7 @@ func initiailzeManifestDir(url, branch, destination string) {
 	out, err = checkoutCmd.Output()
 	if err != nil {
 		if err.Error() != "exit status 1" {
-			log.Fatalln("checkoutCommand finished with error: %s (%v)\n", out, err)
+			log.Fatalf("checkoutCommand finished with error: %s (%v)\n", out, err)
 		}
 	}
 	packageCmd := exec.Command("./package/package.sh", "1.4.0")
