@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -40,9 +41,8 @@ var rootCmd = &cobra.Command{
 	// has an action associated with it:
 	//	Run: func(cmd *cobra.Command, args []string) { },
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		// fmt.Println("Inside PersistentPreRunE")
 		// You can bind cobra and viper in a few locations, but PersistencePreRunE on the root command works well
-		// viperWiper(viper.GetViper())
+		// viperWiper(viper.GetViper()) // Uncomment this if commands are getting strange configs.  It will help
 		return initializeFlagswithViper(cmd)
 	},
 	Run: func(cmd *cobra.Command, args []string) {
@@ -80,7 +80,8 @@ func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 	})
 }
 
-// This function is useful for understanding what a particular viper contains
+// This function is useful for understanding what a particular viper contains.
+// It is more a crutch for development than anything I would ever expect a customer to see.
 func viperWiper(v *viper.Viper) {
 	fmt.Print("\n === Viper Wiper === \n\n")
 	for _, name := range v.AllKeys() {
@@ -100,9 +101,7 @@ func initializeFlagswithViper(cmd *cobra.Command) error {
 		// Find home directory.
 		home, err := homedir.Dir()
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-
+			log.Fatalf("Home Directory not found: %v", err)
 		}
 		// Add the home directory to the config path
 		v.AddConfigPath(home)

@@ -18,8 +18,8 @@ the SLS structure.
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -78,8 +78,8 @@ func ParseSLSfromURL(url string) (sls_common.SLSState, error) {
 func ConvertSLSNetworks(sls sls_common.SLSState) []IPV4Network {
 	var ourNetworks []IPV4Network
 	for key, element := range sls.Networks {
-		// fmt.Println("Key:", key, "=>", "Element:", element, "(", reflect.TypeOf(element), ")")
-		// fmt.Println("Extra Properties:", element.ExtraPropertiesRaw)
+		// log.Printf("Key:", key, "=>", "Element:", element, "(", reflect.TypeOf(element), ")")
+		// log.Printf("Extra Properties:", element.ExtraPropertiesRaw)
 		tempNetwork := new(IPV4Network)
 		tempNetwork.FullName = element.FullName
 		tempNetwork.CIDR = strings.Join(element.IPRanges, ",")
@@ -92,21 +92,20 @@ func ConvertSLSNetworks(sls sls_common.SLSState) []IPV4Network {
 }
 
 // ExtractNCNBMCInfo pulls the port information for the BMCs of all Management Nodes
-func ExtractNCNBMCInfo(sls sls_common.SLSState) []BootstrapNCNMetadata {
+func ExtractNCNBMCInfo(sls sls_common.SLSState) ([]BootstrapNCNMetadata, error) {
 	var ncns []BootstrapNCNMetadata
 	for key, node := range sls.Hardware {
 		if node.Type == sls_common.Node {
 			var extra sls_common.ComptypeNode
 			err := mapstructure.Decode(node.ExtraPropertiesRaw, &extra)
 			if err != nil {
-				fmt.Printf("got data of type %T but wanted sls_common.ComptypeNode. \n", extra)
-				fmt.Println(extra)
+				return ncns, err
 			} else {
 				if extra.Role == "Management" {
-					//fmt.Println("Adding ", key, " to the list with Parent = ", node.Parent)
+					//log.Printf("Adding ", key, " to the list with Parent = ", node.Parent)
 					mgmtSwitch, port, err := portForXname(sls.Hardware, node.Parent)
-					if err != nil {
-						fmt.Println(err, port)
+					if err != nil { // Sometimes the port is not available.  We *should* be able to continue
+						log.Printf("%v %v\n", err, port)
 					}
 					ncns = append(ncns, BootstrapNCNMetadata{
 						Xname:   key,
@@ -118,7 +117,7 @@ func ExtractNCNBMCInfo(sls sls_common.SLSState) []BootstrapNCNMetadata {
 			}
 		}
 	}
-	return ncns
+	return ncns, nil
 }
 
 // Return a tuple of strings that match switch and switchport for the BMC
@@ -140,26 +139,28 @@ func portForXname(hardware map[string]sls_common.GenericHardware, xname string) 
 			}
 		}
 	}
-	// fmt.Println("Couldn't find", xname)
-	return "", "", errors.New("Couldn't find switch port for NCN:" + xname)
+	// log.Printf("Couldn't find", xname)
+	return "", "", errors.New("Couldn't find switch port for NCN: " + xname)
 }
 
 // ExtractSwitches reads the SLSState object and finds any switches
-func ExtractSwitches(sls sls_common.SLSState) {
+func ExtractSwitches(sls sls_common.SLSState) error {
 	for _, node := range sls.Hardware {
 		if node.Type == sls_common.MgmtSwitch {
-			fmt.Println("Found Switch", node)
+			log.Printf("Found Switch: %v \n", node)
 			var extra sls_common.ComptypeMgmtSwitch
 			err := mapstructure.Decode(node.ExtraPropertiesRaw, &extra)
 			if err != nil {
-				fmt.Printf("got data of type %T but wanted sls_common.ComptypeMgmtSwitch. \n", extra)
-				fmt.Println("Found Switch: ", node, extra)
+				return err
 			}
+			// TODO: Map the switch data to either an SLS object or an internal object as needed by SLS
+			// Update the signature to return the lost of switches
 		}
 	}
+	return nil
 }
 
 // func GenerateSLSState(hmn_connections_path string, sls_basic_info sls_common.SLSStateInput) {
-// 	// TODO : or not TODO
+// 	// TODO : or not TODO  The HMS team is still deciding if this belongs here.  I think it does.  10-06-2020 -ALT
 // 	//
 // }

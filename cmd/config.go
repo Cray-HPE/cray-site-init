@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -27,31 +26,17 @@ var configCmd = &cobra.Command{
 		}
 		info, err := os.Stat(args[0])
 		if err != nil {
-			return err
+			return fmt.Errorf("Could not read %v. %v", args[0], err)
 		}
 		if !info.Mode().IsDir() {
 			return fmt.Errorf("%v is not a directory", args[0])
 		}
 		return nil
 	},
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("config called with", len(args), "arguments")
-		fmt.Println("Echo: " + strings.Join(args, " "))
-	},
 }
 
 func init() {
 	rootCmd.AddCommand(configCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// configCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// configCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
 // LoadConfig : Search reasonable places and read the installer configuration file
@@ -63,10 +48,10 @@ func LoadConfig() {
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			panic(fmt.Errorf("fatal error config file: %s", err))
+			log.Fatalln(fmt.Errorf("fatal error config file: %s", err))
 		}
 	}
-	viper.SetEnvPrefix("csm")
+	viper.SetEnvPrefix("CSM")
 	viper.AutomaticEnv()
 	viper.WatchConfig()
 }
@@ -78,47 +63,40 @@ func mergeConfig(configName string) {
 
 	if err := viper.MergeInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			panic(fmt.Errorf("fatal error config file: %s", err))
+			log.Fatalln(fmt.Errorf("fatal error config file: %s", err))
 		}
 	}
 }
 
-// MergeNetworksDerived : Search reasonable places and read the networks_derived as a config
+// MergeNetworksDerived : Search reasonable places and read the 1.3 networks_derived as a config
 func MergeNetworksDerived() {
 	mergeConfig("networks_derived")
 }
 
-// MergeCustomerVar : Search reasonable places and read the customer_var as a config
+// MergeCustomerVar : Search reasonable places and read the 1.3 customer_var as a config
 func MergeCustomerVar() {
 	mergeConfig("customer_var")
 }
 
-// MergeSLSInput : Search reasonable places and read the customer_var as a config
+// MergeSLSInput : Search reasonable places and read the 1.3 SLS Input File as a config
 func MergeSLSInput() {
 	mergeConfig("sls_input_file")
-}
-
-// MergeSiteNetwork : Search reasonable places and read the site_networking as a config
-func MergeSiteNetwork() {
-	mergeConfig("site_networking")
-}
-
-// MergeSystemNetwork : Search reasonable places and read the site_networking as a config
-func MergeSystemNetwork() {
-	mergeConfig("system_networking")
 }
 
 // MergeNCNMetadata : Search reasonable places and read the ncn_metadata.yaml
 func MergeNCNMetadata() {
 	// Read in the configfile
-	bootstrapNodes := ReadCSV("ncn_metadata.csv")
+	bootstrapNodes, err := ReadCSV("ncn_metadata.csv")
+	if err != nil {
+		log.Fatalf("Couldn't process the ncn_metadata.csv file: %v", err)
+	}
 	// Add it to the configuration
 	viper.Set("ncn_metadata", bootstrapNodes)
 }
 
 // PrintConfig : Dump all configuration information as a yaml file on stdout
 func PrintConfig(v *viper.Viper) {
-	log.Print(" == Viper configdump == \n" + yamlStringSettings(v))
+	log.Println(" == Viper configdump == \n" + yamlStringSettings(v))
 }
 
 func yamlStringSettings(v *viper.Viper) string {

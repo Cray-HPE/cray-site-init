@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"strconv"
 
@@ -27,7 +28,7 @@ var subnetCmd = &cobra.Command{
 		var n shasta.IPV4Subnet
 		err := v.Unmarshal(&n)
 		if err != nil {
-			fmt.Printf("unable to decode into struct, %v \n", err)
+			log.Fatalf("unable to decode configuration into usable struct, %v \n", err)
 		}
 		n.Name = args[0]
 		_, network, err := net.ParseCIDR(v.GetString("within"))

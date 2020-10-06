@@ -12,17 +12,17 @@ import (
 )
 
 // ReadCSV parses a CSV file into a list of NCN_bootstrap nodes for use by the installer
-func ReadCSV(filename string) []*shasta.BootstrapNCNMetadata {
+func ReadCSV(filename string) ([]*shasta.BootstrapNCNMetadata, error) {
+	nodes := []*shasta.BootstrapNCNMetadata{}
+
 	ncnMetadataFile, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, os.ModePerm)
 	if err != nil {
-		panic(err)
+		return nodes, err
 	}
 	defer ncnMetadataFile.Close()
 
-	nodes := []*shasta.BootstrapNCNMetadata{}
-
 	if err := gocsv.UnmarshalFile(ncnMetadataFile, &nodes); err != nil { // Load nodes from file
-		panic(err)
+		return nodes, err
 	}
-	return nodes
+	return nodes, nil
 }

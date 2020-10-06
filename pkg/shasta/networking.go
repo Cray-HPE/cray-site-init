@@ -19,15 +19,14 @@ type IPReservation struct {
 
 // IPV4Network is a type for managing IPv4 Networks
 type IPV4Network struct {
-	FullName       string                 `yaml:"full_name"`
-	CIDR           string                 `yaml:"cidr"`
-	IPReservations []IPReservation        `yaml:"ip_reservations"`
-	Subnets        []IPV4Subnet           `yaml:"subnets"`
-	Name           string                 `yaml:"name"`
-	VlanRange      []int16                `yaml:"vlan_range"`
-	MTU            int16                  `yaml:"mtu"`
-	NetType        sls_common.NetworkType `yaml:"type"`
-	Comment        string                 `yaml:"comment"`
+	FullName  string                 `yaml:"full_name"`
+	CIDR      string                 `yaml:"cidr"`
+	Subnets   []IPV4Subnet           `yaml:"subnets"`
+	Name      string                 `yaml:"name"`
+	VlanRange []int16                `yaml:"vlan_range"`
+	MTU       int16                  `yaml:"mtu"`
+	NetType   sls_common.NetworkType `yaml:"type"`
+	Comment   string                 `yaml:"comment"`
 }
 
 // IPV4Subnet is a type for managing IPv4 Subnets

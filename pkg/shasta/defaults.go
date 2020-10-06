@@ -123,3 +123,6 @@ var DefaultNetPW = PasswordCredential{
 	Username: "root",
 	Password: "changem3",
 }
+
+// DefaultManifestURL is the git URL for downloading the loftsman manifests for packaging
+var DefaultManifestURL string = "ssh://git@stash.us.cray.com:7999/shasta-cfg/stable.git"

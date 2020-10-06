@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"os"
 	"os/exec"
@@ -17,7 +18,6 @@ import (
 	"unsafe"
 
 	"github.com/spf13/cobra"
-	jww "github.com/spf13/jwalterweatherman"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
 
@@ -51,18 +51,16 @@ var initCmd = &cobra.Command{
 		}
 		// We use the system-name for a directory.  Make sure it is set.
 		if v.GetString("system-name") == "" {
-			fmt.Println("system-name is not set")
-			os.Exit(1)
+			log.Fatalf("system-name is not set")
 		}
 		// Set up the path for our base directory using our systemname
 		basepath, err := filepath.Abs(filepath.Clean(v.GetString("system-name")))
 		if err != nil {
-			panic(err)
+			log.Fatalln(err)
 		}
 		// Create our base directory
 		if err := os.Mkdir(basepath, 0777); err != nil {
-			fmt.Println("Can't create directory", basepath)
-			panic(err)
+			log.Fatalln("Can't create directory", basepath, err)
 		}
 
 		// These Directories make up the overall structure for the Configuration Payload
@@ -79,8 +77,7 @@ var initCmd = &cobra.Command{
 		// Iterate through the directories and create them
 		for _, dir := range dirs {
 			if err := os.Mkdir(dir, 0777); err != nil {
-				fmt.Println("Can't create directory", dir)
-				panic(err)
+				log.Fatalln("Can't create directory", dir, err)
 			}
 		}
 
@@ -93,13 +90,12 @@ var initCmd = &cobra.Command{
 		}
 
 		networks := shasta.ConvertSLSNetworks(slsState)
-		// fmt.Println("The networks are: ", networks)
 		v.Set("networks.from_sls", networks)
-		// shasta.ExtractSwitches(slsState)
+		// shasta.ExtractSwitches(slsState)  // Uncomment this when it can actually produce the right switch configuration(s) here
 
 		err = v.Unmarshal(&conf)
 		if err != nil {
-			fmt.Printf("unable to decode configuration into struct, %v \n", err)
+			log.Fatalf("unable to decode configuration into struct, %v \n", err)
 		}
 
 		conf.IPV4Resolvers = strings.Split(viper.GetString("ipv4-resolvers"), ",")
@@ -161,7 +157,7 @@ var initCmd = &cobra.Command{
 		WritePasswordCredential(filepath.Join(basepath, "credentials/mgmt_switch_password.json"), shasta.DefaultNetPW)
 
 		if v.GetString("manifest-release") != "" {
-			initiailzeManifestDir("release/shasta-1.4", filepath.Join(basepath, "loftsman-manifests"))
+			initiailzeManifestDir(shasta.DefaultManifestURL, "release/shasta-1.4", filepath.Join(basepath, "loftsman-manifests"))
 		}
 	},
 }
@@ -177,7 +173,7 @@ func init() {
 
 	// System Configuration Flags based on previous system_config.yml and networks_derived.yml
 	initCmd.Flags().String("system-name", "sn-2024", "Name of the System")
-	initCmd.Flags().String("site-domain", "cray.io", "Site Domain Name")
+	initCmd.Flags().String("site-domain", "dev.cray.com", "Site Domain Name")
 	initCmd.Flags().String("internal-domain", "unicos.shasta", "Internal Domain Name")
 	initCmd.Flags().String("ntp-pool", "time.nist.gov", "Hostname for Upstream NTP Pool")
 	initCmd.Flags().String("ipv4-resolvers", "8.8.8.8, 9.9.9.9", "List of IP Addresses for DNS")
@@ -212,58 +208,60 @@ func loadFromSLS(source string) sls_common.SLSState {
 	if strings.HasPrefix(source, "file://") {
 		slsState, err = shasta.ParseSLSFile(strings.TrimPrefix(source, "file://"))
 		if err != nil {
-			panic(err)
+			log.Fatalln(err)
 		}
 	} else if strings.HasPrefix(source, "https://") {
 		slsState, err = shasta.ParseSLSfromURL(strings.TrimPrefix(source, "https://"))
 		if err != nil {
-			panic(err)
+			log.Fatalln(err)
 		}
 	}
 	// Testing that slsState is valid
 	if unsafe.Sizeof(slsState) > 0 {
 		// At this point, we should have a valid slsState
-		// networks := shasta.ConvertSLSNetworks(slsState)
-		// fmt.Println(networks)
-		ncns := shasta.ExtractNCNBMCInfo(slsState)
-		fmt.Println("The NCNs are:", ncns)
+		ncns, err := shasta.ExtractNCNBMCInfo(slsState)
+		if err != nil {
+			log.Fatalln("Unable to extract the NCNs from", source, err)
+		}
+		log.Println("The NCNs are:", ncns) // TODO: Replace this with a call to write the NCN file(s) for basecamp and/or initialization
 	}
 	return slsState
 }
 
-func writeFile(path string, contents string) {
+func writeFile(path string, contents string) error {
 	f, err := os.Create(path)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer f.Close()
 	w := bufio.NewWriter(f)
 	size, err := w.WriteString(contents)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	w.Flush()
-	jww.FEEDBACK.Printf("wrote %d bytes to %s\n", size, path)
+	log.Printf("wrote %d bytes to %s\n", size, path)
+	return nil
 }
 
 // WriteSystemConfig applies a SystemConfig Struct to the Yaml Template and writes the result to the path indicated
-func WriteSystemConfig(path string, conf shasta.SystemConfig) {
+func WriteSystemConfig(path string, conf shasta.SystemConfig) error {
 	bs, err := yaml.Marshal(conf)
-	// fmt.Print(string(bs))
 	if err != nil {
-		panic(err)
+		return err
 	}
-	writeFile(path, string(bs))
+	err = writeFile(path, string(bs))
+	return err
 }
 
 // WriteNetworkConfig applies a IPV4Network Struct to the Yaml Template and writes the result to the path indicated
-func WriteNetworkConfig(path string, network shasta.IPV4Network) {
+func WriteNetworkConfig(path string, network shasta.IPV4Network) error {
 	bs, err := yaml.Marshal(network)
-	// fmt.Print(string(bs))
 	if err != nil {
-		panic(err)
+		return err
 	}
-	writeFile(path, string(bs))
+	err = writeFile(path, string(bs))
+	return err
 }
 
 // WritePasswordCredential applies a PasswordCredential to the Yaml Template and writes the result to the path indicated
@@ -272,44 +270,79 @@ func WritePasswordCredential(path string, pw shasta.PasswordCredential) error {
 	return ioutil.WriteFile(path, creds, 0644)
 }
 
-func initiailzeManifestDir(branch, destination string) {
-	var url string = "ssh://git@stash.us.cray.com:7999/shasta-cfg/stable.git"
+// WriteDNSMasqConfig writes the dnsmasq configuration files necssary for installation
+func WriteDNSMasqConfig(path string, conf shasta.SystemConfig) {
+	log.Printf("NOT IMPLEMENTED")
+	// include the statics.conf stuff too
+}
+
+// WriteNICConfigENV sets environment variables for nic bonding and configuration
+func WriteNICConfigENV(path string, conf shasta.SystemConfig) {
+	log.Printf("NOT IMPLEMENTED")
+}
+
+// WriteBaseCampData writes basecamp data.json for the installer
+func WriteBaseCampData(path string, conf shasta.SystemConfig) {
+	// https://stash.us.cray.com/projects/MTL/repos/docs-non-compute-nodes/browse/example-data.json
+	/* Funky vars from the stopgap
+	export site_nic=em1
+	export bond_member0=p801p1
+	export bond_member1=p801p2
+	export mtl_cidr=10.1.1.1/16
+	export mtl_dhcp_start=10.1.2.3
+	export mtl_dhcp_end=10.1.2.254
+	export nmn_cidr=10.252.0.4/17
+	export nmn_dhcp_start=10.252.50.0
+	export nmn_dhcp_end=10.252.99.252
+	export hmn_cidr=10.254.0.4/17
+	export hmn_dhcp_start=10.254.50.5
+	export hmn_dhcp_end=10.254.99.252
+	export site_cidr=172.30.52.220/20
+	export site_gw=172.30.48.1
+	export site_dns='172.30.84.40 172.31.84.40'
+	export can_cidr=10.102.4.110/24
+	export can_dhcp_start=10.102.4.5
+	export can_dhcp_end=10.102.4.109
+	export dhcp_ttl=2m
+	*/
+}
+
+// WriteConmanConfig provides conman configuration for the installer
+func WriteConmanConfig(path string, conf shasta.SystemConfig) {
+	log.Printf("NOT IMPLEMENTED")
+}
+
+func initiailzeManifestDir(url, branch, destination string) {
 	// First we need a temporary directory
 	dir, err := ioutil.TempDir("", "loftsman-init")
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
-	fmt.Println("Adding a temp directory for the git checkout:", dir)
 	defer os.RemoveAll(dir)
 	cloneCmd := exec.Command("git", "clone", url, dir)
 	out, err := cloneCmd.Output()
 	if err != nil {
-		fmt.Printf("cloneCommand finished with error: %s (%v)\n", out, err)
+		log.Fatalf("cloneCommand finished with error: %s (%v)\n", out, err)
 	}
-	fmt.Printf("cloneCommand finished without error: %s \n", out)
 	checkoutCmd := exec.Command("git", "checkout", branch)
 	checkoutCmd.Dir = dir
 	out, err = checkoutCmd.Output()
 	if err != nil {
 		if err.Error() != "exit status 1" {
-			fmt.Printf("checkoutCommand finished with error: %s (%v)\n", out, err)
-			panic(err)
+			log.Fatalln("checkoutCommand finished with error: %s (%v)\n", out, err)
 		}
 	}
-	fmt.Printf("checkoutCommand finished without error: %s \n", out)
 	packageCmd := exec.Command("./package/package.sh", "1.4.0")
 	packageCmd.Dir = dir
 	out, err = packageCmd.Output()
 	if err != nil {
-		fmt.Printf("packageCommand finished with error: %s (%v)\n", out, err)
+		log.Fatalf("packageCommand finished with error: %s (%v)\n", out, err)
 	}
-	fmt.Printf("package finished without error: %s \n", out)
 	targz, err := filepath.Abs(filepath.Clean(dir + "/dist/shasta-cfg-1.4.0.tgz"))
 	untarCmd := exec.Command("tar", "-zxvvf", targz)
 	untarCmd.Dir = destination
 	out, err = untarCmd.Output()
 	if err != nil {
-		fmt.Printf("untarCmd finished with error: %s (%v)\n", out, err)
+		log.Fatalf("untarCmd finished with error: %s (%v)\n", out, err)
 	}
-	fmt.Printf("untarCmd finished without error: %s \n", out)
 }
