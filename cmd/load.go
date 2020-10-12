@@ -46,14 +46,15 @@ func init() {
 }
 
 func extractNetworks(basepath string) ([]shasta.IPV4Network, error) {
+	// TODO: Handle incoming error?
 	var networks []shasta.IPV4Network
 	err := filepath.Walk(basepath,
 		func(path string, info os.FileInfo, err error) error {
 			if info.Mode().IsRegular() {
 				log.Println("Processing", path, "as IPV4Network -", info.Size())
-				network, err := loadNetwork(path)
+				network, er := loadNetwork(path)
 				if err != nil {
-					log.Printf("Unable to extract network from %v.  Error was: %v \n", path, err)
+					log.Printf("Unable to extract network from %v.  Error was: %v \n", path, er)
 				}
 				networks = append(networks, network)
 			}
@@ -79,7 +80,7 @@ func loadSystemConfig(path string) (shasta.SystemConfig, error) {
 
 func loadNetwork(path string) (shasta.IPV4Network, error) {
 	var c shasta.IPV4Network
-	info, err := os.Stat(path)
+	info, _ := os.Stat(path)
 	log.Printf("Processing %v as Network - (%v)", path, info.Size())
 	yamlFile, err := ioutil.ReadFile(path)
 	if err != nil {
