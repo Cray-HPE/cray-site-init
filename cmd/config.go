@@ -1,52 +1,115 @@
 /*
-Copyright © 2020 NAME HERE <EMAIL ADDRESS>
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+Copyright 2020 Hewlett Packard Enterprise Development LP
 */
 
 package cmd
 
 import (
+	"errors"
 	"fmt"
+	"log"
+	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"gopkg.in/yaml.v2"
 )
 
 // configCmd represents the config command
 var configCmd = &cobra.Command{
-	Use:   "config",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("config called")
+	Use:   "config [directory]",
+	Short: "Interact with a config in a named directory",
+	Long:  `Interact with a config in a named directory`,
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) < 1 {
+			return errors.New("requires a named config directory")
+		}
+		info, err := os.Stat(args[0])
+		if err != nil {
+			return fmt.Errorf("Could not read %v. %v", args[0], err)
+		}
+		if !info.Mode().IsDir() {
+			return fmt.Errorf("%v is not a directory", args[0])
+		}
+		return nil
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(configCmd)
+}
 
-	// Here you will define your flags and configuration settings.
+// LoadConfig : Search reasonable places and read the installer configuration file
+// Possibly no longer relevant
+func LoadConfig() {
+	// Read in the configfile
+	viper.SetConfigName("system_config")
+	viper.AddConfigPath(".")
 
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// configCmd.PersistentFlags().String("foo", "", "A help for foo")
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			log.Fatalln(fmt.Errorf("fatal error config file: %s", err))
+		}
+	}
+	viper.SetEnvPrefix("CSM")
+	viper.AutomaticEnv()
+	viper.WatchConfig()
+}
 
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// configCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+//mergeConfig : Merge a configuration file from the local directory.  It will try all known extensions added to the configName
+func mergeConfig(configName string) {
+	viper.SetConfigName(configName)
+	viper.AddConfigPath(".")
+
+	if err := viper.MergeInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			log.Fatalln(fmt.Errorf("fatal error config file: %s", err))
+		}
+	}
+}
+
+// MergeNetworksDerived : Search reasonable places and read the 1.3 networks_derived as a config
+func MergeNetworksDerived() {
+	mergeConfig("networks_derived")
+}
+
+// MergeCustomerVar : Search reasonable places and read the 1.3 customer_var as a config
+func MergeCustomerVar() {
+	mergeConfig("customer_var")
+}
+
+// MergeSLSInput : Search reasonable places and read the 1.3 SLS Input File as a config
+func MergeSLSInput() {
+	mergeConfig("sls_input_file")
+}
+
+// MergeNCNMetadata : Search reasonable places and read the ncn_metadata.yaml
+func MergeNCNMetadata() {
+	// Read in the configfile
+	bootstrapNodes, err := ReadCSV("ncn_metadata.csv")
+	if err != nil {
+		log.Fatalf("Couldn't process the ncn_metadata.csv file: %v", err)
+	}
+	// Add it to the configuration
+	viper.Set("ncn_metadata", bootstrapNodes)
+}
+
+// PrintConfig : Dump all configuration information as a yaml file on stdout
+func PrintConfig(v *viper.Viper) {
+	log.Println(" == Viper configdump == \n" + yamlStringSettings(v))
+}
+
+func yamlStringSettings(v *viper.Viper) string {
+	c := v.AllSettings()
+	bs, err := yaml.Marshal(c)
+	if err != nil {
+		log.Fatalf("unable to marshal config to YAML: %v", err)
+	}
+	return string(bs)
+}
+
+// WriteConfigFile : Capture viper config and writes to config.yaml
+func WriteConfigFile() {
+	log.Println("Writing configuration to config.yaml")
+	viper.WriteConfigAs("config.yaml")
 }

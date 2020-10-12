@@ -1,0 +1,41 @@
+---
+system_name: fawbush
+domain_name: afw.ccs.ornl.gov
+internal_domain_name: fawbush.afw.ccs.ornl.gov
+shcd_revision: D
+mountain_starting_nid: 20000
+# worker1_site_mgmt_ip: # FIXME - determine from customer and update
+
+river:
+  - cabinet_id: x3001
+    compute_nodes: []
+    worker: [14,16,18]
+    master: [8,10,12]
+    storage: [2,4,6]
+
+mountain:
+  number_of_cabinets: 4
+  starting_cabinet: 1004
+  last_address_gateway: True
+
+dhcp_relay:
+  - cabinet_id: [x3001]
+    dhcp_relay_switches: ['x3001c0w34', 'x3001c0w35']
+  - cabinet_id: [x1004, x1005, x1006, x1007]
+    dhcp_relay_switches: ['d0w1', 'd0w2']
+
+
+# Do sw-100g01, and sw-100g02 need to be represented here?
+management_switches:
+  -  {'ID': 'x3001c0w38R', 'NAME': 'sw-spine01'}  # sw-40g01
+  -  {'ID': 'x3001c0w34', 'NAME': 'sw-leaf01', 'Brand': 'Dell', 'OS': 'OS10', 'Model': 'S3048-ON'}
+  -  {'ID': 'x3001c0w38L', 'NAME': 'sw-spine02'}  # sw-40g02
+  -  {'ID': 'x3001c0w35', 'NAME': 'sw-leaf02', 'Brand': 'Dell', 'OS': 'OS10', 'Model': 'S3048-ON'}
+  -  {'ID': 'd0w1', 'NAME': 'sw-cdu01', 'Brand': 'Dell', 'OS': 'OS10', 'Model': 'S4148T'}
+  -  {'ID': 'd0w2', 'NAME': 'sw-cdu02', 'Brand': 'Dell', 'OS': 'OS10', 'Model': 'S4148T'}
+
+columbia_switches:
+  -  {'ID': 'x3001c0r39b0', 'NAME': 'sw-hsn01'}
+  -  {'ID': 'x3001c0r40b0', 'NAME': 'sw-hsn02'}
+  -  {'ID': 'x3001c0r41b0', 'NAME': 'sw-hsn03'}
+  -  {'ID': 'x3001c0r42b0', 'NAME': 'sw-hsn04'}

@@ -68,7 +68,7 @@ tools:
 	go get github.com/axw/gocov/gocov
 	go get github.com/AlekSi/gocov-xml
 
-vet:
+vet: version
 	go vet -v ./...
 
 lint: tools

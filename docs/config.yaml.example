@@ -1,0 +1,163 @@
+manufacturing_details:
+  columbia_switches:
+  - ID: x3001c0r39b0
+    NAME: sw-hsn01
+  - ID: x3001c0r40b0
+    NAME: sw-hsn02
+  - ID: x3001c0r41b0
+    NAME: sw-hsn03
+  - ID: x3001c0r42b0
+    NAME: sw-hsn04
+  management_switches:
+  - ID: x3001c0w38R
+    NAME: sw-spine01
+  - Brand: Dell
+    DHCP Relay: true
+    ID: x3001c0w34
+    Model: S3048-ON
+    NAME: sw-leaf01
+    OS: OS10
+  - ID: x3001c0w38L
+    NAME: sw-spine02
+  - Brand: Dell
+    DHCP Relay: true
+    ID: x3001c0w35
+    Model: S3048-ON
+    NAME: sw-leaf02
+    OS: OS10
+  - Brand: Dell
+    DHCP Relay: true
+    ID: d0w1
+    Model: S4148T
+    NAME: sw-cdu01
+    OS: OS10
+  - Brand: Dell
+    DHCP Relay: true
+    ID: d0w2
+    Model: S4148T
+    NAME: sw-cdu02
+    OS: OS10
+  mountain_layout:
+    last_address_gateway: true
+    number_of_cabinets: 4
+    starting_cabinet: 1004
+  mountain_starting_nid: 20000
+  river_layout:
+  - cabinet_id: x3001
+    compute_nodes: []
+    master:
+    - 8
+    - 10
+    - 12
+    storage:
+    - 2
+    - 4
+    - 6
+    worker:
+    - 14
+    - 16
+    - 18
+  shcd_revision: D
+networks:
+  site:
+    can_admin:
+      full_name: Customer Access Network (Administrator)
+      gateway: 192.168.10.254
+      ip_reservations:
+      - ip: 192.168.10.5
+        name: dns
+      mtu: 9000
+      name: CANA
+      network_cidr: 192.168.10.1/24
+      type: ethernet
+      vlan: 7
+    can_user:
+      full_name: Customer Access Network (User)
+      gateway: 192.168.20.254
+      ip_reservations:
+      - ip: 192.168.10.5
+        name: dns
+      mtu: 9000
+      name: CANU
+      network_cidr: 192.168.20.1/24
+      type: ethernet
+      vlan: 14
+system_settings:
+  auth:
+    certificate_authority_cert: ca-cert.pem
+    certificate_authority_key: ca-cert.key
+  credentials:
+    cn_bmc_password: ""
+    cn_bmc_username: ""
+    linux_root_password: drowssap
+    ncn_bmc_password: ""
+    ncn_bmc_username: ""
+    redfish_password: ""
+    redfish_username: ""
+  domain_name: afw.ccs.ornl.gov
+  internal_domain: fawbush.afw.ccs.ornl.gov
+  networks:
+    system:
+      nmn:
+        lb_nmn:
+          full_name: NMN Load Balancers (MetalLB)
+          gateway: 10.108.0.1
+          ip_reservations: []
+          network_cidr: 10.92.100.0/24
+        mtn_nmn:
+          full_name: Node Management Network (Mountain)
+          gateway: 10.108.0.1
+          ip_reservations: []
+          mtu: 9000
+          network_cidr: 10.108.0.0/17
+          subnets:
+          - cidr: 10.108.0.0/17
+            dhcp:
+            - end: 10.108.111.253
+              start: 10.108.111.5
+            name: default
+          - cidr: 10.108.104.0/23
+            gateway: 10.108.104.1
+            name: uai_macvlan
+          type: ethernet
+          vlan: 9
+        river_nmn:
+          full_name: Node Management Network (River)
+          gateway: 10.242.0.1
+          ip_reservations: []
+          mtu: 9000
+          network_cidr: 10.242.0.0/17
+          subnets:
+          - cidr: 10.242.0.0/17
+            dhcp:
+            - end: 10.242.99.252
+              start: 10.242.50.0
+            name: default
+          - cidr: 10.242.124.0/23
+            dhcp:
+            - start: 10.242.124.10
+            - end: 10.242.125.244
+            gateway: 10.242.125.245
+            name: uai_macvlan
+          type: ethernet
+          vlan: 2
+  site_services:
+    ipv4_resolvers:
+    - 8.8.8.8
+    - 9.9.9.9
+    ldap:
+      ad_groups:
+      - name: admin_grp
+        origin: ALL
+      - name: dev_users
+        origin: ALL
+      bind_dn: CN=username,CN=Users,DC=yourdomain,DC=com
+      bind_password: drowssap
+      domain: Cray_DC
+      search_base: dc=datacenter,dc=cray,dc=com
+      servers:
+      - ldaps://ldap_server:port/dn?attributes?scope?filter?extensions
+      user_attribute_mappers_to_remove:
+      - email
+    ntp_pool_hostname: pool.ntp.org
+  system_name: fawbush
