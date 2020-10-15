@@ -238,6 +238,19 @@ func WriteNICConfigENV(path string, conf shasta.SystemConfig) {
 func makeBaseCampfromSLS(conf shasta.SystemConfig, sls sls_common.SLSState, ncnMeta []*shasta.BootstrapNCNMetadata) (map[string]shasta.CloudInit, error) {
 	basecampConfig := make(map[string]shasta.CloudInit)
 	globalViper := viper.GetViper()
+
+	var k8sRunCMD = []string{
+		"/srv/cray/scripts/metal/set-dns-config.sh",
+		"/srv/cray/scripts/metal/set-ntp-config.sh",
+		"/srv/cray/scripts/common/kubernetes-cloudinit.sh",
+	}
+
+	var cephRunCMD = []string{
+		"/srv/cray/scripts/metal/set-dns-config.sh",
+		"/srv/cray/scripts/metal/set-ntp-config.sh",
+		"/srv/cray/scripts/common/storage-ceph-cloudinit.sh",
+	}
+
 	ncns, err := shasta.ExtractSLSNCNs(sls)
 	if err != nil {
 		return basecampConfig, err
@@ -257,12 +270,20 @@ func makeBaseCampfromSLS(conf shasta.SystemConfig, sls sls_common.SLSState, ncnM
 		for _, value := range ncnMeta {
 			if value.Xname == v.Xname {
 				// log.Printf("Found %v in both lists. \n", value.Xname)
+				userDataMap := make(map[string]interface{})
+				if v.Subrole == "Storage" {
+					userDataMap["runcmd"] = cephRunCMD
+				} else {
+					userDataMap["runcmd"] = k8sRunCMD
+				}
+				userDataMap["hostname"] = v.Hostnames[0]
+				userDataMap["local_hostname"] = v.Hostnames[0]
 				basecampConfig[value.NmnMac] = shasta.CloudInit{
 					MetaData: structs.Map(tempMetadata),
+					UserData: userDataMap,
 				}
 			}
 		}
-
 	}
 	return basecampConfig, nil
 }
