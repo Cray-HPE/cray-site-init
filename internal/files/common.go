@@ -6,7 +6,6 @@ package files
 
 import (
 	"bufio"
-	"encoding/json"
 	"log"
 	"os"
 	"path"
@@ -14,7 +13,6 @@ import (
 	"strings"
 
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v2"
 )
 
 // ImportConfig converts a configuration file to a viper
@@ -40,24 +38,6 @@ func ExportConfig(configfile string, config *viper.Viper) error {
 	// TODO: Consider doing something of value here or simply
 	// refactor it away
 	return viper.WriteConfigAs(configfile)
-}
-
-// WriteYamlConfig marshals from an interface to yaml and writes the result to the path indicated
-func WriteYamlConfig(path string, conf interface{}) error {
-	bs, err := yaml.Marshal(conf)
-	if err != nil {
-		return err
-	}
-	return writeFile(path, string(bs))
-}
-
-// WriteJSONConfig marshals from an interface to json and writes the result to the path indicated
-func WriteJSONConfig(path string, conf interface{}) error {
-	bs, err := json.Marshal(conf)
-	if err != nil {
-		return err
-	}
-	return writeFile(path, string(bs))
 }
 
 // Generic and safe-ish file writing code

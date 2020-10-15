@@ -13,8 +13,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"unsafe"
 
+	"github.com/fatih/structs"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -38,15 +38,13 @@ var initCmd = &cobra.Command{
 	 - customer_var.yml`,
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
+		// Initialize the global viper
 		v := viper.GetViper()
 		var conf shasta.SystemConfig
-		// if the user has an old configuration dir, use that
-		if v.GetString("from-1.3-dir") != "" {
-			MergeNCNMetadata()
-			MergeNetworksDerived()
-			MergeSLSInput()
-			MergeCustomerVar()
-		}
+
+		// Removed the reference to the files from a 1.3 system.
+		// They were not working properly and leading to confusion
+
 		// We use the system-name for a directory.  Make sure it is set.
 		if v.GetString("system-name") == "" {
 			log.Fatalf("system-name is not set")
@@ -83,24 +81,43 @@ var initCmd = &cobra.Command{
 
 		// Handle an SLSFile if one is provided
 		var slsState sls_common.SLSState
-		if v.GetString("sls-file-path") != "" {
-			slsState = loadFromSLS("file://" + v.GetString("sls-file-path"))
-		} else if v.GetString("sls-url") != "" {
-			slsState = loadFromSLS(v.GetString("sls-url"))
+		if v.GetString("from-sls-file") != "" {
+			log.Println("Loading from ", v.GetString("from-sls-file"))
+			slsState, err = shasta.ParseSLSFile(v.GetString("from-sls-file"))
+			if err != nil {
+				log.Fatal("Error loading the sls-file: ", err)
+			}
+			// Confirm that our slsState is valid
+			networks, err := shasta.ExtractSLSNetworks(slsState)
+			if err != nil {
+				log.Printf("Couldn't extract networks because: %d \n", err)
+			} else {
+				log.Printf("Extracted %d networks \n", len(networks))
+			}
+			switches, err := shasta.ExtractSLSSwitches(slsState)
+			if err != nil {
+				log.Printf("Couldn't extract switches because: %d \n", err)
+			} else {
+				log.Printf("Extracted %d switches \n", len(switches))
+			}
+			ncns, err := shasta.ExtractSLSNCNs(slsState)
+			if err != nil {
+				log.Printf("Couldn't extract ncns because: %d \n", err)
+			} else {
+				log.Printf("Extracted %d management ncns \n", len(ncns))
+			}
+
 		}
 
-		networks := shasta.ConvertSLSNetworks(slsState)
-		v.Set("networks.from_sls", networks)
-		// shasta.ExtractSwitches(slsState)  // Uncomment this when it can actually produce the right switch configuration(s) here
-
+		// Everything should be set up properly in the global viper now.
+		// Unmarshaling it to a struct at this point also verifies that the
+		// resulting struct is valid.
 		err = v.Unmarshal(&conf)
 		if err != nil {
 			log.Fatalf("unable to decode configuration into struct, %v \n", err)
 		}
-
 		conf.IPV4Resolvers = strings.Split(viper.GetString("ipv4-resolvers"), ",")
 		conf.SiteServices.NtpPoolHostname = conf.NtpPoolHostname
-
 		sicFiles.WriteYamlConfig(filepath.Join(basepath, "system_config.yaml"), conf)
 
 		// our primitive ipam uses the number of cabinets to lay out a network for each one.
@@ -155,7 +172,12 @@ var initCmd = &cobra.Command{
 		sicFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/root_password.json"), shasta.DefaultRootPW)
 		sicFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/bmc_password.json"), shasta.DefaultBMCPW)
 		sicFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/mgmt_switch_password.json"), shasta.DefaultNetPW)
-
+		ncnMeta, err := sicFiles.ReadNodeCSV(v.GetString("ncn-metadata"))
+		if err != nil {
+			log.Printf("Couldn't extract NCN information from the metadata file: %v \n", v.GetString("ncn-metadata"))
+		} else {
+			WriteBaseCampData(filepath.Join(basepath, "data.json"), conf, slsState, ncnMeta)
+		}
 		if v.GetString("manifest-release") != "" {
 			initiailzeManifestDir(shasta.DefaultManifestURL, "release/shasta-1.4", filepath.Join(basepath, "loftsman-manifests"))
 		}
@@ -193,39 +215,13 @@ func init() {
 	initCmd.Flags().Int16("starting-NID", 20000, "Starting NID for Compute Nodes")
 	// Use these flags to prepare the basecamp metadata json
 	initCmd.Flags().String("switch-xnames", "", "Comma separated list of xnames for management switches")
+	initCmd.Flags().String("ncn-metadata", "", "CSV for mapping the mac addresses of the NCNs to their xnames")
 
 	// Dealing with an SLS file
 	initCmd.Flags().String("from-sls-file", "", "SLS File Location")
-	initCmd.Flags().String("from-sls", "", "Shasta 1.3 SLS dumpstate url")
 	// Loftsman Manifest Shasta-CFG
 	initCmd.Flags().String("manifest-release", "", "Loftsman Manifest Release Version (leave blank to prevent manifest generation)")
 	initCmd.Flags().SortFlags = false
-}
-
-func loadFromSLS(source string) sls_common.SLSState {
-	var slsState sls_common.SLSState
-	var err error
-	if strings.HasPrefix(source, "file://") {
-		slsState, err = shasta.ParseSLSFile(strings.TrimPrefix(source, "file://"))
-		if err != nil {
-			log.Fatalln(err)
-		}
-	} else if strings.HasPrefix(source, "https://") {
-		slsState, err = shasta.ParseSLSfromURL(strings.TrimPrefix(source, "https://"))
-		if err != nil {
-			log.Fatalln(err)
-		}
-	}
-	// Testing that slsState is valid
-	if unsafe.Sizeof(slsState) > 0 {
-		// At this point, we should have a valid slsState
-		ncns, err := shasta.ExtractNCNBMCInfo(slsState)
-		if err != nil {
-			log.Fatalln("Unable to extract the NCNs from", source, err)
-		}
-		log.Println("The NCNs are:", ncns) // TODO: Replace this with a call to write the NCN file(s) for basecamp and/or initialization
-	}
-	return slsState
 }
 
 // WriteDNSMasqConfig writes the dnsmasq configuration files necssary for installation
@@ -239,12 +235,45 @@ func WriteNICConfigENV(path string, conf shasta.SystemConfig) {
 	log.Printf("NOT IMPLEMENTED")
 }
 
-// WriteBaseCampData writes basecamp data.json for the installer
-func WriteBaseCampData(path string, conf shasta.SystemConfig) {
-	type bascampConfig struct {
-		identifier string
-		cloudInit  shasta.CloudInit
+func makeBaseCampfromSLS(conf shasta.SystemConfig, sls sls_common.SLSState, ncnMeta []*shasta.BootstrapNCNMetadata) (map[string]shasta.CloudInit, error) {
+	basecampConfig := make(map[string]shasta.CloudInit)
+	globalViper := viper.GetViper()
+	ncns, err := shasta.ExtractSLSNCNs(sls)
+	if err != nil {
+		return basecampConfig, err
 	}
+	log.Printf("Processing %d ncns from csv\n", len(ncnMeta))
+	log.Printf("Processing %d ncns from sls\n", len(ncns))
+	for _, v := range ncns {
+		log.Printf("The aliases for %v are %v \n", v.BmcMac, v.Hostnames)
+
+		tempMetadata := shasta.MetaData{
+			Hostname:         v.Hostnames[0],
+			InstanceID:       shasta.GenerateInstanceID(),
+			Region:           globalViper.GetString("system-name"),
+			AvailabilityZone: "", // Using cabinet for AZ
+			ShastaRole:       "ncn-" + strings.ToLower(v.Subrole),
+		}
+		for _, value := range ncnMeta {
+			if value.Xname == v.Xname {
+				// log.Printf("Found %v in both lists. \n", value.Xname)
+				basecampConfig[value.NmnMac] = shasta.CloudInit{
+					MetaData: structs.Map(tempMetadata),
+				}
+			}
+		}
+
+	}
+	return basecampConfig, nil
+}
+
+// WriteBaseCampData writes basecamp data.json for the installer
+func WriteBaseCampData(path string, conf shasta.SystemConfig, sls sls_common.SLSState, ncnMeta []*shasta.BootstrapNCNMetadata) {
+	basecampConfig, err := makeBaseCampfromSLS(conf, sls, ncnMeta)
+	if err != nil {
+		log.Printf("Error extracting NCNs: %v", err)
+	}
+	sicFiles.WriteJSONConfig(path, basecampConfig)
 
 	// https://stash.us.cray.com/projects/MTL/repos/docs-non-compute-nodes/browse/example-data.json
 	/* Funky vars from the stopgap

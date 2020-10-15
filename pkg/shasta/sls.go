@@ -73,9 +73,9 @@ func ParseSLSfromURL(url string) (sls_common.SLSState, error) {
 	return existingState, err
 }
 
-// ConvertSLSNetworks converts from the SLS version of
+// ExtractSLSNetworks converts from the SLS version of
 // Network Definitions to a list of IPV4Networks
-func ConvertSLSNetworks(sls sls_common.SLSState) []IPV4Network {
+func ExtractSLSNetworks(sls sls_common.SLSState) ([]IPV4Network, error) {
 	var ourNetworks []IPV4Network
 	for key, element := range sls.Networks {
 		// log.Printf("Key:", key, "=>", "Element:", element, "(", reflect.TypeOf(element), ")")
@@ -88,11 +88,11 @@ func ConvertSLSNetworks(sls sls_common.SLSState) []IPV4Network {
 		// tempNetwork.VlanRange
 		ourNetworks = append(ourNetworks, *tempNetwork)
 	}
-	return ourNetworks
+	return ourNetworks, nil
 }
 
-// ExtractNCNBMCInfo pulls the port information for the BMCs of all Management Nodes
-func ExtractNCNBMCInfo(sls sls_common.SLSState) ([]BootstrapNCNMetadata, error) {
+// ExtractSLSNCNs pulls the port information for the BMCs of all Management Nodes
+func ExtractSLSNCNs(sls sls_common.SLSState) ([]BootstrapNCNMetadata, error) {
 	var ncns []BootstrapNCNMetadata
 	for key, node := range sls.Hardware {
 		if node.Type == sls_common.Node {
@@ -102,16 +102,18 @@ func ExtractNCNBMCInfo(sls sls_common.SLSState) ([]BootstrapNCNMetadata, error) 
 				return ncns, err
 			}
 			if extra.Role == "Management" {
-				//log.Printf("Adding ", key, " to the list with Parent = ", node.Parent)
+				// log.Printf("Adding %v to the list with Parent = %v", key, node.Parent)
+				log.Printf("Node = %v and Extra = %v", node, extra)
 				mgmtSwitch, port, err := portForXname(sls.Hardware, node.Parent)
 				if err != nil { // Sometimes the port is not available.  We *should* be able to continue
 					log.Printf("%v %v\n", err, port)
 				}
 				ncns = append(ncns, BootstrapNCNMetadata{
-					Xname:   key,
-					Role:    extra.Role,
-					Subrole: extra.SubRole,
-					BmcPort: mgmtSwitch + ":" + port,
+					Xname:     key,
+					Role:      extra.Role,
+					Subrole:   extra.SubRole,
+					Hostnames: extra.Aliases,
+					BmcPort:   mgmtSwitch + ":" + port,
 				})
 			}
 
@@ -140,24 +142,25 @@ func portForXname(hardware map[string]sls_common.GenericHardware, xname string) 
 		}
 	}
 	// log.Printf("Couldn't find", xname)
-	return "", "", errors.New("Couldn't find switch port for NCN: " + xname)
+	return "", "", errors.New("WARNING (Not Fatal): Couldn't find switch port for NCN: " + xname)
 }
 
-// ExtractSwitches reads the SLSState object and finds any switches
-func ExtractSwitches(sls sls_common.SLSState) error {
+// ExtractSLSSwitches reads the SLSState object and finds any switches
+func ExtractSLSSwitches(sls sls_common.SLSState) ([]ManagementSwitch, error) {
+	var switches []ManagementSwitch
 	for _, node := range sls.Hardware {
 		if node.Type == sls_common.MgmtSwitch {
 			log.Printf("Found Switch: %v \n", node)
 			var extra sls_common.ComptypeMgmtSwitch
 			err := mapstructure.Decode(node.ExtraPropertiesRaw, &extra)
 			if err != nil {
-				return err
+				return switches, err
 			}
 			// TODO: Map the switch data to either an SLS object or an internal object as needed by SLS
 			// Update the signature to return the lost of switches
 		}
 	}
-	return nil
+	return switches, nil
 }
 
 // func GenerateSLSState(hmn_connections_path string, sls_basic_info sls_common.SLSStateInput) {
