@@ -5,8 +5,6 @@ Copyright 2020 Hewlett Packard Enterprise Development LP
 package cmd
 
 import (
-	"bufio"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -19,9 +17,9 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v2"
 
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
+	sicFiles "stash.us.cray.com/MTL/sic/internal/files"
 	"stash.us.cray.com/MTL/sic/pkg/ipam"
 	"stash.us.cray.com/MTL/sic/pkg/shasta"
 )
@@ -62,6 +60,8 @@ var initCmd = &cobra.Command{
 		if err := os.Mkdir(basepath, 0777); err != nil {
 			log.Fatalln("Can't create directory", basepath, err)
 		}
+		// Global viper needs a reference to our basepath
+		v.Set("configuration-basepath", basepath)
 
 		// These Directories make up the overall structure for the Configuration Payload
 		dirs := []string{
@@ -101,7 +101,7 @@ var initCmd = &cobra.Command{
 		conf.IPV4Resolvers = strings.Split(viper.GetString("ipv4-resolvers"), ",")
 		conf.SiteServices.NtpPoolHostname = conf.NtpPoolHostname
 
-		WriteSystemConfig(filepath.Join(basepath, "system_config.yaml"), conf)
+		sicFiles.WriteYamlConfig(filepath.Join(basepath, "system_config.yaml"), conf)
 
 		// our primitive ipam uses the number of cabinets to lay out a network for each one.
 		var cabinets = uint(conf.MountainCabinets)
@@ -118,7 +118,7 @@ var initCmd = &cobra.Command{
 				VlanID:  shasta.DefaultNMN.VlanRange[0] + int16(k),
 			})
 		}
-		WriteNetworkConfig(filepath.Join(basepath, "networks/nmn.yaml"), shasta.DefaultNMN)
+		sicFiles.WriteYamlConfig(filepath.Join(basepath, "networks/nmn.yaml"), shasta.DefaultNMN)
 
 		// Merge configs with the HMN Defaults to create a yaml with our subnets in it
 		shasta.DefaultHMN.CIDR = v.GetString("hmn-cidr")
@@ -132,7 +132,7 @@ var initCmd = &cobra.Command{
 				VlanID:  shasta.DefaultHMN.VlanRange[0] + int16(k),
 			})
 		}
-		WriteNetworkConfig(filepath.Join(basepath, "networks/hmn.yaml"), shasta.DefaultHMN)
+		sicFiles.WriteYamlConfig(filepath.Join(basepath, "networks/hmn.yaml"), shasta.DefaultHMN)
 
 		// Merge configs with the HSN Defaults to create a yaml with our subnets in it
 		shasta.DefaultHSN.CIDR = v.GetString("hsn-cidr")
@@ -146,15 +146,15 @@ var initCmd = &cobra.Command{
 				VlanID:  shasta.DefaultHMN.VlanRange[0] + int16(k),
 			})
 		}
-		WriteNetworkConfig(filepath.Join(basepath, "networks/hsn.yaml"), shasta.DefaultHSN)
+		sicFiles.WriteYamlConfig(filepath.Join(basepath, "networks/hsn.yaml"), shasta.DefaultHSN)
 
 		shasta.DefaultMTL.CIDR = v.GetString("mtl-cidr")
-		WriteNetworkConfig(filepath.Join(basepath, "networks/mtl.yaml"), shasta.DefaultMTL)
+		sicFiles.WriteYamlConfig(filepath.Join(basepath, "networks/mtl.yaml"), shasta.DefaultMTL)
 		shasta.DefaultCAN.CIDR = v.GetString("can-cidr")
-		WriteNetworkConfig(filepath.Join(basepath, "networks/can.yaml"), shasta.DefaultCAN)
-		WritePasswordCredential(filepath.Join(basepath, "credentials/root_password.json"), shasta.DefaultRootPW)
-		WritePasswordCredential(filepath.Join(basepath, "credentials/bmc_password.json"), shasta.DefaultBMCPW)
-		WritePasswordCredential(filepath.Join(basepath, "credentials/mgmt_switch_password.json"), shasta.DefaultNetPW)
+		sicFiles.WriteYamlConfig(filepath.Join(basepath, "networks/can.yaml"), shasta.DefaultCAN)
+		sicFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/root_password.json"), shasta.DefaultRootPW)
+		sicFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/bmc_password.json"), shasta.DefaultBMCPW)
+		sicFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/mgmt_switch_password.json"), shasta.DefaultNetPW)
 
 		if v.GetString("manifest-release") != "" {
 			initiailzeManifestDir(shasta.DefaultManifestURL, "release/shasta-1.4", filepath.Join(basepath, "loftsman-manifests"))
@@ -228,48 +228,6 @@ func loadFromSLS(source string) sls_common.SLSState {
 	return slsState
 }
 
-func writeFile(path string, contents string) error {
-	f, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	w := bufio.NewWriter(f)
-	size, err := w.WriteString(contents)
-	if err != nil {
-		return err
-	}
-	w.Flush()
-	log.Printf("wrote %d bytes to %s\n", size, path)
-	return nil
-}
-
-// WriteSystemConfig applies a SystemConfig Struct to the Yaml Template and writes the result to the path indicated
-func WriteSystemConfig(path string, conf shasta.SystemConfig) error {
-	bs, err := yaml.Marshal(conf)
-	if err != nil {
-		return err
-	}
-	err = writeFile(path, string(bs))
-	return err
-}
-
-// WriteNetworkConfig applies a IPV4Network Struct to the Yaml Template and writes the result to the path indicated
-func WriteNetworkConfig(path string, network shasta.IPV4Network) error {
-	bs, err := yaml.Marshal(network)
-	if err != nil {
-		return err
-	}
-	err = writeFile(path, string(bs))
-	return err
-}
-
-// WritePasswordCredential applies a PasswordCredential to the Yaml Template and writes the result to the path indicated
-func WritePasswordCredential(path string, pw shasta.PasswordCredential) error {
-	creds, _ := json.Marshal(pw)
-	return ioutil.WriteFile(path, creds, 0644)
-}
-
 // WriteDNSMasqConfig writes the dnsmasq configuration files necssary for installation
 func WriteDNSMasqConfig(path string, conf shasta.SystemConfig) {
 	log.Printf("NOT IMPLEMENTED")
@@ -283,6 +241,11 @@ func WriteNICConfigENV(path string, conf shasta.SystemConfig) {
 
 // WriteBaseCampData writes basecamp data.json for the installer
 func WriteBaseCampData(path string, conf shasta.SystemConfig) {
+	type bascampConfig struct {
+		identifier string
+		cloudInit  shasta.CloudInit
+	}
+
 	// https://stash.us.cray.com/projects/MTL/repos/docs-non-compute-nodes/browse/example-data.json
 	/* Funky vars from the stopgap
 	export site_nic=em1
