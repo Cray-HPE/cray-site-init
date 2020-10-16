@@ -167,7 +167,33 @@ var initCmd = &cobra.Command{
 
 		shasta.DefaultMTL.CIDR = v.GetString("mtl-cidr")
 		sicFiles.WriteYamlConfig(filepath.Join(basepath, "networks/mtl.yaml"), shasta.DefaultMTL)
+
+		// Deal with the CAN
+		// The overall default is a /24 for the whole network
+		// Within that, we reserve a /25 for the main address pool and a /28 for the static pool
+		addressPoolMask := net.CIDRMask(25, 32)
+		staticPoolMask := net.CIDRMask(25, 32)
+		// customer_access_network: 10.101.8.0/24
+		// customer_access_gateway: 10.101.8.2
+		// customer_access_metallb_address_pool: 10.101.8.128/25
+		// customer_access_static_metallb_address_pool: 10.101.8.112/28
+
 		shasta.DefaultCAN.CIDR = v.GetString("can-cidr")
+		var allocatedCanSubnets []net.IPNet
+		_, myNet, _ = net.ParseCIDR(shasta.DefaultCAN.CIDR)
+		addressPoolNet, _ := ipam.Free(*myNet, addressPoolMask, allocatedCanSubnets)
+		allocatedCanSubnets = append(allocatedCanSubnets, addressPoolNet)
+		staticPoolNet, _ := ipam.Free(*myNet, staticPoolMask, allocatedCanSubnets)
+		shasta.DefaultCAN.Subnets = append(shasta.DefaultCAN.Subnets, shasta.IPV4Subnet{
+			CIDR:    addressPoolNet,
+			Name:    "can_metallb_address_pool",
+			Gateway: ipam.Add(addressPoolNet.IP, 1),
+		})
+		shasta.DefaultCAN.Subnets = append(shasta.DefaultCAN.Subnets, shasta.IPV4Subnet{
+			CIDR:    staticPoolNet,
+			Name:    "can_metallb_static_pool",
+			Gateway: ipam.Add(staticPoolNet.IP, 1),
+		})
 		sicFiles.WriteYamlConfig(filepath.Join(basepath, "networks/can.yaml"), shasta.DefaultCAN)
 		sicFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/root_password.json"), shasta.DefaultRootPW)
 		sicFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/bmc_password.json"), shasta.DefaultBMCPW)
