@@ -26,12 +26,35 @@ Print sections of the configuration object or the whole thing
 
 #### RPM
 
-The RPM installs a system daemon for running the application container.
-The RPM build does not run Go lint or Go unit tests.
+The RPM installs Shasta Instance Control `sic` into a SLES 15 Linux environment.
 
-### Docker Container
+This RPM is installed into every LiveCD (Shasta Pre-Install Toolkit).
 
-The container wraps build and test dependencies for repeatable builds.  All linting and tests run inside the container.
+```bash
+redbull-ncn-w001-spit:/var/www/ephemeral/data # sic --help
+SIC is a tool for creating and validating the configuration of a Shasta system.
+
+	It supports initializing a set of configuration from a variety of inputs including
+	flags and/or Shasta 1.3 configuration files.  It can also validate that a set of
+	configuration details are accurate before attempting to use them for installation
+
+Usage:
+  sic [flags]
+  sic [command]
+
+Available Commands:
+  config      Interact with a config in a named directory
+  help        Help about any command
+  install     Install Cray System Management
+  loftsman    A brief description of your command
+  verify      A brief description of your command
+
+Flags:
+  -h, --help   help for sic
+
+Use "sic [command] --help" for more information about a command.
+```
+
 
 ### Reminder for using GOPRIVATE
 
