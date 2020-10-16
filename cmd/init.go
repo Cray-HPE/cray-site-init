@@ -173,11 +173,6 @@ var initCmd = &cobra.Command{
 		// Within that, we reserve a /25 for the main address pool and a /28 for the static pool
 		addressPoolMask := net.CIDRMask(25, 32)
 		staticPoolMask := net.CIDRMask(25, 32)
-		// customer_access_network: 10.101.8.0/24
-		// customer_access_gateway: 10.101.8.2
-		// customer_access_metallb_address_pool: 10.101.8.128/25
-		// customer_access_static_metallb_address_pool: 10.101.8.112/28
-
 		shasta.DefaultCAN.CIDR = v.GetString("can-cidr")
 		var allocatedCanSubnets []net.IPNet
 		_, myNet, _ = net.ParseCIDR(shasta.DefaultCAN.CIDR)
@@ -188,11 +183,13 @@ var initCmd = &cobra.Command{
 			CIDR:    addressPoolNet,
 			Name:    "can_metallb_address_pool",
 			Gateway: ipam.Add(addressPoolNet.IP, 1),
+			VlanID:  7,
 		})
 		shasta.DefaultCAN.Subnets = append(shasta.DefaultCAN.Subnets, shasta.IPV4Subnet{
 			CIDR:    staticPoolNet,
 			Name:    "can_metallb_static_pool",
 			Gateway: ipam.Add(staticPoolNet.IP, 1),
+			VlanID:  7,
 		})
 		sicFiles.WriteYamlConfig(filepath.Join(basepath, "networks/can.yaml"), shasta.DefaultCAN)
 		sicFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/root_password.json"), shasta.DefaultRootPW)
@@ -298,6 +295,7 @@ func makeBaseCampfromSLS(conf shasta.SystemConfig, sls sls_common.SLSState, ncnM
 				// log.Printf("Found %v in both lists. \n", value.Xname)
 				userDataMap := make(map[string]interface{})
 				if v.Subrole == "Storage" {
+					// TODO: the first ceph node needs to run ceph init.  Not the others
 					userDataMap["runcmd"] = cephRunCMD
 				} else {
 					userDataMap["runcmd"] = k8sRunCMD
