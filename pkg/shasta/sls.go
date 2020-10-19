@@ -75,7 +75,7 @@ func ParseSLSfromURL(url string) (sls_common.SLSState, error) {
 
 // ExtractSLSNetworks converts from the SLS version of
 // Network Definitions to a list of IPV4Networks
-func ExtractSLSNetworks(sls sls_common.SLSState) ([]IPV4Network, error) {
+func ExtractSLSNetworks(sls *sls_common.SLSState) ([]IPV4Network, error) {
 	var ourNetworks []IPV4Network
 	for key, element := range sls.Networks {
 		// log.Printf("Key:", key, "=>", "Element:", element, "(", reflect.TypeOf(element), ")")
@@ -92,7 +92,7 @@ func ExtractSLSNetworks(sls sls_common.SLSState) ([]IPV4Network, error) {
 }
 
 // ExtractSLSNCNs pulls the port information for the BMCs of all Management Nodes
-func ExtractSLSNCNs(sls sls_common.SLSState) ([]BootstrapNCNMetadata, error) {
+func ExtractSLSNCNs(sls *sls_common.SLSState) ([]BootstrapNCNMetadata, error) {
 	var ncns []BootstrapNCNMetadata
 	for key, node := range sls.Hardware {
 		if node.Type == sls_common.Node {
@@ -146,7 +146,7 @@ func portForXname(hardware map[string]sls_common.GenericHardware, xname string) 
 }
 
 // ExtractSLSSwitches reads the SLSState object and finds any switches
-func ExtractSLSSwitches(sls sls_common.SLSState) ([]ManagementSwitch, error) {
+func ExtractSLSSwitches(sls *sls_common.SLSState) ([]ManagementSwitch, error) {
 	var switches []ManagementSwitch
 	for _, node := range sls.Hardware {
 		if node.Type == sls_common.MgmtSwitch {
