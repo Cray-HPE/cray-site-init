@@ -5,6 +5,7 @@ Copyright 2020 Hewlett Packard Enterprise Development LP
 package shasta
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -58,7 +59,7 @@ type ManagementSwitch struct {
 	ManagementInterface net.IPAddr // SNMP/REST interface IP (not a distinct BMC)  // Required for SLS
 }
 
-func (iNet *IPV4Network) GenSubnets(cabinets uint, startingCabinet int, mask net.IPMask) error {
+func (iNet *IPV4Network) GenSubnets(cabinets uint, startingCabinet int, mask net.IPMask, mgmtIPReservations int) error {
 	_, myNet, _ := net.ParseCIDR(iNet.CIDR)
 	mySubnets := iNet.AllocatedSubnets()
 	myIPv4Subnets := iNet.Subnets
@@ -72,14 +73,15 @@ func (iNet *IPV4Network) GenSubnets(cabinets uint, startingCabinet int, mask net
 			log.Printf("Couldn't add subnet because %v \n", err)
 			return err
 		}
-		log.Printf("Adding %v \n", newSubnet)
-		myIPv4Subnets = append(myIPv4Subnets, IPV4Subnet{
+		tempSubnet := IPV4Subnet{
 			CIDR:    newSubnet,
 			Name:    fmt.Sprintf("cabinet_%v", startingCabinet+i),
 			Gateway: ipam.Add(newSubnet.IP, 1),
 			// Reserving the first vlan in the range for a non-cabinet aligned vlan if needed in the future.
 			VlanID: iNet.VlanRange[1] + int16(i),
-		})
+		}
+		tempSubnet.ReserveNetMgmtIPs(mgmtIPReservations)
+		myIPv4Subnets = append(myIPv4Subnets, tempSubnet)
 	}
 	iNet.Subnets = myIPv4Subnets
 	return nil
@@ -110,6 +112,21 @@ func (iNet *IPV4Network) AddSubnet(mask net.IPMask, name string, vlanID int16) (
 	})
 	log.Printf("We've got %v subnets after append. \n", len(iNet.Subnets))
 	return &iNet.Subnets[len(iNet.Subnets)-1], nil
+}
+
+func (iNet *IPV4Network) LookUpSubnet(name string) (*IPV4Subnet, error) {
+	for _, v := range iNet.Subnets {
+		if v.Name == name {
+			return &v, nil
+		}
+	}
+	return &IPV4Subnet{}, errors.New("Subnet not found")
+}
+
+func (iSubnet *IPV4Subnet) ReserveNetMgmtIPs(n int) {
+	for i := 1; i < n+1; i++ {
+		iSubnet.AddReservation(fmt.Sprintf("mgmt_net_%03d", i))
+	}
 }
 
 func (iSubnet *IPV4Subnet) ReservedIPs() []net.IP {

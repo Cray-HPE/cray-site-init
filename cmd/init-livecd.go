@@ -6,7 +6,9 @@ package cmd
 
 import (
 	"log"
+	"path/filepath"
 	"strings"
+	"text/template"
 
 	"github.com/fatih/structs"
 	"github.com/spf13/viper"
@@ -110,4 +112,53 @@ func WriteBaseCampData(path string, conf shasta.SystemConfig, sls *sls_common.SL
 // WriteConmanConfig provides conman configuration for the installer
 func WriteConmanConfig(path string, conf shasta.SystemConfig) {
 	log.Printf("NOT IMPLEMENTED")
+}
+
+// WriteDNSMasqConfig writes the dnsmasq configuration files necssary for installation
+func WriteDNSMasqConfig(path string, bootstrap []*shasta.BootstrapNCNMetadata, networks map[string]shasta.IPV4Network) {
+	tpl1, _ := template.New("statics").Parse(string(shasta.StaticConfigTemplate))
+	tpl2, _ := template.New("canconfig").Parse(string(shasta.CANConfigTemplate))
+	tpl3, _ := template.New("hmnconfig").Parse(string(shasta.HMNConfigTemplate))
+	tpl4, _ := template.New("nmnconfig").Parse(string(shasta.NMNConfigTemplate))
+	tpl5, _ := template.New("mtlconfig").Parse(string(shasta.MTLConfigTemplate))
+	log.Printf("Loaded Templates \n")
+
+	var ncns []shasta.DNSMasqNCN
+	log.Printf("Parsing bootstrap for dnsmasq: %v \n", bootstrap)
+	for _, v := range bootstrap {
+		// Get a new ip reservation for each one
+		ncn := shasta.DNSMasqNCN{
+			Hostname: v.GetHostname(),
+			NMNMac:   v.NmnMac,
+			// NMNIP:    nil,
+			// MTLMac:   nil,
+			BMCMac: v.BmcMac,
+			// BMCIP:    nil,
+		}
+		log.Printf("Adding ncn for dnsmasq: %v", ncn)
+		ncns = append(ncns, ncn)
+	}
+	sicFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/statics.conf"), tpl1, ncns)
+	// get a pointer to the CAN
+	canNet := networks["can"]
+	// get a pointer to the subnet
+	canBootstrapSubnet, _ := canNet.LookUpSubnet("bootstrap_dhcp")
+	log.Printf("Calling WriteTemplate with canBootstrapSubnet = %v", &canBootstrapSubnet)
+	sicFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/can.conf"), tpl2, canBootstrapSubnet)
+	// get a pointer to the HMN
+	hmnNet := networks["hmn"]
+	// get a pointer to the subnet
+	hmnBootstrapSubnet, _ := hmnNet.LookUpSubnet("bootstrap_dhcp")
+	sicFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/hmn.conf"), tpl3, hmnBootstrapSubnet)
+	// get a pointer to the NMN
+	nmnNet := networks["nmn"]
+	// get a pointer to the subnet
+	nmnBootstrapSubnet, _ := nmnNet.LookUpSubnet("bootstrap_dhcp")
+	sicFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/nmn.conf"), tpl4, nmnBootstrapSubnet)
+	// get a pointer to the MTL
+	mtlNet := networks["mtl"]
+	// get a pointer to the subnet
+	mtlBootstrapSubnet, _ := mtlNet.LookUpSubnet("mtl_subnet")
+	sicFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/mtl.conf"), tpl5, mtlBootstrapSubnet)
+
 }

@@ -14,8 +14,8 @@ interface-name=spit.can,vlan007
 interface=vlan007
 cname=packages.can,spit.can
 cname=registry.can,spit.can
-dhcp-option=interface:vlan007,option:router,{{.CANGateway}}
-dhcp-range=interface:vlan007,{{.CANDHCPStart}},{{.CANDHCPEnd}},10m
+dhcp-option=interface:vlan007,option:router,{{.Gateway}}
+dhcp-range=interface:vlan007,{{.DHCPStart}},{{.DHCPEnd}},10m
 `)
 
 // HMNConfigTemplate manages the HMN portion of the DNSMasq configuration
@@ -74,7 +74,7 @@ dhcp-range=interface:vlan002,{{.DHCPStart}},{{.DHCPEnd}},10m
 // StaticConfigTemplate manages the static portion of the DNSMasq configuration
 var StaticConfigTemplate = []byte(`
 # Static Configurations
-{{range .NCNS}}
+{{range .}}
 # DHCP Entries for {{.Hostname}}
 dhcp-host={{.NMNMac}},{{.NMNIP}},{{.Hostname}},infinite # NMN
 dhcp-host={{.MTLMac}},{{.MTLIP}},{{.Hostname}},infinite # MTL
@@ -92,11 +92,11 @@ cname=kubernetes-api.vshasta.io,ncn-m001
 type DNSMasqNCN struct {
 	Hostname string `form:"hostname"`
 	NMNMac   string `form:"nmn-mac"`
-	NMNIP    string `form:"nmn-mac"`
-	MTLMac   string `form:"nmn-mac"`
-	MTLIP    string `form:"nmn-mac"`
-	BMCMac   string `form:"nmn-mac"`
-	BMCIP    string `form:"nmn-mac"`
+	NMNIP    string `form:"nmn-ip"`
+	MTLMac   string `form:"mtl-mac"`
+	MTLIP    string `form:"mtl-ip"`
+	BMCMac   string `form:"bmc-mac"`
+	BMCIP    string `form:"bmc-ip"`
 }
 
 // DNSMasqBootstrapNetwork holds information for configuring DNSMasq on the LiveCD

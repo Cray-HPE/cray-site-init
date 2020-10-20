@@ -90,3 +90,13 @@ func GenerateInstanceID() string {
 	rand.Read(b)
 	return fmt.Sprintf("i-%X", b)
 }
+
+func (node BootstrapNCNMetadata) GetHostname() string {
+	if len(node.Hostnames) > 0 {
+		return node.Hostnames[1]
+	}
+	if node.Xname != "" {
+		return node.Xname
+	}
+	return ""
+}

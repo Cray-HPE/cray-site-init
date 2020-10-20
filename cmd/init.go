@@ -62,6 +62,7 @@ var initCmd = &cobra.Command{
 			filepath.Join(basepath, "networks"),
 			filepath.Join(basepath, "manufacturing"),
 			filepath.Join(basepath, "credentials"),
+			filepath.Join(basepath, "dnsmasq.d"),
 		}
 		// Add the Manifest directory if needed
 		if v.GetString("manifest-release") != "" {
@@ -85,6 +86,16 @@ var initCmd = &cobra.Command{
 		log.Println("About to generate networks")
 		shastaNetworks, err := BuildLiveCDNetworks(conf, v)
 		WriteNetworkFiles(basepath, shastaNetworks)
+
+		conf.IPV4Resolvers = strings.Split(viper.GetString("ipv4-resolvers"), ",")
+		conf.SiteServices.NtpPoolHostname = conf.NtpPoolHostname
+		sicFiles.WriteYamlConfig(filepath.Join(basepath, "system_config.yaml"), conf)
+
+		sicFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/root_password.json"), shasta.DefaultRootPW)
+		sicFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/bmc_password.json"), shasta.DefaultBMCPW)
+		sicFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/mgmt_switch_password.json"), shasta.DefaultNetPW)
+		ncnMeta, err := sicFiles.ReadNodeCSV(v.GetString("ncn-metadata"))
+		WriteDNSMasqConfig(basepath, ncnMeta, shastaNetworks)
 
 		// Handle an SLSFile if one is provided
 		var slsState sls_common.SLSState
@@ -116,14 +127,6 @@ var initCmd = &cobra.Command{
 
 		}
 
-		conf.IPV4Resolvers = strings.Split(viper.GetString("ipv4-resolvers"), ",")
-		conf.SiteServices.NtpPoolHostname = conf.NtpPoolHostname
-		sicFiles.WriteYamlConfig(filepath.Join(basepath, "system_config.yaml"), conf)
-
-		sicFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/root_password.json"), shasta.DefaultRootPW)
-		sicFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/bmc_password.json"), shasta.DefaultBMCPW)
-		sicFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/mgmt_switch_password.json"), shasta.DefaultNetPW)
-		ncnMeta, err := sicFiles.ReadNodeCSV(v.GetString("ncn-metadata"))
 		if err != nil {
 			log.Printf("Couldn't extract NCN information from the metadata file: %v \n", v.GetString("ncn-metadata"))
 		} else {
@@ -165,7 +168,10 @@ func init() {
 	initCmd.Flags().Int16("starting-cabinet", 1004, "Starting ID number for Mountain Cabinets")
 	initCmd.Flags().Int16("starting-NID", 20000, "Starting NID for Compute Nodes")
 	// Use these flags to prepare the basecamp metadata json
-	initCmd.Flags().String("switch-xnames", "", "Comma separated list of xnames for management switches")
+	initCmd.Flags().String("spine-switch-xnames", "", "Comma separated list of xnames for spine switches")
+	initCmd.Flags().String("leaf-switch-xnames", "", "Comma separated list of xnames for spine switches")
+	initCmd.Flags().String("bgp-asn", "65533", "The autonomous system number for BGP conversations")
+	initCmd.Flags().Int("management-net-ips", 20, "Number of ip addresses to reserve in each vlan for the management network")
 	initCmd.Flags().String("ncn-metadata", "", "CSV for mapping the mac addresses of the NCNs to their xnames")
 
 	// Dealing with an SLS file
@@ -173,12 +179,6 @@ func init() {
 	// Loftsman Manifest Shasta-CFG
 	initCmd.Flags().String("manifest-release", "", "Loftsman Manifest Release Version (leave blank to prevent manifest generation)")
 	initCmd.Flags().SortFlags = false
-}
-
-// WriteDNSMasqConfig writes the dnsmasq configuration files necssary for installation
-func WriteDNSMasqConfig(path string, conf shasta.SystemConfig) {
-	log.Printf("NOT IMPLEMENTED")
-	// include the statics.conf stuff too
 }
 
 func initiailzeManifestDir(url, branch, destination string) {
