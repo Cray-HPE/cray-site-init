@@ -32,8 +32,6 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]s
 		log.Printf("Couldn't add subnet: %v", err)
 	}
 	pool.AddReservation("api_gateway")
-	// Add a /28 for the Static Pool
-	_, err = tempNMN.AddSubnet(net.CIDRMask(28, 32), "nmn_metallb_static_pool", tempNMN.VlanRange[0])
 	// Add a /26 for bootstrap dhcp
 	subnet, err := tempNMN.AddSubnet(net.CIDRMask(26, 32), "bootstrap_dhcp", tempNMN.VlanRange[0])
 	subnet.DHCPStart = ipam.Add(subnet.CIDR.IP, v.GetInt("management-net-ips"))
@@ -52,11 +50,7 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]s
 		log.Printf("Couldn't add subnet: %v", err)
 	}
 	pool.AddReservation("api_gateway")
-	// Add a /26 for the Static Pool
-	_, err = tempHMN.AddSubnet(net.CIDRMask(25, 32), "hmn_metallb_static_pool", tempHMN.VlanRange[0])
-	if err != nil {
-		log.Printf("Couldn't add subnet: %v", err)
-	}
+
 	// Add a /26 for bootstrap dhcp
 	subnet, err = tempHMN.AddSubnet(net.CIDRMask(26, 32), "bootstrap_dhcp", tempHMN.VlanRange[0])
 	subnet.DHCPStart = ipam.Add(subnet.CIDR.IP, v.GetInt("management-net-ips"))
@@ -75,11 +69,6 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]s
 		log.Printf("Couldn't add subnet: %v", err)
 	}
 	pool.AddReservation("api_gateway")
-	// Add a /28 for the Static Pool
-	_, err = tempHSN.AddSubnet(net.CIDRMask(28, 32), "hsn_metallb_static_pool", tempHSN.VlanRange[0])
-	if err != nil {
-		log.Printf("Couldn't add subnet: %v", err)
-	}
 
 	// Divide the network into an appropriate number of subnets
 	tempHSN.GenSubnets(uint(conf.MountainCabinets), int(conf.StartingCabinet), net.CIDRMask(22, 32), v.GetInt("management-net-ips"))

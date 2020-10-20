@@ -91,6 +91,7 @@ func GenerateInstanceID() string {
 	return fmt.Sprintf("i-%X", b)
 }
 
+// GetHostname returns an explicit hostname if possible, otherwise the Xname, otherwise an empty string
 func (node BootstrapNCNMetadata) GetHostname() string {
 	if len(node.Hostnames) > 0 {
 		return node.Hostnames[1]

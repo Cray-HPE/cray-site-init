@@ -63,11 +63,9 @@ func (iNet *IPV4Network) GenSubnets(cabinets uint, startingCabinet int, mask net
 	_, myNet, _ := net.ParseCIDR(iNet.CIDR)
 	mySubnets := iNet.AllocatedSubnets()
 	myIPv4Subnets := iNet.Subnets
-	log.Printf("In the GenSubnets function. Cabinets = %v \n", int(cabinets))
 
 	for i := 1; i < int(cabinets); i++ {
 		newSubnet, err := ipam.Free(*myNet, mask, mySubnets)
-		log.Printf("The %v subnet is %v \n", i, newSubnet)
 		mySubnets = append(mySubnets, newSubnet)
 		if err != nil {
 			log.Printf("Couldn't add subnet because %v \n", err)
@@ -103,14 +101,12 @@ func (iNet *IPV4Network) AddSubnet(mask net.IPMask, name string, vlanID int16) (
 		log.Printf("Couldn't add subnet because %v \n", err)
 		return &tempSubnet, err
 	}
-	log.Printf("We've got %v subnets before append. \n", len(iNet.Subnets))
 	iNet.Subnets = append(iNet.Subnets, IPV4Subnet{
 		CIDR:    newSubnet,
 		Name:    name,
 		Gateway: ipam.Add(newSubnet.IP, 1),
 		VlanID:  vlanID,
 	})
-	log.Printf("We've got %v subnets after append. \n", len(iNet.Subnets))
 	return &iNet.Subnets[len(iNet.Subnets)-1], nil
 }
 

@@ -5,6 +5,7 @@ Copyright 2020 Hewlett Packard Enterprise Development LP
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"path/filepath"
 	"strings"
@@ -114,6 +115,40 @@ func WriteConmanConfig(path string, conf shasta.SystemConfig) {
 	log.Printf("NOT IMPLEMENTED")
 }
 
+// WriteMetalLBConfigMap creates the yaml configmap
+func WriteMetalLBConfigMap(path string, conf shasta.SystemConfig, networks map[string]shasta.IPV4Network) {
+
+	// this lookup table should be redundant in the future
+	// when we can better hint which pool an endpoint should pull from
+	var metalLBLookupTable = map[string]string{
+		"nmn_metallb_address_pool": "node-management",
+		"hmn_metallb_address_pool": "hardware-management",
+		"hsn_metallb_address_pool": "high-speed",
+		"can_metallb_address_pool": "customer-access",
+		"can_metallb_static_pool":  "customer-access-static",
+	}
+
+	tpl, err := template.New("mtllbconfigmap").Parse(string(shasta.MetalLBConfigMapTemplate))
+	if err != nil {
+		log.Printf("The template failed to render because: %v \n", err)
+	}
+	var configStruct shasta.MetalLBConfigMap
+	configStruct.Networks = make(map[string]string)
+	configStruct.ASN = "65533"
+	configStruct.SpineSwitches = append(configStruct.SpineSwitches, "x3333")
+
+	for _, network := range networks {
+		for _, subnet := range network.Subnets {
+			if strings.Contains(subnet.Name, "metallb") {
+				if val, ok := metalLBLookupTable[subnet.Name]; ok {
+					configStruct.Networks[val] = subnet.CIDR.String()
+				}
+			}
+		}
+	}
+	sicFiles.WriteTemplate(filepath.Join(path, "metallb.yaml"), tpl, configStruct)
+}
+
 // WriteDNSMasqConfig writes the dnsmasq configuration files necssary for installation
 func WriteDNSMasqConfig(path string, bootstrap []*shasta.BootstrapNCNMetadata, networks map[string]shasta.IPV4Network) {
 	tpl1, _ := template.New("statics").Parse(string(shasta.StaticConfigTemplate))
@@ -121,10 +156,7 @@ func WriteDNSMasqConfig(path string, bootstrap []*shasta.BootstrapNCNMetadata, n
 	tpl3, _ := template.New("hmnconfig").Parse(string(shasta.HMNConfigTemplate))
 	tpl4, _ := template.New("nmnconfig").Parse(string(shasta.NMNConfigTemplate))
 	tpl5, _ := template.New("mtlconfig").Parse(string(shasta.MTLConfigTemplate))
-	log.Printf("Loaded Templates \n")
-
 	var ncns []shasta.DNSMasqNCN
-	log.Printf("Parsing bootstrap for dnsmasq: %v \n", bootstrap)
 	for _, v := range bootstrap {
 		// Get a new ip reservation for each one
 		ncn := shasta.DNSMasqNCN{
@@ -135,32 +167,26 @@ func WriteDNSMasqConfig(path string, bootstrap []*shasta.BootstrapNCNMetadata, n
 			BMCMac: v.BmcMac,
 			// BMCIP:    nil,
 		}
-		log.Printf("Adding ncn for dnsmasq: %v", ncn)
 		ncns = append(ncns, ncn)
 	}
 	sicFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/statics.conf"), tpl1, ncns)
-	// get a pointer to the CAN
-	canNet := networks["can"]
-	// get a pointer to the subnet
-	canBootstrapSubnet, _ := canNet.LookUpSubnet("bootstrap_dhcp")
-	log.Printf("Calling WriteTemplate with canBootstrapSubnet = %v", canBootstrapSubnet)
-	sicFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/can.conf"), tpl2, canBootstrapSubnet)
-	// get a pointer to the HMN
-	hmnNet := networks["hmn"]
-	// get a pointer to the subnet
-	hmnBootstrapSubnet, _ := hmnNet.LookUpSubnet("bootstrap_dhcp")
-	log.Printf("Calling WriteTemplate with hmnBootstrapSubnet = %v", hmnBootstrapSubnet)
-	sicFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/hmn.conf"), tpl3, hmnBootstrapSubnet)
 
-	// get a pointer to the NMN
-	nmnNet := networks["nmn"]
-	// get a pointer to the subnet
-	nmnBootstrapSubnet, _ := nmnNet.LookUpSubnet("bootstrap_dhcp")
-	sicFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/nmn.conf"), tpl4, nmnBootstrapSubnet)
 	// get a pointer to the MTL
 	mtlNet := networks["mtl"]
 	// get a pointer to the subnet
 	mtlBootstrapSubnet, _ := mtlNet.LookUpSubnet("mtl_subnet")
 	sicFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/mtl.conf"), tpl5, mtlBootstrapSubnet)
 
+	// Deal with the easy ones
+	writeConfig("can", path, *tpl2, networks)
+	writeConfig("hmn", path, *tpl3, networks)
+	writeConfig("nmn", path, *tpl4, networks)
+}
+
+func writeConfig(name, path string, tpl template.Template, networks map[string]shasta.IPV4Network) {
+	// get a pointer to the IPV4Network
+	tempNet := networks[name]
+	// get a pointer to the subnet
+	bootstrapSubnet, _ := tempNet.LookUpSubnet("bootstrap_dhcp")
+	sicFiles.WriteTemplate(filepath.Join(path, fmt.Sprintf("dnsmasq.d/%v.conf", name)), &tpl, bootstrapSubnet)
 }

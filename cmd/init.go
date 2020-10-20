@@ -82,8 +82,6 @@ var initCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("unable to decode configuration into struct, %v \n", err)
 		}
-
-		log.Println("About to generate networks")
 		shastaNetworks, err := BuildLiveCDNetworks(conf, v)
 		WriteNetworkFiles(basepath, shastaNetworks)
 
@@ -96,6 +94,7 @@ var initCmd = &cobra.Command{
 		sicFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/mgmt_switch_password.json"), shasta.DefaultNetPW)
 		ncnMeta, err := sicFiles.ReadNodeCSV(v.GetString("ncn-metadata"))
 		WriteDNSMasqConfig(basepath, ncnMeta, shastaNetworks)
+		WriteMetalLBConfigMap(basepath, conf, shastaNetworks)
 
 		// Handle an SLSFile if one is provided
 		var slsState sls_common.SLSState
