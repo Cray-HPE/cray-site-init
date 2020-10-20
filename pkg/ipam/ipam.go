@@ -302,6 +302,11 @@ func size(mask net.IPMask) int {
 	return size
 }
 
+// Broadcast takes a net.IPNet and returns the broadcast address as net.IP
+func Broadcast(network net.IPNet) net.IP {
+	return Add(network.IP, size(network.Mask)-1)
+}
+
 // space takes a list of free ip ranges, and a mask,
 // and returns the start IP of the first range that could fit the mask.
 func space(freeIPRanges []IPRange, mask net.IPMask) (net.IP, error) {
