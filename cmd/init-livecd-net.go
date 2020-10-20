@@ -110,6 +110,11 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]s
 	if err != nil {
 		log.Printf("Couldn't add subnet: %v", err)
 	}
+	// Add a /26 for bootstrap dhcp
+	subnet, err = tempCan.AddSubnet(net.CIDRMask(26, 32), "bootstrap_dhcp", tempCan.VlanRange[0])
+	subnet.ReserveNetMgmtIPs(v.GetInt("management-net-ips"))
+	subnet.DHCPStart = ipam.Add(subnet.CIDR.IP, v.GetInt("management-net-ips"))
+	subnet.DHCPEnd = ipam.Add(ipam.Broadcast(subnet.CIDR), -1)
 	networkMap["can"] = tempCan
 
 	return networkMap, nil

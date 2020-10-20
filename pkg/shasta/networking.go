@@ -114,13 +114,13 @@ func (iNet *IPV4Network) AddSubnet(mask net.IPMask, name string, vlanID int16) (
 	return &iNet.Subnets[len(iNet.Subnets)-1], nil
 }
 
-func (iNet *IPV4Network) LookUpSubnet(name string) (*IPV4Subnet, error) {
+func (iNet *IPV4Network) LookUpSubnet(name string) (IPV4Subnet, error) {
 	for _, v := range iNet.Subnets {
 		if v.Name == name {
-			return &v, nil
+			return v, nil
 		}
 	}
-	return &IPV4Subnet{}, errors.New("Subnet not found")
+	return IPV4Subnet{}, errors.New("Subnet not found")
 }
 
 func (iSubnet *IPV4Subnet) ReserveNetMgmtIPs(n int) {

@@ -143,13 +143,15 @@ func WriteDNSMasqConfig(path string, bootstrap []*shasta.BootstrapNCNMetadata, n
 	canNet := networks["can"]
 	// get a pointer to the subnet
 	canBootstrapSubnet, _ := canNet.LookUpSubnet("bootstrap_dhcp")
-	log.Printf("Calling WriteTemplate with canBootstrapSubnet = %v", &canBootstrapSubnet)
+	log.Printf("Calling WriteTemplate with canBootstrapSubnet = %v", canBootstrapSubnet)
 	sicFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/can.conf"), tpl2, canBootstrapSubnet)
 	// get a pointer to the HMN
 	hmnNet := networks["hmn"]
 	// get a pointer to the subnet
 	hmnBootstrapSubnet, _ := hmnNet.LookUpSubnet("bootstrap_dhcp")
+	log.Printf("Calling WriteTemplate with hmnBootstrapSubnet = %v", hmnBootstrapSubnet)
 	sicFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/hmn.conf"), tpl3, hmnBootstrapSubnet)
+
 	// get a pointer to the NMN
 	nmnNet := networks["nmn"]
 	// get a pointer to the subnet

@@ -23,16 +23,16 @@ var HMNConfigTemplate = []byte(`
 # HMN:
 server=/hmn/
 address=/hmn/
-domain=hmn,{{.HMNDHCPStart}},{{HMNDHCPEnd}},local
+domain=hmn,{{.DHCPStart}},{{.DHCPEnd}},local
 interface-name=spit.hmn,vlan004
 dhcp-option=interace:vlan004,option:domain-search,hmn
 interface=vlan004
 cname=packages.hmn,spit.hmn
 cname=registry.hmn,spit.hmn
-dhcp-option=interface:vlan004,option:dns-server,{{.HMNGateway}}
-dhcp-option=interface:vlan004,option:ntp-server,{{.HMNGateway}}
+dhcp-option=interface:vlan004,option:dns-server,{{.Gateway}}
+dhcp-option=interface:vlan004,option:ntp-server,{{.Gateway}}
 dhcp-option=interface:vlan004,option:router,{{.HMNGateway}}
-dhcp-range=interface:vlan004,{{.HMNDHCPStart}},{{HMNDHCPEnd}},10m
+dhcp-range=interface:vlan004,{{.DHCPStart}},{{.DHCPEnd}},10m
 `)
 
 // MTLConfigTemplate manages the MTL portion of the DNSMasq configuration
@@ -40,7 +40,7 @@ var MTLConfigTemplate = []byte(`
 # MTL:
 server=/mtl/
 address=/mtl/
-domain=mtl,{{.MTLDHCPStart}},{{.MTLDHCPEnd}},local
+domain=mtl,{{.DHCPStart}},{{.DHCPEnd}},local
 dhcp-option=interface:bond0,option:domain-search,mtl
 interface=bond0
 interface-name=spit.mtl,bond0
@@ -48,10 +48,10 @@ cname=packages.mtl,spit.mtl
 cname=registry.mtl,spit.mtl
 cname=packages.local,spit.mtl
 cname=registry.local,spit.mtl
-dhcp-option=interface:bond0,option:dns-server,{{.MTLGateway}}
-dhcp-option=interface:bond0,option:ntp-server,{{.MTLGateway}}
-dhcp-option=interface:bond0,option:router,{{.MTLGateway}}
-dhcp-range=interface:bond0,{{.MTLDHCPStart}},{{.MTLDHCPEnd}},10m
+dhcp-option=interface:bond0,option:dns-server,{{.Gateway}}
+dhcp-option=interface:bond0,option:ntp-server,{{.Gateway}}
+dhcp-option=interface:bond0,option:router,{{.Gateway}}
+dhcp-range=interface:bond0,{{.DHCPStart}},{{.DHCPEnd}},10m
 `)
 
 // NMNConfigTemplate manages the NMN portion of the DNSMasq configuration
