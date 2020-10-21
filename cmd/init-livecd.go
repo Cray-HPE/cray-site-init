@@ -11,7 +11,6 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/fatih/structs"
 	"github.com/spf13/viper"
 
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
@@ -53,7 +52,7 @@ func makeBaseCampfromSLS(conf shasta.SystemConfig, sls *sls_common.SLSState, ncn
 			Hostname:         v.Hostnames[0],
 			InstanceID:       shasta.GenerateInstanceID(),
 			Region:           globalViper.GetString("system-name"),
-			AvailabilityZone: "", // Using cabinet for AZ
+			AvailabilityZone: "", // TODO: Use cabinet for AZ once that is ready
 			ShastaRole:       "ncn-" + strings.ToLower(v.Subrole),
 		}
 		for _, value := range ncnMeta {
@@ -69,7 +68,7 @@ func makeBaseCampfromSLS(conf shasta.SystemConfig, sls *sls_common.SLSState, ncn
 				userDataMap["hostname"] = v.Hostnames[0]
 				userDataMap["local_hostname"] = v.Hostnames[0]
 				basecampConfig[value.NmnMac] = shasta.CloudInit{
-					MetaData: structs.Map(tempMetadata),
+					MetaData: tempMetadata,
 					UserData: userDataMap,
 				}
 			}
