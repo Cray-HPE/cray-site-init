@@ -2,7 +2,7 @@
 Copyright 2020 Hewlett Packard Enterprise Development LP
 */
 
-package cmd
+package files
 
 import (
 	"os"
@@ -11,8 +11,8 @@ import (
 	"stash.us.cray.com/MTL/sic/pkg/shasta"
 )
 
-// ReadCSV parses a CSV file into a list of NCN_bootstrap nodes for use by the installer
-func ReadCSV(filename string) ([]*shasta.BootstrapNCNMetadata, error) {
+// ReadNodeCSV parses a CSV file into a list of NCN_bootstrap nodes for use by the installer
+func ReadNodeCSV(filename string) ([]*shasta.BootstrapNCNMetadata, error) {
 	nodes := []*shasta.BootstrapNCNMetadata{}
 
 	ncnMetadataFile, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, os.ModePerm)
