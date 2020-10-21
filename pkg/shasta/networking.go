@@ -59,6 +59,7 @@ type ManagementSwitch struct {
 	ManagementInterface net.IPAddr // SNMP/REST interface IP (not a distinct BMC)  // Required for SLS
 }
 
+// GenSubnets subdivides a network into a set of subnets
 func (iNet *IPV4Network) GenSubnets(cabinets uint, startingCabinet int, mask net.IPMask, mgmtIPReservations int) error {
 	_, myNet, _ := net.ParseCIDR(iNet.CIDR)
 	mySubnets := iNet.AllocatedSubnets()
@@ -85,6 +86,7 @@ func (iNet *IPV4Network) GenSubnets(cabinets uint, startingCabinet int, mask net
 	return nil
 }
 
+// AllocatedSubnets returns a list of the allocated subnets
 func (iNet IPV4Network) AllocatedSubnets() []net.IPNet {
 	var myNets []net.IPNet
 	for _, v := range iNet.Subnets {
@@ -93,6 +95,7 @@ func (iNet IPV4Network) AllocatedSubnets() []net.IPNet {
 	return myNets
 }
 
+// AddSubnet allocates a new subnet
 func (iNet *IPV4Network) AddSubnet(mask net.IPMask, name string, vlanID int16) (*IPV4Subnet, error) {
 	var tempSubnet IPV4Subnet
 	_, myNet, _ := net.ParseCIDR(iNet.CIDR)
@@ -110,6 +113,7 @@ func (iNet *IPV4Network) AddSubnet(mask net.IPMask, name string, vlanID int16) (
 	return &iNet.Subnets[len(iNet.Subnets)-1], nil
 }
 
+// LookUpSubnet returns a subnet by name
 func (iNet *IPV4Network) LookUpSubnet(name string) (IPV4Subnet, error) {
 	for _, v := range iNet.Subnets {
 		if v.Name == name {
@@ -119,12 +123,14 @@ func (iNet *IPV4Network) LookUpSubnet(name string) (IPV4Subnet, error) {
 	return IPV4Subnet{}, errors.New("Subnet not found")
 }
 
+// ReserveNetMgmtIPs reserves (n) IP addresses for management networking equipment
 func (iSubnet *IPV4Subnet) ReserveNetMgmtIPs(n int) {
 	for i := 1; i < n+1; i++ {
 		iSubnet.AddReservation(fmt.Sprintf("mgmt_net_%03d", i))
 	}
 }
 
+// ReservedIPs returns a list of IPs already reserved within the subnet
 func (iSubnet *IPV4Subnet) ReservedIPs() []net.IP {
 	var addresses []net.IP
 	for _, v := range iSubnet.IPReservations {
@@ -133,6 +139,7 @@ func (iSubnet *IPV4Subnet) ReservedIPs() []net.IP {
 	return addresses
 }
 
+// AddReservation adds a new IP reservation to the subnet
 func (iSubnet *IPV4Subnet) AddReservation(name string) *IPReservation {
 	myReservedIPs := iSubnet.ReservedIPs()
 	// Start counting from the bottom knowing the gateway is on the bottom
