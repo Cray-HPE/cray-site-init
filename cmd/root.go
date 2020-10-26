@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 
 	"github.com/spf13/viper"
 )
@@ -59,27 +59,6 @@ func Execute() {
 	}
 }
 
-// Bind each cobra flag to its associated viper configuration (config file and environment variable)
-func bindFlags(cmd *cobra.Command, v *viper.Viper) {
-	cmd.Flags().VisitAll(func(f *pflag.Flag) {
-		// Environment variables can't have dashes in them, so bind them to their equivalent
-		// keys with underscores, e.g. --favorite-color to STING_FAVORITE_COLOR
-		envVarSuffix := strings.ToUpper(f.Name)
-		if strings.Contains(f.Name, "-") {
-			envVarSuffix = strings.ReplaceAll(envVarSuffix, "-", "_")
-		}
-		v.BindEnv(f.Name, fmt.Sprintf("%s_%s", envPrefix, envVarSuffix))
-
-		// Apply the viper config value to the flag when the flag is not set and viper has a value
-		if !f.Changed && v.IsSet(f.Name) {
-			val := v.Get(f.Name)
-			cmd.Flags().Set(f.Name, fmt.Sprintf("%v", val))
-		} else {
-			v.Set(f.Name, f.Value)
-		}
-	})
-}
-
 // This function is useful for understanding what a particular viper contains.
 // It is more a crutch for development than anything I would ever expect a customer to see.
 func viperWiper(v *viper.Viper) {
@@ -124,9 +103,16 @@ func initializeFlagswithViper(cmd *cobra.Command) error {
 
 	// When we bind flags to environment variables expect that the
 	// environment variables are prefixed, e.g. a flag like --number
-	// binds to an environment variable STING_NUMBER. This helps
+	// binds to an environment variable STRING_NUMBER. This helps
 	// avoid conflicts.
-	v.SetEnvPrefix(envPrefix)
+	reg, err := regexp.Compile("[^A-Za-z0-9]+")
+	if err != nil {
+		log.Fatal(err)
+	}
+	// "sic config init --option" => SIC_CONFIG_INIT_OPTION
+	v.SetEnvPrefix(reg.ReplaceAllString(cmd.CommandPath(), "_"))
+
+	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 
 	// Bind to environment variables
 	// Works great for simple config names, but needs help for names
@@ -134,7 +120,7 @@ func initializeFlagswithViper(cmd *cobra.Command) error {
 	v.AutomaticEnv()
 
 	// Bind the current command's flags to viper
-	bindFlags(cmd, v)
+	v.BindPFlags(cmd.Flags())
 
 	return nil
 }

@@ -66,6 +66,9 @@ func extractNetworks(basepath string) ([]shasta.IPV4Network, error) {
 func loadSystemConfig(path string) (shasta.SystemConfig, error) {
 	var c shasta.SystemConfig
 	info, err := os.Stat(path)
+	if err != nil {
+		return c, err
+	}
 	log.Println("Processing", path, "as SystemConfig -", info.Size())
 	yamlFile, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -80,7 +83,10 @@ func loadSystemConfig(path string) (shasta.SystemConfig, error) {
 
 func loadNetwork(path string) (shasta.IPV4Network, error) {
 	var c shasta.IPV4Network
-	info, _ := os.Stat(path)
+	info, err := os.Stat(path)
+	if err != nil {
+		return c, nil
+	}
 	log.Printf("Processing %v as Network - (%v)", path, info.Size())
 	yamlFile, err := ioutil.ReadFile(path)
 	if err != nil {
