@@ -81,7 +81,7 @@ func init() {
 	viper.AutomaticEnv()
 	validateCmd.Flags().StringVarP(&validateNetwork, "network", "n", viper.GetString("validate_network"), "Validate the network when booted into the LiveCD (env: SPIT_VALIDATE_NETWORK)")
 	validateCmd.Flags().StringVarP(&validateServices, "services", "s", viper.GetString("validate_services"), "Validate services when booted into the LiveCD (env: SPIT_VALIDATE_SERVICES)")
-	validateCmd.Flags().StringVarP(&validateDNS, "dns", "d", viper.GetString("validate_dns"), "Validate the DNS leases (env: SPIT_VALIDATE_DNS)")
+	validateCmd.Flags().StringVarP(&validateDNS, "dns-dhcp", "d", viper.GetString("validate_dns_dhcp"), "Validate the DNS leases (env: SPIT_VALIDATE_DNS_DHCP)")
 	validateCmd.Flags().StringVarP(&validateMtu, "mtu", "m", viper.GetString("validate_mtu"), "Validate the MTU of the spine ports (env: SPIT_VALIDATE_MTU)")
 	validateCmd.Flags().StringVarP(&validateCeph, "ceph", "c", viper.GetString("validate_ceph"), "Validate Ceph is working (env: SPIT_VALIDATE_CEPH)")
 	validateCmd.Flags().StringVarP(&validateK8s, "k8s", "k", viper.GetString("validate_k8s"), "Validate Kubernetes is working (env: SPIT_VALIDATE_K8S)")

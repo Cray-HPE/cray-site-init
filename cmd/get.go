@@ -8,20 +8,13 @@ import (
 	"io"
 	"os"
 	"path"
-	// "os/exec"
+	"log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"net/http"
 )
 
-var dataDir = "/mnt/data/"
-var cephDir = "/mnt/data/ceph/"
-var k8sDir = "/mnt/data/k8s/"
-
-var kernelURL string
-var initrdURL string
-var k8sURL string
-var cephURL string
+var dataDir, cephDir, k8sDir, kernelURL, initrdURL, k8sURL, cephURL string
 
 // getCmd represents the get command
 var getCmd = &cobra.Command{
@@ -31,10 +24,10 @@ var getCmd = &cobra.Command{
 	for booting nodes via iPXE`,
 	Run: func(cmd *cobra.Command, args []string) {
 		makeReqDirs()
-		GetArtifact(dataDir, viper.GetString("kernel"))
-		GetArtifact(dataDir, viper.GetString("initrd"))
-		GetArtifact(cephDir, viper.GetString("storage"))
-		GetArtifact(k8sDir, viper.GetString("manager"))
+		GetArtifact(dataDir, kernelURL)
+		GetArtifact(dataDir, initrdURL)
+		GetArtifact(cephDir, cephURL)
+		GetArtifact(k8sDir, k8sURL)
 	},
 }
 
@@ -47,33 +40,42 @@ func makeReqDirs() {
 
 // GetArtifact downloads kernels, initrd, and squashfs images
 func GetArtifact(dirpath string, url string) (err error) {
-	// Get the data
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
+	if url != "" {
+		// Get the data
+		resp, err := http.Get(url)
+		if err != nil {
+		  log.Fatal(err)
+		}
 
-	filename := resp.Request.URL.String()
-	var fullPath = dirpath + path.Base(filename)
+		if resp.StatusCode != 200 {
+		  fmt.Println(resp.StatusCode)
+		}
+		defer resp.Body.Close()
 
-	fmt.Println("Saving...", fullPath)
-	// Create the file
-	out, err := os.Create(fullPath)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
+		filename := resp.Request.URL.String()
+		var fullPath = dirpath + "/" + path.Base(filename)
 
-	// Check server response
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("bad status: %s", resp.Status)
-	}
+		fmt.Printf("%d Saving...%s\n", resp.StatusCode, fullPath)
+		// Create the file
+		out, err := os.Create(fullPath)
+		if err != nil {
+			fmt.Println(err)
+		}
+		defer out.Close()
 
-	// Writer the body to file
-	_, err = io.Copy(out, resp.Body)
-	if err != nil {
-		return err
+		// Check server response
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("bad status: %s", resp.Status)
+		}
+
+		// Writer the body to file
+		_, err = io.Copy(out, resp.Body)
+		if err != nil {
+			return err
+		}
+
+	} else {
+		fmt.Println("Skipping empty URL")
 	}
 
 	return nil
@@ -87,5 +89,8 @@ func init() {
 	getCmd.Flags().StringVarP(&initrdURL, "initrd", "i", viper.GetString("initrd_url"), "URL of initrd file to download( env: SPIT_INITRD_URL)")
 	getCmd.Flags().StringVarP(&k8sURL, "manager", "m", viper.GetString("manager_url"), "URL of manager/worker squashfs file to download (env: SPIT_MANAGER_URL)")
 	getCmd.Flags().StringVarP(&cephURL, "storage", "s", viper.GetString("storage_url"), "URL of storage squashfs file to download (env: SPIT_STORAGE_URL)")
+	getCmd.Flags().StringVarP(&dataDir, "data-dir", "d", viper.GetString("data_dir"), "Path to data folder where kernel, initrd, will be saved (env: SPIT_DATA_DIR)")
+	getCmd.Flags().StringVarP(&cephDir, "ceph-dir", "c", viper.GetString("ceph_dir"), "Path to where ceph image will be saved (env: SPIT_CEPH_DIR)")
+	getCmd.Flags().StringVarP(&k8sDir, "k8s-dir", "K", viper.GetString("k8s_dir"), "Path to where k8s image will be saved  (env: SPIT_K8S_DIR)")
 
 }
