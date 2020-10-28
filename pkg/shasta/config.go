@@ -25,29 +25,29 @@ type BootstrapNCNMetadata struct {
 
 // SystemConfig stores the overall set of system configuration parameters
 type SystemConfig struct {
-	SystemName       string       `form:"system-name" mapstructure:"system-name"`
-	SiteDomain       string       `form:"site-domain" mapstructure:"site-domain"`
-	InternalDomain   string       `form:"internal-domain" mapstructure:"internal-domain"`
-	MountainCabinets int16        `form:"mountain-cabinets" mapstructure:"mountain-cabinets"`
-	StartingCabinet  int16        `form:"starting-cabinet" mapstructure:"starting-cabinet"`
-	StartingNID      int          `form:"starting-NID" mapstructure:"starting-NID"`
-	NtpPoolHostname  string       `form:"ntp-pool" mapstructure:"ntp-pool"`
-	NtpHosts         []string     `form:"ntp-hosts" mapstructure:"ntp-hosts"`
-	IPV4Resolvers    []string     `form:"ipv4-resolvers" mapstructure:"ipv4-resolvers"`
-	V2Registry       string       `form:"v2-registry" mapstructure:"v2-registry"`
-	RpmRegistry      string       `form:"rpm-repository" mapstructure:"rpm-repository"`
-	NMNCidr          string       `form:"nmn-cidr" mapstructure:"nmn-cidr"`
-	HMNCidr          string       `form:"hmn-cidr" mapstructure:"hmn-cidr"`
-	CANCidr          string       `form:"can-cidr" mapstructure:"can-cidr"`
-	MTLCidr          string       `form:"mtl-cidr" mapstructure:"mtl-cidr"`
-	HSNCidr          string       `form:"hsn-cidr" mapstructure:"hsn-cidr"`
-	SiteServices     SiteServices `form:"site-services" mapstructure:"site-services"`
+	SystemName      string       `form:"system-name" mapstructure:"system-name"`
+	SiteDomain      string       `form:"site-domain" mapstructure:"site-domain"`
+	InternalDomain  string       `form:"internal-domain" mapstructure:"internal-domain"`
+	Cabinets        int16        `form:"cabinets" mapstructure:"cabinets"`
+	StartingCabinet int16        `form:"starting-cabinet" mapstructure:"starting-cabinet"`
+	StartingNID     int          `form:"starting-NID" mapstructure:"starting-NID"`
+	NtpPoolHostname string       `form:"ntp-pool" mapstructure:"ntp-pool"`
+	NtpHosts        []string     `form:"ntp-hosts" mapstructure:"ntp-hosts"`
+	IPV4Resolvers   []string     `form:"ipv4-resolvers" mapstructure:"ipv4-resolvers"`
+	V2Registry      string       `form:"v2-registry" mapstructure:"v2-registry"`
+	RpmRegistry     string       `form:"rpm-repository" mapstructure:"rpm-repository"`
+	NMNCidr         string       `form:"nmn-cidr" mapstructure:"nmn-cidr"`
+	HMNCidr         string       `form:"hmn-cidr" mapstructure:"hmn-cidr"`
+	CANCidr         string       `form:"can-cidr" mapstructure:"can-cidr"`
+	MTLCidr         string       `form:"mtl-cidr" mapstructure:"mtl-cidr"`
+	HSNCidr         string       `form:"hsn-cidr" mapstructure:"hsn-cidr"`
+	SiteServices    SiteServices `form:"site-services" mapstructure:"site-services"`
 }
 
 // HardwareDetail stores information that can only come from Manufacturing
 type HardwareDetail struct {
-	MountainCabinets int16 `form:"mountain-cabinets" mapstructure:"mountain-cabinets"`
-	StartingCabinet  int16 `form:"starting-cabinet" mapstructure:"starting-cabinet"`
+	Cabinets        int16 `form:"cabinets" mapstructure:"cabinets"`
+	StartingCabinet int16 `form:"starting-cabinet" mapstructure:"starting-cabinet"`
 }
 
 // BGPPeering stores information about MetalLB Peering
