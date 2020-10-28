@@ -11,13 +11,14 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
+	shcd_parser "stash.us.cray.com/HMS/hms-shcd-parser/pkg/shcd-parser"
 	sicFiles "stash.us.cray.com/MTL/sic/internal/files"
 	"stash.us.cray.com/MTL/sic/pkg/shasta"
 )
 
 // loadCmd represents the load command
 var loadCmd = &cobra.Command{
-	Use:   "load [path]",
+	Use:   "load <path>",
 	Short: "load a valid Shasta 1.4 directory of configuration",
 	Long: `Load a set of files that represent a Shasta 1.4 system.
 	Often load is used with init which generates the files.`,
@@ -72,4 +73,7 @@ func extractNetworks(basepath string) ([]shasta.IPV4Network, error) {
 	return networks, err
 }
 
+func loadHMNConnectionsFile(path string) (rows []shcd_parser.HMNRow, err error) {
+	err = sicFiles.ReadJSONConfig(path, &rows)
+	return
 }
