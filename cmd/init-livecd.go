@@ -155,6 +155,7 @@ func WriteDNSMasqConfig(path string, bootstrap []*shasta.BootstrapNCNMetadata, n
 	tpl3, _ := template.New("hmnconfig").Parse(string(shasta.HMNConfigTemplate))
 	tpl4, _ := template.New("nmnconfig").Parse(string(shasta.NMNConfigTemplate))
 	tpl5, _ := template.New("mtlconfig").Parse(string(shasta.MTLConfigTemplate))
+	tpl6, _ := template.New("conmanconfig").Parse(string(shasta.ConmanConfigTemplate))
 	var ncns []shasta.DNSMasqNCN
 	for _, v := range bootstrap {
 		// Get a new ip reservation for each one
@@ -168,6 +169,7 @@ func WriteDNSMasqConfig(path string, bootstrap []*shasta.BootstrapNCNMetadata, n
 		}
 		ncns = append(ncns, ncn)
 	}
+	sicFiles.WriteTemplate(filepath.Join(path, "conman.conf"), tpl6, ncns)
 	sicFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/statics.conf"), tpl1, ncns)
 
 	// get a pointer to the MTL

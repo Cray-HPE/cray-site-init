@@ -1,0 +1,281 @@
+##
+# ConMan daemon configuration file
+##
+# - Whitespace is ignored.
+# - Comments are ignored (from the pound char to the newline).
+# - Directives are terminated by a newline.
+# - Directives may span multiple lines by escaping the newline
+#     (ie, immediately preceding it with a backslash char).
+# - Integers may begin with either a plus or minus, and contain only digits.
+# - Strings may be single-quoted or double-quoted.
+# - Strings cannot contain newlines.
+# - Unquoted strings are sequences of letters, digits, and underscores;
+#     they may not begin with a digit (just like a C identifier).
+# - Tokens are unquoted case-insensitive strings.
+##
+
+##
+# The daemon's COREDUMP keyword specifies whether the daemon should generate a
+#   core dump file.  This file will be created in the current working directory
+#   (or '/' when running in the background) unless you also set COREDUMPDIR.
+#   The default is OFF.
+##
+# server coredump=(on|off)
+##
+
+##
+# The daemon's COREDUMPDIR keyword specifies the directory where the daemon
+#   tries to write core dump files.  The default is empty, meaning the current
+#   working directory (or '/' when running in the background) will be used.
+##
+# server coredumpdir="<dir>"
+##
+
+##
+# The daemon's EXECPATH keyword specifies a colon-separated list of directories
+#   in which to search for external process-based console executables that are
+#   not defined by an absolute or relative pathname.  The default is empty.
+##
+# server execpath="<dir1:dir2:dir3...>"
+##
+
+##
+# The daemon's KEEPALIVE keyword specifies whether the daemon will use
+#   TCP keep-alives for detecting dead connections.  The default is ON.
+##
+# server keepalive=(on|off)
+##
+
+##
+# The daemon's LOGDIR keyword specifies a directory prefix for log files that
+#   are not defined via an absolute pathname.  This affects the SERVER LOGFILE,
+#   GLOBAL LOG, and CONSOLE LOG directives.
+##
+# server logdir="<dir>"
+##
+
+##
+# The daemon's LOGFILE keyword specifies the file to which log messages are
+#   appended if the daemon is not running in the foreground.  This string
+#   undergoes conversion specifier expansion each time the file is opened.
+#   If an absolute pathname is not given, the file's location is relative to
+#   either LOGDIR (if defined) or the current working directory.  Intermediate
+#   directories will be created as needed.
+# The filename may optionally be followed by a comma and a minimum priority
+#   at which messages will be logged.  Refer to the syslog.conf(5) man page
+#   for a list of priorities.  The default priority is 'info'.
+# If this keyword is used in conjunction with the SYSLOG keyword,
+#   messages will be sent to both locations.
+##
+# server logfile="<file>[,<priority>]"
+##
+
+##
+# The daemon's LOOPBACK keyword specifies whether the daemon will bind its
+#   socket to the loopback address, thereby only accepting local client
+#   connections directed to that address (127.0.0.1).  The default is ON.
+##
+# server loopback=(on|off)
+##
+
+##
+# The daemon's NOFILE keyword specifies the maximum number of open files for
+#   the daemon.  If set to 0, use the current (soft) limit.  If set to -1,
+#   use the the maximum (hard) limit.  The default is 0.
+##
+# server nofile=<int>
+##
+
+##
+# The daemon's PIDFILE keyword specifies the file to which the daemon's PID is
+#   written.  Intermediate directories will be created as needed.  The use of
+#   a pidfile is recommended if you want to use the daemon's '-k' or '-r'
+#   options.
+##
+# server pidfile="<file>"
+##
+
+##
+# The daemon's PORT keyword specifies the port on which the daemon will
+#   listen for client connections.
+##
+# server port=<int>
+##
+
+##
+# The daemon's RESETCMD keyword specifies a command string to be invoked by
+#   a subshell upon receipt of the client's "reset" escape.  Multiple commands
+#   within a string may be separated with semicolons.  This string undergoes
+#   conversion specifier expansion and will be invoked multiple times if the
+#   client is connected to multiple consoles.
+##
+# server resetcmd="<str>"
+##
+
+##
+# The daemon's SYSLOG keyword specifies that log messages are to be sent
+#   to the system logger (syslogd) at the given facility.  Refer to the
+#   syslog.conf(5) man page for a list of facilities.
+# If this keyword is used in conjunction with the LOGFILE keyword,
+#   messages will be sent to both locations.
+##
+# server syslog="<facility>"
+##
+
+##
+# The daemon's TCPWRAPPERS keyword specifies whether the daemon will
+#   use Wietse Venema's TCP-Wrappers when accepting client connections.
+#   Support for this feature must be enabled at compile-time
+#   (via configure's "--with-tcp-wrappers" option).  Refer to the
+#   hosts_access(5) and hosts_options(5) man pages for more details.
+#   The default is OFF.
+##
+# server tcpwrappers=(on|off)
+##
+
+##
+# The daemon's TIMESTAMP keyword specifies the interval between timestamps
+#   written to all console log files.  The interval is an integer that may
+#   be followed by a single-char modifier; 'm' for minutes (the default),
+#   'h' for hours, or 'd' for days.  The default is 0 (ie, no timestamps).
+##
+# server timestamp=<int>(m|h|d)
+##
+
+##
+# The global LOG keyword specifies the default log file to use for each
+#   CONSOLE directive.  This string undergoes conversion specifier expansion
+#   each time the file is opened; it must contain either '%N' or '%D'.  If an
+#   absolute pathname is not given, the file's location is relative to either
+#   LOGDIR (if defined) or the current working directory.  Intermediate
+#   directories will be created as needed.
+##
+# global log="<file>"
+##
+
+##
+#  The global LOGOPTS keyword specifies options for console log files.
+#    These options can be overridden on an per-console basis by specifying
+#    the CONSOLE LOGOPTS keyword.  Note that options affecting the output
+#    of the console's logfile also affect the output of the console's
+#    log-replay escape.
+#  The valid logopts include the following:
+#    - "lock" or "nolock" - locked logs are protected with a write lock.
+#    - "sanitize" or "nosanitize" - sanitized logs convert non-printable
+#      characters into 7-bit printable characters.
+#    - "timestamp" or "notimestamp" - timestamped logs prepend each line
+#      of console output with a timestamp in "YYYY-MM-DD HH:MM:SS" format.
+#      This timestamp is generated when the first character following the
+#      line break is output.
+#  The default is "lock,nosanitize,notimestamp".
+##
+# global logopts="lock,nosanitize,notimestamp"
+##
+
+##
+# The global SEROPTS keyword specifies options for local serial devices;
+#    These options can be overridden on an per-console basis by specifying
+#    the CONSOLE SEROPTS keyword.
+# The default is "9600,8n1" for 9600 bps, 8 data bits, no parity, 1 stop bit.
+##
+# global seropts="9600,8n1"
+##
+
+##
+#  The global IPMIOPTS keyword specifies global options for IPMI
+#    Serial-Over-LAN devices.  These options can be overridden on a per-console
+#    basis by specifying the CONSOLE IPMIOPTS keyword.  This directive is only
+#    available if configured using the "--with-freeipmi" option.
+#  The IPMIOPTS string is parsed into comma-delimited substrings where each
+#    substring is of the form "X:VALUE".  "X" is a single-character
+#    case-insensitive key specifying the option type, and "VALUE" is its
+#    corresponding value.  The IPMI default will be used if either "VALUE" is
+#    omitted from the substring ("X:") or the substring is omitted altogether.
+#    Note that since the IPMIOPTS string is delimited by commas, substring
+#    values cannot contain commas.
+#  The valid IPMIOPTS substrings include the following (in any order):
+#    - U:<username> - a string of at most 16 bytes for the username.
+#    - P:<password> - a string of at most 20 bytes for the password.
+#    - K:<K_g> - a string of at most 20 bytes for the K_g key.
+#    - C:<cipher_suite> - an integer for the IPMI cipher suite ID.
+#    - L:<privilege_level> - the string "user", "op", or "admin".
+#    - W:<workaround_flag> - a string or integer for an IPMI workaround.
+#      The following strings are recognized: "authcap", "integritycheckvalue",
+#      "intel20", "nochecksumcheck", "opensesspriv", "serialalertsdeferred",
+#      "solchannelsupport", "solpacketseq", "solpayloadsize", "solport",
+#      "solstatus", "sun20", "supermicro20", "default", and "none".
+#      This substring may be repeated in order to specify multiple workarounds.
+#  Both the <password> and <K_g> values can be specified in either ASCII or
+#    hexadecimal; in the latter case, the string should begin with "0x" and
+#    contain at most 40 hexadecimal digits.  A <K_g> key entered in hexadecimal
+#    may contain embedded null characters, but any characters following the
+#    first null character in the <password> key will be ignored.
+##
+# global ipmiopts="U:<str>,P:<str>,K:<str>,C:<int>,L:<str>,W:<flag>"
+##
+
+##
+# The CONSOLE directive defines a console being managed by the daemon.
+# The NAME keyword specifies the name used by clients to refer to the console.
+# The DEV keyword specifies the type and location of the device.
+#   - A local serial port connection is defined by the pathname of the
+#     character device file.
+#   - A remote terminal server connection using the telnet protocol is defined
+#     by the "<host>:<port>" format (where <host> is the remote hostname or
+#     IPv4 address, and <port> is the remote port number).
+#   - An external process-based connection is defined by the "<path> <args>"
+#     format (where <path> is the pathname to an executable file/script, and
+#     any additional <args> are space-delimited).
+#   - A local Unix domain socket connection is defined by the "unix:<path>"
+#     format (where "unix:" is the literal character string prefix and <path>
+#     is the pathname of the local socket).
+#   - An IPMI Serial-Over-LAN connection is defined by the "ipmi:<host>" format
+#     (where "ipmi:" is the literal string and <host> is a hostname or IPv4
+#     address).
+#   The '%N' character sequence will be replaced by the console name.
+# The optional LOG keyword specifies the file where console output is logged.
+#   This string undergoes conversion specifier expansion each time the file is
+#   opened.  If an absolute pathname is not given, the file's location is
+#   relative to either LOGDIR (if defined) or the current working directory.
+#   Intermediate directories will be created as needed.  An empty log string
+#   (ie, log="") disables logging, overriding the GLOBAL LOG name.
+# The optional LOGOPTS, SEROPTS, and IPMIOPTS keywords override the global
+#   settings.
+##
+# console name="<str>" dev="<str>" \
+#   [log="<file>"] [logopts="<str>"] [seropts="<str>"] [ipmiopts="<str>"]
+##
+#SERVER keepalive=ON
+#SERVER logdir="/var/log/conman/"
+#SERVER logfile="/var/log/conman/conman.log"
+#SERVER loopback=ON
+#SERVER pidfile="/var/run/conman/conman.pid"
+#SERVER tcpwrappers=ON
+#SERVER timestamp=1h
+#GLOBAL seropts="115200,8n1"
+#GLOBAL log="console.%N"
+#GLOBAL logopts="sanitize,timestamp"
+
+SERVER keepalive=ON
+SERVER logdir="/var/log/"
+SERVER logfile="conman.log"
+SERVER loopback=ON
+SERVER pidfile="/var/run/conman.pid"
+SERVER resetcmd="powerman -0 %N; sleep 3; powerman -1 %N"
+SERVER timestamp=1h
+GLOBAL seropts="115200,8n1"
+GLOBAL log="conman/console.%N"
+GLOBAL logopts="sanitize,timestamp"
+console name="uan01-mgmt"     dev="ipmi:10.254.2.26" ipmiopts="U:root,P:initial0,W:solpayloadsize"
+console name="nid000001-mgmt" dev="ipmi:10.254.2.6" ipmiopts="U:root,P:initial0,W:solpayloadsize"
+console name="nid000002-mgmt" dev="ipmi:10.254.2.3" ipmiopts="U:root,P:initial0,W:solpayloadsize"
+console name="nid000003-mgmt" dev="ipmi:10.254.2.20" ipmiopts="U:root,P:initial0,W:solpayloadsize"
+console name="nid000004-mgmt" dev="ipmi:10.254.2.19" ipmiopts="U:root,P:initial0,W:solpayloadsize"
+console name="ncn-s003-mgmt"  dev="ipmi:10.254.2.17" ipmiopts="U:root,P:initial0,W:solpayloadsize"
+console name="ncn-s002-mgmt"  dev="ipmi:10.254.2.52" ipmiopts="U:root,P:initial0,W:solpayloadsize"
+console name="ncn-s001-mgmt"  dev="ipmi:10.254.2.11" ipmiopts="U:root,P:initial0,W:solpayloadsize"
+console name="ncn-w003-mgmt"  dev="ipmi:10.254.2.30" ipmiopts="U:root,P:initial0,W:solpayloadsize"
+console name="ncn-w002-mgmt"  dev="ipmi:10.254.2.44" ipmiopts="U:root,P:initial0,W:solpayloadsize"
+console name="ncn-w001-mgmt"  dev="ipmi:10.254.2.8" ipmiopts="U:root,P:initial0,W:solpayloadsize"
+console name="ncn-m003-mgmt"  dev="ipmi:10.254.2.40" ipmiopts="U:root,P:initial0,W:solpayloadsize"
+console name="ncn-m002-mgmt"  dev="ipmi:10.254.2.10" ipmiopts="U:root,P:initial0,W:solpayloadsize"
