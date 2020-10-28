@@ -6,13 +6,12 @@ package cmd
 
 import (
 	"errors"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	sicFiles "stash.us.cray.com/MTL/sic/internal/files"
 	"stash.us.cray.com/MTL/sic/pkg/shasta"
 )
 
@@ -45,6 +44,16 @@ func init() {
 	configCmd.AddCommand(loadCmd)
 }
 
+func loadSystemConfig(path string) (sysconf shasta.SystemConfig, err error) {
+	err = sicFiles.ReadYAMLConfig(path, &sysconf)
+	return
+}
+
+func loadNetwork(path string) (network shasta.IPV4Network, err error) {
+	err = sicFiles.ReadJSONConfig(path, &network)
+	return
+}
+
 func extractNetworks(basepath string) ([]shasta.IPV4Network, error) {
 	// TODO: Handle incoming error?
 	var networks []shasta.IPV4Network
@@ -52,9 +61,9 @@ func extractNetworks(basepath string) ([]shasta.IPV4Network, error) {
 		func(path string, info os.FileInfo, err error) error {
 			if info.Mode().IsRegular() {
 				log.Println("Processing", path, "as IPV4Network -", info.Size())
-				network, er := loadNetwork(path)
+				network, err := loadNetwork(path)
 				if err != nil {
-					log.Printf("Unable to extract network from %v.  Error was: %v \n", path, er)
+					log.Printf("Failed loading network from %v: %v\n", path, err)
 				}
 				networks = append(networks, network)
 			}
@@ -63,35 +72,4 @@ func extractNetworks(basepath string) ([]shasta.IPV4Network, error) {
 	return networks, err
 }
 
-func loadSystemConfig(path string) (shasta.SystemConfig, error) {
-	var c shasta.SystemConfig
-	info, err := os.Stat(path)
-	if err != nil {
-		return c, err
-	}
-	log.Println("Processing", path, "as SystemConfig -", info.Size())
-	yamlFile, err := ioutil.ReadFile(path)
-	if err != nil {
-		return c, err
-	}
-	err = yaml.Unmarshal(yamlFile, &c)
-	if err != nil {
-		return c, err
-	}
-	return c, nil
-}
-
-func loadNetwork(path string) (shasta.IPV4Network, error) {
-	var c shasta.IPV4Network
-	info, err := os.Stat(path)
-	if err != nil {
-		return c, nil
-	}
-	log.Printf("Processing %v as Network - (%v)", path, info.Size())
-	yamlFile, err := ioutil.ReadFile(path)
-	if err != nil {
-		return c, err
-	}
-	err = yaml.Unmarshal(yamlFile, &c)
-	return c, err
 }

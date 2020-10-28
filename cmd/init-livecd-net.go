@@ -112,6 +112,6 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]s
 // WriteNetworkFiles persistes our network configuration to disk in a directory of yaml files
 func WriteNetworkFiles(basepath string, networks map[string]shasta.IPV4Network) {
 	for k, v := range networks {
-		sicFiles.WriteYamlConfig(filepath.Join(basepath, fmt.Sprintf("networks/%v.yaml", k)), v)
+		sicFiles.WriteYAMLConfig(filepath.Join(basepath, fmt.Sprintf("networks/%v.yaml", k)), v)
 	}
 }
