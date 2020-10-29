@@ -4,7 +4,7 @@ Copyright 2020 Hewlett Packard Enterprise Development LP
 
 package shasta
 
-// ConmanConfigTemplate manages the CAN portion of the DNSMasq configuration
+// ConmanConfigTemplate manages the Conman Configuration
 var ConmanConfigTemplate = []byte(` 
 SERVER keepalive=ON
 SERVER logdir="/var/log/"
@@ -17,6 +17,6 @@ GLOBAL seropts="115200,8n1"
 GLOBAL log="conman/console.%N"
 GLOBAL logopts="sanitize,timestamp"
 {{range .}}
-console name="{{.Hostname}}-mgmt"     dev="ipmi:{{.BMCIP}}" ipmiopts="U:root,P:initial0,W:solpayloadsize"
+console name="{{.Hostname}}-mgmt"     dev="ipmi:{{.IP}}" ipmiopts="U:{{.User}},P:{{.Pass}},W:solpayloadsize"
 {{- end}}
 `)

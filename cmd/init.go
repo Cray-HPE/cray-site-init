@@ -166,12 +166,17 @@ func init() {
 	initCmd.Flags().Int16("mountain-cabinets", 5, "Number of Mountain Cabinets")
 	initCmd.Flags().Int16("starting-cabinet", 1004, "Starting ID number for Mountain Cabinets")
 	initCmd.Flags().Int16("starting-NID", 20000, "Starting NID for Compute Nodes")
+
 	// Use these flags to prepare the basecamp metadata json
 	initCmd.Flags().String("spine-switch-xnames", "", "Comma separated list of xnames for spine switches")
 	initCmd.Flags().String("leaf-switch-xnames", "", "Comma separated list of xnames for spine switches")
 	initCmd.Flags().String("bgp-asn", "65533", "The autonomous system number for BGP conversations")
 	initCmd.Flags().Int("management-net-ips", 20, "Number of ip addresses to reserve in each vlan for the management network")
 	initCmd.Flags().String("ncn-metadata", "", "CSV for mapping the mac addresses of the NCNs to their xnames")
+
+	// Use these flags to set the default ncn bmc credentials for bootstrap
+	initCmd.Flags().String("bootstrap-ncn-bmc-user", "", "Username for connecting to the BMC on the initial NCNs")
+	initCmd.Flags().String("bootstrap-ncn-bmc-pass", "", "Password for connecting to the BMC on the initial NCNs")
 
 	// Dealing with an SLS file
 	initCmd.Flags().String("from-sls-file", "", "SLS File Location")

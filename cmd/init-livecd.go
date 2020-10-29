@@ -110,8 +110,30 @@ func WriteBaseCampData(path string, conf shasta.SystemConfig, sls *sls_common.SL
 }
 
 // WriteConmanConfig provides conman configuration for the installer
-func WriteConmanConfig(path string, conf shasta.SystemConfig) {
-	log.Printf("NOT IMPLEMENTED")
+func WriteConmanConfig(path string, ncns []shasta.DNSMasqNCN, conf shasta.SystemConfig) {
+	type conmanLine struct {
+		Hostname string
+		User     string
+		IP       string
+		Pass     string
+	}
+	v := viper.GetViper()
+	ncnBMCUser := v.GetString("bootstrap-ncn-bmc-user")
+	ncnBMCPass := v.GetString("bootstrap-ncn-bmc-pass")
+
+	var conmanNCNs []conmanLine
+
+	for _, k := range ncns {
+		conmanNCNs = append(conmanNCNs, conmanLine{
+			Hostname: k.Hostname,
+			User:     ncnBMCUser,
+			Pass:     ncnBMCPass,
+			IP:       k.BMCIP,
+		})
+	}
+
+	tpl6, _ := template.New("conmanconfig").Parse(string(shasta.ConmanConfigTemplate))
+	sicFiles.WriteTemplate(filepath.Join(path, "conman.conf"), tpl6, conmanNCNs)
 }
 
 // WriteMetalLBConfigMap creates the yaml configmap
@@ -155,7 +177,7 @@ func WriteDNSMasqConfig(path string, bootstrap []*shasta.BootstrapNCNMetadata, n
 	tpl3, _ := template.New("hmnconfig").Parse(string(shasta.HMNConfigTemplate))
 	tpl4, _ := template.New("nmnconfig").Parse(string(shasta.NMNConfigTemplate))
 	tpl5, _ := template.New("mtlconfig").Parse(string(shasta.MTLConfigTemplate))
-	tpl6, _ := template.New("conmanconfig").Parse(string(shasta.ConmanConfigTemplate))
+	// tpl6, _ := template.New("conmanconfig").Parse(string(shasta.ConmanConfigTemplate))
 	var ncns []shasta.DNSMasqNCN
 	for _, v := range bootstrap {
 		// Get a new ip reservation for each one
@@ -169,7 +191,7 @@ func WriteDNSMasqConfig(path string, bootstrap []*shasta.BootstrapNCNMetadata, n
 		}
 		ncns = append(ncns, ncn)
 	}
-	sicFiles.WriteTemplate(filepath.Join(path, "conman.conf"), tpl6, ncns)
+	// sicFiles.WriteTemplate(filepath.Join(path, "conman.conf"), tpl6, ncns)
 	sicFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/statics.conf"), tpl1, ncns)
 
 	// get a pointer to the MTL
