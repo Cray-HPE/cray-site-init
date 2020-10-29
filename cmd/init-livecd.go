@@ -182,6 +182,8 @@ func WriteDNSMasqConfig(path string, bootstrap []shasta.LogicalNCN, networks map
 		MTLIP    string `form:"mtl-ip"`
 		BMCMac   string `form:"bmc-mac"`
 		BMCIP    string `form:"bmc-ip"`
+		CANIP    string `form:"can-ip"`
+		HMNIP    string `form:"can-ip"`
 	}
 
 	tpl1, _ := template.New("statics").Parse(string(shasta.StaticConfigTemplate))
