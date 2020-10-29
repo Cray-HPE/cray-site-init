@@ -83,7 +83,7 @@ var initCmd = &cobra.Command{
 			log.Fatalf("unable to decode configuration into struct, %v \n", err)
 		}
 		shastaNetworks, err := BuildLiveCDNetworks(conf, v)
-		WriteNetworkFiles(basepath, shastaNetworks)
+		// WriteNetworkFiles(basepath, shastaNetworks)
 
 		conf.IPV4Resolvers = strings.Split(viper.GetString("ipv4-resolvers"), ",")
 		conf.SiteServices.NtpPoolHostname = conf.NtpPoolHostname
@@ -137,6 +137,7 @@ var initCmd = &cobra.Command{
 			WriteMetalLBConfigMap(basepath, conf, shastaNetworks)
 			WriteBaseCampData(filepath.Join(basepath, "data.json"), conf, &slsState, ncnMeta)
 		}
+		WriteNetworkFiles(basepath, shastaNetworks)
 
 		if v.GetString("manifest-release") != "" {
 			initiailzeManifestDir(shasta.DefaultManifestURL, "release/shasta-1.4", filepath.Join(basepath, "loftsman-manifests"))
