@@ -13,14 +13,24 @@ import (
 // BootstrapNCNMetadata is a type that matches the ncn_metadata.csv file as
 // NCN xname,NCN Role,NCN Subrole,BMC MAC,BMC Switch Port,NMN MAC,NMN Switch Port
 type BootstrapNCNMetadata struct {
-	Xname     string   `form:"xname" csv:"NCN xname"`
-	Role      string   `form:"role" csv:"NCN Role"`
-	Subrole   string   `form:"subrole" csv:"NCN Subrole"`
-	BmcMac    string   `form:"bmc-mac" csv:"BMC MAC"`
-	BmcPort   string   `form:"bmc-port" csv:"BMC Switch Port"`
-	NmnMac    string   `form:"nmn-port" csv:"NMN MAC"`
-	NmnPort   string   `form:"nmn-port" csv:"NMN Switch Port"`
-	Hostnames []string `form:"hostnames" csv:"-"`
+	Xname     string   `json:"xname" csv:"NCN xname"`
+	Role      string   `json:"role" csv:"NCN Role"`
+	Subrole   string   `json:"subrole" csv:"NCN Subrole"`
+	BmcMac    string   `json:"bmc-mac" csv:"BMC MAC"`
+	BmcPort   string   `json:"bmc-port" csv:"BMC Switch Port"`
+	NmnMac    string   `json:"nmn-mac" csv:"NMN MAC"`
+	NmnPort   string   `json:"nmn-port" csv:"NMN Switch Port"`
+	Hostnames []string `json:"hostnames" csv:"-"`
+}
+
+// AsLogicalNCN converts from NCNMetadata to LogicalNCN.  It's unwise to try to reverse this.
+func (node BootstrapNCNMetadata) AsLogicalNCN() LogicalNCN {
+	return LogicalNCN{
+		Xname:      node.Xname,
+		Hostname:   node.GetHostname(),
+		ShastaRole: fmt.Sprintf("%v-%v", node.Role, node.Subrole),
+		Aliases:    node.Hostnames,
+	}
 }
 
 // SystemConfig stores the overall set of system configuration parameters
