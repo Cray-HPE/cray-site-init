@@ -4,7 +4,10 @@ Copyright 2020 Hewlett Packard Enterprise Development LP
 
 package shasta
 
-import "log"
+import (
+	"fmt"
+	"log"
+)
 
 // LogicalNCN is the main struct for NCNs
 type LogicalNCN struct {
@@ -16,6 +19,9 @@ type LogicalNCN struct {
 	ShastaRole       string       `yaml:"shasta-role" json:"shasta-role"` // map to HSM role
 	Aliases          []string     `yaml:"aliases" json:"aliases"`
 	Networks         []NCNNetwork `yaml:"networks" json:"networks"`
+	BMCMac           string       `yaml:"bmc-mac" json:"bmc-mac"`
+	BMCIp            string       `yaml:"bmc-ip" json:"bmc-ip"`
+	NMNMac           string       `yaml:"nmn-mac" json:"nmn-mac"`
 }
 
 // NCNNetwork holds information about networks
@@ -59,12 +65,17 @@ func AllocateIps(ncns []LogicalNCN, networks map[string]IPV4Network) {
 	// Loop through the NCNs and then run through the networks to add reservations and assign ip addresses
 	for _, ncn := range ncns {
 		for netName, subnet := range subnets {
+			// reserve the bmc ip
+			if netName == "hmn" {
+				ncn.BMCIp = subnet.AddReservation(fmt.Sprintf("bmc-%v", ncn.Hostname)).IPAddress.String()
+			}
 			reservation := subnet.AddReservation(ncn.Hostname)
 			ncn.Networks = append(ncn.Networks, NCNNetwork{
 				NetworkName: netName,
 				IPAddress:   reservation.IPAddress.String(),
 				Vlan:        int(subnet.VlanID),
 			})
+
 		}
 	}
 }

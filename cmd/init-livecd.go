@@ -110,7 +110,7 @@ func WriteBaseCampData(path string, conf shasta.SystemConfig, sls *sls_common.SL
 }
 
 // WriteConmanConfig provides conman configuration for the installer
-func WriteConmanConfig(path string, ncns []shasta.DNSMasqNCN, conf shasta.SystemConfig) {
+func WriteConmanConfig(path string, ncns []shasta.LogicalNCN, conf shasta.SystemConfig) {
 	type conmanLine struct {
 		Hostname string
 		User     string
@@ -128,12 +128,12 @@ func WriteConmanConfig(path string, ncns []shasta.DNSMasqNCN, conf shasta.System
 			Hostname: k.Hostname,
 			User:     ncnBMCUser,
 			Pass:     ncnBMCPass,
-			IP:       k.BMCIP,
+			IP:       k.BMCIp,
 		})
 	}
 
 	tpl6, _ := template.New("conmanconfig").Parse(string(shasta.ConmanConfigTemplate))
-	sicFiles.WriteTemplate(filepath.Join(path, "conman.conf"), tpl6, conmanNCNs)
+	sicFiles.WriteTemplate(path, tpl6, conmanNCNs)
 }
 
 // WriteMetalLBConfigMap creates the yaml configmap
@@ -171,27 +171,43 @@ func WriteMetalLBConfigMap(path string, conf shasta.SystemConfig, networks map[s
 }
 
 // WriteDNSMasqConfig writes the dnsmasq configuration files necssary for installation
-func WriteDNSMasqConfig(path string, bootstrap []*shasta.BootstrapNCNMetadata, networks map[string]shasta.IPV4Network) {
+func WriteDNSMasqConfig(path string, bootstrap []shasta.LogicalNCN, networks map[string]shasta.IPV4Network) {
+
+	// DNSMasqNCN is the struct to manage NCNs within DNSMasq
+	type DNSMasqNCN struct {
+		Hostname string `form:"hostname"`
+		NMNMac   string `form:"nmn-mac"`
+		NMNIP    string `form:"nmn-ip"`
+		MTLMac   string `form:"mtl-mac"`
+		MTLIP    string `form:"mtl-ip"`
+		BMCMac   string `form:"bmc-mac"`
+		BMCIP    string `form:"bmc-ip"`
+	}
+
 	tpl1, _ := template.New("statics").Parse(string(shasta.StaticConfigTemplate))
 	tpl2, _ := template.New("canconfig").Parse(string(shasta.CANConfigTemplate))
 	tpl3, _ := template.New("hmnconfig").Parse(string(shasta.HMNConfigTemplate))
 	tpl4, _ := template.New("nmnconfig").Parse(string(shasta.NMNConfigTemplate))
 	tpl5, _ := template.New("mtlconfig").Parse(string(shasta.MTLConfigTemplate))
-	// tpl6, _ := template.New("conmanconfig").Parse(string(shasta.ConmanConfigTemplate))
-	var ncns []shasta.DNSMasqNCN
+	var ncns []DNSMasqNCN
+	var nmnIP string
 	for _, v := range bootstrap {
+		for _, net := range v.Networks {
+			if net.NetworkName == "nmn" {
+				nmnIP = net.IPAddress
+			}
+		}
 		// Get a new ip reservation for each one
-		ncn := shasta.DNSMasqNCN{
-			Hostname: v.GetHostname(),
-			NMNMac:   v.NmnMac,
-			// NMNIP:    nil,
+		ncn := DNSMasqNCN{
+			Hostname: v.Hostname,
+			NMNMac:   v.NMNMac,
+			NMNIP:    nmnIP,
 			// MTLMac:   nil,
-			BMCMac: v.BmcMac,
-			// BMCIP:    nil,
+			BMCMac: v.BMCMac,
+			BMCIP:  v.BMCIp,
 		}
 		ncns = append(ncns, ncn)
 	}
-	// sicFiles.WriteTemplate(filepath.Join(path, "conman.conf"), tpl6, ncns)
 	sicFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/statics.conf"), tpl1, ncns)
 
 	// get a pointer to the MTL

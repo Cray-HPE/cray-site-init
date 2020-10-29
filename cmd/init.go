@@ -132,8 +132,8 @@ var initCmd = &cobra.Command{
 			}
 			// We need to allocate IPs and then pull macs from the metadata to add them
 			shasta.AllocateIps(ncns, shastaNetworks)
-			// log.Println(ncns)
-			WriteDNSMasqConfig(basepath, ncnMeta, shastaNetworks)
+			WriteDNSMasqConfig(basepath, ncns, shastaNetworks)
+			WriteConmanConfig(filepath.Join(basepath, "conman.conf"), ncns, conf)
 			WriteMetalLBConfigMap(basepath, conf, shastaNetworks)
 			WriteBaseCampData(filepath.Join(basepath, "data.json"), conf, &slsState, ncnMeta)
 		}

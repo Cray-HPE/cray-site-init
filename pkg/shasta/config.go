@@ -30,6 +30,8 @@ func (node BootstrapNCNMetadata) AsLogicalNCN() LogicalNCN {
 		Hostname:   node.GetHostname(),
 		ShastaRole: fmt.Sprintf("%v-%v", node.Role, node.Subrole),
 		Aliases:    node.Hostnames,
+		BMCMac:     node.BmcMac,
+		NMNMac:     node.NmnMac,
 	}
 }
 
