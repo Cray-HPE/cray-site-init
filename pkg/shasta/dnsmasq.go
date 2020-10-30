@@ -88,17 +88,6 @@ host-record={{.Hostname}},{{.Hostname}}.mtl
 cname=kubernetes-api.vshasta.io,ncn-m001
 `)
 
-// DNSMasqNCN is the struct to manage NCNs within DNSMasq
-type DNSMasqNCN struct {
-	Hostname string `form:"hostname"`
-	NMNMac   string `form:"nmn-mac"`
-	NMNIP    string `form:"nmn-ip"`
-	MTLMac   string `form:"mtl-mac"`
-	MTLIP    string `form:"mtl-ip"`
-	BMCMac   string `form:"bmc-mac"`
-	BMCIP    string `form:"bmc-ip"`
-}
-
 // DNSMasqBootstrapNetwork holds information for configuring DNSMasq on the LiveCD
 type DNSMasqBootstrapNetwork struct {
 	Subnet    IPV4Subnet

@@ -83,7 +83,7 @@ var initCmd = &cobra.Command{
 			log.Fatalf("unable to decode configuration into struct, %v \n", err)
 		}
 		shastaNetworks, err := BuildLiveCDNetworks(conf, v)
-		WriteNetworkFiles(basepath, shastaNetworks)
+		// WriteNetworkFiles(basepath, shastaNetworks)
 
 		conf.IPV4Resolvers = strings.Split(viper.GetString("ipv4-resolvers"), ",")
 		conf.SiteServices.NtpPoolHostname = conf.NtpPoolHostname
@@ -92,9 +92,6 @@ var initCmd = &cobra.Command{
 		sicFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/root_password.json"), shasta.DefaultRootPW)
 		sicFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/bmc_password.json"), shasta.DefaultBMCPW)
 		sicFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/mgmt_switch_password.json"), shasta.DefaultNetPW)
-		ncnMeta, err := sicFiles.ReadNodeCSV(v.GetString("ncn-metadata"))
-		WriteDNSMasqConfig(basepath, ncnMeta, shastaNetworks)
-		WriteMetalLBConfigMap(basepath, conf, shastaNetworks)
 
 		// Handle an SLSFile if one is provided
 		var slsState sls_common.SLSState
@@ -125,12 +122,23 @@ var initCmd = &cobra.Command{
 			}
 
 		}
-
+		ncnMeta, err := sicFiles.ReadNodeCSV(v.GetString("ncn-metadata"))
 		if err != nil {
 			log.Printf("Couldn't extract NCN information from the metadata file: %v \n", v.GetString("ncn-metadata"))
 		} else {
+			var ncns []shasta.LogicalNCN
+			for _, node := range ncnMeta {
+				ncns = append(ncns, node.AsLogicalNCN())
+			}
+			// We need to allocate IPs and then pull macs from the metadata to add them
+			shasta.AllocateIps(ncns, shastaNetworks)
+			WriteDNSMasqConfig(basepath, ncns, shastaNetworks)
+			WriteConmanConfig(filepath.Join(basepath, "conman.conf"), ncns, conf)
+			WriteMetalLBConfigMap(basepath, conf, shastaNetworks)
 			WriteBaseCampData(filepath.Join(basepath, "data.json"), conf, &slsState, ncnMeta)
 		}
+		WriteNetworkFiles(basepath, shastaNetworks)
+
 		if v.GetString("manifest-release") != "" {
 			initiailzeManifestDir(shasta.DefaultManifestURL, "release/shasta-1.4", filepath.Join(basepath, "loftsman-manifests"))
 		}
@@ -144,7 +152,7 @@ func init() {
 
 	// Flags to deal with 1.3 configuration directories
 
-	initCmd.Flags().String("from-1.3-dir", "", "Shasta 1.3 Configuration Directory")
+	// initCmd.Flags().String("from-1.3-dir", "", "Shasta 1.3 Configuration Directory") // This should shift to a different command like config convert or something like that
 
 	// System Configuration Flags based on previous system_config.yml and networks_derived.yml
 	initCmd.Flags().String("system-name", "sn-2024", "Name of the System")
@@ -162,19 +170,34 @@ func init() {
 	initCmd.Flags().String("mtl-cidr", shasta.DefaultMTLString, "Overall IPv4 CIDR for all Provisioning subnets")
 	initCmd.Flags().String("hsn-cidr", shasta.DefaultHSNString, "Overall IPv4 CIDR for all HSN subnets")
 
+	// Bootstrap VLANS
+	initCmd.Flags().Int("nmn-bootstrap-vlan", shasta.DefaultNMNVlan, "Bootstrap VLAN for the NMN")
+	initCmd.Flags().Int("hmn-bootstrap-vlan", shasta.DefaultHMNVlan, "Bootstrap VLAN for the HMN")
+	initCmd.Flags().Int("can-bootstrap-vlan", shasta.DefaultCANVlan, "Bootstrap VLAN for the CAN")
+
 	// Hardware Details
-	initCmd.Flags().Int16("mountain-cabinets", 5, "Number of Mountain Cabinets")
+	initCmd.Flags().Int16("cabinets", 5, "Total Number of Cabinets")
 	initCmd.Flags().Int16("starting-cabinet", 1004, "Starting ID number for Mountain Cabinets")
 	initCmd.Flags().Int16("starting-NID", 20000, "Starting NID for Compute Nodes")
+
 	// Use these flags to prepare the basecamp metadata json
 	initCmd.Flags().String("spine-switch-xnames", "", "Comma separated list of xnames for spine switches")
 	initCmd.Flags().String("leaf-switch-xnames", "", "Comma separated list of xnames for spine switches")
 	initCmd.Flags().String("bgp-asn", "65533", "The autonomous system number for BGP conversations")
 	initCmd.Flags().Int("management-net-ips", 20, "Number of ip addresses to reserve in each vlan for the management network")
-	initCmd.Flags().String("ncn-metadata", "", "CSV for mapping the mac addresses of the NCNs to their xnames")
+
+	// Use these flags to set the default ncn bmc credentials for bootstrap
+	initCmd.Flags().String("bootstrap-ncn-bmc-user", "", "Username for connecting to the BMC on the initial NCNs")
+	initCmd.Flags().String("bootstrap-ncn-bmc-pass", "", "Password for connecting to the BMC on the initial NCNs")
 
 	// Dealing with an SLS file
 	initCmd.Flags().String("from-sls-file", "", "SLS File Location")
+
+	// Dealing with SLS precursors
+	initCmd.Flags().String("hmn_connnections", "", "HMN Connections JSON Location (For generating an SLS File)")
+	initCmd.Flags().String("ncn-metadata", "", "CSV for mapping the mac addresses of the NCNs to their xnames")
+	initCmd.Flags().String("oca-ncn-metadata", "", "CSV from the OCA tool for mapping the mac addresses of the NCNs to their serial numbers")
+
 	// Loftsman Manifest Shasta-CFG
 	initCmd.Flags().String("manifest-release", "", "Loftsman Manifest Release Version (leave blank to prevent manifest generation)")
 	initCmd.Flags().SortFlags = false

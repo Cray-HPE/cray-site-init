@@ -147,7 +147,7 @@ func (iSubnet *IPV4Subnet) AddReservation(name string) *IPReservation {
 	for {
 		for _, v := range myReservedIPs {
 			if tempIP.Equal(v) {
-				log.Printf("Found %v already in the reservations list. \n", v)
+				// log.Printf("Found %v already in the reservations list. \n", v)
 				tempIP = ipam.Add(tempIP, 1)
 			}
 		}

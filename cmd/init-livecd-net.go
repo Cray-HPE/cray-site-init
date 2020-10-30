@@ -27,13 +27,13 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]s
 	// Update the CIDR from flags/viper
 	tempNMN.CIDR = v.GetString("nmn-cidr")
 	// Add a /25 for the Load Balancers
-	pool, err := tempNMN.AddSubnet(net.CIDRMask(25, 32), "nmn_metallb_address_pool", tempNMN.VlanRange[0])
+	pool, err := tempNMN.AddSubnet(net.CIDRMask(25, 32), "nmn_metallb_address_pool", int16(v.GetInt("nmn-bootstrap-vlan")))
 	if err != nil {
 		log.Printf("Couldn't add subnet: %v", err)
 	}
 	pool.AddReservation("api_gateway")
 	// Add a /26 for bootstrap dhcp
-	subnet, err := tempNMN.AddSubnet(net.CIDRMask(26, 32), "bootstrap_dhcp", tempNMN.VlanRange[0])
+	subnet, err := tempNMN.AddSubnet(net.CIDRMask(26, 32), "bootstrap_dhcp", int16(v.GetInt("nmn-bootstrap-vlan")))
 	subnet.DHCPStart = ipam.Add(subnet.CIDR.IP, v.GetInt("management-net-ips"))
 	subnet.DHCPEnd = ipam.Add(ipam.Broadcast(subnet.CIDR), -1)
 	// Divide the network into an appropriate number of subnets
@@ -45,14 +45,14 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]s
 	// Update the CIDR from flags/viper
 	tempHMN.CIDR = v.GetString("hmn-cidr")
 	// Add a /25 for the Load Balancers
-	pool, err = tempHMN.AddSubnet(net.CIDRMask(25, 32), "hmn_metallb_address_pool", tempHMN.VlanRange[0])
+	pool, err = tempHMN.AddSubnet(net.CIDRMask(25, 32), "hmn_metallb_address_pool", int16(v.GetInt("hmn-bootstrap-vlan")))
 	if err != nil {
 		log.Printf("Couldn't add subnet: %v", err)
 	}
 	pool.AddReservation("api_gateway")
 
 	// Add a /26 for bootstrap dhcp
-	subnet, err = tempHMN.AddSubnet(net.CIDRMask(26, 32), "bootstrap_dhcp", tempHMN.VlanRange[0])
+	subnet, err = tempHMN.AddSubnet(net.CIDRMask(26, 32), "bootstrap_dhcp", int16(v.GetInt("hmn-bootstrap-vlan")))
 	subnet.DHCPStart = ipam.Add(subnet.CIDR.IP, v.GetInt("management-net-ips"))
 	subnet.DHCPEnd = ipam.Add(ipam.Broadcast(subnet.CIDR), -1)
 	// Divide the network into an appropriate number of subnets
@@ -79,7 +79,7 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]s
 	// Update the CIDR from flags/viper
 	tempMTL.CIDR = v.GetString("mtl-cidr")
 	// No need to subdivide the mtl network by cabinets
-	subnet, err = tempMTL.AddSubnet(net.CIDRMask(24, 32), "mtl_subnet", tempMTL.VlanRange[0])
+	subnet, err = tempMTL.AddSubnet(net.CIDRMask(24, 32), "bootstrap_dhcp", 0)
 	subnet.ReserveNetMgmtIPs(v.GetInt("management-net-ips"))
 	subnet.DHCPStart = ipam.Add(subnet.CIDR.IP, v.GetInt("management-net-ips"))
 	subnet.DHCPEnd = ipam.Add(ipam.Broadcast(subnet.CIDR), -1)
@@ -90,17 +90,17 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]s
 	// Update the CIDR from flags/viper
 	tempCan.CIDR = v.GetString("can-cidr") // This is probably a /24
 	// Add a /25 for the Load Balancers on vlan0007
-	_, err = tempCan.AddSubnet(net.CIDRMask(25, 32), "can_metallb_address_pool", int16(7))
+	_, err = tempCan.AddSubnet(net.CIDRMask(25, 32), "can_metallb_address_pool", int16(v.GetInt("can-bootstrap-vlan")))
 	if err != nil {
 		log.Printf("Couldn't add subnet: %v", err)
 	}
 	// Add a /28 for the Static Pool on vlan0007
-	_, err = tempCan.AddSubnet(net.CIDRMask(28, 32), "can_metallb_static_pool", int16(7))
+	_, err = tempCan.AddSubnet(net.CIDRMask(28, 32), "can_metallb_static_pool", int16(v.GetInt("can-bootstrap-vlan")))
 	if err != nil {
 		log.Printf("Couldn't add subnet: %v", err)
 	}
 	// Add a /26 for bootstrap dhcp
-	subnet, err = tempCan.AddSubnet(net.CIDRMask(26, 32), "bootstrap_dhcp", tempCan.VlanRange[0])
+	subnet, err = tempCan.AddSubnet(net.CIDRMask(26, 32), "bootstrap_dhcp", int16(v.GetInt("hmn-bootstrap-vlan")))
 	subnet.ReserveNetMgmtIPs(v.GetInt("management-net-ips"))
 	subnet.DHCPStart = ipam.Add(subnet.CIDR.IP, v.GetInt("management-net-ips"))
 	subnet.DHCPEnd = ipam.Add(ipam.Broadcast(subnet.CIDR), -1)

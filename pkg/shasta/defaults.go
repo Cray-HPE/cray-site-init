@@ -28,16 +28,22 @@ Handy Netmask Cheet Sheet
 */
 
 const (
-	// DefaultHMNString is the Default HMN String
-	DefaultHMNString = "10.254.0.0/16"
-	// DefaultNMNString is the Default NMN String
-	DefaultNMNString = "10.242.0.0/17"
+	// DefaultHMNString is the Default HMN String (vlan004)
+	DefaultHMNString = "10.254.1.1/16"
+	// DefaultHMNVlan is the default HMN Bootstrap Vlan
+	DefaultHMNVlan = 4
+	// DefaultNMNString is the Default NMN String (vlan002)
+	DefaultNMNString = "10.252.1.0/16"
+	// DefaultNMNVlan is the default NMN Bootstrap Vlan
+	DefaultNMNVlan = 2
 	// DefaultHSNString is the Default HSN String
-	DefaultHSNString = "10.253.0.0/16"
-	// DefaultCANString is the Default CAN String
-	DefaultCANString = "192.168.20.0/24"
-	// DefaultMTLString is the Default MTL String
-	DefaultMTLString = "192.168.1.0/24"
+	DefaultHSNString = "10.250.0.0/16"
+	// DefaultCANString is the Default CAN String (vlan007)
+	DefaultCANString = "10.102.9.0/24"
+	// DefaultCANVlan is the default CAN Bootstrap Vlan
+	DefaultCANVlan = 7
+	// DefaultMTLString is the Default MTL String (bond0 interface)
+	DefaultMTLString = "10.1.1.0/16"
 )
 
 var slash24 = net.IPv4Mask(255, 255, 255, 0)
@@ -56,7 +62,7 @@ var DefaultHMN = IPV4Network{
 	FullName:  "Hardware Management Network",
 	CIDR:      DefaultHMNString,
 	Name:      "hmn",
-	VlanRange: []int16{60, 100},
+	VlanRange: []int16{11, 40},
 	MTU:       9000,
 	NetType:   "ethernet",
 	Comment:   "",
@@ -67,7 +73,7 @@ var DefaultNMN = IPV4Network{
 	FullName:  "Node Management Network",
 	CIDR:      DefaultNMNString,
 	Name:      "nmn",
-	VlanRange: []int16{60, 100},
+	VlanRange: []int16{41, 70},
 	MTU:       9000,
 	NetType:   "ethernet",
 	Comment:   "",
@@ -78,7 +84,7 @@ var DefaultHSN = IPV4Network{
 	FullName:  "High Speed Network",
 	CIDR:      DefaultHSNString,
 	Name:      "hsn",
-	VlanRange: []int16{60, 100},
+	VlanRange: []int16{71, 90},
 	MTU:       9000,
 	NetType:   "slingshot10",
 	Comment:   "",
@@ -89,7 +95,7 @@ var DefaultCAN = IPV4Network{
 	FullName:  "Customer Access Network",
 	CIDR:      DefaultCANString,
 	Name:      "can",
-	VlanRange: []int16{60, 100},
+	VlanRange: []int16{91, 120},
 	MTU:       9000,
 	NetType:   "ethernet",
 	Comment:   "",
@@ -100,7 +106,7 @@ var DefaultMTL = IPV4Network{
 	FullName:  "Provisioning Network (untagged)",
 	CIDR:      DefaultMTLString,
 	Name:      "mtl",
-	VlanRange: []int16{60, 100},
+	VlanRange: []int16{121, 150},
 	MTU:       9000,
 	NetType:   "ethernet",
 	Comment:   "This network is only valid for the NCNs",
