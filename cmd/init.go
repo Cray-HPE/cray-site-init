@@ -87,7 +87,7 @@ var initCmd = &cobra.Command{
 
 		conf.IPV4Resolvers = strings.Split(viper.GetString("ipv4-resolvers"), ",")
 		conf.SiteServices.NtpPoolHostname = conf.NtpPoolHostname
-		sicFiles.WriteYamlConfig(filepath.Join(basepath, "system_config.yaml"), conf)
+		sicFiles.WriteYAMLConfig(filepath.Join(basepath, "system_config.yaml"), conf)
 
 		sicFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/root_password.json"), shasta.DefaultRootPW)
 		sicFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/bmc_password.json"), shasta.DefaultBMCPW)

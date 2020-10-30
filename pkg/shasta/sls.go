@@ -26,6 +26,10 @@ import (
 	"time"
 
 	"github.com/mitchellh/mapstructure"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+
+	shcd_parser "stash.us.cray.com/HMS/hms-shcd-parser/pkg/shcd-parser"
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
 )
 
@@ -163,7 +167,20 @@ func ExtractSLSSwitches(sls *sls_common.SLSState) ([]ManagementSwitch, error) {
 	return switches, nil
 }
 
-// func GenerateSLSState(hmn_connections_path string, sls_basic_info sls_common.SLSStateInput) {
-// 	// TODO : or not TODO  The HMS team is still deciding if this belongs here.  I think it does.  10-06-2020 -ALT
-// 	//
-// }
+// GenerateSLSState generates new SLSState object from an input state and hmn-connections file.
+func GenerateSLSState(inputState SLSGeneratorInputState, hmnRows []shcd_parser.HMNRow) sls_common.SLSState {
+	atomicLevel := zap.NewAtomicLevel()
+	encoderCfg := zap.NewProductionEncoderConfig()
+	logger := zap.New(zapcore.NewCore(
+		zapcore.NewJSONEncoder(encoderCfg),
+		zapcore.Lock(os.Stdout),
+		atomicLevel,
+	))
+
+	atomicLevel.SetLevel(zap.InfoLevel)
+
+	logger.Info("Beginning SLS configuration generation.")
+
+	g := NewSLSStateGenerator(logger, inputState, hmnRows)
+	return g.GenerateSLSState()
+}

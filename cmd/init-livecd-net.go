@@ -37,7 +37,7 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]s
 	subnet.DHCPStart = ipam.Add(subnet.CIDR.IP, v.GetInt("management-net-ips"))
 	subnet.DHCPEnd = ipam.Add(ipam.Broadcast(subnet.CIDR), -1)
 	// Divide the network into an appropriate number of subnets
-	tempNMN.GenSubnets(uint(conf.MountainCabinets), int(conf.StartingCabinet), net.CIDRMask(22, 32), v.GetInt("management-net-ips"))
+	tempNMN.GenSubnets(uint(conf.Cabinets), int(conf.StartingCabinet), net.CIDRMask(22, 32), v.GetInt("management-net-ips"))
 	networkMap["nmn"] = tempNMN
 
 	// Start the HMN with out defaults
@@ -56,7 +56,7 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]s
 	subnet.DHCPStart = ipam.Add(subnet.CIDR.IP, v.GetInt("management-net-ips"))
 	subnet.DHCPEnd = ipam.Add(ipam.Broadcast(subnet.CIDR), -1)
 	// Divide the network into an appropriate number of subnets
-	tempHMN.GenSubnets(uint(conf.MountainCabinets), int(conf.StartingCabinet), net.CIDRMask(22, 32), v.GetInt("management-net-ips"))
+	tempHMN.GenSubnets(uint(conf.Cabinets), int(conf.StartingCabinet), net.CIDRMask(22, 32), v.GetInt("management-net-ips"))
 	networkMap["hmn"] = tempHMN
 
 	// Start the HSN with out defaults
@@ -71,7 +71,7 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]s
 	pool.AddReservation("api_gateway")
 
 	// Divide the network into an appropriate number of subnets
-	tempHSN.GenSubnets(uint(conf.MountainCabinets), int(conf.StartingCabinet), net.CIDRMask(22, 32), v.GetInt("management-net-ips"))
+	tempHSN.GenSubnets(uint(conf.Cabinets), int(conf.StartingCabinet), net.CIDRMask(22, 32), v.GetInt("management-net-ips"))
 	networkMap["hsn"] = tempHSN
 
 	// Start the MTL with our defaults
@@ -112,6 +112,6 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]s
 // WriteNetworkFiles persistes our network configuration to disk in a directory of yaml files
 func WriteNetworkFiles(basepath string, networks map[string]shasta.IPV4Network) {
 	for k, v := range networks {
-		sicFiles.WriteYamlConfig(filepath.Join(basepath, fmt.Sprintf("networks/%v.yaml", k)), v)
+		sicFiles.WriteYAMLConfig(filepath.Join(basepath, fmt.Sprintf("networks/%v.yaml", k)), v)
 	}
 }

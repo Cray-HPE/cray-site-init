@@ -65,7 +65,7 @@ func (iNet *IPV4Network) GenSubnets(cabinets uint, startingCabinet int, mask net
 	mySubnets := iNet.AllocatedSubnets()
 	myIPv4Subnets := iNet.Subnets
 
-	for i := 1; i < int(cabinets); i++ {
+	for i := 0; i < int(cabinets); i++ {
 		newSubnet, err := ipam.Free(*myNet, mask, mySubnets)
 		mySubnets = append(mySubnets, newSubnet)
 		if err != nil {
@@ -125,7 +125,7 @@ func (iNet *IPV4Network) LookUpSubnet(name string) (IPV4Subnet, error) {
 
 // ReserveNetMgmtIPs reserves (n) IP addresses for management networking equipment
 func (iSubnet *IPV4Subnet) ReserveNetMgmtIPs(n int) {
-	for i := 1; i < n+1; i++ {
+	for i := 1; i <= n; i++ {
 		iSubnet.AddReservation(fmt.Sprintf("mgmt_net_%03d", i))
 	}
 }
