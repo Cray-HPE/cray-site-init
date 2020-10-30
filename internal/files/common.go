@@ -56,16 +56,11 @@ func WriteConfig(enc encoder, path string, conf interface{}) error {
 
 // ReadConfig decodes an object from the specified file
 func ReadConfig(dec decoder, path string, conf interface{}) error {
-	var f *os.File
-	if path == "-" {
-		f = os.Stdin
-	} else {
-		f, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
+	f, err := os.Open(path)
+	if err != nil {
+		return err
 	}
+	defer f.Close()
 	return dec(f, conf)
 }
 
