@@ -195,7 +195,7 @@ func init() {
 
 	// Dealing with SLS precursors
 	initCmd.Flags().String("hmn_connnections", "hmn_connections.json", "HMN Connections JSON Location (For generating an SLS File)")
-	initCmd.Flags().String("ncn-metadata", "ncn-metadata.csv", "CSV for mapping the mac addresses of the NCNs to their xnames")
+	initCmd.Flags().String("ncn-metadata", "ncn_metadata.csv", "CSV for mapping the mac addresses of the NCNs to their xnames")
 
 	// Loftsman Manifest Shasta-CFG
 	initCmd.Flags().String("manifest-release", "", "Loftsman Manifest Release Version (leave blank to prevent manifest generation)")

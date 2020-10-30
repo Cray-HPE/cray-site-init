@@ -77,7 +77,9 @@ var StaticConfigTemplate = []byte(`
 {{range .}}
 # DHCP Entries for {{.Hostname}}
 dhcp-host={{.NMNMac}},{{.NMNIP}},{{.Hostname}},infinite # NMN
-dhcp-host={{.MTLMac}},{{.MTLIP}},{{.Hostname}},infinite # MTL
+dhcp-host={{.NMNMac}},{{.MTLIP}},{{.Hostname}},infinite # MTL
+dhcp-host={{.NMNMac}},{{.HMNIP}},{{.Hostname}},infinite # HMN
+dhcp-host={{.NMNMac}},{{.CANIP}},{{.Hostname}},infinite # CAN
 dhcp-host={{.BMCMac}},{{.BMCIP}},{{.Hostname}}-mgmt,infinite #HMN
 # Host Record Entries for {{.Hostname}}
 host-record={{.Hostname}},{{.Hostname}}.can,{{.CANIP}}
