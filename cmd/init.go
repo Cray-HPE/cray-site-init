@@ -65,6 +65,7 @@ var initCmd = &cobra.Command{
 		//
 		// The first step in building the NCN map is to read the NCN Metadata file
 		ncnMeta, err := sicFiles.ReadNodeCSV(v.GetString("ncn-metadata"))
+		log.Printf("ncnMeta: %v\n", ncnMeta)
 		// *** Loading Data Complete **** //
 		// *** Begin Enrichment *** //
 		// Alone, this metadata isn't enough.  We need to enrich it by converting from the
@@ -80,6 +81,7 @@ var initCmd = &cobra.Command{
 		// To enrich our data, we need to allocate IPs for the management network switches and
 		// NCNs and pair MACs with IPs in the NCN structures
 		shasta.AllocateIps(ncns, shastaNetworks) // This function has no return because it is working with lists of pointers.
+		log.Printf("ncns: %v\n", ncns)
 		// Finally, the data is properly enriched and we can begin shaping it for use.
 		// *** Enrichment Complete *** //
 		// *** Commence Shaping for use *** //
@@ -115,7 +117,7 @@ var initCmd = &cobra.Command{
 		}
 		slsState := shasta.GenerateSLSState(inputState, hmnRows)
 
-		err = sicFiles.WriteJSONConfig("-", &slsState)
+		err = sicFiles.WriteJSONConfig(filepath.Join(basepath, "sls_input_file.json"), &slsState)
 		if err != nil {
 			log.Fatalln("Failed to encode SLS state:", err)
 		}
@@ -167,16 +169,16 @@ func init() {
 	initCmd.Flags().Int("can-bootstrap-vlan", shasta.DefaultCANVlan, "Bootstrap VLAN for the CAN")
 
 	// Hardware Details
-	initCmd.Flags().Int16("mountain-cabinets", 5, "Number of Mountain Cabinets")
-	initCmd.Flags().Int16("starting-mountain-cabinet", 5000, "Starting ID number for Mountain Cabinets")
+	initCmd.Flags().Int("mountain-cabinets", 5, "Number of Mountain Cabinets")
+	initCmd.Flags().Int("starting-mountain-cabinet", 5000, "Starting ID number for Mountain Cabinets")
 
-	initCmd.Flags().Int16("river-cabinets", 1, "Number of River Cabinets")
-	initCmd.Flags().Int16("starting-river-cabinet", 1004, "Starting ID number for River Cabinets")
+	initCmd.Flags().Int("river-cabinets", 1, "Number of River Cabinets")
+	initCmd.Flags().Int("starting-river-cabinet", 1004, "Starting ID number for River Cabinets")
 
-	initCmd.Flags().Int16("hill-cabinets", 0, "Number of Hill Cabinets")
-	initCmd.Flags().Int16("starting-hill-cabinet", 3000, "Starting ID number for Hill Cabinets")
+	initCmd.Flags().Int("hill-cabinets", 0, "Number of Hill Cabinets")
+	initCmd.Flags().Int("starting-hill-cabinet", 3000, "Starting ID number for Hill Cabinets")
 
-	initCmd.Flags().Int16("starting-NID", 20000, "Starting NID for Compute Nodes")
+	initCmd.Flags().Int("starting-NID", 20000, "Starting NID for Compute Nodes")
 
 	// Use these flags to prepare the basecamp metadata json
 	initCmd.Flags().String("spine-switch-xnames", "", "Comma separated list of xnames for spine switches")
@@ -193,8 +195,7 @@ func init() {
 
 	// Dealing with SLS precursors
 	initCmd.Flags().String("hmn_connnections", "hmn_connections.json", "HMN Connections JSON Location (For generating an SLS File)")
-	initCmd.Flags().String("ncn-metadata", "", "CSV for mapping the mac addresses of the NCNs to their xnames")
-	initCmd.Flags().String("oca-ncn-metadata", "", "CSV from the OCA tool for mapping the mac addresses of the NCNs to their serial numbers")
+	initCmd.Flags().String("ncn-metadata", "ncn-metadata.csv", "CSV for mapping the mac addresses of the NCNs to their xnames")
 
 	// Loftsman Manifest Shasta-CFG
 	initCmd.Flags().String("manifest-release", "", "Loftsman Manifest Release Version (leave blank to prevent manifest generation)")

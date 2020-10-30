@@ -60,27 +60,30 @@ type ManagementSwitch struct {
 }
 
 // GenSubnets subdivides a network into a set of subnets
-func (iNet *IPV4Network) GenSubnets(cabinets uint, startingCabinet int, mask net.IPMask, mgmtIPReservations int) error {
+func (iNet *IPV4Network) GenSubnets(cabinetDetails []CabinetDetail, mask net.IPMask, mgmtIPReservations int) error {
 	_, myNet, _ := net.ParseCIDR(iNet.CIDR)
 	mySubnets := iNet.AllocatedSubnets()
 	myIPv4Subnets := iNet.Subnets
 
-	for i := 0; i < int(cabinets); i++ {
-		newSubnet, err := ipam.Free(*myNet, mask, mySubnets)
-		mySubnets = append(mySubnets, newSubnet)
-		if err != nil {
-			log.Printf("Couldn't add subnet because %v \n", err)
-			return err
+	for _, cabinetDetail := range cabinetDetails {
+
+		for i := 0; i < int(cabinetDetail.Cabinets); i++ {
+			newSubnet, err := ipam.Free(*myNet, mask, mySubnets)
+			mySubnets = append(mySubnets, newSubnet)
+			if err != nil {
+				log.Printf("Couldn't add subnet because %v \n", err)
+				return err
+			}
+			tempSubnet := IPV4Subnet{
+				CIDR:    newSubnet,
+				Name:    fmt.Sprintf("cabinet_%v", cabinetDetail.StartingCabinet+i),
+				Gateway: ipam.Add(newSubnet.IP, 1),
+				// Reserving the first vlan in the range for a non-cabinet aligned vlan if needed in the future.
+				VlanID: iNet.VlanRange[1] + int16(i),
+			}
+			tempSubnet.ReserveNetMgmtIPs(mgmtIPReservations)
+			myIPv4Subnets = append(myIPv4Subnets, tempSubnet)
 		}
-		tempSubnet := IPV4Subnet{
-			CIDR:    newSubnet,
-			Name:    fmt.Sprintf("cabinet_%v", startingCabinet+i),
-			Gateway: ipam.Add(newSubnet.IP, 1),
-			// Reserving the first vlan in the range for a non-cabinet aligned vlan if needed in the future.
-			VlanID: iNet.VlanRange[1] + int16(i),
-		}
-		tempSubnet.ReserveNetMgmtIPs(mgmtIPReservations)
-		myIPv4Subnets = append(myIPv4Subnets, tempSubnet)
 	}
 	iNet.Subnets = myIPv4Subnets
 	return nil

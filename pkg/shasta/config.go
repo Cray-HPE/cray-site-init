@@ -57,10 +57,11 @@ type SystemConfig struct {
 	SiteServices    SiteServices `form:"site-services" mapstructure:"site-services"`
 }
 
-// HardwareDetail stores information that can only come from Manufacturing
-type HardwareDetail struct {
-	Cabinets        int16 `form:"cabinets" mapstructure:"cabinets"`
-	StartingCabinet int16 `form:"starting-cabinet" mapstructure:"starting-cabinet"`
+// CabinetDetail stores information that can only come from Manufacturing
+type CabinetDetail struct {
+	Kind            string `mapstructure:"cabinet-type"`
+	Cabinets        int    `mapstructure:"cabinets"`
+	StartingCabinet int    `mapstructure:"starting-cabinet"`
 }
 
 // BGPPeering stores information about MetalLB Peering

@@ -20,6 +20,10 @@ import (
 // BuildLiveCDNetworks creates an array of IPv4 Networks based on the supplied system configuration
 func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*shasta.IPV4Network, error) {
 	// our primitive ipam uses the number of cabinets to lay out a network for each one.
+	// It is per-cabinet type which is pretty annoying, but here we are.
+
+	cabinetDetails := buildCabinetDetails(v)
+
 	var networkMap = make(map[string]*shasta.IPV4Network)
 
 	// Start the NMN with out defaults
@@ -37,7 +41,7 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*
 	subnet.DHCPStart = ipam.Add(subnet.CIDR.IP, v.GetInt("management-net-ips"))
 	subnet.DHCPEnd = ipam.Add(ipam.Broadcast(subnet.CIDR), -1)
 	// Divide the network into an appropriate number of subnets
-	tempNMN.GenSubnets(uint(conf.Cabinets), int(conf.StartingCabinet), net.CIDRMask(22, 32), v.GetInt("management-net-ips"))
+	tempNMN.GenSubnets(cabinetDetails, net.CIDRMask(22, 32), v.GetInt("management-net-ips"))
 	networkMap["nmn"] = &tempNMN
 
 	// Start the HMN with out defaults
@@ -56,7 +60,7 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*
 	subnet.DHCPStart = ipam.Add(subnet.CIDR.IP, v.GetInt("management-net-ips"))
 	subnet.DHCPEnd = ipam.Add(ipam.Broadcast(subnet.CIDR), -1)
 	// Divide the network into an appropriate number of subnets
-	tempHMN.GenSubnets(uint(conf.Cabinets), int(conf.StartingCabinet), net.CIDRMask(22, 32), v.GetInt("management-net-ips"))
+	tempHMN.GenSubnets(cabinetDetails, net.CIDRMask(22, 32), v.GetInt("management-net-ips"))
 	networkMap["hmn"] = &tempHMN
 
 	// Start the HSN with out defaults
@@ -71,7 +75,7 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*
 	pool.AddReservation("api_gateway")
 
 	// Divide the network into an appropriate number of subnets
-	tempHSN.GenSubnets(uint(conf.Cabinets), int(conf.StartingCabinet), net.CIDRMask(22, 32), v.GetInt("management-net-ips"))
+	tempHSN.GenSubnets(cabinetDetails, net.CIDRMask(22, 32), v.GetInt("management-net-ips"))
 	networkMap["hsn"] = &tempHSN
 
 	// Start the MTL with our defaults
@@ -114,4 +118,25 @@ func WriteNetworkFiles(basepath string, networks map[string]*shasta.IPV4Network)
 	for k, v := range networks {
 		sicFiles.WriteYAMLConfig(filepath.Join(basepath, fmt.Sprintf("networks/%v.yaml", k)), v)
 	}
+}
+
+func buildCabinetDetails(v *viper.Viper) []shasta.CabinetDetail {
+	var cabinets []shasta.CabinetDetail
+	// Add the River Cabinets
+	cabinets = append(cabinets, shasta.CabinetDetail{
+		Kind:            "river",
+		Cabinets:        v.GetInt("river-cabinets"),
+		StartingCabinet: v.GetInt("starting-rivier-cabinet"),
+	})
+	cabinets = append(cabinets, shasta.CabinetDetail{
+		Kind:            "hill",
+		Cabinets:        v.GetInt("hill-cabinets"),
+		StartingCabinet: v.GetInt("starting-hill-cabinet"),
+	})
+	cabinets = append(cabinets, shasta.CabinetDetail{
+		Kind:            "mountain",
+		Cabinets:        v.GetInt("mountain-cabinets"),
+		StartingCabinet: v.GetInt("starting-mountain-cabinet"),
+	})
+	return cabinets
 }
