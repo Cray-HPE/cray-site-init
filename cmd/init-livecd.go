@@ -215,7 +215,7 @@ func WriteDNSMasqConfig(path string, bootstrap []*shasta.LogicalNCN, networks ma
 	// get a pointer to the MTL
 	mtlNet := networks["mtl"]
 	// get a pointer to the subnet
-	mtlBootstrapSubnet, _ := mtlNet.LookUpSubnet("mtl_subnet")
+	mtlBootstrapSubnet, _ := mtlNet.LookUpSubnet("bootstrap_dhcp")
 	sicFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/mtl.conf"), tpl5, mtlBootstrapSubnet)
 
 	// Deal with the easy ones
