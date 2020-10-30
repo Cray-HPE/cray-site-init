@@ -31,7 +31,7 @@ cname=packages.hmn,spit.hmn
 cname=registry.hmn,spit.hmn
 dhcp-option=interface:vlan004,option:dns-server,{{.Gateway}}
 dhcp-option=interface:vlan004,option:ntp-server,{{.Gateway}}
-dhcp-option=interface:vlan004,option:router,{{.HMNGateway}}
+dhcp-option=interface:vlan004,option:router,{{.Gateway}}
 dhcp-range=interface:vlan004,{{.DHCPStart}},{{.DHCPEnd}},10m
 `)
 

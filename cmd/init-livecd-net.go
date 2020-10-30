@@ -18,9 +18,9 @@ import (
 )
 
 // BuildLiveCDNetworks creates an array of IPv4 Networks based on the supplied system configuration
-func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]shasta.IPV4Network, error) {
+func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*shasta.IPV4Network, error) {
 	// our primitive ipam uses the number of cabinets to lay out a network for each one.
-	var networkMap = make(map[string]shasta.IPV4Network)
+	var networkMap = make(map[string]*shasta.IPV4Network)
 
 	// Start the NMN with out defaults
 	tempNMN := shasta.DefaultNMN
@@ -38,7 +38,7 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]s
 	subnet.DHCPEnd = ipam.Add(ipam.Broadcast(subnet.CIDR), -1)
 	// Divide the network into an appropriate number of subnets
 	tempNMN.GenSubnets(uint(conf.Cabinets), int(conf.StartingCabinet), net.CIDRMask(22, 32), v.GetInt("management-net-ips"))
-	networkMap["nmn"] = tempNMN
+	networkMap["nmn"] = &tempNMN
 
 	// Start the HMN with out defaults
 	tempHMN := shasta.DefaultHMN
@@ -57,7 +57,7 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]s
 	subnet.DHCPEnd = ipam.Add(ipam.Broadcast(subnet.CIDR), -1)
 	// Divide the network into an appropriate number of subnets
 	tempHMN.GenSubnets(uint(conf.Cabinets), int(conf.StartingCabinet), net.CIDRMask(22, 32), v.GetInt("management-net-ips"))
-	networkMap["hmn"] = tempHMN
+	networkMap["hmn"] = &tempHMN
 
 	// Start the HSN with out defaults
 	tempHSN := shasta.DefaultHSN
@@ -72,7 +72,7 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]s
 
 	// Divide the network into an appropriate number of subnets
 	tempHSN.GenSubnets(uint(conf.Cabinets), int(conf.StartingCabinet), net.CIDRMask(22, 32), v.GetInt("management-net-ips"))
-	networkMap["hsn"] = tempHSN
+	networkMap["hsn"] = &tempHSN
 
 	// Start the MTL with our defaults
 	tempMTL := shasta.DefaultMTL
@@ -83,7 +83,7 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]s
 	subnet.ReserveNetMgmtIPs(v.GetInt("management-net-ips"))
 	subnet.DHCPStart = ipam.Add(subnet.CIDR.IP, v.GetInt("management-net-ips"))
 	subnet.DHCPEnd = ipam.Add(ipam.Broadcast(subnet.CIDR), -1)
-	networkMap["mtl"] = tempMTL
+	networkMap["mtl"] = &tempMTL
 
 	// Start the CAN with our defaults
 	tempCan := shasta.DefaultCAN
@@ -104,13 +104,13 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]s
 	subnet.ReserveNetMgmtIPs(v.GetInt("management-net-ips"))
 	subnet.DHCPStart = ipam.Add(subnet.CIDR.IP, v.GetInt("management-net-ips"))
 	subnet.DHCPEnd = ipam.Add(ipam.Broadcast(subnet.CIDR), -1)
-	networkMap["can"] = tempCan
+	networkMap["can"] = &tempCan
 
 	return networkMap, nil
 }
 
 // WriteNetworkFiles persistes our network configuration to disk in a directory of yaml files
-func WriteNetworkFiles(basepath string, networks map[string]shasta.IPV4Network) {
+func WriteNetworkFiles(basepath string, networks map[string]*shasta.IPV4Network) {
 	for k, v := range networks {
 		sicFiles.WriteYAMLConfig(filepath.Join(basepath, fmt.Sprintf("networks/%v.yaml", k)), v)
 	}

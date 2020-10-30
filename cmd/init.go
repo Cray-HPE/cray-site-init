@@ -22,68 +22,103 @@ import (
 
 // initCmd represents the init command
 var initCmd = &cobra.Command{
-	Use:   "init --from-sls-file=<file> --from-1.3-dir=<dir> --from-sls=<sls url> system-name",
+	Use:   "init",
 	Short: "init generates the directory structure for a new system rooted in a directory matching the system-name argument",
-	Long: `init generates a scaffolding the Shasta 1.4 configuration payload.  
-	It can optionally load from the sls or files of an existing 1.3 system.
-	Files used from the 1.3 system include:
-	 - system_config.yml
-	 - ncn_metadata.csv
-	 - networks_derived.yml
-	 - hmn_connections.json
-	 - customer_var.yml`,
+	Long:  `init generates a scaffolding the Shasta 1.4 configuration payload.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 		// Initialize the global viper
 		v := viper.GetViper()
 		var conf shasta.SystemConfig
 
-		// Removed the reference to the files from a 1.3 system.
-		// They were not working properly and leading to confusion
-
+		// TODO: Move this to an ARG
 		// We use the system-name for a directory.  Make sure it is set.
 		if v.GetString("system-name") == "" {
 			log.Fatalf("system-name is not set")
 		}
-		// Set up the path for our base directory using our systemname
-		basepath, err := filepath.Abs(filepath.Clean(v.GetString("system-name")))
-		if err != nil {
-			log.Fatalln(err)
-		}
-		// Create our base directory
-		if err := os.Mkdir(basepath, 0777); err != nil {
-			log.Fatalln("Can't create directory", basepath, err)
-		}
-		// Global viper needs a reference to our basepath
-		v.Set("configuration-basepath", basepath)
-
-		// These Directories make up the overall structure for the Configuration Payload
-		dirs := []string{
-			filepath.Join(basepath, "networks"),
-			filepath.Join(basepath, "manufacturing"),
-			filepath.Join(basepath, "credentials"),
-			filepath.Join(basepath, "dnsmasq.d"),
-		}
-		// Add the Manifest directory if needed
-		if v.GetString("manifest-release") != "" {
-			dirs = append(dirs, filepath.Join(basepath, "loftsman-manifests"))
-		}
-		// Iterate through the directories and create them
-		for _, dir := range dirs {
-			if err := os.Mkdir(dir, 0777); err != nil {
-				log.Fatalln("Can't create directory", dir, err)
-			}
-		}
-
+		basepath, err := setupDirectories(v.GetString("system-name"), v)
 		// Everything should be set up properly in the global viper now.
 		// Unmarshaling it to a struct at this point also verifies that the
 		// resulting struct is valid.
+
 		err = v.Unmarshal(&conf)
 		if err != nil {
 			log.Fatalf("unable to decode configuration into struct, %v \n", err)
 		}
+
+		// The installation requires a set of information in order to proceed
+		// First, we need some kind of representation of the physical hardware
+		// That is generally represented through the hmn_connections.json file
+		// which is literally a cabling map with metadata about the NCNs.
+		//
+		// From the hmn_connections file, we can create a set of HMNRow objects
+		// to use for populating SLS.
+		hmnRows, err := loadHMNConnectionsFile(v.GetString("hmn-connections"))
+		//
+		// SLS also needs to know about our networking configuration.  In order to do that,
+		// we need to split one or more large CIDRs into subnets per cabinet and add that to
+		// the SLS configuration.  We have sensible defaults, but most of this needs to be
+		// handled through ip address math with out internal ipam library
 		shastaNetworks, err := BuildLiveCDNetworks(conf, v)
-		// WriteNetworkFiles(basepath, shastaNetworks)
+		// This is techincally sufficient to generate an SLSState object, but to do so now
+		// would not include extended information about the NCNs and Network Switches.
+		//
+		// The first step in building the NCN map is to read the NCN Metadata file
+		ncnMeta, err := sicFiles.ReadNodeCSV(v.GetString("ncn-metadata"))
+		// *** Loading Data Complete **** //
+		// *** Begin Enrichment *** //
+		// Alone, this metadata isn't enough.  We need to enrich it by converting from the
+		// simple metadata structure to a more useful shasta.LogicalNCN structure
+		var ncns []*shasta.LogicalNCN
+		for _, node := range ncnMeta {
+			ncns = append(ncns, node.AsLogicalNCN()) // Conversion logic in here is simplistic
+		}
+		//
+		// Now, we have all the raw data we need to build out our system map/configuration
+		// before committing it to disk as the various configuration files we need.
+		//
+		// To enrich our data, we need to allocate IPs for the management network switches and
+		// NCNs and pair MACs with IPs in the NCN structures
+		shasta.AllocateIps(ncns, shastaNetworks) // This function has no return because it is working with lists of pointers.
+		// Finally, the data is properly enriched and we can begin shaping it for use.
+		// *** Enrichment Complete *** //
+		// *** Commence Shaping for use *** //
+		// First, our sls generator needs a list of networks and not a map of them
+		var networks []shasta.IPV4Network
+		for name, network := range shastaNetworks {
+			if network.Name == "" {
+				network.Name = name
+			}
+			networks = append(networks, *network)
+		}
+		// Generate SLS input state
+		// Verify there are enough cabinet subnets
+		cabinetSubnets := getCabinetSubnets(&networks)
+		numRiver := v.GetInt("river-cabinets")
+		numHill := v.GetInt("hill-cabinets")
+		numMountain := v.GetInt("mountain-cabinets")
+
+		numCabinets := numRiver + numHill + numMountain
+		if len(cabinetSubnets) < numCabinets {
+			log.Fatalln("Insufficient subnets for", numCabinets, "cabinets, has only", len(cabinetSubnets))
+		} else if len(cabinetSubnets) > numCabinets {
+			log.Println("Warning: Using", numCabinets, "of", len(cabinetSubnets), "available subnets")
+		}
+
+		inputState := shasta.SLSGeneratorInputState{
+			// TODO What about the ManagementSwitch?
+			RiverCabinets:       getCabinets(sls_common.ClassRiver, 1004, cabinetSubnets[0:numRiver]),
+			HillCabinets:        getCabinets(sls_common.ClassHill, 3000, cabinetSubnets[numRiver:numRiver+numHill]),
+			MountainCabinets:    getCabinets(sls_common.ClassMountain, 5000, cabinetSubnets[numRiver+numHill:]),
+			MountainStartingNid: v.GetInt("starting-nid"),
+			Networks:            convertIPV4NetworksToSLS(&networks),
+		}
+		slsState := shasta.GenerateSLSState(inputState, hmnRows)
+
+		err = sicFiles.WriteJSONConfig("-", &slsState)
+		if err != nil {
+			log.Fatalln("Failed to encode SLS state:", err)
+		}
 
 		conf.IPV4Resolvers = strings.Split(viper.GetString("ipv4-resolvers"), ",")
 		conf.SiteServices.NtpPoolHostname = conf.NtpPoolHostname
@@ -93,50 +128,10 @@ var initCmd = &cobra.Command{
 		sicFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/bmc_password.json"), shasta.DefaultBMCPW)
 		sicFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/mgmt_switch_password.json"), shasta.DefaultNetPW)
 
-		// Handle an SLSFile if one is provided
-		var slsState sls_common.SLSState
-		if v.GetString("from-sls-file") != "" {
-			log.Println("Loading from ", v.GetString("from-sls-file"))
-			slsState, err = shasta.ParseSLSFile(v.GetString("from-sls-file"))
-			if err != nil {
-				log.Fatal("Error loading the sls-file: ", err)
-			}
-			// Confirm that our slsState is valid
-			networks, err := shasta.ExtractSLSNetworks(&slsState)
-			if err != nil {
-				log.Printf("Couldn't extract networks because: %d \n", err)
-			} else {
-				log.Printf("Extracted %d networks \n", len(networks))
-			}
-			switches, err := shasta.ExtractSLSSwitches(&slsState)
-			if err != nil {
-				log.Printf("Couldn't extract switches because: %d \n", err)
-			} else {
-				log.Printf("Extracted %d switches \n", len(switches))
-			}
-			ncns, err := shasta.ExtractSLSNCNs(&slsState)
-			if err != nil {
-				log.Printf("Couldn't extract ncns because: %d \n", err)
-			} else {
-				log.Printf("Extracted %d management ncns \n", len(ncns))
-			}
-
-		}
-		ncnMeta, err := sicFiles.ReadNodeCSV(v.GetString("ncn-metadata"))
-		if err != nil {
-			log.Printf("Couldn't extract NCN information from the metadata file: %v \n", v.GetString("ncn-metadata"))
-		} else {
-			var ncns []shasta.LogicalNCN
-			for _, node := range ncnMeta {
-				ncns = append(ncns, node.AsLogicalNCN())
-			}
-			// We need to allocate IPs and then pull macs from the metadata to add them
-			shasta.AllocateIps(ncns, shastaNetworks)
-			WriteDNSMasqConfig(basepath, ncns, shastaNetworks)
-			WriteConmanConfig(filepath.Join(basepath, "conman.conf"), ncns, conf)
-			WriteMetalLBConfigMap(basepath, conf, shastaNetworks)
-			WriteBaseCampData(filepath.Join(basepath, "data.json"), conf, &slsState, ncnMeta)
-		}
+		WriteDNSMasqConfig(basepath, ncns, shastaNetworks)
+		WriteConmanConfig(filepath.Join(basepath, "conman.conf"), ncns, conf)
+		WriteMetalLBConfigMap(basepath, conf, shastaNetworks)
+		WriteBaseCampData(filepath.Join(basepath, "data.json"), conf, &slsState, ncnMeta)
 		WriteNetworkFiles(basepath, shastaNetworks)
 
 		if v.GetString("manifest-release") != "" {
@@ -149,10 +144,6 @@ func init() {
 	configCmd.AddCommand(initCmd)
 
 	// Flags with defaults for initializing a configuration
-
-	// Flags to deal with 1.3 configuration directories
-
-	// initCmd.Flags().String("from-1.3-dir", "", "Shasta 1.3 Configuration Directory") // This should shift to a different command like config convert or something like that
 
 	// System Configuration Flags based on previous system_config.yml and networks_derived.yml
 	initCmd.Flags().String("system-name", "sn-2024", "Name of the System")
@@ -176,8 +167,15 @@ func init() {
 	initCmd.Flags().Int("can-bootstrap-vlan", shasta.DefaultCANVlan, "Bootstrap VLAN for the CAN")
 
 	// Hardware Details
-	initCmd.Flags().Int16("cabinets", 5, "Total Number of Cabinets")
-	initCmd.Flags().Int16("starting-cabinet", 1004, "Starting ID number for Mountain Cabinets")
+	initCmd.Flags().Int16("mountain-cabinets", 5, "Number of Mountain Cabinets")
+	initCmd.Flags().Int16("starting-mountain-cabinet", 5000, "Starting ID number for Mountain Cabinets")
+
+	initCmd.Flags().Int16("river-cabinets", 1, "Number of River Cabinets")
+	initCmd.Flags().Int16("starting-river-cabinet", 1004, "Starting ID number for River Cabinets")
+
+	initCmd.Flags().Int16("hill-cabinets", 0, "Number of Hill Cabinets")
+	initCmd.Flags().Int16("starting-hill-cabinet", 3000, "Starting ID number for Hill Cabinets")
+
 	initCmd.Flags().Int16("starting-NID", 20000, "Starting NID for Compute Nodes")
 
 	// Use these flags to prepare the basecamp metadata json
@@ -194,7 +192,7 @@ func init() {
 	initCmd.Flags().String("from-sls-file", "", "SLS File Location")
 
 	// Dealing with SLS precursors
-	initCmd.Flags().String("hmn_connnections", "", "HMN Connections JSON Location (For generating an SLS File)")
+	initCmd.Flags().String("hmn_connnections", "hmn_connections.json", "HMN Connections JSON Location (For generating an SLS File)")
 	initCmd.Flags().String("ncn-metadata", "", "CSV for mapping the mac addresses of the NCNs to their xnames")
 	initCmd.Flags().String("oca-ncn-metadata", "", "CSV from the OCA tool for mapping the mac addresses of the NCNs to their serial numbers")
 
@@ -237,3 +235,68 @@ func initiailzeManifestDir(url, branch, destination string) {
 		log.Fatalf("untarCmd finished with error: %s (%v)\n", out, err)
 	}
 }
+
+func setupDirectories(systemName string, v *viper.Viper) (string, error) {
+	// Set up the path for our base directory using our systemname
+	basepath, err := filepath.Abs(filepath.Clean(systemName))
+	if err != nil {
+		return basepath, err
+	}
+	// Create our base directory
+	if err = os.Mkdir(basepath, 0777); err != nil {
+		return basepath, err
+	}
+
+	// These Directories make up the overall structure for the Configuration Payload
+	// TODO: Refactor this out of the function and into defaults or some other config
+	dirs := []string{
+		filepath.Join(basepath, "networks"),
+		filepath.Join(basepath, "manufacturing"),
+		filepath.Join(basepath, "credentials"),
+		filepath.Join(basepath, "dnsmasq.d"),
+	}
+	// Add the Manifest directory if needed
+	if v.GetString("manifest-release") != "" {
+		dirs = append(dirs, filepath.Join(basepath, "loftsman-manifests"))
+	}
+	// Iterate through the directories and create them
+	for _, dir := range dirs {
+		if err := os.Mkdir(dir, 0777); err != nil {
+			// log.Fatalln("Can't create directory", dir, err)
+			return basepath, err
+		}
+	}
+	return basepath, nil
+}
+
+/*
+	// Handle an SLSFile if one is provided
+	var slsState sls_common.SLSState
+	if v.GetString("from-sls-file") != "" {
+		log.Println("Loading from ", v.GetString("from-sls-file"))
+		slsState, err = shasta.ParseSLSFile(v.GetString("from-sls-file"))
+		if err != nil {
+			log.Fatal("Error loading the sls-file: ", err)
+		}
+		// Confirm that our slsState is valid
+		networks, err := shasta.ExtractSLSNetworks(&slsState)
+		if err != nil {
+			log.Printf("Couldn't extract networks because: %d \n", err)
+		} else {
+			log.Printf("Extracted %d networks \n", len(networks))
+		}
+		switches, err := shasta.ExtractSLSSwitches(&slsState)
+		if err != nil {
+			log.Printf("Couldn't extract switches because: %d \n", err)
+		} else {
+			log.Printf("Extracted %d switches \n", len(switches))
+		}
+		ncns, err := shasta.ExtractSLSNCNs(&slsState)
+		if err != nil {
+			log.Printf("Couldn't extract ncns because: %d \n", err)
+		} else {
+			log.Printf("Extracted %d management ncns \n", len(ncns))
+		}
+
+	}
+*/

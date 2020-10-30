@@ -24,8 +24,8 @@ type BootstrapNCNMetadata struct {
 }
 
 // AsLogicalNCN converts from NCNMetadata to LogicalNCN.  It's unwise to try to reverse this.
-func (node BootstrapNCNMetadata) AsLogicalNCN() LogicalNCN {
-	return LogicalNCN{
+func (node BootstrapNCNMetadata) AsLogicalNCN() *LogicalNCN {
+	tempNCN := LogicalNCN{
 		Xname:      node.Xname,
 		Hostname:   node.GetHostname(),
 		ShastaRole: fmt.Sprintf("%v-%v", node.Role, node.Subrole),
@@ -33,6 +33,7 @@ func (node BootstrapNCNMetadata) AsLogicalNCN() LogicalNCN {
 		BMCMac:     node.BmcMac,
 		NMNMac:     node.NmnMac,
 	}
+	return &tempNCN
 }
 
 // SystemConfig stores the overall set of system configuration parameters

@@ -110,7 +110,7 @@ func WriteBaseCampData(path string, conf shasta.SystemConfig, sls *sls_common.SL
 }
 
 // WriteConmanConfig provides conman configuration for the installer
-func WriteConmanConfig(path string, ncns []shasta.LogicalNCN, conf shasta.SystemConfig) {
+func WriteConmanConfig(path string, ncns []*shasta.LogicalNCN, conf shasta.SystemConfig) {
 	type conmanLine struct {
 		Hostname string
 		User     string
@@ -137,7 +137,7 @@ func WriteConmanConfig(path string, ncns []shasta.LogicalNCN, conf shasta.System
 }
 
 // WriteMetalLBConfigMap creates the yaml configmap
-func WriteMetalLBConfigMap(path string, conf shasta.SystemConfig, networks map[string]shasta.IPV4Network) {
+func WriteMetalLBConfigMap(path string, conf shasta.SystemConfig, networks map[string]*shasta.IPV4Network) {
 
 	// this lookup table should be redundant in the future
 	// when we can better hint which pool an endpoint should pull from
@@ -171,7 +171,7 @@ func WriteMetalLBConfigMap(path string, conf shasta.SystemConfig, networks map[s
 }
 
 // WriteDNSMasqConfig writes the dnsmasq configuration files necssary for installation
-func WriteDNSMasqConfig(path string, bootstrap []shasta.LogicalNCN, networks map[string]shasta.IPV4Network) {
+func WriteDNSMasqConfig(path string, bootstrap []*shasta.LogicalNCN, networks map[string]*shasta.IPV4Network) {
 
 	// DNSMasqNCN is the struct to manage NCNs within DNSMasq
 	type DNSMasqNCN struct {
@@ -224,7 +224,7 @@ func WriteDNSMasqConfig(path string, bootstrap []shasta.LogicalNCN, networks map
 	writeConfig("nmn", path, *tpl4, networks)
 }
 
-func writeConfig(name, path string, tpl template.Template, networks map[string]shasta.IPV4Network) {
+func writeConfig(name, path string, tpl template.Template, networks map[string]*shasta.IPV4Network) {
 	// get a pointer to the IPV4Network
 	tempNet := networks[name]
 	// get a pointer to the subnet

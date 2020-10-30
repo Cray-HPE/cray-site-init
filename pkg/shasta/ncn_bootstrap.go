@@ -11,17 +11,19 @@ import (
 
 // LogicalNCN is the main struct for NCNs
 type LogicalNCN struct {
-	Xname            string       `json:"xname"`
-	Hostname         string       `yaml:"local-hostname" json:"local-hostname"` // should be xname
-	InstanceID       string       `yaml:"instance-id" json:"instance-id"`       // should be unique for the life of the image
-	Region           string       `yaml:"region" json:"region"`
-	AvailabilityZone string       `yaml:"availability-zone" json:"availability-zone"`
-	ShastaRole       string       `yaml:"shasta-role" json:"shasta-role"` // map to HSM role
-	Aliases          []string     `yaml:"aliases" json:"aliases"`
-	Networks         []NCNNetwork `yaml:"networks" json:"networks"`
-	BMCMac           string       `yaml:"bmc-mac" json:"bmc-mac"`
-	BMCIp            string       `yaml:"bmc-ip" json:"bmc-ip"`
-	NMNMac           string       `yaml:"nmn-mac" json:"nmn-mac"`
+	Xname            string         `yaml:"xname" json:"xname"`
+	Hostname         string         `yaml:"hostname" json:"hostname"`
+	InstanceID       string         `yaml:"instance-id" json:"instance-id"` // should be unique for the life of the image
+	Region           string         `yaml:"region" json:"region"`
+	AvailabilityZone string         `yaml:"availability-zone" json:"availability-zone"`
+	ShastaRole       string         `yaml:"shasta-role" json:"shasta-role"` // map to HSM Subrole
+	Aliases          []string       `yaml:"aliases" json:"aliases"`
+	Networks         []NCNNetwork   `yaml:"networks" json:"networks"`
+	Interfaces       []NCNInterface `yaml:"interfaces" json:"interfaces"`
+	BMCMac           string         `yaml:"bmc-mac" json:"bmc-mac"`
+	BMCIp            string         `yaml:"bmc-ip" json:"bmc-ip"`
+	NMNMac           string         `yaml:"nmn-mac" json:"nmn-mac"`
+	Cabinet          string         `yaml:"cabinet" json:"cabinet"` // Use to establish availability zone
 }
 
 // NCNNetwork holds information about networks
@@ -44,8 +46,8 @@ type NCNInterface struct {
 }
 
 // AllocateIps distributes IP reservations for each of the NCNs within the networks
-func AllocateIps(ncns []LogicalNCN, networks map[string]IPV4Network) {
-	lookup := func(name string, networks map[string]IPV4Network) *IPV4Subnet {
+func AllocateIps(ncns []*LogicalNCN, networks map[string]*IPV4Network) {
+	lookup := func(name string, networks map[string]*IPV4Network) *IPV4Subnet {
 		tempNetwork := networks[name]
 		subnet, err := tempNetwork.LookUpSubnet("bootstrap_dhcp")
 		if err != nil {
