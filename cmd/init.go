@@ -109,10 +109,11 @@ var initCmd = &cobra.Command{
 
 		inputState := shasta.SLSGeneratorInputState{
 			// TODO What about the ManagementSwitch?
+			// ManagementSwitches: should be an array of sls_common.Hardware xname and ip addr are crucial
 			RiverCabinets:       getCabinets(sls_common.ClassRiver, 1004, cabinetSubnets[0:numRiver]),
 			HillCabinets:        getCabinets(sls_common.ClassHill, 3000, cabinetSubnets[numRiver:numRiver+numHill]),
 			MountainCabinets:    getCabinets(sls_common.ClassMountain, 5000, cabinetSubnets[numRiver+numHill:]),
-			MountainStartingNid: v.GetInt("starting-nid"),
+			MountainStartingNid: v.GetInt("starting-mountain-nid"),
 			Networks:            convertIPV4NetworksToSLS(&networks),
 		}
 		slsState := shasta.GenerateSLSState(inputState, hmnRows)
@@ -169,16 +170,17 @@ func init() {
 	initCmd.Flags().Int("can-bootstrap-vlan", shasta.DefaultCANVlan, "Bootstrap VLAN for the CAN")
 
 	// Hardware Details
-	initCmd.Flags().Int("mountain-cabinets", 5, "Number of Mountain Cabinets")
+	initCmd.Flags().Int("mountain-cabinets", 4, "Number of Mountain Cabinets") // 4 mountain cabinets per CDU
 	initCmd.Flags().Int("starting-mountain-cabinet", 5000, "Starting ID number for Mountain Cabinets")
 
 	initCmd.Flags().Int("river-cabinets", 1, "Number of River Cabinets")
-	initCmd.Flags().Int("starting-river-cabinet", 1004, "Starting ID number for River Cabinets")
+	initCmd.Flags().Int("starting-river-cabinet", 3000, "Starting ID number for River Cabinets")
 
 	initCmd.Flags().Int("hill-cabinets", 0, "Number of Hill Cabinets")
-	initCmd.Flags().Int("starting-hill-cabinet", 3000, "Starting ID number for Hill Cabinets")
+	initCmd.Flags().Int("starting-hill-cabinet", 9000, "Starting ID number for Hill Cabinets")
 
-	initCmd.Flags().Int("starting-NID", 20000, "Starting NID for Compute Nodes")
+	initCmd.Flags().Int("starting-river-NID", 1, "Starting NID for Compute Nodes")
+	initCmd.Flags().Int("starting-mountain-NID", 1000, "Starting NID for Compute Nodes")
 
 	// Use these flags to prepare the basecamp metadata json
 	initCmd.Flags().String("spine-switch-xnames", "", "Comma separated list of xnames for spine switches")
@@ -194,7 +196,7 @@ func init() {
 	initCmd.Flags().String("from-sls-file", "", "SLS File Location")
 
 	// Dealing with SLS precursors
-	initCmd.Flags().String("hmn_connnections", "hmn_connections.json", "HMN Connections JSON Location (For generating an SLS File)")
+	initCmd.Flags().String("hmn-connnections", "hmn_connections.json", "HMN Connections JSON Location (For generating an SLS File)")
 	initCmd.Flags().String("ncn-metadata", "ncn_metadata.csv", "CSV for mapping the mac addresses of the NCNs to their xnames")
 
 	// Loftsman Manifest Shasta-CFG
