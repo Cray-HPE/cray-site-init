@@ -44,7 +44,7 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*
 	subnet.DHCPEnd = ipam.Add(ipam.Broadcast(subnet.CIDR), -1)
 	// Divide the network into an appropriate number of subnets
 	tempNMN.GenSubnets(cabinetDetails, net.CIDRMask(22, 32), v.GetInt("management-net-ips"), v.GetString("spine-switch-xnames"), v.GetString("leaf-switch-xnames"))
-	networkMap["nmn"] = &tempNMN
+	networkMap["NMN"] = &tempNMN
 
 	// Start the HMN with out defaults
 	tempHMN := shasta.DefaultHMN
@@ -65,7 +65,7 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*
 	// Divide the network into an appropriate number of subnets
 	tempHMN.GenSubnets(cabinetDetails, net.CIDRMask(22, 32), v.GetInt("management-net-ips"), v.GetString("spine-switch-xnames"), v.GetString("leaf-switch-xnames"))
 
-	networkMap["hmn"] = &tempHMN
+	networkMap["HMN"] = &tempHMN
 
 	// Start the HSN with out defaults
 	tempHSN := shasta.DefaultHSN
@@ -81,7 +81,7 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*
 	// Divide the network into an appropriate number of subnets
 	tempHSN.GenSubnets(cabinetDetails, net.CIDRMask(22, 32), v.GetInt("management-net-ips"), v.GetString("spine-switch-xnames"), v.GetString("leaf-switch-xnames"))
 
-	networkMap["hsn"] = &tempHSN
+	networkMap["HSN"] = &tempHSN
 
 	// Start the MTL with our defaults
 	tempMTL := shasta.DefaultMTL
@@ -92,7 +92,7 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*
 	subnet.ReserveNetMgmtIPs(v.GetInt("management-net-ips"), strings.Split(v.GetString("spine-switch-xnames"), ","), strings.Split(v.GetString("leaf-switch-xnames"), ","))
 	subnet.DHCPStart = ipam.Add(subnet.CIDR.IP, v.GetInt("management-net-ips"))
 	subnet.DHCPEnd = ipam.Add(ipam.Broadcast(subnet.CIDR), -1)
-	networkMap["mtl"] = &tempMTL
+	networkMap["MTL"] = &tempMTL
 
 	// Start the CAN with our defaults
 	tempCan := shasta.DefaultCAN
@@ -113,7 +113,7 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*
 	subnet.ReserveNetMgmtIPs(v.GetInt("management-net-ips"), strings.Split(v.GetString("spine-switch-xnames"), ","), strings.Split(v.GetString("leaf-switch-xnames"), ","))
 	subnet.DHCPStart = ipam.Add(subnet.CIDR.IP, v.GetInt("management-net-ips"))
 	subnet.DHCPEnd = ipam.Add(ipam.Broadcast(subnet.CIDR), -1)
-	networkMap["can"] = &tempCan
+	networkMap["CAN"] = &tempCan
 
 	return networkMap, nil
 }

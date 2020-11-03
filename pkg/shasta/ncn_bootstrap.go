@@ -58,7 +58,7 @@ func AllocateIps(ncns []*LogicalNCN, networks map[string]*IPV4Network) {
 	}
 
 	// Build a map of networks based on their names
-	netNames := [4]string{"can", "mtl", "nmn", "hmn"}
+	netNames := [4]string{"CAN", "MTL", "NMN", "HMN"}
 	subnets := make(map[string]*IPV4Subnet)
 	for _, name := range netNames {
 		subnets[name] = lookup(name, networks)
@@ -68,7 +68,7 @@ func AllocateIps(ncns []*LogicalNCN, networks map[string]*IPV4Network) {
 	for _, ncn := range ncns {
 		for netName, subnet := range subnets {
 			// reserve the bmc ip
-			if netName == "hmn" {
+			if netName == "HMN" {
 				ncn.BMCIp = subnet.AddReservation(fmt.Sprintf("bmc-%v", ncn.Hostname), fmt.Sprintf("bmc-%v", ncn.Xname)).IPAddress.String()
 			}
 			reservation := subnet.AddReservation(ncn.Hostname, ncn.Xname)

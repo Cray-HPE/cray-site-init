@@ -86,6 +86,7 @@ func (iNet *IPV4Network) GenSubnets(cabinetDetails []CabinetDetail, mask net.IPM
 				VlanID: iNet.VlanRange[1] + int16(i),
 			}
 			tempSubnet.ReserveNetMgmtIPs(mgmtIPReservations, spineXnames, leafXnames)
+			log.Println("Adding subnet for", tempSubnet.Name)
 			myIPv4Subnets = append(myIPv4Subnets, tempSubnet)
 		}
 	}

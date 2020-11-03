@@ -179,7 +179,7 @@ func WriteDNSMasqConfig(path string, bootstrap []*shasta.LogicalNCN, networks ma
 	var nmnIP string
 	for _, v := range bootstrap {
 		for _, net := range v.Networks {
-			if net.NetworkName == "nmn" {
+			if net.NetworkName == "NMN" {
 				nmnIP = net.IPAddress
 			}
 		}
@@ -197,15 +197,15 @@ func WriteDNSMasqConfig(path string, bootstrap []*shasta.LogicalNCN, networks ma
 	sicFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/statics.conf"), tpl1, ncns)
 
 	// get a pointer to the MTL
-	mtlNet := networks["mtl"]
+	mtlNet := networks["MTL"]
 	// get a pointer to the subnet
 	mtlBootstrapSubnet, _ := mtlNet.LookUpSubnet("bootstrap_dhcp")
 	sicFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/mtl.conf"), tpl5, mtlBootstrapSubnet)
 
 	// Deal with the easy ones
-	writeConfig("can", path, *tpl2, networks)
-	writeConfig("hmn", path, *tpl3, networks)
-	writeConfig("nmn", path, *tpl4, networks)
+	writeConfig("CAN", path, *tpl2, networks)
+	writeConfig("HMN", path, *tpl3, networks)
+	writeConfig("NMN", path, *tpl4, networks)
 }
 
 func writeConfig(name, path string, tpl template.Template, networks map[string]*shasta.IPV4Network) {
