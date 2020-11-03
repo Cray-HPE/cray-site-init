@@ -54,6 +54,9 @@ var initCmd = &cobra.Command{
 		// From the hmn_connections file, we can create a set of HMNRow objects
 		// to use for populating SLS.
 		hmnRows, err := loadHMNConnectionsFile(v.GetString("hmn-connections"))
+		if err != nil {
+			log.Fatalf("unable to load hmn connections, %v \n", err)
+		}
 		//
 		// SLS also needs to know about our networking configuration.  In order to do that,
 		// we need to split one or more large CIDRs into subnets per cabinet and add that to
@@ -184,7 +187,7 @@ func init() {
 
 	// Use these flags to prepare the basecamp metadata json
 	initCmd.Flags().String("spine-switch-xnames", "", "Comma separated list of xnames for spine switches")
-	initCmd.Flags().String("leaf-switch-xnames", "", "Comma separated list of xnames for spine switches")
+	initCmd.Flags().String("leaf-switch-xnames", "", "Comma separated list of xnames for leaf switches")
 	initCmd.Flags().String("bgp-asn", "65533", "The autonomous system number for BGP conversations")
 	initCmd.Flags().Int("management-net-ips", 20, "Number of ip addresses to reserve in each vlan for the management network")
 
@@ -196,7 +199,7 @@ func init() {
 	initCmd.Flags().String("from-sls-file", "", "SLS File Location")
 
 	// Dealing with SLS precursors
-	initCmd.Flags().String("hmn-connnections", "hmn_connections.json", "HMN Connections JSON Location (For generating an SLS File)")
+	initCmd.Flags().String("hmn-connections", "hmn_connections.json", "HMN Connections JSON Location (For generating an SLS File)")
 	initCmd.Flags().String("ncn-metadata", "ncn_metadata.csv", "CSV for mapping the mac addresses of the NCNs to their xnames")
 
 	// Loftsman Manifest Shasta-CFG
