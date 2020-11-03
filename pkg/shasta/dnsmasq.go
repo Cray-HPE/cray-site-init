@@ -72,12 +72,13 @@ dhcp-range=interface:vlan002,{{.DHCPStart}},{{.DHCPEnd}},10m
 `)
 
 // StaticConfigTemplate manages the static portion of the DNSMasq configuration
+// Systems with onboard NICs will have a MTL MAC.  Others will also use the NMN
 var StaticConfigTemplate = []byte(`
 # Static Configurations
 {{range .}}
 # DHCP Entries for {{.Hostname}}
 dhcp-host={{.NMNMac}},{{.NMNIP}},{{.Hostname}},infinite # NMN
-dhcp-host={{.NMNMac}},{{.MTLIP}},{{.Hostname}},infinite # MTL
+dhcp-host={{.MTLMac}},{{.MTLIP}},{{.Hostname}},infinite # MTL
 dhcp-host={{.NMNMac}},{{.HMNIP}},{{.Hostname}},infinite # HMN
 dhcp-host={{.NMNMac}},{{.CANIP}},{{.Hostname}},infinite # CAN
 dhcp-host={{.BMCMac}},{{.BMCIP}},{{.Hostname}}-mgmt,infinite #HMN

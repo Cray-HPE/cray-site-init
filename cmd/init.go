@@ -110,9 +110,20 @@ var initCmd = &cobra.Command{
 			log.Println("Warning: Using", numCabinets, "of", len(cabinetSubnets), "available subnets")
 		}
 
+		// Management Switch Information is included in the IP Reservations for each subnet
+		switchNet, err := shastaNetworks["nmn"].LookUpSubnet("bootstrap_dhcp")
+		switches, _ := extractSwitchesfromReservations(switchNet)
+		log.Println("Found Switches:", switches)
+		slsSwitches := make(map[string]sls_common.GenericHardware)
+		for _, mySwitch := range switches {
+			log.Println("Found Switch:", mySwitch.Xname)
+			slsSwitches[mySwitch.Xname] = convertManagemenetSwitchToSLS(&mySwitch)
+		}
+
 		inputState := shasta.SLSGeneratorInputState{
 			// TODO What about the ManagementSwitch?
 			// ManagementSwitches: should be an array of sls_common.Hardware xname and ip addr are crucial
+			ManagementSwitches:  slsSwitches,
 			RiverCabinets:       getCabinets(sls_common.ClassRiver, 1004, cabinetSubnets[0:numRiver]),
 			HillCabinets:        getCabinets(sls_common.ClassHill, 3000, cabinetSubnets[numRiver:numRiver+numHill]),
 			MountainCabinets:    getCabinets(sls_common.ClassMountain, 5000, cabinetSubnets[numRiver+numHill:]),

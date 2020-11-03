@@ -69,9 +69,9 @@ func AllocateIps(ncns []*LogicalNCN, networks map[string]*IPV4Network) {
 		for netName, subnet := range subnets {
 			// reserve the bmc ip
 			if netName == "hmn" {
-				ncn.BMCIp = subnet.AddReservation(fmt.Sprintf("bmc-%v", ncn.Hostname)).IPAddress.String()
+				ncn.BMCIp = subnet.AddReservation(fmt.Sprintf("bmc-%v", ncn.Hostname), fmt.Sprintf("bmc-%v", ncn.Xname)).IPAddress.String()
 			}
-			reservation := subnet.AddReservation(ncn.Hostname)
+			reservation := subnet.AddReservation(ncn.Hostname, ncn.Xname)
 			ncn.Networks = append(ncn.Networks, NCNNetwork{
 				NetworkName: netName,
 				IPAddress:   reservation.IPAddress.String(),

@@ -90,22 +90,6 @@ func WriteBaseCampData(path string, conf shasta.SystemConfig, sls *sls_common.SL
 	export site_nic=em1
 	export bond_member0=p801p1
 	export bond_member1=p801p2
-	export mtl_cidr=10.1.1.1/16
-	export mtl_dhcp_start=10.1.2.3
-	export mtl_dhcp_end=10.1.2.254
-	export nmn_cidr=10.252.0.4/17
-	export nmn_dhcp_start=10.252.50.0
-	export nmn_dhcp_end=10.252.99.252
-	export hmn_cidr=10.254.0.4/17
-	export hmn_dhcp_start=10.254.50.5
-	export hmn_dhcp_end=10.254.99.252
-	export site_cidr=172.30.52.220/20
-	export site_gw=172.30.48.1
-	export site_dns='172.30.84.40 172.31.84.40'
-	export can_cidr=10.102.4.110/24
-	export can_dhcp_start=10.102.4.5
-	export can_dhcp_end=10.102.4.109
-	export dhcp_ttl=2m
 	*/
 }
 

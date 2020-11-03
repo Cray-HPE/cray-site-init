@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strings"
 
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
 	"stash.us.cray.com/MTL/sic/pkg/ipam"
@@ -49,18 +50,21 @@ type IPV4Subnet struct {
 
 // ManagementSwitch is a type for managing Management switches
 type ManagementSwitch struct {
-	Xname               string     `form:"xname" mapstructure:"xname"` // Required for SLS
-	Name                string     `form:"name" mapstructure:"name"`   // Required for SLS to update DNS
-	Brand               string     `form:"brand" mapstructure:"brand"`
-	Model               string     `form:"model" mapstructure:"model"`
-	Os                  string     `form:"operating-system" mapstructure:"operating-system"`
-	Firmware            string     `form:"firmware" mapstructure:"firmware"`
-	SwitchType          string     //"CDU/Leaf/Spine"
-	ManagementInterface net.IPAddr // SNMP/REST interface IP (not a distinct BMC)  // Required for SLS
+	Xname               string `json:"xname" mapstructure:"xname" csv:"xname"` // Required for SLS
+	Name                string `json:"name" mapstructure:"name" csv:"-"`       // Required for SLS to update DNS
+	Brand               string `json:"brand" mapstructure:"brand" csv:"-"`
+	Model               string `json:"model" mapstructure:"model" csv:"model"`
+	Os                  string `json:"operating-system" mapstructure:"operating-system" csv:"-"`
+	Firmware            string `json:"firmware" mapstructure:"firmware" csv:"-"`
+	SwitchType          string `json:"type" mapstructure:"type" csv:"-"` //"CDU/Leaf/Spine"
+	ManagementInterface net.IP `json:"ip" mapstructure:"ip" csv:"-"`     // SNMP/REST interface IP (not a distinct BMC)  // Required for SLS
 }
 
 // GenSubnets subdivides a network into a set of subnets
-func (iNet *IPV4Network) GenSubnets(cabinetDetails []CabinetDetail, mask net.IPMask, mgmtIPReservations int) error {
+func (iNet *IPV4Network) GenSubnets(cabinetDetails []CabinetDetail, mask net.IPMask, mgmtIPReservations int, spines string, leafs string) error {
+	spineXnames := strings.Split(spines, ",")
+	leafXnames := strings.Split(spines, ",")
+
 	_, myNet, _ := net.ParseCIDR(iNet.CIDR)
 	mySubnets := iNet.AllocatedSubnets()
 	myIPv4Subnets := iNet.Subnets
@@ -81,7 +85,7 @@ func (iNet *IPV4Network) GenSubnets(cabinetDetails []CabinetDetail, mask net.IPM
 				// Reserving the first vlan in the range for a non-cabinet aligned vlan if needed in the future.
 				VlanID: iNet.VlanRange[1] + int16(i),
 			}
-			tempSubnet.ReserveNetMgmtIPs(mgmtIPReservations)
+			tempSubnet.ReserveNetMgmtIPs(mgmtIPReservations, spineXnames, leafXnames)
 			myIPv4Subnets = append(myIPv4Subnets, tempSubnet)
 		}
 	}
@@ -127,9 +131,16 @@ func (iNet *IPV4Network) LookUpSubnet(name string) (IPV4Subnet, error) {
 }
 
 // ReserveNetMgmtIPs reserves (n) IP addresses for management networking equipment
-func (iSubnet *IPV4Subnet) ReserveNetMgmtIPs(n int) {
+func (iSubnet *IPV4Subnet) ReserveNetMgmtIPs(n int, spines []string, leafs []string) {
 	for i := 1; i <= n; i++ {
-		iSubnet.AddReservation(fmt.Sprintf("mgmt_net_%03d", i))
+		// First allocate the spines and then the leafs
+		if i < len(spines) {
+			iSubnet.AddReservation(fmt.Sprintf("sw-spine-%03d", i), spines[i])
+		} else if i < len(spines)+len(leafs) {
+			iSubnet.AddReservation(fmt.Sprintf("sw-leaf-%03d", i-len(spines)), leafs[i-len(spines)])
+		} else {
+			iSubnet.AddReservation(fmt.Sprintf("mgmt_net_%03d", i), "")
+		}
 	}
 }
 
@@ -143,7 +154,7 @@ func (iSubnet *IPV4Subnet) ReservedIPs() []net.IP {
 }
 
 // AddReservation adds a new IP reservation to the subnet
-func (iSubnet *IPV4Subnet) AddReservation(name string) *IPReservation {
+func (iSubnet *IPV4Subnet) AddReservation(name, comment string) *IPReservation {
 	myReservedIPs := iSubnet.ReservedIPs()
 	// Start counting from the bottom knowing the gateway is on the bottom
 	tempIP := ipam.Add(iSubnet.CIDR.IP, 2)
@@ -157,6 +168,7 @@ func (iSubnet *IPV4Subnet) AddReservation(name string) *IPReservation {
 		iSubnet.IPReservations = append(iSubnet.IPReservations, IPReservation{
 			IPAddress: tempIP,
 			Name:      name,
+			Comment:   comment,
 		})
 		return &iSubnet.IPReservations[len(iSubnet.IPReservations)-1]
 	}

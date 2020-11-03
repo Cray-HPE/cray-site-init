@@ -186,7 +186,7 @@ var TestSLSInputState = SLSGeneratorInputState{
 	},
 
 	RiverCabinets: map[string]sls_common.GenericHardware{
-		"x3000": sls_common.GenericHardware{
+		"x3000": {
 			Parent:             "s0",
 			Xname:              "x3000",
 			Type:               sls_common.Cabinet,
@@ -196,7 +196,7 @@ var TestSLSInputState = SLSGeneratorInputState{
 		},
 	},
 	HillCabinets: map[string]sls_common.GenericHardware{
-		"x5000": sls_common.GenericHardware{
+		"x5000": {
 			Parent:             "s0",
 			Xname:              "x5000",
 			Type:               sls_common.Cabinet,
@@ -206,7 +206,7 @@ var TestSLSInputState = SLSGeneratorInputState{
 		},
 	},
 	MountainCabinets: map[string]sls_common.GenericHardware{
-		"x9000": sls_common.GenericHardware{
+		"x9000": {
 			Parent:             "s0",
 			Xname:              "x9000",
 			Type:               sls_common.Cabinet,
