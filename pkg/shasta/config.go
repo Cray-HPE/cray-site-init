@@ -24,8 +24,8 @@ type BootstrapNCNMetadata struct {
 }
 
 // AsLogicalNCN converts from NCNMetadata to LogicalNCN.  It's unwise to try to reverse this.
-func (node BootstrapNCNMetadata) AsLogicalNCN() LogicalNCN {
-	return LogicalNCN{
+func (node BootstrapNCNMetadata) AsLogicalNCN() *LogicalNCN {
+	tempNCN := LogicalNCN{
 		Xname:      node.Xname,
 		Hostname:   node.GetHostname(),
 		ShastaRole: fmt.Sprintf("%v-%v", node.Role, node.Subrole),
@@ -33,6 +33,7 @@ func (node BootstrapNCNMetadata) AsLogicalNCN() LogicalNCN {
 		BMCMac:     node.BmcMac,
 		NMNMac:     node.NmnMac,
 	}
+	return &tempNCN
 }
 
 // SystemConfig stores the overall set of system configuration parameters
@@ -56,10 +57,11 @@ type SystemConfig struct {
 	SiteServices    SiteServices `form:"site-services" mapstructure:"site-services"`
 }
 
-// HardwareDetail stores information that can only come from Manufacturing
-type HardwareDetail struct {
-	Cabinets        int16 `form:"cabinets" mapstructure:"cabinets"`
-	StartingCabinet int16 `form:"starting-cabinet" mapstructure:"starting-cabinet"`
+// CabinetDetail stores information that can only come from Manufacturing
+type CabinetDetail struct {
+	Kind            string `mapstructure:"cabinet-type"`
+	Cabinets        int    `mapstructure:"cabinets"`
+	StartingCabinet int    `mapstructure:"starting-cabinet"`
 }
 
 // BGPPeering stores information about MetalLB Peering

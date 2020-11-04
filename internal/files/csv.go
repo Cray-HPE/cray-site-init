@@ -11,6 +11,12 @@ import (
 	"stash.us.cray.com/MTL/sic/pkg/shasta"
 )
 
+// ReadSwitchCSV parses a CSV file into a list of ManagementSwitch structs
+func ReadSwitchCSV(filename string) ([]*shasta.ManagementSwitch, error) {
+	switches := []*shasta.ManagementSwitch{}
+	return switches, nil
+}
+
 // ReadNodeCSV parses a CSV file into a list of NCN_bootstrap nodes for use by the installer
 func ReadNodeCSV(filename string) ([]*shasta.BootstrapNCNMetadata, error) {
 	nodes := []*shasta.BootstrapNCNMetadata{}

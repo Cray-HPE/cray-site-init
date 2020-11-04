@@ -90,27 +90,11 @@ func WriteBaseCampData(path string, conf shasta.SystemConfig, sls *sls_common.SL
 	export site_nic=em1
 	export bond_member0=p801p1
 	export bond_member1=p801p2
-	export mtl_cidr=10.1.1.1/16
-	export mtl_dhcp_start=10.1.2.3
-	export mtl_dhcp_end=10.1.2.254
-	export nmn_cidr=10.252.0.4/17
-	export nmn_dhcp_start=10.252.50.0
-	export nmn_dhcp_end=10.252.99.252
-	export hmn_cidr=10.254.0.4/17
-	export hmn_dhcp_start=10.254.50.5
-	export hmn_dhcp_end=10.254.99.252
-	export site_cidr=172.30.52.220/20
-	export site_gw=172.30.48.1
-	export site_dns='172.30.84.40 172.31.84.40'
-	export can_cidr=10.102.4.110/24
-	export can_dhcp_start=10.102.4.5
-	export can_dhcp_end=10.102.4.109
-	export dhcp_ttl=2m
 	*/
 }
 
 // WriteConmanConfig provides conman configuration for the installer
-func WriteConmanConfig(path string, ncns []shasta.LogicalNCN, conf shasta.SystemConfig) {
+func WriteConmanConfig(path string, ncns []*shasta.LogicalNCN, conf shasta.SystemConfig) {
 	type conmanLine struct {
 		Hostname string
 		User     string
@@ -137,7 +121,7 @@ func WriteConmanConfig(path string, ncns []shasta.LogicalNCN, conf shasta.System
 }
 
 // WriteMetalLBConfigMap creates the yaml configmap
-func WriteMetalLBConfigMap(path string, conf shasta.SystemConfig, networks map[string]shasta.IPV4Network) {
+func WriteMetalLBConfigMap(path string, conf shasta.SystemConfig, networks map[string]*shasta.IPV4Network) {
 
 	// this lookup table should be redundant in the future
 	// when we can better hint which pool an endpoint should pull from
@@ -171,7 +155,7 @@ func WriteMetalLBConfigMap(path string, conf shasta.SystemConfig, networks map[s
 }
 
 // WriteDNSMasqConfig writes the dnsmasq configuration files necssary for installation
-func WriteDNSMasqConfig(path string, bootstrap []shasta.LogicalNCN, networks map[string]shasta.IPV4Network) {
+func WriteDNSMasqConfig(path string, bootstrap []*shasta.LogicalNCN, networks map[string]*shasta.IPV4Network) {
 
 	// DNSMasqNCN is the struct to manage NCNs within DNSMasq
 	type DNSMasqNCN struct {
@@ -195,7 +179,7 @@ func WriteDNSMasqConfig(path string, bootstrap []shasta.LogicalNCN, networks map
 	var nmnIP string
 	for _, v := range bootstrap {
 		for _, net := range v.Networks {
-			if net.NetworkName == "nmn" {
+			if net.NetworkName == "NMN" {
 				nmnIP = net.IPAddress
 			}
 		}
@@ -213,18 +197,18 @@ func WriteDNSMasqConfig(path string, bootstrap []shasta.LogicalNCN, networks map
 	sicFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/statics.conf"), tpl1, ncns)
 
 	// get a pointer to the MTL
-	mtlNet := networks["mtl"]
+	mtlNet := networks["MTL"]
 	// get a pointer to the subnet
-	mtlBootstrapSubnet, _ := mtlNet.LookUpSubnet("mtl_subnet")
+	mtlBootstrapSubnet, _ := mtlNet.LookUpSubnet("bootstrap_dhcp")
 	sicFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/mtl.conf"), tpl5, mtlBootstrapSubnet)
 
 	// Deal with the easy ones
-	writeConfig("can", path, *tpl2, networks)
-	writeConfig("hmn", path, *tpl3, networks)
-	writeConfig("nmn", path, *tpl4, networks)
+	writeConfig("CAN", path, *tpl2, networks)
+	writeConfig("HMN", path, *tpl3, networks)
+	writeConfig("NMN", path, *tpl4, networks)
 }
 
-func writeConfig(name, path string, tpl template.Template, networks map[string]shasta.IPV4Network) {
+func writeConfig(name, path string, tpl template.Template, networks map[string]*shasta.IPV4Network) {
 	// get a pointer to the IPV4Network
 	tempNet := networks[name]
 	// get a pointer to the subnet

@@ -46,31 +46,21 @@ type decoder func(io.Reader, interface{}) error
 
 // WriteConfig encodes an object to the specified file
 func WriteConfig(enc encoder, path string, conf interface{}) error {
-	var f *os.File
-	if path == "-" {
-		f = os.Stdout
-	} else {
-		f, err := os.Create(path)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
+	f, err := os.Create(path)
+	if err != nil {
+		return err
 	}
+	defer f.Close()
 	return enc(f, conf)
 }
 
 // ReadConfig decodes an object from the specified file
 func ReadConfig(dec decoder, path string, conf interface{}) error {
-	var f *os.File
-	if path == "-" {
-		f = os.Stdin
-	} else {
-		f, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
+	f, err := os.Open(path)
+	if err != nil {
+		return err
 	}
+	defer f.Close()
 	return dec(f, conf)
 }
 

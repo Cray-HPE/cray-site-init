@@ -88,6 +88,7 @@ var genSLSCmd = &cobra.Command{
 		// Generate SLS input state
 		inputState := shasta.SLSGeneratorInputState{
 			// TODO What about the ManagementSwitch?
+			// ManagementSwitches: ,
 			RiverCabinets:       getCabinets(sls_common.ClassRiver, 1004, cabinetSubnets[0:numRiver]),
 			HillCabinets:        getCabinets(sls_common.ClassHill, 3000, cabinetSubnets[numRiver:numRiver+numHill]),
 			MountainCabinets:    getCabinets(sls_common.ClassMountain, 5000, cabinetSubnets[numRiver+numHill:]),
@@ -187,7 +188,7 @@ func convertManagemenetSwitchToSLS(s *shasta.ManagementSwitch) sls_common.Generi
 		TypeString: base.MgmtSwitch,
 		Class:      sls_common.ClassRiver,
 		ExtraPropertiesRaw: sls_common.ComptypeMgmtSwitch{
-			IP4Addr:          s.ManagementInterface.IP.String(), // TODO Test
+			IP4Addr:          s.ManagementInterface.String(), // TODO Test
 			Model:            s.Model,
 			SNMPAuthPassword: fmt.Sprintf("vault://hms-creds/%s", s.Xname),
 			SNMPAuthProtocol: "MD5",
@@ -198,6 +199,30 @@ func convertManagemenetSwitchToSLS(s *shasta.ManagementSwitch) sls_common.Generi
 			Aliases: []string{s.Name},
 		},
 	}
+}
+
+func extractSwitchesfromReservations(subnet shasta.IPV4Subnet) ([]shasta.ManagementSwitch, error) {
+	var switches []shasta.ManagementSwitch
+	for _, reservation := range subnet.IPReservations {
+		if strings.HasPrefix(reservation.Name, "sw-spine") {
+			switches = append(switches, shasta.ManagementSwitch{
+				Xname:               reservation.Comment,
+				Name:                reservation.Name,
+				SwitchType:          "spine",
+				ManagementInterface: reservation.IPAddress,
+			})
+		}
+		if strings.HasPrefix(reservation.Name, "sw-leaf") {
+			switches = append(switches, shasta.ManagementSwitch{
+				Xname:               reservation.Comment,
+				Name:                reservation.Name,
+				SwitchType:          "leaf",
+				ManagementInterface: reservation.IPAddress,
+			})
+		}
+	}
+
+	return switches, nil
 }
 
 func convertIPV4NetworksToSLS(networks *[]shasta.IPV4Network) map[string]sls_common.Network {

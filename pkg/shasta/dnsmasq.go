@@ -31,7 +31,7 @@ cname=packages.hmn,spit.hmn
 cname=registry.hmn,spit.hmn
 dhcp-option=interface:vlan004,option:dns-server,{{.Gateway}}
 dhcp-option=interface:vlan004,option:ntp-server,{{.Gateway}}
-dhcp-option=interface:vlan004,option:router,{{.HMNGateway}}
+dhcp-option=interface:vlan004,option:router,{{.Gateway}}
 dhcp-range=interface:vlan004,{{.DHCPStart}},{{.DHCPEnd}},10m
 `)
 
@@ -72,12 +72,15 @@ dhcp-range=interface:vlan002,{{.DHCPStart}},{{.DHCPEnd}},10m
 `)
 
 // StaticConfigTemplate manages the static portion of the DNSMasq configuration
+// Systems with onboard NICs will have a MTL MAC.  Others will also use the NMN
 var StaticConfigTemplate = []byte(`
 # Static Configurations
 {{range .}}
 # DHCP Entries for {{.Hostname}}
 dhcp-host={{.NMNMac}},{{.NMNIP}},{{.Hostname}},infinite # NMN
 dhcp-host={{.MTLMac}},{{.MTLIP}},{{.Hostname}},infinite # MTL
+dhcp-host={{.NMNMac}},{{.HMNIP}},{{.Hostname}},infinite # HMN
+dhcp-host={{.NMNMac}},{{.CANIP}},{{.Hostname}},infinite # CAN
 dhcp-host={{.BMCMac}},{{.BMCIP}},{{.Hostname}}-mgmt,infinite #HMN
 # Host Record Entries for {{.Hostname}}
 host-record={{.Hostname}},{{.Hostname}}.can,{{.CANIP}}
