@@ -16,8 +16,8 @@ import (
 
 	base "stash.us.cray.com/HMS/hms-base"
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
-	sicFiles "stash.us.cray.com/MTL/sic/internal/files"
-	"stash.us.cray.com/MTL/sic/pkg/shasta"
+	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
+	"stash.us.cray.com/MTL/csi/pkg/shasta"
 )
 
 // initCmd represents the init command
@@ -98,7 +98,7 @@ var genSLSCmd = &cobra.Command{
 
 		slsState := shasta.GenerateSLSState(inputState, hmnRows)
 
-		err = sicFiles.WriteJSONConfig("-", &slsState)
+		err = csiFiles.WriteJSONConfig("-", &slsState)
 		if err != nil {
 			log.Fatalln("Failed to encode SLS state:", err)
 		}

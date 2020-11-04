@@ -82,15 +82,15 @@ func GetArtifact(dirpath string, url string) (err error) {
 }
 
 func init() {
-	spitCmd.AddCommand(getCmd)
-	viper.SetEnvPrefix("spit") // will be uppercased automatically
+	pitCmd.AddCommand(getCmd)
+	viper.SetEnvPrefix("pit") // will be uppercased automatically
 	viper.AutomaticEnv()
-	getCmd.Flags().StringVarP(&kernelURL, "kernel", "k", viper.GetString("kernel_url"), "URL of kernel file to download (env: SPIT_KERNEL_URL)")
-	getCmd.Flags().StringVarP(&initrdURL, "initrd", "i", viper.GetString("initrd_url"), "URL of initrd file to download( env: SPIT_INITRD_URL)")
-	getCmd.Flags().StringVarP(&k8sURL, "manager", "m", viper.GetString("manager_url"), "URL of manager/worker squashfs file to download (env: SPIT_MANAGER_URL)")
-	getCmd.Flags().StringVarP(&cephURL, "storage", "s", viper.GetString("storage_url"), "URL of storage squashfs file to download (env: SPIT_STORAGE_URL)")
-	getCmd.Flags().StringVarP(&dataDir, "data-dir", "d", viper.GetString("data_dir"), "Path to data folder where kernel, initrd, will be saved (env: SPIT_DATA_DIR)")
-	getCmd.Flags().StringVarP(&cephDir, "ceph-dir", "c", viper.GetString("ceph_dir"), "Path to where ceph image will be saved (env: SPIT_CEPH_DIR)")
-	getCmd.Flags().StringVarP(&k8sDir, "k8s-dir", "K", viper.GetString("k8s_dir"), "Path to where k8s image will be saved  (env: SPIT_K8S_DIR)")
+	getCmd.Flags().StringVarP(&kernelURL, "kernel", "k", viper.GetString("kernel_url"), "URL of kernel file to download (env: PIT_KERNEL_URL)")
+	getCmd.Flags().StringVarP(&initrdURL, "initrd", "i", viper.GetString("initrd_url"), "URL of initrd file to download( env: PIT_INITRD_URL)")
+	getCmd.Flags().StringVarP(&k8sURL, "manager", "m", viper.GetString("manager_url"), "URL of manager/worker squashfs file to download (env: PIT_MANAGER_URL)")
+	getCmd.Flags().StringVarP(&cephURL, "storage", "s", viper.GetString("storage_url"), "URL of storage squashfs file to download (env: PIT_STORAGE_URL)")
+	getCmd.Flags().StringVarP(&dataDir, "data-dir", "d", viper.GetString("data_dir"), "Path to data folder where kernel, initrd, will be saved (env: PIT_DATA_DIR)")
+	getCmd.Flags().StringVarP(&cephDir, "ceph-dir", "c", viper.GetString("ceph_dir"), "Path to where ceph image will be saved (env: PIT_CEPH_DIR)")
+	getCmd.Flags().StringVarP(&k8sDir, "k8s-dir", "K", viper.GetString("k8s_dir"), "Path to where k8s image will be saved  (env: PIT_K8S_DIR)")
 
 }

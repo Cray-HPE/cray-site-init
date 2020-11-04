@@ -1,4 +1,4 @@
-module stash.us.cray.com/MTL/sic
+module stash.us.cray.com/MTL/csi
 
 go 1.14
 

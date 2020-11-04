@@ -7,7 +7,7 @@ import (
 	"math/rand"
 	"time"
 
-	"stash.us.cray.com/MTL/sic/cmd"
+	"stash.us.cray.com/MTL/csi/cmd"
 )
 
 func main() {

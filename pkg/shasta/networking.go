@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
-	"stash.us.cray.com/MTL/sic/pkg/ipam"
+	"stash.us.cray.com/MTL/csi/pkg/ipam"
 )
 
 // IPReservation is a type for managing IP Reservations
