@@ -17,6 +17,6 @@ func WriteTemplate(path string, tpl *template.Template, conf interface{}) error 
 	if err != nil {
 		log.Printf("The error executing the template is %v \n", err)
 	}
-	log.Printf("calling writefile with %v, %v", path, bs.String())
+	// log.Printf("calling writefile with %v, %v", path, bs.String())
 	return writeFile(path, bs.String())
 }

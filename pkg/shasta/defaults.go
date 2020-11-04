@@ -61,7 +61,7 @@ func IPNetfromCIDRString(mynet string) *net.IPNet {
 var DefaultHMN = IPV4Network{
 	FullName:  "Hardware Management Network",
 	CIDR:      DefaultHMNString,
-	Name:      "hmn",
+	Name:      "HMN",
 	VlanRange: []int16{11, 40},
 	MTU:       9000,
 	NetType:   "ethernet",
@@ -72,7 +72,7 @@ var DefaultHMN = IPV4Network{
 var DefaultNMN = IPV4Network{
 	FullName:  "Node Management Network",
 	CIDR:      DefaultNMNString,
-	Name:      "nmn",
+	Name:      "NMN",
 	VlanRange: []int16{41, 70},
 	MTU:       9000,
 	NetType:   "ethernet",
@@ -83,7 +83,7 @@ var DefaultNMN = IPV4Network{
 var DefaultHSN = IPV4Network{
 	FullName:  "High Speed Network",
 	CIDR:      DefaultHSNString,
-	Name:      "hsn",
+	Name:      "HSN",
 	VlanRange: []int16{71, 90},
 	MTU:       9000,
 	NetType:   "slingshot10",
@@ -94,7 +94,7 @@ var DefaultHSN = IPV4Network{
 var DefaultCAN = IPV4Network{
 	FullName:  "Customer Access Network",
 	CIDR:      DefaultCANString,
-	Name:      "can",
+	Name:      "CAN",
 	VlanRange: []int16{91, 120},
 	MTU:       9000,
 	NetType:   "ethernet",
@@ -105,7 +105,7 @@ var DefaultCAN = IPV4Network{
 var DefaultMTL = IPV4Network{
 	FullName:  "Provisioning Network (untagged)",
 	CIDR:      DefaultMTLString,
-	Name:      "mtl",
+	Name:      "MTL",
 	VlanRange: []int16{121, 150},
 	MTU:       9000,
 	NetType:   "ethernet",
