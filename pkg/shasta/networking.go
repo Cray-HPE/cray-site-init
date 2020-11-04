@@ -26,7 +26,7 @@ type IPReservation struct {
 type IPV4Network struct {
 	FullName  string                 `yaml:"full_name"`
 	CIDR      string                 `yaml:"cidr"`
-	Subnets   []IPV4Subnet           `yaml:"subnets"`
+	Subnets   []*IPV4Subnet          `yaml:"subnets"`
 	Name      string                 `yaml:"name"`
 	VlanRange []int16                `yaml:"vlan_range"`
 	MTU       int16                  `yaml:"mtu"`
@@ -80,7 +80,7 @@ func (iNet *IPV4Network) GenSubnets(cabinets uint, startingCabinet int, mask net
 			VlanID: iNet.VlanRange[1] + int16(i),
 		}
 		tempSubnet.ReserveNetMgmtIPs(mgmtIPReservations)
-		myIPv4Subnets = append(myIPv4Subnets, tempSubnet)
+		myIPv4Subnets = append(myIPv4Subnets, &tempSubnet)
 	}
 	iNet.Subnets = myIPv4Subnets
 	return nil
@@ -104,23 +104,23 @@ func (iNet *IPV4Network) AddSubnet(mask net.IPMask, name string, vlanID int16) (
 		log.Printf("Couldn't add subnet because %v \n", err)
 		return &tempSubnet, err
 	}
-	iNet.Subnets = append(iNet.Subnets, IPV4Subnet{
+	iNet.Subnets = append(iNet.Subnets, &IPV4Subnet{
 		CIDR:    newSubnet,
 		Name:    name,
 		Gateway: ipam.Add(newSubnet.IP, 1),
 		VlanID:  vlanID,
 	})
-	return &iNet.Subnets[len(iNet.Subnets)-1], nil
+	return iNet.Subnets[len(iNet.Subnets)-1], nil
 }
 
 // LookUpSubnet returns a subnet by name
-func (iNet *IPV4Network) LookUpSubnet(name string) (IPV4Subnet, error) {
+func (iNet *IPV4Network) LookUpSubnet(name string) (*IPV4Subnet, error) {
 	for _, v := range iNet.Subnets {
 		if v.Name == name {
 			return v, nil
 		}
 	}
-	return IPV4Subnet{}, errors.New("Subnet not found")
+	return &IPV4Subnet{}, errors.New("Subnet not found")
 }
 
 // ReserveNetMgmtIPs reserves (n) IP addresses for management networking equipment

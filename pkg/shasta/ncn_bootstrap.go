@@ -52,7 +52,7 @@ func AllocateIps(ncns []LogicalNCN, networks map[string]IPV4Network) {
 			log.Printf("couldn't find a bootstrap_dhcp subnet in the %v network", name)
 		}
 		log.Printf("found a bootstrap_dhcp subnet in the %v network", name)
-		return &subnet
+		return subnet
 	}
 
 	// Build a map of networks based on their names
