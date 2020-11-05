@@ -205,7 +205,27 @@ func WriteDNSMasqConfig(path string, bootstrap []*shasta.LogicalNCN, networks ma
 		}
 		ncns = append(ncns, ncn)
 	}
-	sicFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/statics.conf"), tpl1, ncns)
+	var kubevip, rgwvip string
+	nmnSubnet, _ := networks["NMN"].LookUpSubnet("bootstrap_dhcp")
+	for _, reservation := range nmnSubnet.IPReservations {
+		if reservation.Name == "kubeapi-vip" {
+			kubevip = reservation.IPAddress.String()
+		}
+		if reservation.Name == "rgw-vip" {
+			rgwvip = reservation.IPAddress.String()
+		}
+	}
+
+	data := struct {
+		NCNS    []DNSMasqNCN
+		KUBEVIP string
+		RGWVIP  string
+	}{
+		ncns,
+		kubevip,
+		rgwvip,
+	}
+	sicFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/statics.conf"), tpl1, data)
 
 	// get a pointer to the MTL
 	mtlNet := networks["MTL"]

@@ -75,7 +75,7 @@ dhcp-range=interface:vlan002,{{.DHCPStart}},{{.DHCPEnd}},10m
 // Systems with onboard NICs will have a MTL MAC.  Others will also use the NMN
 var StaticConfigTemplate = []byte(`
 # Static Configurations
-{{range .}}
+{{range .NCNS}}
 # DHCP Entries for {{.Hostname}}
 dhcp-host={{.NMNMac}},{{.NMNIP}},{{.Hostname}},infinite # NMN
 dhcp-host={{.MTLMac}},{{.MTLIP}},{{.Hostname}},infinite # MTL
@@ -87,7 +87,11 @@ host-record={{.Hostname}},{{.Hostname}}.can,{{.CANIP}}
 host-record={{.Hostname}},{{.Hostname}}.hmn,{{.HMNIP}}
 host-record={{.Hostname}},{{.Hostname}}.nmn
 host-record={{.Hostname}},{{.Hostname}}.mtl
-{{end -}}
+{{end}}
+# Virtual IP Addresses for k8s and the rados gateway
+host-record=kubeapi-vip,kubeapi-vip.nmn,{{.KUBEVIP}} # k8s-virtual-ip
+host-record=rgw-vip,rgw-vip.nmn,{{.RGWVIP}} # rgw-virtual-ip
+
 cname=kubernetes-api.vshasta.io,ncn-m001
 `)
 
