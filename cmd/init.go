@@ -84,7 +84,6 @@ var initCmd = &cobra.Command{
 		// To enrich our data, we need to allocate IPs for the management network switches and
 		// NCNs and pair MACs with IPs in the NCN structures
 		shasta.AllocateIps(ncns, shastaNetworks) // This function has no return because it is working with lists of pointers.
-		log.Printf("ncns: %v\n", ncns)
 		// Finally, the data is properly enriched and we can begin shaping it for use.
 		// *** Enrichment Complete *** //
 		// *** Commence Shaping for use *** //
@@ -140,18 +139,29 @@ var initCmd = &cobra.Command{
 		// Now that SLS can tell us which NCNs match with which Xnames, we need to update the IP Reservations
 		tempNcns, err := shasta.ExtractSLSNCNs(&slsState)
 		if err != nil {
-			log.Panic(err)
+			log.Panic(err) // This should never happen.  I can't really imagine how it would.
 		}
-		tempSubnet, err := shastaNetworks["NMN"].LookUpSubnet("bootstrap_dhcp")
-		if err != nil {
-			log.Panic(err)
-		} else {
-			for _, reservation := range tempSubnet.IPReservations {
-				for index, ncn := range tempNcns {
-					if reservation.Comment == ncn.Xname {
-						reservation.Name = ncn.Hostnames[0]
-						log.Printf("Setting hostname to %v for %v. \n", reservation.Name, reservation.Comment)
-						tempSubnet.IPReservations[index] = reservation
+		// Let it be known that nested loops like this are embarassing and hard to read, but I'm a sEnIOr DEveLOPeR
+		// YOLO
+		// https://www.reddit.com/r/ProgrammerHumor/comments/fokc7r/brrrrrrr/
+		for _, netName := range [4]string{"NMN", "HMN", "CAN", "MTL"} {
+			tempSubnet, err := shastaNetworks[netName].LookUpSubnet("bootstrap_dhcp")
+			if err != nil {
+				log.Panic(err)
+			} else {
+				for _, reservation := range tempSubnet.IPReservations {
+					for index, ncn := range tempNcns {
+						if reservation.Comment == ncn.Xname {
+							reservation.Name = ncn.Hostnames[0]
+							// log.Printf("Setting hostname to %v for %v. \n", reservation.Name, reservation.Comment)
+							tempSubnet.IPReservations[index] = reservation
+							for lindex, lncn := range ncns {
+								if lncn.Xname == ncn.Xname {
+									lncn.Hostname = ncn.Hostnames[0]
+									ncns[lindex] = lncn
+								}
+							}
+						}
 					}
 				}
 			}

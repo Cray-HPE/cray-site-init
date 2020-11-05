@@ -176,11 +176,20 @@ func WriteDNSMasqConfig(path string, bootstrap []*shasta.LogicalNCN, networks ma
 	tpl4, _ := template.New("nmnconfig").Parse(string(shasta.NMNConfigTemplate))
 	tpl5, _ := template.New("mtlconfig").Parse(string(shasta.MTLConfigTemplate))
 	var ncns []DNSMasqNCN
-	var nmnIP string
+	var canIP, nmnIP, hmnIP, mtlIP string
 	for _, v := range bootstrap {
 		for _, net := range v.Networks {
 			if net.NetworkName == "NMN" {
 				nmnIP = net.IPAddress
+			}
+			if net.NetworkName == "CAN" {
+				canIP = net.IPAddress
+			}
+			if net.NetworkName == "MTL" {
+				mtlIP = net.IPAddress
+			}
+			if net.NetworkName == "HMN" {
+				hmnIP = net.IPAddress
 			}
 		}
 		// Get a new ip reservation for each one
@@ -188,9 +197,11 @@ func WriteDNSMasqConfig(path string, bootstrap []*shasta.LogicalNCN, networks ma
 			Hostname: v.Hostname,
 			NMNMac:   v.NMNMac,
 			NMNIP:    nmnIP,
-			// MTLMac:   nil,
-			BMCMac: v.BMCMac,
-			BMCIP:  v.BMCIp,
+			MTLMac:   mtlIP,
+			BMCMac:   v.BMCMac,
+			BMCIP:    v.BMCIp,
+			CANIP:    canIP,
+			HMNIP:    hmnIP,
 		}
 		ncns = append(ncns, ncn)
 	}
