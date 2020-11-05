@@ -201,7 +201,7 @@ func convertManagemenetSwitchToSLS(s *shasta.ManagementSwitch) sls_common.Generi
 	}
 }
 
-func extractSwitchesfromReservations(subnet shasta.IPV4Subnet) ([]shasta.ManagementSwitch, error) {
+func extractSwitchesfromReservations(subnet *shasta.IPV4Subnet) ([]shasta.ManagementSwitch, error) {
 	var switches []shasta.ManagementSwitch
 	for _, reservation := range subnet.IPReservations {
 		if strings.HasPrefix(reservation.Name, "sw-spine") {

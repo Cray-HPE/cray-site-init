@@ -137,6 +137,26 @@ var initCmd = &cobra.Command{
 			log.Fatalln("Failed to encode SLS state:", err)
 		}
 
+		// Now that SLS can tell us which NCNs match with which Xnames, we need to update the IP Reservations
+		tempNcns, err := shasta.ExtractSLSNCNs(&slsState)
+		if err != nil {
+			log.Panic(err)
+		}
+		tempSubnet, err := shastaNetworks["NMN"].LookUpSubnet("bootstrap_dhcp")
+		if err != nil {
+			log.Panic(err)
+		} else {
+			for _, reservation := range tempSubnet.IPReservations {
+				for index, ncn := range tempNcns {
+					if reservation.Comment == ncn.Xname {
+						reservation.Name = ncn.Hostnames[0]
+						log.Printf("Setting hostname to %v for %v. \n", reservation.Name, reservation.Comment)
+						tempSubnet.IPReservations[index] = reservation
+					}
+				}
+			}
+		}
+
 		conf.IPV4Resolvers = strings.Split(viper.GetString("ipv4-resolvers"), ",")
 		conf.SiteServices.NtpPoolHostname = conf.NtpPoolHostname
 		sicFiles.WriteYAMLConfig(filepath.Join(basepath, "system_config.yaml"), conf)

@@ -46,7 +46,7 @@ func makeBaseCampfromSLS(conf shasta.SystemConfig, sls *sls_common.SLSState, ncn
 	log.Printf("Processing %d ncns from csv\n", len(ncnMeta))
 	log.Printf("Processing %d ncns from sls\n", len(ncns))
 	for _, v := range ncns {
-		log.Printf("The aliases for %v are %v \n", v.BmcMac, v.Hostnames)
+		log.Printf("The aliases for %v are %v \n", v.Xname, v.Hostnames)
 
 		tempMetadata := shasta.MetaData{
 			Hostname:         v.Hostnames[0],
