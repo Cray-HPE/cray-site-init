@@ -162,6 +162,7 @@ var initCmd = &cobra.Command{
 					}
 				}
 			}
+			tempSubnet.UpdateDHCPRange()
 		}
 
 		conf.IPV4Resolvers = strings.Split(viper.GetString("ipv4-resolvers"), ",")
