@@ -68,7 +68,6 @@ var initCmd = &cobra.Command{
 		//
 		// The first step in building the NCN map is to read the NCN Metadata file
 		ncnMeta, err := sicFiles.ReadNodeCSV(v.GetString("ncn-metadata"))
-		log.Printf("ncnMeta: %v\n", ncnMeta)
 		// *** Loading Data Complete **** //
 		// *** Begin Enrichment *** //
 		// Alone, this metadata isn't enough.  We need to enrich it by converting from the
@@ -112,10 +111,8 @@ var initCmd = &cobra.Command{
 		// Management Switch Information is included in the IP Reservations for each subnet
 		switchNet, err := shastaNetworks["NMN"].LookUpSubnet("bootstrap_dhcp")
 		switches, _ := extractSwitchesfromReservations(switchNet)
-		log.Println("Found Switches:", switches)
 		slsSwitches := make(map[string]sls_common.GenericHardware)
 		for _, mySwitch := range switches {
-			log.Println("Found Switch:", mySwitch.Xname)
 			slsSwitches[mySwitch.Xname] = convertManagemenetSwitchToSLS(&mySwitch)
 		}
 
