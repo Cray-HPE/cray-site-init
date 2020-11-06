@@ -133,14 +133,16 @@ func (iNet *IPV4Network) LookUpSubnet(name string) (*IPV4Subnet, error) {
 
 // ReserveNetMgmtIPs reserves (n) IP addresses for management networking equipment
 func (iSubnet *IPV4Subnet) ReserveNetMgmtIPs(n int, spines []string, leafs []string) {
-	for i := 1; i <= n; i++ {
+	for i := 0; i <= n; i++ {
+		fmt.Println("The spines are:", spines)
 		// First allocate the spines and then the leafs
 		if i < len(spines) {
-			iSubnet.AddReservation(fmt.Sprintf("sw-spine-%03d", i), spines[i])
+			log.Printf("Adding the spine switch reservation: sw-spine-%03d", i+1)
+			iSubnet.AddReservation(fmt.Sprintf("sw-spine-%03d", i+1), spines[i])
 		} else if i < len(spines)+len(leafs) {
-			iSubnet.AddReservation(fmt.Sprintf("sw-leaf-%03d", i-len(spines)), leafs[i-len(spines)])
+			iSubnet.AddReservation(fmt.Sprintf("sw-leaf-%03d", i-len(spines)+1), leafs[i-len(spines)])
 		} else {
-			iSubnet.AddReservation(fmt.Sprintf("mgmt_net_%03d", i), "")
+			iSubnet.AddReservation(fmt.Sprintf("mgmt_net_%03d", i+1), "")
 		}
 	}
 }

@@ -139,8 +139,8 @@ func WriteMetalLBConfigMap(path string, conf shasta.SystemConfig, networks map[s
 	}
 	var configStruct shasta.MetalLBConfigMap
 	configStruct.Networks = make(map[string]string)
-	configStruct.ASN = "65533"
-	configStruct.SpineSwitches = append(configStruct.SpineSwitches, "x3333")
+	configStruct.ASN = "65533"                                               // TODO: This should come from the upstream flag
+	configStruct.SpineSwitches = append(configStruct.SpineSwitches, "x3333") // TODO: This should come from the upstream flag
 
 	for _, network := range networks {
 		for _, subnet := range network.Subnets {
@@ -197,11 +197,12 @@ func WriteDNSMasqConfig(path string, bootstrap []*shasta.LogicalNCN, networks ma
 			Hostname: v.Hostname,
 			NMNMac:   v.NMNMac,
 			NMNIP:    nmnIP,
-			MTLMac:   mtlIP,
-			BMCMac:   v.BMCMac,
-			BMCIP:    v.BMCIp,
-			CANIP:    canIP,
-			HMNIP:    hmnIP,
+			// MTLMac:   ,
+			MTLIP:  mtlIP,
+			BMCMac: v.BMCMac,
+			BMCIP:  v.BMCIp,
+			CANIP:  canIP,
+			HMNIP:  hmnIP,
 		}
 		ncns = append(ncns, ncn)
 	}
