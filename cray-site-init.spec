@@ -12,11 +12,11 @@ Provides: shasta-instance-control
 %ifarch %ix86
     %global GOARCH 386
 %endif
-%ifarch    x86_64
+%ifarch x86_64
     %global GOARCH amd64
 %endif
 %description
-Instantiates a Cray system from a local or remote device.
+Installs the Cray Site Initiator GoLang binary onto a Linux system.
 
 %prep
 %setup -q
@@ -39,6 +39,13 @@ export CGO_ENABLED GOOS GOARCH GO111MODULE
 
 mkdir -pv ${RPM_BUILD_ROOT}/usr/bin/
 cp -pv bin/csi ${RPM_BUILD_ROOT}/usr/bin/csi
+
+%pre
+# Replace the old application with a symlink to the new application.
+if [ /usr/bin/sic ] ; then
+    rm /usr/bin/sic
+    (cd /usr/bin/ && rm -f sic && ln -snf ./csi sic)
+fi
 
 %clean
 
