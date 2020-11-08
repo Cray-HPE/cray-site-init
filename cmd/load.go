@@ -12,8 +12,8 @@ import (
 
 	"github.com/spf13/cobra"
 	shcd_parser "stash.us.cray.com/HMS/hms-shcd-parser/pkg/shcd-parser"
-	sicFiles "stash.us.cray.com/MTL/sic/internal/files"
-	"stash.us.cray.com/MTL/sic/pkg/shasta"
+	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
+	"stash.us.cray.com/MTL/csi/pkg/shasta"
 )
 
 // loadCmd represents the load command
@@ -46,12 +46,12 @@ func init() {
 }
 
 func loadSystemConfig(path string) (sysconf shasta.SystemConfig, err error) {
-	err = sicFiles.ReadYAMLConfig(path, &sysconf)
+	err = csiFiles.ReadYAMLConfig(path, &sysconf)
 	return
 }
 
 func loadNetwork(path string) (network shasta.IPV4Network, err error) {
-	err = sicFiles.ReadJSONConfig(path, &network)
+	err = csiFiles.ReadJSONConfig(path, &network)
 	return
 }
 
@@ -74,18 +74,18 @@ func extractNetworks(basepath string) ([]shasta.IPV4Network, error) {
 }
 
 func loadHMNConnectionsFile(path string) (rows []shcd_parser.HMNRow, err error) {
-	err = sicFiles.ReadJSONConfig(path, &rows)
+	err = csiFiles.ReadJSONConfig(path, &rows)
 	return
 }
 
 func loadNCNMetadataFile(path string) (ncns []*shasta.BootstrapNCNMetadata, err error) {
 	// I know this is a little silly, but it improves readability and
 	// gives us future flexibility
-	return sicFiles.ReadNodeCSV(path)
+	return csiFiles.ReadNodeCSV(path)
 }
 
 func loadMgmtMetadataFile(path string) (switches []*shasta.ManagementSwitch, err error) {
 	// I know this is a little silly, but it improves readability and
 	// gives us future flexibility
-	return sicFiles.ReadSwitchCSV(path)
+	return csiFiles.ReadSwitchCSV(path)
 }

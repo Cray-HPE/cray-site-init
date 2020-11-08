@@ -13,9 +13,9 @@ import (
 
 	"github.com/spf13/viper"
 
-	sicFiles "stash.us.cray.com/MTL/sic/internal/files"
-	"stash.us.cray.com/MTL/sic/pkg/ipam"
-	"stash.us.cray.com/MTL/sic/pkg/shasta"
+	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
+	"stash.us.cray.com/MTL/csi/pkg/ipam"
+	"stash.us.cray.com/MTL/csi/pkg/shasta"
 )
 
 // BuildLiveCDNetworks creates an array of IPv4 Networks based on the supplied system configuration
@@ -121,7 +121,7 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*
 // WriteNetworkFiles persistes our network configuration to disk in a directory of yaml files
 func WriteNetworkFiles(basepath string, networks map[string]*shasta.IPV4Network) {
 	for k, v := range networks {
-		sicFiles.WriteYAMLConfig(filepath.Join(basepath, fmt.Sprintf("networks/%v.yaml", k)), v)
+		csiFiles.WriteYAMLConfig(filepath.Join(basepath, fmt.Sprintf("networks/%v.yaml", k)), v)
 	}
 }
 

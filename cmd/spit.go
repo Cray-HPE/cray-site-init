@@ -8,16 +8,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// spitCmd represents the spit command
-var spitCmd = &cobra.Command{
-	Use:   "spit",
-	Short: "Control SPIT",
-	Long: `Control SPIT`,
+// pitCmd represents the pit command
+var pitCmd = &cobra.Command{
+	Use:   "pit",
+	Short: "Control PIT",
+	Long: `Control PIT`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("spit called")
+		fmt.Println("pit called")
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(spitCmd)
+	rootCmd.AddCommand(pitCmd)
 }

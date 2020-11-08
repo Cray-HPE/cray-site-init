@@ -20,29 +20,21 @@ import (
 var cfgFile string
 
 const (
-	// The name of our config file, without the file extension because viper supports many different config file languages.
-	defaultConfigFilename = "sic"
-
-	// The environment variable prefix of all environment variables bound to our command line flags.
-	// For example, --number is bound to STING_NUMBER.
-	envPrefix = "SIC"
+	defaultConfigFilename = "csi"
+	envPrefix = "csi"
 )
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "sic",
-	Short: "Shasta Instance Configurator",
-	Long: `SIC is a tool for creating and validating the configuration of a Shasta system.
-	
+	Use:   "csi",
+	Short: "Cray Site Init",
+	Long: `csi is a tool for creating, validating, installing, and upgrading a CRAY supercomputer
+    system.
+
 	It supports initializing a set of configuration from a variety of inputs including 
-	flags and/or Shasta 1.3 configuration files.  It can also validate that a set of 
+	flags (and/or Shasta 1.3 configuration files). It can also validate that a set of 
 	configuration details are accurate before attempting to use them for installation`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	//	Run: func(cmd *cobra.Command, args []string) { },
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		// You can bind cobra and viper in a few locations, but PersistencePreRunE on the root command works well
-		// viperWiper(viper.GetViper()) // Uncomment this if commands are getting strange configs.  It will help
 		return initializeFlagswithViper(cmd)
 	},
 	Run: func(cmd *cobra.Command, args []string) {
@@ -109,7 +101,7 @@ func initializeFlagswithViper(cmd *cobra.Command) error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// "sic config init --option" => SIC_CONFIG_INIT_OPTION
+	// "csi config init --option" => csi_CONFIG_INIT_OPTION
 	v.SetEnvPrefix(reg.ReplaceAllString(cmd.CommandPath(), "_"))
 
 	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))

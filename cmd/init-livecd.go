@@ -14,8 +14,8 @@ import (
 	"github.com/spf13/viper"
 
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
-	sicFiles "stash.us.cray.com/MTL/sic/internal/files"
-	"stash.us.cray.com/MTL/sic/pkg/shasta"
+	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
+	"stash.us.cray.com/MTL/csi/pkg/shasta"
 )
 
 // WriteNICConfigENV sets environment variables for nic bonding and configuration
@@ -83,7 +83,7 @@ func WriteBaseCampData(path string, conf shasta.SystemConfig, sls *sls_common.SL
 	if err != nil {
 		log.Printf("Error extracting NCNs: %v", err)
 	}
-	sicFiles.WriteJSONConfig(path, basecampConfig)
+	csiFiles.WriteJSONConfig(path, basecampConfig)
 
 	// https://stash.us.cray.com/projects/MTL/repos/docs-non-compute-nodes/browse/example-data.json
 	/* Funky vars from the stopgap
@@ -117,7 +117,7 @@ func WriteConmanConfig(path string, ncns []*shasta.LogicalNCN, conf shasta.Syste
 	}
 
 	tpl6, _ := template.New("conmanconfig").Parse(string(shasta.ConmanConfigTemplate))
-	sicFiles.WriteTemplate(path, tpl6, conmanNCNs)
+	csiFiles.WriteTemplate(path, tpl6, conmanNCNs)
 }
 
 // WriteMetalLBConfigMap creates the yaml configmap
@@ -151,7 +151,7 @@ func WriteMetalLBConfigMap(path string, conf shasta.SystemConfig, networks map[s
 			}
 		}
 	}
-	sicFiles.WriteTemplate(filepath.Join(path, "metallb.yaml"), tpl, configStruct)
+	csiFiles.WriteTemplate(filepath.Join(path, "metallb.yaml"), tpl, configStruct)
 }
 
 // WriteDNSMasqConfig writes the dnsmasq configuration files necssary for installation
@@ -194,13 +194,13 @@ func WriteDNSMasqConfig(path string, bootstrap []*shasta.LogicalNCN, networks ma
 		}
 		ncns = append(ncns, ncn)
 	}
-	sicFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/statics.conf"), tpl1, ncns)
+	csiFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/statics.conf"), tpl1, ncns)
 
 	// get a pointer to the MTL
 	mtlNet := networks["MTL"]
 	// get a pointer to the subnet
 	mtlBootstrapSubnet, _ := mtlNet.LookUpSubnet("bootstrap_dhcp")
-	sicFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/mtl.conf"), tpl5, mtlBootstrapSubnet)
+	csiFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/mtl.conf"), tpl5, mtlBootstrapSubnet)
 
 	// Deal with the easy ones
 	writeConfig("CAN", path, *tpl2, networks)
@@ -213,5 +213,5 @@ func writeConfig(name, path string, tpl template.Template, networks map[string]*
 	tempNet := networks[name]
 	// get a pointer to the subnet
 	bootstrapSubnet, _ := tempNet.LookUpSubnet("bootstrap_dhcp")
-	sicFiles.WriteTemplate(filepath.Join(path, fmt.Sprintf("dnsmasq.d/%v.conf", name)), &tpl, bootstrapSubnet)
+	csiFiles.WriteTemplate(filepath.Join(path, fmt.Sprintf("dnsmasq.d/%v.conf", name)), &tpl, bootstrapSubnet)
 }

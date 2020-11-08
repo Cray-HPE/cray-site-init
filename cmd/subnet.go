@@ -13,8 +13,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
-	"stash.us.cray.com/MTL/sic/pkg/ipam"
-	"stash.us.cray.com/MTL/sic/pkg/shasta"
+	"stash.us.cray.com/MTL/csi/pkg/ipam"
+	"stash.us.cray.com/MTL/csi/pkg/shasta"
 )
 
 // subnetCmd represents the subnet command

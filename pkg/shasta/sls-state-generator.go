@@ -84,7 +84,7 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 		objects.
 
 		The only real trick here is the source parent field. That indicates two things:
-		  1) A grouping of nodes that are physically located in the same chassis.
+		  1) A grouping of nodes that are phycsially located in the same chassis.
 		  2) There is another device that needs to be treated differently (a CMC on a Gigabyte node is the only example
 		     of this at the time of writing.)
 	*/

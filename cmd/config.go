@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
-	sicFiles "stash.us.cray.com/MTL/sic/internal/files"
+	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
 )
 
 // configCmd represents the config command
@@ -82,7 +82,7 @@ func MergeCustomerVar() {
 // MergeNCNMetadata : Search reasonable places and read the ncn_metadata.yaml
 func MergeNCNMetadata() {
 	// Read in the configfile
-	bootstrapNodes, err := sicFiles.ReadNodeCSV("ncn_metadata.csv")
+	bootstrapNodes, err := csiFiles.ReadNodeCSV("ncn_metadata.csv")
 	if err != nil {
 		log.Fatalf("Couldn't process the ncn_metadata.csv file: %v", err)
 	}

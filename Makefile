@@ -25,7 +25,7 @@ help:
 	@echo ''
 	@echo 'Available targets are:'
 	@echo ''
-	@echo '    run                Run sic.'
+	@echo '    run                Run csi.'
 	@echo '    help               Show this help screen.'
 	@echo '    clean              Remove binaries, artifacts and releases.'
 	@echo '    clean-artifacts    Remove build artifacts only.'
@@ -85,7 +85,7 @@ run: build
 	go run ./main.go$(TARGET) $>
 
 build: fmt vet
-	go build -o bin/sic ./main.go
+	go build -o bin/csi ./main.go
 
 doc:
 	godoc -http=:8080 -index

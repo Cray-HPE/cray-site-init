@@ -5,7 +5,7 @@ Copyright 2020 Hewlett Packard Enterprise Development LP
 package shasta
 
 /*
-This package bridges the gap between the SLS view of the Shasta System and one that is useful
+This package bridges the gap between the SLS view of the CRAY System and one that is useful
 for administrators who are trying to install and upgrade a system.  Where possible, we'd like
 to reuse datastructures, but that's not practical, at least initially because of the very
 ways the two tools use the data.
