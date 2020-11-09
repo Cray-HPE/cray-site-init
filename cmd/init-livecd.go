@@ -30,18 +30,21 @@ func makeBaseCampfromSLS(conf shasta.SystemConfig, sls *sls_common.SLSState, ncn
 	var k8sRunCMD = []string{
 		"/srv/cray/scripts/metal/set-dns-config.sh",
 		"/srv/cray/scripts/metal/set-ntp-config.sh",
+		"/srv/cray/scripts/metal/install-bootloader.sh",
 		"/srv/cray/scripts/common/kubernetes-cloudinit.sh",
 	}
 
 	var cephRunCMD = []string{
 		"/srv/cray/scripts/metal/set-dns-config.sh",
 		"/srv/cray/scripts/metal/set-ntp-config.sh",
+		"/srv/cray/scripts/metal/install-bootloader.sh",
 		"/srv/cray/scripts/common/storage-ceph-cloudinit.sh",
 	}
 
 	var cephWorkerRunCMD = []string{
 		"/srv/cray/scripts/metal/set-dns-config.sh",
 		"/srv/cray/scripts/metal/set-ntp-config.sh",
+		"/srv/cray/scripts/metal/install-bootloader.sh",
 	}
 
 	ncns, err := shasta.ExtractSLSNCNs(sls)
