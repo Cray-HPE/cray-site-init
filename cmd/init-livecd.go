@@ -39,16 +39,25 @@ func makeBaseCampfromSLS(conf shasta.SystemConfig, sls *sls_common.SLSState, ncn
 		"/srv/cray/scripts/common/storage-ceph-cloudinit.sh",
 	}
 
+	var cephWorkerRunCMD = []string{
+		"/srv/cray/scripts/metal/set-dns-config.sh",
+		"/srv/cray/scripts/metal/set-ntp-config.sh",
+	}
+
 	ncns, err := shasta.ExtractSLSNCNs(sls)
 	if err != nil {
 		return basecampConfig, err
 	}
 	for _, v := range ncns {
+		tempAvailabilityZone, err := shasta.CabinetForXname(v.Xname)
+		if err != nil {
+			log.Printf("Couldn't generate cabinet name for %v: %v \n", v.Xname, err)
+		}
 		tempMetadata := shasta.MetaData{
 			Hostname:         v.Hostnames[0],
 			InstanceID:       shasta.GenerateInstanceID(),
 			Region:           globalViper.GetString("system-name"),
-			AvailabilityZone: "", // TODO: Use cabinet for AZ once that is ready
+			AvailabilityZone: tempAvailabilityZone,
 			ShastaRole:       "ncn-" + strings.ToLower(v.Subrole),
 		}
 		for _, value := range ncnMeta {
@@ -56,8 +65,11 @@ func makeBaseCampfromSLS(conf shasta.SystemConfig, sls *sls_common.SLSState, ncn
 				// log.Printf("Found %v in both lists. \n", value.Xname)
 				userDataMap := make(map[string]interface{})
 				if v.Subrole == "Storage" {
-					// TODO: the first ceph node needs to run ceph init.  Not the others
-					userDataMap["runcmd"] = cephRunCMD
+					if strings.HasSuffix(v.Hostnames[0], "001") {
+						userDataMap["runcmd"] = cephRunCMD
+					} else {
+						userDataMap["runcmd"] = cephWorkerRunCMD
+					}
 				} else {
 					userDataMap["runcmd"] = k8sRunCMD
 				}

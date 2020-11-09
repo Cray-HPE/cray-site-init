@@ -18,10 +18,12 @@ the SLS structure.
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -182,4 +184,15 @@ func GenerateSLSState(inputState SLSGeneratorInputState, hmnRows []shcd_parser.H
 
 	g := NewSLSStateGenerator(logger, inputState, hmnRows)
 	return g.GenerateSLSState()
+}
+
+// CabinetForXname extracts the cabinet identifier from an xname
+func CabinetForXname(xname string) (string, error) {
+	r := regexp.MustCompile("(x[0-9]+)") // the leading x is not part of the cabinet identifier
+	matches := r.FindStringSubmatch(xname)
+	if len(matches) != 2 {
+		err := fmt.Errorf("Failed to find cabinet for %v", xname)
+		return "", err
+	}
+	return matches[0], nil
 }
