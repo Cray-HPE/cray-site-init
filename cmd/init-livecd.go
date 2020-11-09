@@ -222,7 +222,7 @@ func WriteDNSMasqConfig(path string, bootstrap []*shasta.LogicalNCN, networks ma
 		kubevip,
 		rgwvip,
 	}
-	sicFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/statics.conf"), tpl1, data)
+	csiFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/statics.conf"), tpl1, data)
 
 	// get a pointer to the MTL
 	mtlNet := networks["MTL"]

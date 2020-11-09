@@ -67,7 +67,7 @@ var initCmd = &cobra.Command{
 		// would not include extended information about the NCNs and Network Switches.
 		//
 		// The first step in building the NCN map is to read the NCN Metadata file
-		ncnMeta, err := sicFiles.ReadNodeCSV(v.GetString("ncn-metadata"))
+		ncnMeta, err := csiFiles.ReadNodeCSV(v.GetString("ncn-metadata"))
 		// *** Loading Data Complete **** //
 		// *** Begin Enrichment *** //
 		// Alone, this metadata isn't enough.  We need to enrich it by converting from the
