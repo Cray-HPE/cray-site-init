@@ -16,8 +16,8 @@ import (
 	"github.com/spf13/viper"
 
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
-	sicFiles "stash.us.cray.com/MTL/sic/internal/files"
-	"stash.us.cray.com/MTL/sic/pkg/shasta"
+	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
+	"stash.us.cray.com/MTL/csi/pkg/shasta"
 )
 
 // initCmd represents the init command
@@ -128,7 +128,7 @@ var initCmd = &cobra.Command{
 		}
 		slsState := shasta.GenerateSLSState(inputState, hmnRows)
 
-		err = sicFiles.WriteJSONConfig(filepath.Join(basepath, "sls_input_file.json"), &slsState)
+		err = csiFiles.WriteJSONConfig(filepath.Join(basepath, "sls_input_file.json"), &slsState)
 		if err != nil {
 			log.Fatalln("Failed to encode SLS state:", err)
 		}
@@ -167,11 +167,11 @@ var initCmd = &cobra.Command{
 
 		conf.IPV4Resolvers = strings.Split(viper.GetString("ipv4-resolvers"), ",")
 		conf.SiteServices.NtpPoolHostname = conf.NtpPoolHostname
-		sicFiles.WriteYAMLConfig(filepath.Join(basepath, "system_config.yaml"), conf)
+		csiFiles.WriteYAMLConfig(filepath.Join(basepath, "system_config.yaml"), conf)
 
-		sicFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/root_password.json"), shasta.DefaultRootPW)
-		sicFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/bmc_password.json"), shasta.DefaultBMCPW)
-		sicFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/mgmt_switch_password.json"), shasta.DefaultNetPW)
+		csiFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/root_password.json"), shasta.DefaultRootPW)
+		csiFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/bmc_password.json"), shasta.DefaultBMCPW)
+		csiFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/mgmt_switch_password.json"), shasta.DefaultNetPW)
 
 		WriteDNSMasqConfig(basepath, ncns, shastaNetworks)
 		WriteConmanConfig(filepath.Join(basepath, "conman.conf"), ncns, conf)

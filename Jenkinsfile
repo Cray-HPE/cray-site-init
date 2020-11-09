@@ -1,6 +1,6 @@
 @Library("dst-shared@master") _
 rpmBuild(
-    specfile : "shasta-instance-control.spec",
+    specfile : "cray-site-init.spec",
     product : "shasta-premium",
     target_node : "ncn",
     fanout_params : ["sle15sp2"],

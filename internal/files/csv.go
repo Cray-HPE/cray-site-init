@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/gocarina/gocsv"
-	"stash.us.cray.com/MTL/sic/pkg/shasta"
+	"stash.us.cray.com/MTL/csi/pkg/shasta"
 )
 
 // ReadSwitchCSV parses a CSV file into a list of ManagementSwitch structs
