@@ -154,7 +154,6 @@ func ExtractSLSSwitches(sls *sls_common.SLSState) ([]ManagementSwitch, error) {
 	var switches []ManagementSwitch
 	for _, node := range sls.Hardware {
 		if node.Type == sls_common.MgmtSwitch {
-			log.Printf("Found Switch: %v \n", node)
 			var extra sls_common.ComptypeMgmtSwitch
 			err := mapstructure.Decode(node.ExtraPropertiesRaw, &extra)
 			if err != nil {

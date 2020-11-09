@@ -40,7 +40,9 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*
 	// Add a /26 for bootstrap dhcp
 	subnet, err := tempNMN.AddSubnet(net.CIDRMask(26, 32), "bootstrap_dhcp", int16(v.GetInt("nmn-bootstrap-vlan")))
 	subnet.ReserveNetMgmtIPs(v.GetInt("management-net-ips"), strings.Split(v.GetString("spine-switch-xnames"), ","), strings.Split(v.GetString("leaf-switch-xnames"), ","))
-	subnet.DHCPStart = ipam.Add(subnet.CIDR.IP, v.GetInt("management-net-ips"))
+	subnet.AddReservation("kubeapi-vip", "k8s-virtual-ip")
+	subnet.AddReservation("rgw-vip", "rgw-virtual-ip")
+	subnet.DHCPStart = ipam.Add(subnet.CIDR.IP, len(subnet.IPReservations))
 	subnet.DHCPEnd = ipam.Add(ipam.Broadcast(subnet.CIDR), -1)
 	// Divide the network into an appropriate number of subnets
 	tempNMN.GenSubnets(cabinetDetails, net.CIDRMask(22, 32), v.GetInt("management-net-ips"), v.GetString("spine-switch-xnames"), v.GetString("leaf-switch-xnames"))
@@ -60,7 +62,7 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*
 	// Add a /26 for bootstrap dhcp
 	subnet, err = tempHMN.AddSubnet(net.CIDRMask(26, 32), "bootstrap_dhcp", int16(v.GetInt("hmn-bootstrap-vlan")))
 	subnet.ReserveNetMgmtIPs(v.GetInt("management-net-ips"), strings.Split(v.GetString("spine-switch-xnames"), ","), strings.Split(v.GetString("leaf-switch-xnames"), ","))
-	subnet.DHCPStart = ipam.Add(subnet.CIDR.IP, v.GetInt("management-net-ips"))
+	subnet.DHCPStart = ipam.Add(subnet.CIDR.IP, len(subnet.IPReservations))
 	subnet.DHCPEnd = ipam.Add(ipam.Broadcast(subnet.CIDR), -1)
 	// Divide the network into an appropriate number of subnets
 	tempHMN.GenSubnets(cabinetDetails, net.CIDRMask(22, 32), v.GetInt("management-net-ips"), v.GetString("spine-switch-xnames"), v.GetString("leaf-switch-xnames"))
@@ -90,7 +92,7 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*
 	// No need to subdivide the mtl network by cabinets
 	subnet, err = tempMTL.AddSubnet(net.CIDRMask(24, 32), "bootstrap_dhcp", 0)
 	subnet.ReserveNetMgmtIPs(v.GetInt("management-net-ips"), strings.Split(v.GetString("spine-switch-xnames"), ","), strings.Split(v.GetString("leaf-switch-xnames"), ","))
-	subnet.DHCPStart = ipam.Add(subnet.CIDR.IP, v.GetInt("management-net-ips"))
+	subnet.DHCPStart = ipam.Add(subnet.CIDR.IP, len(subnet.IPReservations))
 	subnet.DHCPEnd = ipam.Add(ipam.Broadcast(subnet.CIDR), -1)
 	networkMap["MTL"] = &tempMTL
 
@@ -111,7 +113,9 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*
 	// Add a /26 for bootstrap dhcp
 	subnet, err = tempCan.AddSubnet(net.CIDRMask(26, 32), "bootstrap_dhcp", int16(v.GetInt("hmn-bootstrap-vlan")))
 	subnet.ReserveNetMgmtIPs(v.GetInt("management-net-ips"), strings.Split(v.GetString("spine-switch-xnames"), ","), strings.Split(v.GetString("leaf-switch-xnames"), ","))
-	subnet.DHCPStart = ipam.Add(subnet.CIDR.IP, v.GetInt("management-net-ips"))
+	subnet.AddReservation("kubeapi-vip", "k8s-virtual-ip")
+	subnet.AddReservation("rgw-vip", "rgw-virtual-ip")
+	subnet.DHCPStart = ipam.Add(subnet.CIDR.IP, len(subnet.IPReservations))
 	subnet.DHCPEnd = ipam.Add(ipam.Broadcast(subnet.CIDR), -1)
 	networkMap["CAN"] = &tempCan
 

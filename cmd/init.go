@@ -68,7 +68,6 @@ var initCmd = &cobra.Command{
 		//
 		// The first step in building the NCN map is to read the NCN Metadata file
 		ncnMeta, err := csiFiles.ReadNodeCSV(v.GetString("ncn-metadata"))
-		log.Printf("ncnMeta: %v\n", ncnMeta)
 		// *** Loading Data Complete **** //
 		// *** Begin Enrichment *** //
 		// Alone, this metadata isn't enough.  We need to enrich it by converting from the
@@ -84,7 +83,6 @@ var initCmd = &cobra.Command{
 		// To enrich our data, we need to allocate IPs for the management network switches and
 		// NCNs and pair MACs with IPs in the NCN structures
 		shasta.AllocateIps(ncns, shastaNetworks) // This function has no return because it is working with lists of pointers.
-		log.Printf("ncns: %v\n", ncns)
 		// Finally, the data is properly enriched and we can begin shaping it for use.
 		// *** Enrichment Complete *** //
 		// *** Commence Shaping for use *** //
@@ -113,10 +111,8 @@ var initCmd = &cobra.Command{
 		// Management Switch Information is included in the IP Reservations for each subnet
 		switchNet, err := shastaNetworks["NMN"].LookUpSubnet("bootstrap_dhcp")
 		switches, _ := extractSwitchesfromReservations(switchNet)
-		log.Println("Found Switches:", switches)
 		slsSwitches := make(map[string]sls_common.GenericHardware)
 		for _, mySwitch := range switches {
-			log.Println("Found Switch:", mySwitch.Xname)
 			slsSwitches[mySwitch.Xname] = convertManagemenetSwitchToSLS(&mySwitch)
 		}
 
@@ -135,6 +131,38 @@ var initCmd = &cobra.Command{
 		err = csiFiles.WriteJSONConfig(filepath.Join(basepath, "sls_input_file.json"), &slsState)
 		if err != nil {
 			log.Fatalln("Failed to encode SLS state:", err)
+		}
+
+		// Now that SLS can tell us which NCNs match with which Xnames, we need to update the IP Reservations
+		tempNcns, err := shasta.ExtractSLSNCNs(&slsState)
+		if err != nil {
+			log.Panic(err) // This should never happen.  I can't really imagine how it would.
+		}
+		// Let it be known that nested loops like this are embarassing and hard to read, but I'm a sEnIOr DEveLOPeR
+		// YOLO
+		// https://www.reddit.com/r/ProgrammerHumor/comments/fokc7r/brrrrrrr/
+		for _, netName := range [4]string{"NMN", "HMN", "CAN", "MTL"} {
+			tempSubnet, err := shastaNetworks[netName].LookUpSubnet("bootstrap_dhcp")
+			if err != nil {
+				log.Panic(err)
+			} else {
+				for _, reservation := range tempSubnet.IPReservations {
+					for index, ncn := range tempNcns {
+						if reservation.Comment == ncn.Xname {
+							reservation.Name = ncn.Hostnames[0]
+							// log.Printf("Setting hostname to %v for %v. \n", reservation.Name, reservation.Comment)
+							tempSubnet.IPReservations[index] = reservation
+							for lindex, lncn := range ncns {
+								if lncn.Xname == ncn.Xname {
+									lncn.Hostname = ncn.Hostnames[0]
+									ncns[lindex] = lncn
+								}
+							}
+						}
+					}
+				}
+			}
+			tempSubnet.UpdateDHCPRange()
 		}
 
 		conf.IPV4Resolvers = strings.Split(viper.GetString("ipv4-resolvers"), ",")
@@ -198,13 +226,18 @@ func init() {
 
 	// Use these flags to prepare the basecamp metadata json
 	initCmd.Flags().String("spine-switch-xnames", "", "Comma separated list of xnames for spine switches")
+	initCmd.MarkFlagRequired("spine-switch-xnames")
 	initCmd.Flags().String("leaf-switch-xnames", "", "Comma separated list of xnames for leaf switches")
+	initCmd.MarkFlagRequired("leaf-switch-xnames")
 	initCmd.Flags().String("bgp-asn", "65533", "The autonomous system number for BGP conversations")
 	initCmd.Flags().Int("management-net-ips", 20, "Number of ip addresses to reserve in each vlan for the management network")
 
 	// Use these flags to set the default ncn bmc credentials for bootstrap
 	initCmd.Flags().String("bootstrap-ncn-bmc-user", "", "Username for connecting to the BMC on the initial NCNs")
+	initCmd.MarkFlagRequired("bootstrap-ncn-bmc-user")
+
 	initCmd.Flags().String("bootstrap-ncn-bmc-pass", "", "Password for connecting to the BMC on the initial NCNs")
+	initCmd.MarkFlagRequired("bootstrap-ncn-bmc-pass")
 
 	// Dealing with an SLS file
 	initCmd.Flags().String("from-sls-file", "", "SLS File Location")

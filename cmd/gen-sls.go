@@ -112,14 +112,14 @@ func init() {
 
 }
 
-func getCabinetSubnets(networks *[]shasta.IPV4Network) []map[string]shasta.IPV4Subnet {
+func getCabinetSubnets(networks *[]shasta.IPV4Network) []map[string]*shasta.IPV4Subnet {
 	// Collect all subnets for each cabinet
-	cabinetSubnets := make(map[string]map[string]shasta.IPV4Subnet)
+	cabinetSubnets := make(map[string]map[string]*shasta.IPV4Subnet)
 	for _, network := range *networks {
 		for _, subnet := range network.Subnets {
 			if strings.HasPrefix(subnet.Name, "cabinet_") {
 				if _, ok := cabinetSubnets[subnet.Name]; !ok {
-					cabinetSubnets[subnet.Name] = make(map[string]shasta.IPV4Subnet)
+					cabinetSubnets[subnet.Name] = make(map[string]*shasta.IPV4Subnet)
 				}
 				//cabinetSubnets[subnet.Name][network.Name] = convertIPV4SubnetToSLS(&subnet)
 				cabinetSubnets[subnet.Name][network.Name] = subnet
@@ -136,7 +136,7 @@ func getCabinetSubnets(networks *[]shasta.IPV4Network) []map[string]shasta.IPV4S
 	}
 
 	// Assemble ordered list of cabinet subnets
-	subnets := make([]map[string]shasta.IPV4Subnet, len(cabinetSubnets))
+	subnets := make([]map[string]*shasta.IPV4Subnet, len(cabinetSubnets))
 	for i, name := range cabinets {
 		subnets[i] = cabinetSubnets[name]
 	}
@@ -144,7 +144,7 @@ func getCabinetSubnets(networks *[]shasta.IPV4Network) []map[string]shasta.IPV4S
 	return subnets
 }
 
-func getCabinets(cabinetClass sls_common.CabinetType, startingIndex int, cabinetSubnets []map[string]shasta.IPV4Subnet) map[string]sls_common.GenericHardware {
+func getCabinets(cabinetClass sls_common.CabinetType, startingIndex int, cabinetSubnets []map[string]*shasta.IPV4Subnet) map[string]sls_common.GenericHardware {
 	cabinets := make(map[string]sls_common.GenericHardware)
 
 	for i, subnets := range cabinetSubnets {
@@ -201,7 +201,7 @@ func convertManagemenetSwitchToSLS(s *shasta.ManagementSwitch) sls_common.Generi
 	}
 }
 
-func extractSwitchesfromReservations(subnet shasta.IPV4Subnet) ([]shasta.ManagementSwitch, error) {
+func extractSwitchesfromReservations(subnet *shasta.IPV4Subnet) ([]shasta.ManagementSwitch, error) {
 	var switches []shasta.ManagementSwitch
 	for _, reservation := range subnet.IPReservations {
 		if strings.HasPrefix(reservation.Name, "sw-spine") {
@@ -240,7 +240,7 @@ func convertIPV4NetworksToSLS(networks *[]shasta.IPV4Network) map[string]sls_com
 func convertIPV4NetworkToSLS(n *shasta.IPV4Network) sls_common.Network {
 	subnets := make([]sls_common.IPV4Subnet, len(n.Subnets))
 	for i, subnet := range n.Subnets {
-		subnets[i] = convertIPV4SubnetToSLS(&subnet)
+		subnets[i] = convertIPV4SubnetToSLS(subnet)
 	}
 
 	return sls_common.Network{

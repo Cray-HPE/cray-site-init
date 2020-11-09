@@ -9,30 +9,30 @@ var CANConfigTemplate = []byte(`
 # CAN:
 server=/can/
 address=/can/
-dhcp-option=interface:vlan007,option:domain-search,can
-interface-name=pit.can,vlan007
-interface=vlan007
-cname=packages.can,pit.can
-cname=registry.can,pit.can
-dhcp-option=interface:vlan007,option:router,{{.Gateway}}
-dhcp-range=interface:vlan007,{{.DHCPStart}},{{.DHCPEnd}},10m
+dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:domain-search,can
+interface-name=spit.can,{{.VlanID | printf "vlan%03d"}}
+interface={{.VlanID | printf "vlan%03d"}}
+cname=packages.can,spit.can
+cname=registry.can,spit.can
+dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:router,{{.Gateway}}
+dhcp-range=interface:{{.VlanID | printf "vlan%03d"}},{{.DHCPStart}},{{.DHCPEnd}},10m
 `)
 
-// HMNConfigTemplate manages the HMN portion of the DNSMasq configuration
+// HMNConfigTemplate manages the HMN portion of the DNSMasq configuration typically vlan004
 var HMNConfigTemplate = []byte(`
 # HMN:
 server=/hmn/
 address=/hmn/
 domain=hmn,{{.DHCPStart}},{{.DHCPEnd}},local
-interface-name=pit.hmn,vlan004
-dhcp-option=interace:vlan004,option:domain-search,hmn
-interface=vlan004
-cname=packages.hmn,pit.hmn
-cname=registry.hmn,pit.hmn
-dhcp-option=interface:vlan004,option:dns-server,{{.Gateway}}
-dhcp-option=interface:vlan004,option:ntp-server,{{.Gateway}}
-dhcp-option=interface:vlan004,option:router,{{.Gateway}}
-dhcp-range=interface:vlan004,{{.DHCPStart}},{{.DHCPEnd}},10m
+interface-name=spit.hmn,{{.VlanID | printf "vlan%03d"}}
+dhcp-option=interace:{{.VlanID | printf "vlan%03d"}},option:domain-search,hmn
+interface={{.VlanID | printf "vlan%03d"}}
+cname=packages.hmn,spit.hmn
+cname=registry.hmn,spit.hmn
+dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:dns-server,{{.Gateway}}
+dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:ntp-server,{{.Gateway}}
+dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:router,{{.Gateway}}
+dhcp-range=interface:{{.VlanID | printf "vlan%03d"}},{{.DHCPStart}},{{.DHCPEnd}},10m
 `)
 
 // MTLConfigTemplate manages the MTL portion of the DNSMasq configuration
@@ -59,23 +59,23 @@ var NMNConfigTemplate = []byte(`
 # NMN:
 server=/nmn/
 address=/nmn/
-interface-name=pit.nmn,vlan002
+interface-name=spit.nmn,{{.VlanID | printf "vlan%03d"}}
 domain=nmn,{{.DHCPStart}},{{.DHCPEnd}},local
-dhcp-option=interface:vlan002,option:domain-search,nmn
-interface=vlan002
-cname=packages.nmn,pit.nmn
-cname=registry.nmn,pit.nmn
-dhcp-option=interface:vlan002,option:dns-server,{{.Gateway}}
-dhcp-option=interface:vlan002,option:ntp-server,{{.Gateway}}
-dhcp-option=interface:vlan002,option:router,{{.Gateway}}
-dhcp-range=interface:vlan002,{{.DHCPStart}},{{.DHCPEnd}},10m
+dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:domain-search,nmn
+interface={{.VlanID | printf "vlan%03d"}}
+cname=packages.nmn,spit.nmn
+cname=registry.nmn,spit.nmn
+dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:dns-server,{{.Gateway}}
+dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:ntp-server,{{.Gateway}}
+dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:router,{{.Gateway}}
+dhcp-range=interface:{{.VlanID | printf "vlan%03d"}},{{.DHCPStart}},{{.DHCPEnd}},10m
 `)
 
 // StaticConfigTemplate manages the static portion of the DNSMasq configuration
 // Systems with onboard NICs will have a MTL MAC.  Others will also use the NMN
 var StaticConfigTemplate = []byte(`
 # Static Configurations
-{{range .}}
+{{range .NCNS}}
 # DHCP Entries for {{.Hostname}}
 dhcp-host={{.NMNMac}},{{.NMNIP}},{{.Hostname}},infinite # NMN
 dhcp-host={{.MTLMac}},{{.MTLIP}},{{.Hostname}},infinite # MTL
@@ -85,9 +85,13 @@ dhcp-host={{.BMCMac}},{{.BMCIP}},{{.Hostname}}-mgmt,infinite #HMN
 # Host Record Entries for {{.Hostname}}
 host-record={{.Hostname}},{{.Hostname}}.can,{{.CANIP}}
 host-record={{.Hostname}},{{.Hostname}}.hmn,{{.HMNIP}}
-host-record={{.Hostname}},{{.Hostname}}.nmn
-host-record={{.Hostname}},{{.Hostname}}.mtl
-{{end -}}
+host-record={{.Hostname}},{{.Hostname}}.nmn,{{.NMNIP}}
+host-record={{.Hostname}},{{.Hostname}}.mtl,{{.MTLIP}}
+{{end}}
+# Virtual IP Addresses for k8s and the rados gateway
+host-record=kubeapi-vip,kubeapi-vip.nmn,{{.KUBEVIP}} # k8s-virtual-ip
+host-record=rgw-vip,rgw-vip.nmn,{{.RGWVIP}} # rgw-virtual-ip
+
 cname=kubernetes-api.vshasta.io,ncn-m001
 `)
 

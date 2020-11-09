@@ -43,11 +43,7 @@ func makeBaseCampfromSLS(conf shasta.SystemConfig, sls *sls_common.SLSState, ncn
 	if err != nil {
 		return basecampConfig, err
 	}
-	log.Printf("Processing %d ncns from csv\n", len(ncnMeta))
-	log.Printf("Processing %d ncns from sls\n", len(ncns))
 	for _, v := range ncns {
-		log.Printf("The aliases for %v are %v \n", v.BmcMac, v.Hostnames)
-
 		tempMetadata := shasta.MetaData{
 			Hostname:         v.Hostnames[0],
 			InstanceID:       shasta.GenerateInstanceID(),
@@ -139,8 +135,8 @@ func WriteMetalLBConfigMap(path string, conf shasta.SystemConfig, networks map[s
 	}
 	var configStruct shasta.MetalLBConfigMap
 	configStruct.Networks = make(map[string]string)
-	configStruct.ASN = "65533"
-	configStruct.SpineSwitches = append(configStruct.SpineSwitches, "x3333")
+	configStruct.ASN = "65533"                                               // TODO: This should come from the upstream flag
+	configStruct.SpineSwitches = append(configStruct.SpineSwitches, "x3333") // TODO: This should come from the upstream flag
 
 	for _, network := range networks {
 		for _, subnet := range network.Subnets {
@@ -176,11 +172,20 @@ func WriteDNSMasqConfig(path string, bootstrap []*shasta.LogicalNCN, networks ma
 	tpl4, _ := template.New("nmnconfig").Parse(string(shasta.NMNConfigTemplate))
 	tpl5, _ := template.New("mtlconfig").Parse(string(shasta.MTLConfigTemplate))
 	var ncns []DNSMasqNCN
-	var nmnIP string
+	var canIP, nmnIP, hmnIP, mtlIP string
 	for _, v := range bootstrap {
 		for _, net := range v.Networks {
 			if net.NetworkName == "NMN" {
 				nmnIP = net.IPAddress
+			}
+			if net.NetworkName == "CAN" {
+				canIP = net.IPAddress
+			}
+			if net.NetworkName == "MTL" {
+				mtlIP = net.IPAddress
+			}
+			if net.NetworkName == "HMN" {
+				hmnIP = net.IPAddress
 			}
 		}
 		// Get a new ip reservation for each one
@@ -188,13 +193,36 @@ func WriteDNSMasqConfig(path string, bootstrap []*shasta.LogicalNCN, networks ma
 			Hostname: v.Hostname,
 			NMNMac:   v.NMNMac,
 			NMNIP:    nmnIP,
-			// MTLMac:   nil,
+			// MTLMac:   ,
+			MTLIP:  mtlIP,
 			BMCMac: v.BMCMac,
 			BMCIP:  v.BMCIp,
+			CANIP:  canIP,
+			HMNIP:  hmnIP,
 		}
 		ncns = append(ncns, ncn)
 	}
-	csiFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/statics.conf"), tpl1, ncns)
+	var kubevip, rgwvip string
+	nmnSubnet, _ := networks["NMN"].LookUpSubnet("bootstrap_dhcp")
+	for _, reservation := range nmnSubnet.IPReservations {
+		if reservation.Name == "kubeapi-vip" {
+			kubevip = reservation.IPAddress.String()
+		}
+		if reservation.Name == "rgw-vip" {
+			rgwvip = reservation.IPAddress.String()
+		}
+	}
+
+	data := struct {
+		NCNS    []DNSMasqNCN
+		KUBEVIP string
+		RGWVIP  string
+	}{
+		ncns,
+		kubevip,
+		rgwvip,
+	}
+	csiFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/statics.conf"), tpl1, data)
 
 	// get a pointer to the MTL
 	mtlNet := networks["MTL"]
