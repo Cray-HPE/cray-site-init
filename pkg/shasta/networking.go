@@ -86,6 +86,8 @@ func (iNet *IPV4Network) GenSubnets(cabinetDetails []CabinetDetail, mask net.IPM
 				VlanID: iNet.VlanRange[1] + int16(i),
 			}
 			tempSubnet.ReserveNetMgmtIPs(mgmtIPReservations, spineXnames, leafXnames)
+			tempSubnet.DHCPStart = ipam.Add(tempSubnet.CIDR.IP, len(tempSubnet.IPReservations)+1)
+			tempSubnet.DHCPEnd = ipam.Add(ipam.Broadcast(tempSubnet.CIDR), -1)
 			myIPv4Subnets = append(myIPv4Subnets, &tempSubnet)
 		}
 	}
