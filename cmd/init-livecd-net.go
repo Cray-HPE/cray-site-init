@@ -10,6 +10,7 @@ import (
 	"net"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"github.com/spf13/viper"
 
@@ -44,6 +45,13 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*
 	subnet.AddReservation("rgw-vip", "rgw-virtual-ip")
 	subnet.DHCPStart = ipam.Add(subnet.CIDR.IP, len(subnet.IPReservations))
 	subnet.DHCPEnd = ipam.Add(ipam.Broadcast(subnet.CIDR), -1)
+	// Add the macvlan network for uais
+	uaisubnet, err := tempNMN.AddSubnet(net.CIDRMask(23, 32), "uai_macvlan", int16(v.GetInt("nmn-bootstrap-vlan")))
+	uaisubnet.AddReservation("uai_macvlan_bridge", "")
+	uaisubnet.AddReservation("slurmctld_service", "")
+	uaisubnet.AddReservation("slurmdbd_service", "")
+	uaisubnet.AddReservation("pbs_service", "")
+	uaisubnet.AddReservation("pbs_comm_service", "")
 	// Divide the network into an appropriate number of subnets
 	tempNMN.GenSubnets(cabinetDetails, net.CIDRMask(22, 32), v.GetInt("management-net-ips"), v.GetString("spine-switch-xnames"), v.GetString("leaf-switch-xnames"))
 	networkMap["NMN"] = &tempNMN
@@ -150,14 +158,26 @@ func buildCabinetDetails(v *viper.Viper) []shasta.CabinetDetail {
 	return cabinets
 }
 
+// WriteCPTNetworkConfig writes the Network Configuration details for the installation node  (CPT)
+func WriteCPTNetworkConfig(path string, ncn shasta.LogicalNCN, shastaNetworks map[string]*shasta.IPV4Network) error {
+
+	// fmt.Println(ncn)
+	csiFiles.WriteTemplate(filepath.Join(path, "ifcfg-bond0"), template.Must(template.New("bond0").Parse(string(Bond0ConfigTemplate))), ncn)
+	csiFiles.WriteTemplate(filepath.Join(path, "ifcfg-lan0"), template.Must(template.New("lan0").Parse(string(Lan0ConfigTemplate))), ncn)
+	csiFiles.WriteTemplate(filepath.Join(path, "ifcfg-vlan002"), template.Must(template.New("vlan").Parse(string(VlanConfigTemplate))), ncn)
+	csiFiles.WriteTemplate(filepath.Join(path, "ifcfg-vlan004"), template.Must(template.New("vlan").Parse(string(VlanConfigTemplate))), ncn)
+	csiFiles.WriteTemplate(filepath.Join(path, "ifcfg-vlan007"), template.Must(template.New("vlan").Parse(string(VlanConfigTemplate))), ncn)
+	return nil
+}
+
 // VlanConfigTemplate is the text/template to bootstrap the install cd
 var VlanConfigTemplate = []byte(`
 NAME='{{.FullName}}'
 
 # Set static IP (becomes "preferred" if dhcp is enabled)
 BOOTPROTO='static'
-IPADDR=''    # i.e. '192.168.80.1/20'
-PREFIXLEN='' # i.e. '20'
+IPADDR='{{.CIDR}}'    # i.e. '192.168.80.1/20'
+PREFIXLEN='{{.Mask}}' # i.e. '20'
 
 # CHANGE AT OWN RISK:
 ETHERDEVICE='bond0'

@@ -36,6 +36,8 @@ const (
 	DefaultNMNString = "10.252.1.0/16"
 	// DefaultNMNVlan is the default NMN Bootstrap Vlan
 	DefaultNMNVlan = 2
+	// DefaultMacVlan is the default Macvlan cidr (shares vlan with NMN)
+	DefaultMacVlanString = "10.252.124.0/23"
 	// DefaultHSNString is the Default HSN String
 	DefaultHSNString = "10.250.0.0/16"
 	// DefaultCANString is the Default CAN String (vlan007)

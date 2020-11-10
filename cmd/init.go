@@ -109,7 +109,7 @@ var initCmd = &cobra.Command{
 		}
 
 		// Management Switch Information is included in the IP Reservations for each subnet
-		switchNet, err := shastaNetworks["NMN"].LookUpSubnet("bootstrap_dhcp")
+		switchNet, err := shastaNetworks["HMN"].LookUpSubnet("bootstrap_dhcp")
 		switches, _ := extractSwitchesfromReservations(switchNet)
 		slsSwitches := make(map[string]sls_common.GenericHardware)
 		for _, mySwitch := range switches {
@@ -172,7 +172,12 @@ var initCmd = &cobra.Command{
 		csiFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/root_password.json"), shasta.DefaultRootPW)
 		csiFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/bmc_password.json"), shasta.DefaultBMCPW)
 		csiFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/mgmt_switch_password.json"), shasta.DefaultNetPW)
-
+		for _, ncn := range ncns {
+			if strings.HasPrefix(ncn.Hostname, "ncn-m001") {
+				WriteCPTNetworkConfig(filepath.Join(basepath, ncn.Hostname), *ncn, shastaNetworks)
+			}
+		}
+		// WriteCPTNetworkConfig(basepath, ncns, shastaNetworks)
 		WriteDNSMasqConfig(basepath, ncns, shastaNetworks)
 		WriteConmanConfig(filepath.Join(basepath, "conman.conf"), ncns, conf)
 		WriteMetalLBConfigMap(basepath, conf, shastaNetworks)
