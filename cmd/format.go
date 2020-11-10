@@ -4,13 +4,13 @@ package cmd
 Copyright 2020 Hewlett Packard Enterprise Development LP
 */
 import (
+	"bytes"
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"log"
 	"io"
+	"log"
 	"os"
-	"bytes"
 	"os/exec"
 	"path/filepath"
 )
@@ -50,7 +50,7 @@ func writeLiveCD(device string, iso string, size string) {
 
 	err := cmd.Run()
 	if err != nil {
-	  log.Fatalf("cmd.Run() failed with %s\n", err)
+		log.Fatalf("cmd.Run() failed with %s\n", err)
 	}
 	outStr, errStr := string(stdoutBuf.Bytes()), string(stderrBuf.Bytes())
 	fmt.Printf("\nout:\n%s\nerr:\n%s\n", outStr, errStr)
