@@ -235,7 +235,7 @@ func init() {
 	initCmd.Flags().String("leaf-switch-xnames", "", "Comma separated list of xnames for leaf switches")
 	initCmd.MarkFlagRequired("leaf-switch-xnames")
 	initCmd.Flags().String("bgp-asn", "65533", "The autonomous system number for BGP conversations")
-	initCmd.Flags().Int("management-net-ips", 20, "Number of ip addresses to reserve in each vlan for the management network")
+	initCmd.Flags().Int("management-net-ips", 0, "Additional number of ip addresses to reserve in each vlan for the management network")
 
 	// Use these flags to set the default ncn bmc credentials for bootstrap
 	initCmd.Flags().String("bootstrap-ncn-bmc-user", "", "Username for connecting to the BMC on the initial NCNs")
