@@ -67,7 +67,7 @@ func IPNetfromCIDRString(mynet string) *net.IPNet {
 	return ipnet
 }
 
-// DefaultLoadBalancerNMN
+// DefaultLoadBalancerNMN is a thing we need
 var DefaultLoadBalancerNMN = IPV4Network{
 	FullName: "Node Management Network LoadBalancers",
 	CIDR:     DefaultNMNLBString,
@@ -77,7 +77,7 @@ var DefaultLoadBalancerNMN = IPV4Network{
 	Comment:  "",
 }
 
-// DefaultLoadBalancerNMN
+// DefaultLoadBalancerHMN is a thing we need
 var DefaultLoadBalancerHMN = IPV4Network{
 	FullName: "Node Management Network LoadBalancers",
 	CIDR:     DefaultHMNLBString,
