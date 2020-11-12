@@ -214,6 +214,9 @@ func init() {
 	initCmd.Flags().String("nmn-cidr", shasta.DefaultNMNString, "Overall IPv4 CIDR for all Node Management subnets")
 	initCmd.Flags().String("hmn-cidr", shasta.DefaultHMNString, "Overall IPv4 CIDR for all Hardware Management subnets")
 	initCmd.Flags().String("can-cidr", shasta.DefaultCANString, "Overall IPv4 CIDR for all Customer Access subnets")
+	initCmd.Flags().String("can-static-pool", shasta.DefaultCANStaticString, "Overall IPv4 CIDR for static Customer Access addresses")
+	initCmd.Flags().String("can-dynamic-pool", shasta.DefaultCANPoolString, "Overall IPv4 CIDR for dynamic Customer Access addresses")
+
 	initCmd.Flags().String("mtl-cidr", shasta.DefaultMTLString, "Overall IPv4 CIDR for all Provisioning subnets")
 	initCmd.Flags().String("hsn-cidr", shasta.DefaultHSNString, "Overall IPv4 CIDR for all HSN subnets")
 

@@ -101,6 +101,21 @@ func (iNet IPV4Network) AllocatedSubnets() []net.IPNet {
 	return myNets
 }
 
+// AddSubnetbyCIDR allocates a new subnet
+func (iNet *IPV4Network) AddSubnetbyCIDR(desiredNet net.IPNet, name string, vlanID int16) (*IPV4Subnet, error) {
+	_, myNet, _ := net.ParseCIDR(iNet.CIDR)
+	if ipam.Contains(*myNet, desiredNet) {
+		iNet.Subnets = append(iNet.Subnets, &IPV4Subnet{
+			CIDR:    desiredNet,
+			Name:    name,
+			Gateway: ipam.Add(desiredNet.IP, 1),
+			VlanID:  vlanID,
+		})
+		return iNet.Subnets[len(iNet.Subnets)-1], nil
+	}
+	return &IPV4Subnet{}, fmt.Errorf("subnet %v is not part of %v", desiredNet.String(), myNet.String())
+}
+
 // AddSubnet allocates a new subnet
 func (iNet *IPV4Network) AddSubnet(mask net.IPMask, name string, vlanID int16) (*IPV4Subnet, error) {
 	var tempSubnet IPV4Subnet
@@ -155,7 +170,7 @@ func (iSubnet *IPV4Subnet) ReservedIPs() []net.IP {
 
 // UpdateDHCPRange resets the DHCPStart to exclude all IPReservations
 func (iSubnet *IPV4Subnet) UpdateDHCPRange() {
-	iSubnet.DHCPStart = ipam.Add(iSubnet.CIDR.IP, len(iSubnet.IPReservations))
+	iSubnet.DHCPStart = ipam.Add(iSubnet.CIDR.IP, len(iSubnet.IPReservations)+1)
 }
 
 // AddReservation adds a new IP reservation to the subnet
