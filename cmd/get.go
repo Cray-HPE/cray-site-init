@@ -5,13 +5,13 @@ Copyright 2020 Hewlett Packard Enterprise Development LP
 */
 import (
 	"fmt"
-	"io"
-	"os"
-	"path"
-	"log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"io"
+	"log"
 	"net/http"
+	"os"
+	"path"
 )
 
 var dataDir, cephDir, k8sDir, kernelURL, initrdURL, k8sURL, cephURL string
@@ -44,11 +44,11 @@ func GetArtifact(dirpath string, url string) (err error) {
 		// Get the data
 		resp, err := http.Get(url)
 		if err != nil {
-		  log.Fatal(err)
+			log.Fatal(err)
 		}
 
 		if resp.StatusCode != 200 {
-		  fmt.Println(resp.StatusCode)
+			fmt.Println(resp.StatusCode)
 		}
 		defer resp.Body.Close()
 

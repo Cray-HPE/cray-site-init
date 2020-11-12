@@ -1,4 +1,5 @@
 package cmd
+
 /*
 Copyright 2020 Hewlett Packard Enterprise Development LP
 */
@@ -12,7 +13,7 @@ import (
 var pitCmd = &cobra.Command{
 	Use:   "pit",
 	Short: "Control PIT",
-	Long: `Control PIT`,
+	Long:  `Control PIT`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("pit called")
 	},

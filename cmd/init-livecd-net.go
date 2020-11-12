@@ -28,25 +28,33 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*
 
 	var networkMap = make(map[string]*shasta.IPV4Network)
 
+	//
 	// Start the NMN with out defaults
+	//
 	tempNMN := shasta.DefaultNMN
 	// Update the CIDR from flags/viper
 	tempNMN.CIDR = v.GetString("nmn-cidr")
-	// Add a /25 for the Load Balancers
-	pool, err := tempNMN.AddSubnet(net.CIDRMask(25, 32), "nmn_metallb_address_pool", int16(v.GetInt("nmn-bootstrap-vlan")))
+	// Add a /24 for Network Hardware
+	hardware, err := tempNMN.AddSubnet(net.CIDRMask(24, 32), "nmn_network_hardware", int16(v.GetInt("nmn-bootstrap-vlan")))
 	if err != nil {
 		log.Printf("Couldn't add subnet: %v", err)
 	}
-	pool.AddReservation("api_gateway", "")
+	hardware.FullName = "NMN Management Networking Infrastructure"
+	hardware.ReserveNetMgmtIPs(strings.Split(v.GetString("spine-switch-xnames"), ","), strings.Split(v.GetString("leaf-switch-xnames"), ","), v.GetInt("management-net-ips"))
 	// Add a /26 for bootstrap dhcp
 	subnet, err := tempNMN.AddSubnet(net.CIDRMask(26, 32), "bootstrap_dhcp", int16(v.GetInt("nmn-bootstrap-vlan")))
-	subnet.ReserveNetMgmtIPs(v.GetInt("management-net-ips"), strings.Split(v.GetString("spine-switch-xnames"), ","), strings.Split(v.GetString("leaf-switch-xnames"), ","))
+	subnet.FullName = "NMN NCNs"
 	subnet.AddReservation("kubeapi-vip", "k8s-virtual-ip")
 	subnet.AddReservation("rgw-vip", "rgw-virtual-ip")
 	subnet.DHCPStart = ipam.Add(subnet.CIDR.IP, len(subnet.IPReservations))
 	subnet.DHCPEnd = ipam.Add(ipam.Broadcast(subnet.CIDR), -1)
+	// Add a /25 for the Load Balancers
+	pool, err := tempNMN.AddSubnet(net.CIDRMask(25, 32), "nmn_metallb_address_pool", int16(v.GetInt("nmn-bootstrap-vlan")))
+	pool.FullName = "NMN MetalLB"
+	pool.AddReservation("api_gateway", "")
 	// Add the macvlan network for uais
 	uaisubnet, err := tempNMN.AddSubnet(net.CIDRMask(23, 32), "uai_macvlan", int16(v.GetInt("nmn-bootstrap-vlan")))
+	uaisubnet.FullName = "NMN UAIs"
 	uaisubnet.AddReservation("uai_macvlan_bridge", "")
 	uaisubnet.AddReservation("slurmctld_service", "")
 	uaisubnet.AddReservation("slurmdbd_service", "")
@@ -56,28 +64,37 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*
 	tempNMN.GenSubnets(cabinetDetails, net.CIDRMask(22, 32), v.GetInt("management-net-ips"), v.GetString("spine-switch-xnames"), v.GetString("leaf-switch-xnames"))
 	networkMap["NMN"] = &tempNMN
 
+	//
 	// Start the HMN with out defaults
+	//
 	tempHMN := shasta.DefaultHMN
 	// Update the CIDR from flags/viper
 	tempHMN.CIDR = v.GetString("hmn-cidr")
-	// Add a /25 for the Load Balancers
-	pool, err = tempHMN.AddSubnet(net.CIDRMask(25, 32), "hmn_metallb_address_pool", int16(v.GetInt("hmn-bootstrap-vlan")))
+	// Add a /24 for Network Hardware
+	hardware, err = tempHMN.AddSubnet(net.CIDRMask(24, 32), "hmn_network_hardware", int16(v.GetInt("hmn-bootstrap-vlan")))
 	if err != nil {
 		log.Printf("Couldn't add subnet: %v", err)
 	}
-	pool.AddReservation("api_gateway", "")
-
+	hardware.FullName = "HMN Management Networking Infrastructure"
+	hardware.ReserveNetMgmtIPs(strings.Split(v.GetString("spine-switch-xnames"), ","), strings.Split(v.GetString("leaf-switch-xnames"), ","), v.GetInt("management-net-ips"))
 	// Add a /26 for bootstrap dhcp
 	subnet, err = tempHMN.AddSubnet(net.CIDRMask(26, 32), "bootstrap_dhcp", int16(v.GetInt("hmn-bootstrap-vlan")))
-	subnet.ReserveNetMgmtIPs(v.GetInt("management-net-ips"), strings.Split(v.GetString("spine-switch-xnames"), ","), strings.Split(v.GetString("leaf-switch-xnames"), ","))
+	subnet.FullName = "HMN NCNs"
+	// Add a /25 for the Load Balancers
+	pool, err = tempHMN.AddSubnet(net.CIDRMask(25, 32), "hmn_metallb_address_pool", int16(v.GetInt("hmn-bootstrap-vlan")))
+	pool.FullName = "HMN MetalLB"
+	pool.AddReservation("api_gateway", "")
+	// TODO - removing this causes a "Couldn't find switch port for NCN error", but I don't want this
+	subnet.ReserveNetMgmtIPs(strings.Split(v.GetString("spine-switch-xnames"), ","), strings.Split(v.GetString("leaf-switch-xnames"), ","), v.GetInt("management-net-ips"))
 	subnet.DHCPStart = ipam.Add(subnet.CIDR.IP, len(subnet.IPReservations))
 	subnet.DHCPEnd = ipam.Add(ipam.Broadcast(subnet.CIDR), -1)
 	// Divide the network into an appropriate number of subnets
 	tempHMN.GenSubnets(cabinetDetails, net.CIDRMask(22, 32), v.GetInt("management-net-ips"), v.GetString("spine-switch-xnames"), v.GetString("leaf-switch-xnames"))
-
 	networkMap["HMN"] = &tempHMN
 
+	//
 	// Start the HSN with out defaults
+	//
 	tempHSN := shasta.DefaultHSN
 	// Update the CIDR from flags/viper
 	tempHSN.CIDR = v.GetString("hsn-cidr")
@@ -86,46 +103,61 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*
 	if err != nil {
 		log.Printf("Couldn't add subnet: %v", err)
 	}
+	pool.FullName = "HSN MetalLB"
 	pool.AddReservation("api_gateway", "")
-
 	// Divide the network into an appropriate number of subnets
 	tempHSN.GenSubnets(cabinetDetails, net.CIDRMask(22, 32), v.GetInt("management-net-ips"), v.GetString("spine-switch-xnames"), v.GetString("leaf-switch-xnames"))
-
 	networkMap["HSN"] = &tempHSN
 
+	//
 	// Start the MTL with our defaults
+	//
 	tempMTL := shasta.DefaultMTL
 	// Update the CIDR from flags/viper
 	tempMTL.CIDR = v.GetString("mtl-cidr")
+	// Add a /24 for Network Hardware
+	hardware, err = tempMTL.AddSubnet(net.CIDRMask(24, 32), "mtl_network_hardware", int16(v.GetInt("mtl-bootstrap-vlan")))
+	if err != nil {
+		log.Printf("Couldn't add subnet: %v", err)
+	}
+	hardware.FullName = "MTL Management Networking Infrastructure"
+	hardware.ReserveNetMgmtIPs(strings.Split(v.GetString("spine-switch-xnames"), ","), strings.Split(v.GetString("leaf-switch-xnames"), ","), v.GetInt("management-net-ips"))
 	// No need to subdivide the mtl network by cabinets
 	subnet, err = tempMTL.AddSubnet(net.CIDRMask(24, 32), "bootstrap_dhcp", 0)
-	subnet.ReserveNetMgmtIPs(v.GetInt("management-net-ips"), strings.Split(v.GetString("spine-switch-xnames"), ","), strings.Split(v.GetString("leaf-switch-xnames"), ","))
+	// TODO: Probably only really required for masters.
+	subnet.FullName = "MTL NCNs"
 	subnet.DHCPStart = ipam.Add(subnet.CIDR.IP, len(subnet.IPReservations))
 	subnet.DHCPEnd = ipam.Add(ipam.Broadcast(subnet.CIDR), -1)
 	networkMap["MTL"] = &tempMTL
 
+	//
 	// Start the CAN with our defaults
-	tempCan := shasta.DefaultCAN
+	//
+	tempCAN := shasta.DefaultCAN
 	// Update the CIDR from flags/viper
-	tempCan.CIDR = v.GetString("can-cidr") // This is probably a /24
-	// Add a /25 for the Load Balancers on vlan0007
-	_, err = tempCan.AddSubnet(net.CIDRMask(25, 32), "can_metallb_address_pool", int16(v.GetInt("can-bootstrap-vlan")))
-	if err != nil {
-		log.Printf("Couldn't add subnet: %v", err)
-	}
+	tempCAN.CIDR = v.GetString("can-cidr") // This is probably a /24
 	// Add a /28 for the Static Pool on vlan0007
-	_, err = tempCan.AddSubnet(net.CIDRMask(28, 32), "can_metallb_static_pool", int16(v.GetInt("can-bootstrap-vlan")))
+	static, err := tempCAN.AddSubnet(net.CIDRMask(28, 32), "can_metallb_static_pool", int16(v.GetInt("can-bootstrap-vlan")))
 	if err != nil {
 		log.Printf("Couldn't add subnet: %v", err)
 	}
+	static.FullName = "CAN Static Pool MetalLB"
+	// Add a /25 for the Load Balancers on vlan0007
+	pool, err = tempCAN.AddSubnet(net.CIDRMask(25, 32), "can_metallb_address_pool", int16(v.GetInt("can-bootstrap-vlan")))
+	if err != nil {
+		log.Printf("Couldn't add subnet: %v", err)
+	}
+	pool.FullName = "CAN Static MetalLB"
 	// Add a /26 for bootstrap dhcp
-	subnet, err = tempCan.AddSubnet(net.CIDRMask(26, 32), "bootstrap_dhcp", int16(v.GetInt("hmn-bootstrap-vlan")))
-	subnet.ReserveNetMgmtIPs(v.GetInt("management-net-ips"), strings.Split(v.GetString("spine-switch-xnames"), ","), strings.Split(v.GetString("leaf-switch-xnames"), ","))
+	subnet, err = tempCAN.AddSubnet(net.CIDRMask(26, 32), "bootstrap_dhcp", int16(v.GetInt("hmn-bootstrap-vlan")))
+	subnet.FullName = "CAN NCNs"
+	// TODO: Is this really necessary?  At best this is far too many.
+	subnet.ReserveNetMgmtIPs(strings.Split(v.GetString("spine-switch-xnames"), ","), strings.Split(v.GetString("leaf-switch-xnames"), ","), v.GetInt("management-net-ips"))
 	subnet.AddReservation("kubeapi-vip", "k8s-virtual-ip")
 	subnet.AddReservation("rgw-vip", "rgw-virtual-ip")
 	subnet.DHCPStart = ipam.Add(subnet.CIDR.IP, len(subnet.IPReservations))
 	subnet.DHCPEnd = ipam.Add(ipam.Broadcast(subnet.CIDR), -1)
-	networkMap["CAN"] = &tempCan
+	networkMap["CAN"] = &tempCAN
 
 	return networkMap, nil
 }

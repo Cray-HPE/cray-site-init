@@ -1,4 +1,5 @@
 package cmd
+
 /*
 Copyright 2020 Hewlett Packard Enterprise Development LP
 */
@@ -17,7 +18,7 @@ var validateNetwork, validateServices, validateDNS, validateMtu, validateCeph, v
 var validateCmd = &cobra.Command{
 	Use:   "validate",
 	Short: "Validates the PIT liveCD during setup",
-	Long: `Validates certain requirements needed for effectively running the liveCD.`,
+	Long:  `Validates certain requirements needed for effectively running the liveCD.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if s, err := strconv.ParseBool(validateServices); err == nil {
@@ -73,7 +74,6 @@ func runCommand(shellCode string) {
 		fmt.Println(err)
 	}
 }
-
 
 func init() {
 	pitCmd.AddCommand(validateCmd)

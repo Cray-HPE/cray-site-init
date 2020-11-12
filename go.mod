@@ -12,7 +12,7 @@ require (
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.5.1
 	go.uber.org/zap v1.15.0
-	golang.org/x/tools v0.0.0-20201105220310-78b158585360 // indirect
+	golang.org/x/tools v0.0.0-20201111224557-41a3a589386c // indirect
 	gopkg.in/yaml.v2 v2.2.4
 	stash.us.cray.com/HMS/hms-base v1.7.1
 	stash.us.cray.com/HMS/hms-shcd-parser v0.0.0-20200612211515-3e74e1e2ad9d
