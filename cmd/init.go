@@ -5,6 +5,7 @@ Copyright 2020 Hewlett Packard Enterprise Development LP
 package cmd
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -138,6 +139,9 @@ var initCmd = &cobra.Command{
 		if err != nil {
 			log.Panic(err) // This should never happen.  I can't really imagine how it would.
 		}
+		for _, ncn := range tempNcns {
+			fmt.Printf("LogicalNCN %v = %v \n", ncn.Xname, ncn.Hostnames)
+		}
 		// Let it be known that nested loops like this are embarassing and hard to read, but I'm a sEnIOr DEveLOPeR
 		// YOLO
 		// https://www.reddit.com/r/ProgrammerHumor/comments/fokc7r/brrrrrrr/
@@ -174,8 +178,10 @@ var initCmd = &cobra.Command{
 		csiFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/mgmt_switch_password.json"), shasta.DefaultNetPW)
 		for _, ncn := range ncns {
 			if strings.HasPrefix(ncn.Hostname, "ncn-m001") {
+				log.Println("Generating the interface configurations for:", ncn.Hostname)
 				WriteCPTNetworkConfig(filepath.Join(basepath, ncn.Hostname), *ncn, shastaNetworks)
 			}
+			log.Println("*NOT* Generating the interface configurations for:", ncn.Hostname)
 		}
 		// WriteCPTNetworkConfig(basepath, ncns, shastaNetworks)
 		WriteDNSMasqConfig(basepath, ncns, shastaNetworks)

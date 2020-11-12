@@ -108,8 +108,8 @@ func ExtractSLSNCNs(sls *sls_common.SLSState) ([]BootstrapNCNMetadata, error) {
 				return ncns, err
 			}
 			if extra.Role == "Management" {
-				// log.Printf("Adding %v to the list with Parent = %v", key, node.Parent)
-				// log.Printf("Node = %v and Extra = %v", node, extra)
+				log.Printf("Adding %v to the list with Parent = %v", key, node.Parent)
+				log.Printf("Node = %v and Extra = %v", node, extra)
 				mgmtSwitch, port, err := portForXname(sls.Hardware, node.Parent)
 				if err != nil { // Sometimes the port is not available.  We *should* be able to continue
 					log.Printf("%v %v\n", err, port)
