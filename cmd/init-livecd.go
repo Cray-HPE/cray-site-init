@@ -31,6 +31,7 @@ func makeBaseCampfromSLS(conf shasta.SystemConfig, sls *sls_common.SLSState, ncn
 		"/srv/cray/scripts/metal/set-dns-config.sh",
 		"/srv/cray/scripts/metal/set-ntp-config.sh",
 		"/srv/cray/scripts/metal/install-bootloader.sh",
+		"/srv/cray/scripts/common/update_ca_certs.py",
 		"/srv/cray/scripts/common/kubernetes-cloudinit.sh",
 	}
 
@@ -38,6 +39,7 @@ func makeBaseCampfromSLS(conf shasta.SystemConfig, sls *sls_common.SLSState, ncn
 		"/srv/cray/scripts/metal/set-dns-config.sh",
 		"/srv/cray/scripts/metal/set-ntp-config.sh",
 		"/srv/cray/scripts/metal/install-bootloader.sh",
+		"/srv/cray/scripts/common/update_ca_certs.py",
 		"/srv/cray/scripts/common/storage-ceph-cloudinit.sh",
 	}
 
