@@ -183,7 +183,7 @@ var initCmd = &cobra.Command{
 		}
 		WriteDNSMasqConfig(basepath, ncns, shastaNetworks)
 		WriteConmanConfig(filepath.Join(basepath, "conman.conf"), ncns, conf)
-		WriteMetalLBConfigMap(basepath, conf, shastaNetworks)
+		WriteMetalLBConfigMap(basepath, conf, v, shastaNetworks)
 		WriteBaseCampData(filepath.Join(basepath, "data.json"), conf, &slsState, ncnMeta)
 		WriteNetworkFiles(basepath, shastaNetworks)
 

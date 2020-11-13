@@ -134,7 +134,7 @@ func WriteConmanConfig(path string, ncns []*shasta.LogicalNCN, conf shasta.Syste
 }
 
 // WriteMetalLBConfigMap creates the yaml configmap
-func WriteMetalLBConfigMap(path string, conf shasta.SystemConfig, networks map[string]*shasta.IPV4Network) {
+func WriteMetalLBConfigMap(path string, conf shasta.SystemConfig, v *viper.Viper, networks map[string]*shasta.IPV4Network) {
 
 	// this lookup table should be redundant in the future
 	// when we can better hint which pool an endpoint should pull from
@@ -152,11 +152,19 @@ func WriteMetalLBConfigMap(path string, conf shasta.SystemConfig, networks map[s
 	}
 	var configStruct shasta.MetalLBConfigMap
 	configStruct.Networks = make(map[string]string)
-	configStruct.ASN = "65533"                                               // TODO: This should come from the upstream flag
-	configStruct.SpineSwitches = append(configStruct.SpineSwitches, "x3333") // TODO: This should come from the upstream flag
+	configStruct.ASN = v.GetString("bgp-asn")
 
-	for _, network := range networks {
+	for name, network := range networks {
 		for _, subnet := range network.Subnets {
+			if name == "NMN" && subnet.Name == "nmn_network_hardware" {
+				for _, reservation := range subnet.IPReservations {
+					for _, switchXname := range strings.Split(v.GetString("spine-switch-xnames"), ",") {
+						if reservation.Comment == switchXname {
+							configStruct.SpineSwitches = append(configStruct.SpineSwitches, reservation.IPAddress.String())
+						}
+					}
+				}
+			}
 			if strings.Contains(subnet.Name, "metallb") {
 				if val, ok := metalLBLookupTable[subnet.Name]; ok {
 					configStruct.Networks[val] = subnet.CIDR.String()
