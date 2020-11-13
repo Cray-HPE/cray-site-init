@@ -257,5 +257,10 @@ func writeConfig(name, path string, tpl template.Template, networks map[string]*
 	tempNet := networks[name]
 	// get a pointer to the subnet
 	bootstrapSubnet, _ := tempNet.LookUpSubnet("bootstrap_dhcp")
+	for _, reservation := range bootstrapSubnet.IPReservations {
+		if reservation.Name == "ncn-m001" {
+			bootstrapSubnet.Gateway = reservation.IPAddress
+		}
+	}
 	csiFiles.WriteTemplate(filepath.Join(path, fmt.Sprintf("dnsmasq.d/%v.conf", name)), &tpl, bootstrapSubnet)
 }

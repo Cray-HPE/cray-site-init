@@ -170,7 +170,8 @@ func (iSubnet *IPV4Subnet) ReservedIPs() []net.IP {
 
 // UpdateDHCPRange resets the DHCPStart to exclude all IPReservations
 func (iSubnet *IPV4Subnet) UpdateDHCPRange() {
-	iSubnet.DHCPStart = ipam.Add(iSubnet.CIDR.IP, len(iSubnet.IPReservations)+1)
+	iSubnet.DHCPStart = ipam.Add(iSubnet.CIDR.IP, len(iSubnet.IPReservations)+2)
+	iSubnet.DHCPEnd = ipam.Add(ipam.Broadcast(iSubnet.CIDR), -1)
 }
 
 // AddReservation adds a new IP reservation to the subnet

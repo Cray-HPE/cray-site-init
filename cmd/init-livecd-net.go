@@ -205,10 +205,6 @@ func WriteCPTNetworkConfig(path string, ncn shasta.LogicalNCN, shastaNetworks ma
 	for _, network := range ncn.Networks {
 		csiFiles.WriteTemplate(filepath.Join(path, fmt.Sprintf("ifcfg-vlan%03d", network.Vlan)), template.Must(template.New("vlan").Parse(string(VlanConfigTemplate))), network)
 	}
-
-	// csiFiles.WriteTemplate(filepath.Join(path, "ifcfg-vlan002"), template.Must(template.New("vlan").Parse(string(VlanConfigTemplate))), ncn)
-	// csiFiles.WriteTemplate(filepath.Join(path, "ifcfg-vlan004"), template.Must(template.New("vlan").Parse(string(VlanConfigTemplate))), ncn)
-	// csiFiles.WriteTemplate(filepath.Join(path, "ifcfg-vlan007"), template.Must(template.New("vlan").Parse(string(VlanConfigTemplate))), ncn)
 	return nil
 }
 
