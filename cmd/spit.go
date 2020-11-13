@@ -4,7 +4,7 @@ package cmd
 Copyright 2020 Hewlett Packard Enterprise Development LP
 */
 import (
-	"fmt"
+	"log"
 
 	"github.com/spf13/cobra"
 )
@@ -15,7 +15,7 @@ var pitCmd = &cobra.Command{
 	Short: "Control PIT",
 	Long:  `Control PIT`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("pit called")
+		log.Println("pit called")
 	},
 }
 

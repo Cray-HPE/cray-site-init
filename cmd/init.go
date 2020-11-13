@@ -5,7 +5,6 @@ Copyright 2020 Hewlett Packard Enterprise Development LP
 package cmd
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -69,6 +68,9 @@ var initCmd = &cobra.Command{
 		//
 		// The first step in building the NCN map is to read the NCN Metadata file
 		ncnMeta, err := csiFiles.ReadNodeCSV(v.GetString("ncn-metadata"))
+		if err != nil {
+			log.Fatalln("Couldn't extract ncns", err)
+		}
 		// *** Loading Data Complete **** //
 		// *** Begin Enrichment *** //
 		// Alone, this metadata isn't enough.  We need to enrich it by converting from the
@@ -139,9 +141,6 @@ var initCmd = &cobra.Command{
 		if err != nil {
 			log.Panic(err) // This should never happen.  I can't really imagine how it would.
 		}
-		for _, ncn := range tempNcns {
-			fmt.Printf("LogicalNCN %v = %v \n", ncn.Xname, ncn.Hostnames)
-		}
 		// Let it be known that nested loops like this are embarassing and hard to read, but I'm a sEnIOr DEveLOPeR
 		// YOLO
 		// https://www.reddit.com/r/ProgrammerHumor/comments/fokc7r/brrrrrrr/
@@ -178,12 +177,10 @@ var initCmd = &cobra.Command{
 		csiFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/mgmt_switch_password.json"), shasta.DefaultNetPW)
 		for _, ncn := range ncns {
 			if strings.HasPrefix(ncn.Hostname, "ncn-m001") {
-				log.Println("Generating the interface configurations for:", ncn.Hostname)
-				WriteCPTNetworkConfig(filepath.Join(basepath, ncn.Hostname), *ncn, shastaNetworks)
+				log.Println("Generating Installer Node (CPT) interface configurations for:", ncn.Hostname)
+				WriteCPTNetworkConfig(filepath.Join(basepath, "cpt-files"), *ncn, shastaNetworks)
 			}
-			log.Println("*NOT* Generating the interface configurations for:", ncn.Hostname)
 		}
-		// WriteCPTNetworkConfig(basepath, ncns, shastaNetworks)
 		WriteDNSMasqConfig(basepath, ncns, shastaNetworks)
 		WriteConmanConfig(filepath.Join(basepath, "conman.conf"), ncns, conf)
 		WriteMetalLBConfigMap(basepath, conf, shastaNetworks)
@@ -318,6 +315,7 @@ func setupDirectories(systemName string, v *viper.Viper) (string, error) {
 		filepath.Join(basepath, "manufacturing"),
 		filepath.Join(basepath, "credentials"),
 		filepath.Join(basepath, "dnsmasq.d"),
+		filepath.Join(basepath, "cpt-files"),
 	}
 	// Add the Manifest directory if needed
 	if v.GetString("manifest-release") != "" {

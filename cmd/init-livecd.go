@@ -169,7 +169,6 @@ func WriteMetalLBConfigMap(path string, conf shasta.SystemConfig, networks map[s
 
 // WriteDNSMasqConfig writes the dnsmasq configuration files necssary for installation
 func WriteDNSMasqConfig(path string, bootstrap []*shasta.LogicalNCN, networks map[string]*shasta.IPV4Network) {
-
 	// DNSMasqNCN is the struct to manage NCNs within DNSMasq
 	type DNSMasqNCN struct {
 		Hostname string `form:"hostname"`

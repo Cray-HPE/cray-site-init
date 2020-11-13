@@ -7,6 +7,7 @@ package shasta
 import (
 	"fmt"
 	"log"
+	"strings"
 )
 
 // LogicalNCN is the main struct for NCNs
@@ -23,16 +24,21 @@ type LogicalNCN struct {
 	BMCMac           string         `yaml:"bmc-mac" json:"bmc-mac"`
 	BMCIp            string         `yaml:"bmc-ip" json:"bmc-ip"`
 	NMNMac           string         `yaml:"nmn-mac" json:"nmn-mac"`
+	Bond0Mac0        string         `yaml:"bond0-mac0" json:"bond0-mac0`
+	Bond0Mac1        string         `yaml:"bond0-mac1" json:"bond0-mac1`
 	Cabinet          string         `yaml:"cabinet" json:"cabinet"` // Use to establish availability zone
 }
 
 // NCNNetwork holds information about networks
 type NCNNetwork struct {
 	NetworkName   string `json:"network-name"`
+	FullName      string `json:"full-name"`
 	IPAddress     string `json:"ip-address"`
 	InterfaceName string `json:"net-device"`
 	InterfaceMac  string `json:"mac-address"`
 	Vlan          int    `json:"vlan"`
+	CIDR          string `json:"cidr"`
+	Mask          string `json:"mask"`
 }
 
 // NCNInterface holds information for all MAC addresses in all NCNs. CSV definitions are the lshw fields
@@ -72,10 +78,14 @@ func AllocateIps(ncns []*LogicalNCN, networks map[string]*IPV4Network) {
 				ncn.BMCIp = subnet.AddReservation(fmt.Sprintf("bmc-%v", ncn.Hostname), fmt.Sprintf("bmc-%v", ncn.Xname)).IPAddress.String()
 			}
 			reservation := subnet.AddReservation(ncn.Hostname, ncn.Xname)
+			prefixLen := strings.Split(subnet.CIDR.String(), "/")[1]
 			ncn.Networks = append(ncn.Networks, NCNNetwork{
 				NetworkName: netName,
 				IPAddress:   reservation.IPAddress.String(),
 				Vlan:        int(subnet.VlanID),
+				FullName:    subnet.FullName,
+				CIDR:        strings.Join([]string{reservation.IPAddress.String(), prefixLen}, "/"),
+				Mask:        prefixLen,
 			})
 
 		}

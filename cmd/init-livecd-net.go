@@ -198,13 +198,17 @@ func buildCabinetDetails(v *viper.Viper) []shasta.CabinetDetail {
 
 // WriteCPTNetworkConfig writes the Network Configuration details for the installation node  (CPT)
 func WriteCPTNetworkConfig(path string, ncn shasta.LogicalNCN, shastaNetworks map[string]*shasta.IPV4Network) error {
-
-	// fmt.Println(ncn)
+	log.Println("Interface Networks:", ncn.Networks)
+	log.Println("Networks are:", shastaNetworks)
 	csiFiles.WriteTemplate(filepath.Join(path, "ifcfg-bond0"), template.Must(template.New("bond0").Parse(string(Bond0ConfigTemplate))), ncn)
 	csiFiles.WriteTemplate(filepath.Join(path, "ifcfg-lan0"), template.Must(template.New("lan0").Parse(string(Lan0ConfigTemplate))), ncn)
-	csiFiles.WriteTemplate(filepath.Join(path, "ifcfg-vlan002"), template.Must(template.New("vlan").Parse(string(VlanConfigTemplate))), ncn)
-	csiFiles.WriteTemplate(filepath.Join(path, "ifcfg-vlan004"), template.Must(template.New("vlan").Parse(string(VlanConfigTemplate))), ncn)
-	csiFiles.WriteTemplate(filepath.Join(path, "ifcfg-vlan007"), template.Must(template.New("vlan").Parse(string(VlanConfigTemplate))), ncn)
+	for _, network := range ncn.Networks {
+		csiFiles.WriteTemplate(filepath.Join(path, fmt.Sprintf("ifcfg-vlan%03d", network.Vlan)), template.Must(template.New("vlan").Parse(string(VlanConfigTemplate))), network)
+	}
+
+	// csiFiles.WriteTemplate(filepath.Join(path, "ifcfg-vlan002"), template.Must(template.New("vlan").Parse(string(VlanConfigTemplate))), ncn)
+	// csiFiles.WriteTemplate(filepath.Join(path, "ifcfg-vlan004"), template.Must(template.New("vlan").Parse(string(VlanConfigTemplate))), ncn)
+	// csiFiles.WriteTemplate(filepath.Join(path, "ifcfg-vlan007"), template.Must(template.New("vlan").Parse(string(VlanConfigTemplate))), ncn)
 	return nil
 }
 
@@ -231,8 +235,8 @@ var Bond0ConfigTemplate = []byte(`
 NAME='Internal Interface'
 
 # Select the NIC(s) for access.
-BONDING_SLAVE0='{{.Bond0Mac}}'
-BONDING_SLAVE1='{{.Bond1Mac}}'
+BONDING_SLAVE0='{{.Bond0Mac0}}'
+BONDING_SLAVE1='{{.Bond0Mac1}}'
 
 # Set static IP (becomes "preferred" if dhcp is enabled)
 BOOTPROTO='static'

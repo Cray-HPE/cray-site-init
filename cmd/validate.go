@@ -5,11 +5,13 @@ Copyright 2020 Hewlett Packard Enterprise Development LP
 */
 import (
 	"fmt"
+	"log"
 	"os/exec"
-	// "log"
+
+	"strconv"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"strconv"
 )
 
 var validateNetwork, validateServices, validateDNS, validateMtu, validateCeph, validateK8s, validateAll string
@@ -22,7 +24,7 @@ var validateCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if s, err := strconv.ParseBool(validateServices); err == nil {
-			fmt.Println("[csi] VALIDATING SERVICES: ", s)
+			log.Println("[csi] VALIDATING SERVICES: ", s)
 			runCommand("systemctl status dnsmasq")
 			runCommand("systemctl status nexus")
 			runCommand("systemctl status basecamp")
@@ -30,7 +32,7 @@ var validateCmd = &cobra.Command{
 		}
 
 		if n, err := strconv.ParseBool(validateNetwork); err == nil {
-			fmt.Println("[csi] VALIDATING NETWORK: ", n)
+			log.Println("[csi] VALIDATING NETWORK: ", n)
 			runCommand("ip a show lan0")
 			runCommand("ip a show bond0")
 			runCommand("ip a show vlan002")
@@ -39,31 +41,31 @@ var validateCmd = &cobra.Command{
 		}
 
 		if d, err := strconv.ParseBool(validateDNS); err == nil {
-			fmt.Println("[csi] VALIDATING DNS: ", d)
+			log.Println("[csi] VALIDATING DNS: ", d)
 			runCommand("grep -Eo ncn-.*-mgmt /var/lib/misc/dnsmasq.leases | sort")
 		}
 
 		if m, err := strconv.ParseBool(validateMtu); err == nil {
-			fmt.Println("[csi] VALIDATING MTU: ", m)
-			fmt.Println("[csi] MANUAL ACTION: verify the MTU of the spine ports connected to the NCNs is set to 9216")
+			log.Println("[csi] VALIDATING MTU: ", m)
+			log.Println("[csi] MANUAL ACTION: verify the MTU of the spine ports connected to the NCNs is set to 9216")
 		}
 
 		if c, err := strconv.ParseBool(validateCeph); err == nil {
-			fmt.Println("[csi] VALIDATING CEPH: ", c)
-			fmt.Println("[csi] MANUAL ACTION: run 'ceph -s' on a storage node if booted")
+			log.Println("[csi] VALIDATING CEPH: ", c)
+			log.Println("[csi] MANUAL ACTION: run 'ceph -s' on a storage node if booted")
 		}
 
 		if k, err := strconv.ParseBool(validateK8s); err == nil {
-			fmt.Println("[csi] VALIDATING K8S: ", k)
-			fmt.Println("[csi] MANUAL ACTION: run 'kubectl get storageclass' on a storage node if booted and verify if 3 classes are available")
-			fmt.Println("[csi] MANUAL ACTION: run 'kubectl get nodes' on a manager node if booted to verify all nodes are in the cluister")
-			fmt.Println("[csi] MANUAL ACTION: run 'kubectl get po -n kube-system' on a manager node if booted to verify all nodes are in the cluister")
+			log.Println("[csi] VALIDATING K8S: ", k)
+			log.Println("[csi] MANUAL ACTION: run 'kubectl get storageclass' on a storage node if booted and verify if 3 classes are available")
+			log.Println("[csi] MANUAL ACTION: run 'kubectl get nodes' on a manager node if booted to verify all nodes are in the cluister")
+			log.Println("[csi] MANUAL ACTION: run 'kubectl get po -n kube-system' on a manager node if booted to verify all nodes are in the cluister")
 		}
 	},
 }
 
 func runCommand(shellCode string) {
-	fmt.Println("[csi] Running...", shellCode)
+	log.Println("[csi] Running...", shellCode)
 	cmd := exec.Command("bash", "-c", shellCode)
 	stdoutStderr, err := cmd.CombinedOutput()
 	fmt.Printf("%s\n", stdoutStderr)
@@ -71,7 +73,7 @@ func runCommand(shellCode string) {
 		// Don't fail yet.  For now, we're just automating what humans currently do
 		// This also gives an overview of the current state of things in one command
 		// log.Fatal(err)
-		fmt.Println(err)
+		log.Println(err)
 	}
 }
 
