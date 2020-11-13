@@ -21,7 +21,7 @@ var cfgFile string
 
 const (
 	defaultConfigFilename = "csi"
-	envPrefix = "csi"
+	envPrefix             = "csi"
 )
 
 // rootCmd represents the base command when called without any subcommands

@@ -20,7 +20,22 @@ type BootstrapNCNMetadata struct {
 	BmcPort   string   `json:"bmc-port" csv:"BMC Switch Port"`
 	NmnMac    string   `json:"nmn-mac" csv:"NMN MAC"`
 	NmnPort   string   `json:"nmn-port" csv:"NMN Switch Port"`
-	Hostnames []string `json:"hostnames" csv:"-"`
+	Hostnames []string `json:"hostnames" csv:"-"` // The "-" indicates that we do *not* expect this field to be in the CSV file
+	Bond0Macs []string `json:"bond0-macs" csv:"-"`
+}
+
+// NewBootstrapNCNMetadata is a type that matches the updated ncn_metadata.csv file as
+// Xname,Role,Subrole,BMC MAC,Bootstrap MAC,Bond0 MAC0,Bond0 Mac1
+// It is probable that on many machines bootstrap mac will be the same as one of the bond macs
+// Do not be alarmed.
+type NewBootstrapNCNMetadata struct {
+	Xname        string `json:"xname" csv:"Xname"`
+	Role         string `json:"role" csv:"Role"`
+	Subrole      string `json:"subrole" csv:"Subrole"`
+	BmcMac       string `json:"bmc-mac" csv:"BMC MAC"`
+	BootstrapMac string `json:"bootstrap-mac" csv:"Bootstrap MAC"`
+	Bond0Mac0    string `json:"bond0-mac0" csv:"Bond0 MAC0"`
+	Bond0Mac1    string `json:"bond0-mac1" csv:"Bond0 MAC1"`
 }
 
 // AsLogicalNCN converts from NCNMetadata to LogicalNCN.  It's unwise to try to reverse this.

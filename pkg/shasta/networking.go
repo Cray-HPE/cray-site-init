@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"strings"
 
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
 	"stash.us.cray.com/MTL/csi/pkg/ipam"
@@ -62,8 +61,6 @@ type ManagementSwitch struct {
 
 // GenSubnets subdivides a network into a set of subnets
 func (iNet *IPV4Network) GenSubnets(cabinetDetails []CabinetDetail, mask net.IPMask, mgmtIPReservations int, spines string, leafs string) error {
-	spineXnames := strings.Split(spines, ",")
-	leafXnames := strings.Split(spines, ",")
 
 	_, myNet, _ := net.ParseCIDR(iNet.CIDR)
 	mySubnets := iNet.AllocatedSubnets()
@@ -85,7 +82,9 @@ func (iNet *IPV4Network) GenSubnets(cabinetDetails []CabinetDetail, mask net.IPM
 				// Reserving the first vlan in the range for a non-cabinet aligned vlan if needed in the future.
 				VlanID: iNet.VlanRange[1] + int16(i),
 			}
-			tempSubnet.ReserveNetMgmtIPs(mgmtIPReservations, spineXnames, leafXnames)
+			// Bump the DHCP Start IP past the gateway
+			tempSubnet.DHCPStart = ipam.Add(tempSubnet.CIDR.IP, len(tempSubnet.IPReservations)+2)
+			tempSubnet.DHCPEnd = ipam.Add(ipam.Broadcast(tempSubnet.CIDR), -1)
 			myIPv4Subnets = append(myIPv4Subnets, &tempSubnet)
 		}
 	}
@@ -100,6 +99,21 @@ func (iNet IPV4Network) AllocatedSubnets() []net.IPNet {
 		myNets = append(myNets, v.CIDR)
 	}
 	return myNets
+}
+
+// AddSubnetbyCIDR allocates a new subnet
+func (iNet *IPV4Network) AddSubnetbyCIDR(desiredNet net.IPNet, name string, vlanID int16) (*IPV4Subnet, error) {
+	_, myNet, _ := net.ParseCIDR(iNet.CIDR)
+	if ipam.Contains(*myNet, desiredNet) {
+		iNet.Subnets = append(iNet.Subnets, &IPV4Subnet{
+			CIDR:    desiredNet,
+			Name:    name,
+			Gateway: ipam.Add(desiredNet.IP, 1),
+			VlanID:  vlanID,
+		})
+		return iNet.Subnets[len(iNet.Subnets)-1], nil
+	}
+	return &IPV4Subnet{}, fmt.Errorf("subnet %v is not part of %v", desiredNet.String(), myNet.String())
 }
 
 // AddSubnet allocates a new subnet
@@ -131,15 +145,16 @@ func (iNet *IPV4Network) LookUpSubnet(name string) (*IPV4Subnet, error) {
 }
 
 // ReserveNetMgmtIPs reserves (n) IP addresses for management networking equipment
-func (iSubnet *IPV4Subnet) ReserveNetMgmtIPs(n int, spines []string, leafs []string) {
-	for i := 0; i <= n; i++ {
+func (iSubnet *IPV4Subnet) ReserveNetMgmtIPs(spines []string, leafs []string, additional int) {
+	var n = len(spines) + len(leafs) + additional
+	for i := 0; i < n; i++ {
 		// First allocate the spines and then the leafs
 		if i < len(spines) {
 			iSubnet.AddReservation(fmt.Sprintf("sw-spine-%03d", i+1), spines[i])
 		} else if i < len(spines)+len(leafs) {
 			iSubnet.AddReservation(fmt.Sprintf("sw-leaf-%03d", i-len(spines)+1), leafs[i-len(spines)])
 		} else {
-			iSubnet.AddReservation(fmt.Sprintf("mgmt_net_%03d", i+1), "")
+			iSubnet.AddReservation(fmt.Sprintf("mgmt-net-stub-%03d", i+1), "")
 		}
 	}
 }
@@ -155,7 +170,7 @@ func (iSubnet *IPV4Subnet) ReservedIPs() []net.IP {
 
 // UpdateDHCPRange resets the DHCPStart to exclude all IPReservations
 func (iSubnet *IPV4Subnet) UpdateDHCPRange() {
-	iSubnet.DHCPStart = ipam.Add(iSubnet.CIDR.IP, len(iSubnet.IPReservations))
+	iSubnet.DHCPStart = ipam.Add(iSubnet.CIDR.IP, len(iSubnet.IPReservations)+1)
 }
 
 // AddReservation adds a new IP reservation to the subnet

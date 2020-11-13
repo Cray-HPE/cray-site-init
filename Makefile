@@ -18,7 +18,7 @@ VERSION := $(shell cat .version)
 	doc \
 	version
 
-all: fmt lint vet build
+all: fmt lint build
 
 help:
 	@echo 'Usage: make <OPTIONS> ... <TARGETS>'
@@ -84,7 +84,7 @@ env:
 run: build
 	go run ./main.go$(TARGET) $>
 
-build: fmt vet
+build: fmt
 	go build -o bin/csi ./main.go
 
 doc:

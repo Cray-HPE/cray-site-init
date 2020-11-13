@@ -68,6 +68,9 @@ var initCmd = &cobra.Command{
 		//
 		// The first step in building the NCN map is to read the NCN Metadata file
 		ncnMeta, err := csiFiles.ReadNodeCSV(v.GetString("ncn-metadata"))
+		if err != nil {
+			log.Fatalln("Couldn't extract ncns", err)
+		}
 		// *** Loading Data Complete **** //
 		// *** Begin Enrichment *** //
 		// Alone, this metadata isn't enough.  We need to enrich it by converting from the
@@ -109,7 +112,7 @@ var initCmd = &cobra.Command{
 		}
 
 		// Management Switch Information is included in the IP Reservations for each subnet
-		switchNet, err := shastaNetworks["NMN"].LookUpSubnet("bootstrap_dhcp")
+		switchNet, err := shastaNetworks["HMN"].LookUpSubnet("bootstrap_dhcp")
 		switches, _ := extractSwitchesfromReservations(switchNet)
 		slsSwitches := make(map[string]sls_common.GenericHardware)
 		for _, mySwitch := range switches {
@@ -172,7 +175,12 @@ var initCmd = &cobra.Command{
 		csiFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/root_password.json"), shasta.DefaultRootPW)
 		csiFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/bmc_password.json"), shasta.DefaultBMCPW)
 		csiFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/mgmt_switch_password.json"), shasta.DefaultNetPW)
-
+		for _, ncn := range ncns {
+			if strings.HasPrefix(ncn.Hostname, "ncn-m001") {
+				log.Println("Generating Installer Node (CPT) interface configurations for:", ncn.Hostname)
+				WriteCPTNetworkConfig(filepath.Join(basepath, "cpt-files"), *ncn, shastaNetworks)
+			}
+		}
 		WriteDNSMasqConfig(basepath, ncns, shastaNetworks)
 		WriteConmanConfig(filepath.Join(basepath, "conman.conf"), ncns, conf)
 		WriteMetalLBConfigMap(basepath, conf, shastaNetworks)
@@ -203,6 +211,9 @@ func init() {
 	initCmd.Flags().String("nmn-cidr", shasta.DefaultNMNString, "Overall IPv4 CIDR for all Node Management subnets")
 	initCmd.Flags().String("hmn-cidr", shasta.DefaultHMNString, "Overall IPv4 CIDR for all Hardware Management subnets")
 	initCmd.Flags().String("can-cidr", shasta.DefaultCANString, "Overall IPv4 CIDR for all Customer Access subnets")
+	initCmd.Flags().String("can-static-pool", shasta.DefaultCANStaticString, "Overall IPv4 CIDR for static Customer Access addresses")
+	initCmd.Flags().String("can-dynamic-pool", shasta.DefaultCANPoolString, "Overall IPv4 CIDR for dynamic Customer Access addresses")
+
 	initCmd.Flags().String("mtl-cidr", shasta.DefaultMTLString, "Overall IPv4 CIDR for all Provisioning subnets")
 	initCmd.Flags().String("hsn-cidr", shasta.DefaultHSNString, "Overall IPv4 CIDR for all HSN subnets")
 
@@ -230,7 +241,7 @@ func init() {
 	initCmd.Flags().String("leaf-switch-xnames", "", "Comma separated list of xnames for leaf switches")
 	initCmd.MarkFlagRequired("leaf-switch-xnames")
 	initCmd.Flags().String("bgp-asn", "65533", "The autonomous system number for BGP conversations")
-	initCmd.Flags().Int("management-net-ips", 20, "Number of ip addresses to reserve in each vlan for the management network")
+	initCmd.Flags().Int("management-net-ips", 0, "Additional number of ip addresses to reserve in each vlan for the management network")
 
 	// Use these flags to set the default ncn bmc credentials for bootstrap
 	initCmd.Flags().String("bootstrap-ncn-bmc-user", "", "Username for connecting to the BMC on the initial NCNs")
@@ -304,6 +315,7 @@ func setupDirectories(systemName string, v *viper.Viper) (string, error) {
 		filepath.Join(basepath, "manufacturing"),
 		filepath.Join(basepath, "credentials"),
 		filepath.Join(basepath, "dnsmasq.d"),
+		filepath.Join(basepath, "cpt-files"),
 	}
 	// Add the Manifest directory if needed
 	if v.GetString("manifest-release") != "" {

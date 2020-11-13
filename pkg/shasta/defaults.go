@@ -36,10 +36,20 @@ const (
 	DefaultNMNString = "10.252.1.0/16"
 	// DefaultNMNVlan is the default NMN Bootstrap Vlan
 	DefaultNMNVlan = 2
+	// DefaultNMNLBString is the default LoadBalancer CIDR for the NMN
+	DefaultNMNLBString = "10.92.100.0/24"
+	// DefaultHMNLBString is the default LoadBalancer CIDR for the HMN
+	DefaultHMNLBString = "10.94.100.0/24"
+	// DefaultMacVlanString is the default Macvlan cidr (shares vlan with NMN)
+	DefaultMacVlanString = "10.252.124.0/23"
 	// DefaultHSNString is the Default HSN String
 	DefaultHSNString = "10.250.0.0/16"
 	// DefaultCANString is the Default CAN String (vlan007)
-	DefaultCANString = "10.102.9.0/24"
+	DefaultCANString = "10.102.11.0/24"
+	// DefaultCANPoolString is the default pool for CAN addresses
+	DefaultCANPoolString = "10.102.11.128/25"
+	// DefaultCANStaticString is the default pool for Static CAN addresses
+	DefaultCANStaticString = "10.102.11.112/28"
 	// DefaultCANVlan is the default CAN Bootstrap Vlan
 	DefaultCANVlan = 7
 	// DefaultMTLString is the Default MTL String (bond0 interface)
@@ -55,6 +65,26 @@ var slash16 = net.IPv4Mask(255, 255, 0, 0)
 func IPNetfromCIDRString(mynet string) *net.IPNet {
 	_, ipnet, _ := net.ParseCIDR(mynet)
 	return ipnet
+}
+
+// DefaultLoadBalancerNMN is a thing we need
+var DefaultLoadBalancerNMN = IPV4Network{
+	FullName: "Node Management Network LoadBalancers",
+	CIDR:     DefaultNMNLBString,
+	Name:     "NMNLB",
+	MTU:      9000,
+	NetType:  "ethernet",
+	Comment:  "",
+}
+
+// DefaultLoadBalancerHMN is a thing we need
+var DefaultLoadBalancerHMN = IPV4Network{
+	FullName: "Node Management Network LoadBalancers",
+	CIDR:     DefaultHMNLBString,
+	Name:     "HMNLB",
+	MTU:      9000,
+	NetType:  "ethernet",
+	Comment:  "",
 }
 
 // DefaultHMN is the default structure for templating initial HMN configuration
