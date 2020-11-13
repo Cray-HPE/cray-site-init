@@ -127,7 +127,7 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*
 	pool, err = tempHMNLoadBalancer.AddSubnet(net.CIDRMask(25, 32), "hmn_metallb_address_pool", int16(v.GetInt("hmn-bootstrap-vlan")))
 	pool.FullName = "HMN MetalLB"
 	pool.AddReservation("api_gateway", "")
-	networkMap["HMNLB"] = &tempNMNLoadBalancer
+	networkMap["HMNLB"] = &tempHMNLoadBalancer
 
 	//
 	// Start the CAN with our defaults
