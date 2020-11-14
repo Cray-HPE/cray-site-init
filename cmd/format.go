@@ -67,7 +67,7 @@ func init() {
 	formatCmd.Flags().StringVarP(&isoName, "iso-name", "n", viper.GetString("iso_name"), "Local filename of the iso to download (env: PIT_ISO_NAME)")
 	formatCmd.MarkFlagRequired("write-script")
 	formatCmd.Flags().StringVarP(&writeScript, "write-script", "w", viper.GetString("write_script"), "Path to the write_livecd.sh script (env: PIT_WRITE_SCRIPT)")
-	formatCmd.Flags().StringVarP(&toolkit, "repo-url", "r", viper.GetString("repo_url"), "URL of the git repo for the preinstall toolkit (env: PIT_REPO_URL)")
-	formatCmd.Flags().StringVarP(&pitdata, "disk-label", "l", viper.GetString("disk_label"), "URL of the git repo for the preinstall toolkit (env: PIT_DISK_LABEL)")
+	formatCmd.Flags().StringVarP(&toolkit, "repo-url", "r", viper.GetString("repo_url"), "URL of the git repo for the pre-install toolkit (env: PIT_REPO_URL)")
+	formatCmd.Flags().StringVarP(&pitdata, "disk-label", "l", viper.GetString("disk_label"), "URL of the git repo for the pre-install toolkit (env: PIT_DISK_LABEL)")
 	formatCmd.Flags().BoolP("force", "f", false, "Force overwrite the disk without warning")
 }
