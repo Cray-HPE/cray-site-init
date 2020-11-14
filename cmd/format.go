@@ -41,7 +41,7 @@ func writeLiveCD(device string, iso string, size string) {
 	// git clone https://stash.us.cray.com/scm/mtl/cray-pre-install-toolkit.git
 
 	// ./cray-pre-install-toolkit/scripts/write-livecd.sh /dev/sdd $(pwd)/cray-pre-install-toolkit-latest.iso 20000
-	// format the device as the livecd
+	// format the device as the liveCD
 	cmd := exec.Command(writeScript, device, iso, size)
 
 	var stdoutBuf, stderrBuf bytes.Buffer
