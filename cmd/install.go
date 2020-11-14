@@ -12,9 +12,10 @@ import (
 
 // installCmd represents the install command
 var installCmd = &cobra.Command{
-	Use:   "install",
-	Short: "Install Cray System Management",
-	Long:  `Perform a system installation from valid Configuration Payload using Matching Artifact Payload`,
+	Hidden: true, // TODO Remove this when ready.
+	Use:    "install",
+	Short:  "Install Cray System Management",
+	Long:   `Perform a system installation from valid Configuration Payload using Matching Artifact Payload`,
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Println("install called")
 	},

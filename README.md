@@ -67,6 +67,23 @@ Reads a Shasta 1.4 configuration and verify all required fields and whether they
 
 Read a Shasta 1.4 configuration and output a single yaml configuration file for use by the installer.
 
+## Pre-Install Toolkit `pit`
 
+> `csi pit get`
+
+Get the artifacts needed for deploying a CRAY.
+- SquashFS Images for Storage and Kubernetes class nodes
+- Boot artifacts (initrd and kernel)
+- Specify where to store files with `-c` and `-d` for configs and data, respecitively
+
+> `csi pit format`
+
+Formats and creates a liveCD off an attached USB stick.
+
+> `csi pit validate`
+
+Verifies the liveCD after launch.
+
+ 
 
 [1]: https://golang.org/cmd/go/#hdr-Module_configuration_for_non_public_modules

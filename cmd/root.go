@@ -27,13 +27,16 @@ const (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "csi",
-	Short: "Cray Site Init",
-	Long: `csi is a tool for creating, validating, installing, and upgrading a CRAY supercomputer
-    system.
+	Short: "Cray Site Init. for new sites ore re-installs and upgrades.",
+	Long: `
+CSI creates, validates, installs, and upgrades a CRAY supercomputer or HPCaaS platform.
 
-	It supports initializing a set of configuration from a variety of inputs including 
-	flags (and/or Shasta 1.3 configuration files). It can also validate that a set of 
-	configuration details are accurate before attempting to use them for installation`,
+It supports initializing a set of configuration from a variety of inputs including 
+flags (and/or Shasta 1.3 configuration files). It can also validate that a set of 
+configuration details are accurate before attempting to use them for installation.
+
+Configs aside, this will prepare USB sticks for deploying on baremetal or for recovery and
+traige.`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		return initializeFlagswithViper(cmd)
 	},
