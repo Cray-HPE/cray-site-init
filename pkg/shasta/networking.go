@@ -170,19 +170,30 @@ func (iSubnet *IPV4Subnet) ReservedIPs() []net.IP {
 
 // UpdateDHCPRange resets the DHCPStart to exclude all IPReservations
 func (iSubnet *IPV4Subnet) UpdateDHCPRange() {
-	iSubnet.DHCPStart = ipam.Add(iSubnet.CIDR.IP, len(iSubnet.IPReservations)+2)
+	myReservedIPs := iSubnet.ReservedIPs()
+	ip := ipam.Add(iSubnet.CIDR.IP, len(myReservedIPs)+2)
+	iSubnet.DHCPStart = ip
+	// log.Printf("Inside UpdateDHCPRange and ip = %v which is at %v in list\n", ip, netIPInSlice(ip, myReservedIPs))
+	for ipam.NetIPInSlice(ip, myReservedIPs) > 0 {
+		iSubnet.DHCPStart = ipam.Add(ip, 2)
+		log.Printf("Dealing with DHCPStart as %v \n", iSubnet.DHCPStart)
+		ip = ipam.Add(ip, 1)
+	}
 	iSubnet.DHCPEnd = ipam.Add(ipam.Broadcast(iSubnet.CIDR), -1)
 }
 
 // AddReservation adds a new IP reservation to the subnet
 func (iSubnet *IPV4Subnet) AddReservation(name, comment string) *IPReservation {
 	myReservedIPs := iSubnet.ReservedIPs()
+	floor := iSubnet.CIDR.IP.Mask(iSubnet.CIDR.Mask)
+	if !floor.Equal(iSubnet.CIDR.IP) {
+		log.Printf("VERY BAD - In reservation. CIDR.IP = %v and floor is %v", iSubnet.CIDR.IP.String(), floor)
+	}
 	// Start counting from the bottom knowing the gateway is on the bottom
 	tempIP := ipam.Add(iSubnet.CIDR.IP, 2)
 	for {
 		for _, v := range myReservedIPs {
 			if tempIP.Equal(v) {
-				// log.Printf("Found %v already in the reservations list. \n", v)
 				tempIP = ipam.Add(tempIP, 1)
 			}
 		}

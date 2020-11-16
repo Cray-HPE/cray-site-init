@@ -366,6 +366,16 @@ func SubnetWithin(network net.IPNet, hostNumber int) (net.IPNet, error) {
 	return n, nil
 }
 
+// NetIPInSlice makes it easy to assess if an IP address is present in a list of ips
+func NetIPInSlice(a net.IP, list []net.IP) int {
+	for index, b := range list {
+		if b.Equal(a) {
+			return index
+		}
+	}
+	return 0
+}
+
 // Quick const map for mapping the number of hosts to the netmask shorthand
 // I'm bad at math.
 var netmasks = map[int]string{
