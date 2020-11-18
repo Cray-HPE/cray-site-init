@@ -7,6 +7,7 @@ package cmd
 import (
 	"io/ioutil"
 	"log"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -17,6 +18,7 @@ import (
 
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
 	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
+	"stash.us.cray.com/MTL/csi/pkg/ipam"
 	"stash.us.cray.com/MTL/csi/pkg/shasta"
 )
 
@@ -149,7 +151,11 @@ var initCmd = &cobra.Command{
 			if err != nil {
 				log.Panic(err)
 			} else {
+				var visited []net.IP
 				for _, reservation := range tempSubnet.IPReservations {
+					if ipam.NetIPInSlice(reservation.IPAddress, visited) > 0 {
+						log.Printf("%s is already in the list of reservations \n", reservation.IPAddress)
+					}
 					for index, ncn := range tempNcns {
 						if reservation.Comment == ncn.Xname {
 							reservation.Name = ncn.Hostnames[0]
@@ -163,11 +169,14 @@ var initCmd = &cobra.Command{
 							}
 						}
 					}
+					// Before we run throught the DHCP Update Range, we need to claim it's all good.
+					// log.Printf("%v Reservation[%v] %v - %v", netName, tmpIndex, reservation.IPAddress, reservation.Name)
 				}
 			}
 			tempSubnet.UpdateDHCPRange()
 		}
 
+		WriteNetworkFiles(basepath, shastaNetworks)
 		conf.IPV4Resolvers = strings.Split(viper.GetString("ipv4-resolvers"), ",")
 		conf.SiteServices.NtpPoolHostname = conf.NtpPoolHostname
 		csiFiles.WriteYAMLConfig(filepath.Join(basepath, "system_config.yaml"), conf)
@@ -185,7 +194,7 @@ var initCmd = &cobra.Command{
 		WriteConmanConfig(filepath.Join(basepath, "conman.conf"), ncns, conf)
 		WriteMetalLBConfigMap(basepath, conf, v, shastaNetworks)
 		WriteBaseCampData(filepath.Join(basepath, "data.json"), conf, &slsState, ncnMeta)
-		WriteNetworkFiles(basepath, shastaNetworks)
+		// WriteNetworkFiles(basepath, shastaNetworks)
 
 		if v.GetString("manifest-release") != "" {
 			initiailzeManifestDir(shasta.DefaultManifestURL, "release/shasta-1.4", filepath.Join(basepath, "loftsman-manifests"))

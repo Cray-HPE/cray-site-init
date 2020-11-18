@@ -198,8 +198,8 @@ func buildCabinetDetails(v *viper.Viper) []shasta.CabinetDetail {
 
 // WriteCPTNetworkConfig writes the Network Configuration details for the installation node  (CPT)
 func WriteCPTNetworkConfig(path string, ncn shasta.LogicalNCN, shastaNetworks map[string]*shasta.IPV4Network) error {
-	log.Println("Interface Networks:", ncn.Networks)
-	log.Println("Networks are:", shastaNetworks)
+	// log.Println("Interface Networks:", ncn.Networks)
+	// log.Println("Networks are:", shastaNetworks)
 	csiFiles.WriteTemplate(filepath.Join(path, "ifcfg-bond0"), template.Must(template.New("bond0").Parse(string(Bond0ConfigTemplate))), ncn)
 	csiFiles.WriteTemplate(filepath.Join(path, "ifcfg-lan0"), template.Must(template.New("lan0").Parse(string(Lan0ConfigTemplate))), ncn)
 	for _, network := range ncn.Networks {

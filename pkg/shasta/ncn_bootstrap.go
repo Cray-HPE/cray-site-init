@@ -24,8 +24,8 @@ type LogicalNCN struct {
 	BMCMac           string         `yaml:"bmc-mac" json:"bmc-mac"`
 	BMCIp            string         `yaml:"bmc-ip" json:"bmc-ip"`
 	NMNMac           string         `yaml:"nmn-mac" json:"nmn-mac"`
-	Bond0Mac0        string         `yaml:"bond0-mac0" json:"bond0-mac0`
-	Bond0Mac1        string         `yaml:"bond0-mac1" json:"bond0-mac1`
+	Bond0Mac0        string         `yaml:"bond0-mac0" json:"bond0-mac0"`
+	Bond0Mac1        string         `yaml:"bond0-mac1" json:"bond0-mac1"`
 	Cabinet          string         `yaml:"cabinet" json:"cabinet"` // Use to establish availability zone
 }
 
@@ -78,6 +78,7 @@ func AllocateIps(ncns []*LogicalNCN, networks map[string]*IPV4Network) {
 				ncn.BMCIp = subnet.AddReservation(fmt.Sprintf("bmc-%v", ncn.Hostname), fmt.Sprintf("bmc-%v", ncn.Xname)).IPAddress.String()
 			}
 			reservation := subnet.AddReservation(ncn.Hostname, ncn.Xname)
+			// log.Printf("Adding %v %v reservation for %v(%v) at %v \n", netName, subnet.Name, reservation.Name, reservation.Comment, reservation.IPAddress.String())
 			prefixLen := strings.Split(subnet.CIDR.String(), "/")[1]
 			ncn.Networks = append(ncn.Networks, NCNNetwork{
 				NetworkName: netName,
