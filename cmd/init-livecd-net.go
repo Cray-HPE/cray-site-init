@@ -115,7 +115,7 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*
 	//
 	tempNMNLoadBalancer := shasta.DefaultLoadBalancerNMN
 	// Add a /25 for the Load Balancers
-	pool, err := tempNMNLoadBalancer.AddSubnet(net.CIDRMask(25, 32), "nmn_metallb_address_pool", int16(v.GetInt("nmn-bootstrap-vlan")))
+	pool, err := tempNMNLoadBalancer.AddSubnet(net.CIDRMask(24, 32), "nmn_metallb_address_pool", int16(v.GetInt("nmn-bootstrap-vlan")))
 	pool.FullName = "NMN MetalLB"
 	pool.AddReservation("api_gateway", "")
 	networkMap["NMNLB"] = &tempNMNLoadBalancer
@@ -124,7 +124,7 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*
 	// Start the HMN Load Balancer with our Defaults
 	//
 	tempHMNLoadBalancer := shasta.DefaultLoadBalancerHMN
-	pool, err = tempHMNLoadBalancer.AddSubnet(net.CIDRMask(25, 32), "hmn_metallb_address_pool", int16(v.GetInt("hmn-bootstrap-vlan")))
+	pool, err = tempHMNLoadBalancer.AddSubnet(net.CIDRMask(24, 32), "hmn_metallb_address_pool", int16(v.GetInt("hmn-bootstrap-vlan")))
 	pool.FullName = "HMN MetalLB"
 	pool.AddReservation("api_gateway", "")
 	networkMap["HMNLB"] = &tempHMNLoadBalancer
