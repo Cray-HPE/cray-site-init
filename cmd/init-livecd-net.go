@@ -48,11 +48,11 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*
 	// Add the macvlan network for uais
 	uaisubnet, err := tempNMN.AddSubnet(net.CIDRMask(23, 32), "uai_macvlan", int16(v.GetInt("nmn-bootstrap-vlan")))
 	uaisubnet.FullName = "NMN UAIs"
-	uaisubnet.AddReservation("uai_macvlan_bridge", "")
-	uaisubnet.AddReservation("slurmctld_service", "")
-	uaisubnet.AddReservation("slurmdbd_service", "")
-	uaisubnet.AddReservation("pbs_service", "")
-	uaisubnet.AddReservation("pbs_comm_service", "")
+	uaisubnet.AddReservation("uai_macvlan_bridge", "uai-macvlan-bridge")
+	uaisubnet.AddReservation("slurmctld_service", "slurmctld-service")
+	uaisubnet.AddReservation("slurmdbd_service", "slurmdbd-service")
+	uaisubnet.AddReservation("pbs_service", "pbs-service")
+	uaisubnet.AddReservation("pbs_comm_service", "pbs-comm-service")
 	// Divide the network into an appropriate number of subnets
 	tempNMN.GenSubnets(cabinetDetails, net.CIDRMask(22, 32), v.GetInt("management-net-ips"), v.GetString("spine-switch-xnames"), v.GetString("leaf-switch-xnames"))
 	networkMap["NMN"] = &tempNMN
@@ -117,7 +117,10 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*
 	// Add a /25 for the Load Balancers
 	pool, err := tempNMNLoadBalancer.AddSubnet(net.CIDRMask(24, 32), "nmn_metallb_address_pool", int16(v.GetInt("nmn-bootstrap-vlan")))
 	pool.FullName = "NMN MetalLB"
-	pool.AddReservation("api_gateway", "")
+	pool.AddReservation("istio-ingressgateway", "api-gw-service packages registry")
+	pool.AddReservation("rsyslog-aggregator", "rsyslog-agg-service")
+	pool.AddReservation("rsyslog-aggregator-udp", "rsyslog-agg-service-udp")
+	pool.AddReservation("cray-tftp", "tftp-service")
 	networkMap["NMNLB"] = &tempNMNLoadBalancer
 
 	//
@@ -126,7 +129,10 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*
 	tempHMNLoadBalancer := shasta.DefaultLoadBalancerHMN
 	pool, err = tempHMNLoadBalancer.AddSubnet(net.CIDRMask(24, 32), "hmn_metallb_address_pool", int16(v.GetInt("hmn-bootstrap-vlan")))
 	pool.FullName = "HMN MetalLB"
-	pool.AddReservation("api_gateway", "")
+	pool.AddReservation("istio-ingressgateway-hmn", "api-gw-service packages registry")
+	pool.AddReservation("rsyslog-aggregator-hmn", "rsyslog-agg-service")
+	pool.AddReservation("rsyslog-aggregator-hmn-udp", "rsyslog-agg-service-udp")
+	pool.AddReservation("cray-tftp-hmn", "tftp-service")
 	networkMap["HMNLB"] = &tempHMNLoadBalancer
 
 	//
@@ -159,7 +165,6 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*
 	// Add a /26 for bootstrap dhcp
 	subnet, err = tempCAN.AddSubnet(net.CIDRMask(26, 32), "bootstrap_dhcp", int16(v.GetInt("hmn-bootstrap-vlan")))
 	subnet.FullName = "CAN NCNs"
-	// TODO: Is this really necessary?  At best this is far too many.
 	subnet.ReserveNetMgmtIPs(strings.Split(v.GetString("spine-switch-xnames"), ","), strings.Split(v.GetString("leaf-switch-xnames"), ","), v.GetInt("management-net-ips"))
 	subnet.AddReservation("kubeapi-vip", "k8s-virtual-ip")
 	subnet.AddReservation("rgw-vip", "rgw-virtual-ip")
