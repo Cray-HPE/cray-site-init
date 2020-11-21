@@ -11,22 +11,29 @@ import (
 )
 
 // LogicalNCN is the main struct for NCNs
+// It replaces the deprecated BootstrapNCNMetadata
+// and still matches the ncn_metadata.csv file as
+// NCN xname,NCN Role,NCN Subrole,BMC MAC,BMC Switch Port,NMN MAC,NMN Switch Port
 type LogicalNCN struct {
-	Xname            string         `yaml:"xname" json:"xname"`
-	Hostname         string         `yaml:"hostname" json:"hostname"`
-	InstanceID       string         `yaml:"instance-id" json:"instance-id"` // should be unique for the life of the image
-	Region           string         `yaml:"region" json:"region"`
-	AvailabilityZone string         `yaml:"availability-zone" json:"availability-zone"`
-	ShastaRole       string         `yaml:"shasta-role" json:"shasta-role"` // map to HSM Subrole
-	Aliases          []string       `yaml:"aliases" json:"aliases"`
-	Networks         []NCNNetwork   `yaml:"networks" json:"networks"`
-	Interfaces       []NCNInterface `yaml:"interfaces" json:"interfaces"`
-	BMCMac           string         `yaml:"bmc-mac" json:"bmc-mac"`
-	BMCIp            string         `yaml:"bmc-ip" json:"bmc-ip"`
-	NMNMac           string         `yaml:"nmn-mac" json:"nmn-mac"`
-	Bond0Mac0        string         `yaml:"bond0-mac0" json:"bond0-mac0"`
-	Bond0Mac1        string         `yaml:"bond0-mac1" json:"bond0-mac1"`
-	Cabinet          string         `yaml:"cabinet" json:"cabinet"` // Use to establish availability zone
+	Role             string         `yaml:"role" json:"role" csv:"NCN Role"`
+	Subrole          string         `yaml:"subrole" json:"subrole" csv:"NCN Subrole"`
+	BmcMac           string         `yaml:"bmc-mac" json:"bmc-mac" csv:"BMC MAC"`
+	BmcPort          string         `yaml:"bmc-port" json:"bmc-port" csv:"BMC Switch Port"`
+	NmnMac           string         `yaml:"nmn-mac" json:"nmn-mac" csv:"NMN MAC"`
+	NmnPort          string         `yaml:"nmn-port" json:"nmn-port" csv:"NMN Switch Port"`
+	Xname            string         `yaml:"xname" json:"xname" csv:"NCN xname"`
+	Hostname         string         `yaml:"hostname" json:"hostname" csv:"-"`
+	InstanceID       string         `yaml:"instance-id" json:"instance-id" csv:"-"` // should be unique for the life of the image
+	Region           string         `yaml:"region" json:"region" csv:"-"`
+	AvailabilityZone string         `yaml:"availability-zone" json:"availability-zone" csv:"-"`
+	ShastaRole       string         `yaml:"shasta-role" json:"shasta-role" csv:"-"` // map to HSM Subrole
+	Aliases          []string       `yaml:"aliases" json:"aliases" csv:"-"`
+	Networks         []NCNNetwork   `yaml:"networks" json:"networks" csv:"-"`
+	Interfaces       []NCNInterface `yaml:"interfaces" json:"interfaces" csv:"-"`
+	BmcIP            string         `yaml:"bmc-ip" json:"bmc-ip" csv:"-"`
+	Bond0Mac0        string         `yaml:"bond0-mac0" json:"bond0-mac0" csv:"-"`
+	Bond0Mac1        string         `yaml:"bond0-mac1" json:"bond0-mac1" csv:"-"`
+	Cabinet          string         `yaml:"cabinet" json:"cabinet" csv:"-"` // Use to establish availability zone
 }
 
 // NCNNetwork holds information about networks
@@ -75,10 +82,11 @@ func AllocateIps(ncns []*LogicalNCN, networks map[string]*IPV4Network) {
 		for netName, subnet := range subnets {
 			// reserve the bmc ip
 			if netName == "HMN" {
-				ncn.BMCIp = subnet.AddReservation(fmt.Sprintf("bmc-%v", ncn.Hostname), fmt.Sprintf("bmc-%v", ncn.Xname)).IPAddress.String()
+				ncn.BmcIP = subnet.AddReservation(fmt.Sprintf("bmc-%v", ncn.Xname), fmt.Sprintf("bmc-%v", ncn.Xname)).IPAddress.String()
 			}
-			reservation := subnet.AddReservation(ncn.Hostname, ncn.Xname)
-			// log.Printf("Adding %v %v reservation for %v(%v) at %v \n", netName, subnet.Name, reservation.Name, reservation.Comment, reservation.IPAddress.String())
+			// Hostname is not available a the point AllocateIPs should be called.
+			reservation := subnet.AddReservation(ncn.Xname, ncn.Xname)
+			// log.Printf("Adding %v %v reservation for %v(%v) at %v \n", netName, subnet.Name, ncn.Xname, ncn.Xname, reservation.IPAddress.String())
 			prefixLen := strings.Split(subnet.CIDR.String(), "/")[1]
 			ncn.Networks = append(ncn.Networks, NCNNetwork{
 				NetworkName: netName,

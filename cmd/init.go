@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	shcd_parser "stash.us.cray.com/HMS/hms-shcd-parser/pkg/shcd-parser"
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
 	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
 	"stash.us.cray.com/MTL/csi/pkg/ipam"
@@ -31,127 +32,49 @@ var initCmd = &cobra.Command{
 		var err error
 		// Initialize the global viper
 		v := viper.GetViper()
-		var conf shasta.SystemConfig
 
 		// TODO: Move this to an ARG
 		// We use the system-name for a directory.  Make sure it is set.
 		if v.GetString("system-name") == "" {
 			log.Fatalf("system-name is not set")
 		}
-		basepath, err := setupDirectories(v.GetString("system-name"), v)
-		// Everything should be set up properly in the global viper now.
-		// Unmarshaling it to a struct at this point also verifies that the
-		// resulting struct is valid.
 
-		err = v.Unmarshal(&conf)
-		if err != nil {
-			log.Fatalf("unable to decode configuration into struct, %v \n", err)
-		}
+		// Read and validate our three input files
+		hmnRows, logicalNcns, switches := collectInput(v)
 
-		// The installation requires a set of information in order to proceed
-		// First, we need some kind of representation of the physical hardware
-		// That is generally represented through the hmn_connections.json file
-		// which is literally a cabling map with metadata about the NCNs.
-		//
-		// From the hmn_connections file, we can create a set of HMNRow objects
-		// to use for populating SLS.
-		hmnRows, err := loadHMNConnectionsFile(v.GetString("hmn-connections"))
-		if err != nil {
-			log.Fatalf("unable to load hmn connections, %v \n", err)
-		}
-		//
-		// SLS also needs to know about our networking configuration.  In order to do that,
-		// we need to load the swtiches
-		switches, err := csiFiles.ReadSwitchCSV(v.GetString("switch-metadata"))
-		if err != nil {
-			log.Fatalln("Couldn't extract switches", err)
-		}
-		// Now we need to split one or more large CIDRs into subnets per cabinet and add that to
-		// the SLS configuration.  We have sensible defaults, but most of this needs to be
-		// handled through ip address math with out internal ipam library
-		shastaNetworks, err := BuildLiveCDNetworks(conf, v, switches)
-		// This is techincally sufficient to generate an SLSState object, but to do so now
-		// would not include extended information about the NCNs and Network Switches.
-		//
-		// The first step in building the NCN map is to read the NCN Metadata file
-		ncnMeta, err := csiFiles.ReadNodeCSV(v.GetString("ncn-metadata"))
-		if err != nil {
-			log.Fatalln("Couldn't extract ncns", err)
-		}
-		// *** Loading Data Complete **** //
-		// *** Begin Enrichment *** //
-		// Alone, this metadata isn't enough.  We need to enrich it by converting from the
-		// simple metadata structure to a more useful shasta.LogicalNCN structure
-		var ncns []*shasta.LogicalNCN
-		for _, node := range ncnMeta {
-			ncns = append(ncns, node.AsLogicalNCN()) // Conversion logic in here is simplistic
-		}
-		//
-		// Now, we have all the raw data we need to build out our system map/configuration
-		// before committing it to disk as the various configuration files we need.
-		//
-		// To enrich our data, we need to allocate IPs for the management network switches and
-		// NCNs and pair MACs with IPs in the NCN structures
-		shasta.AllocateIps(ncns, shastaNetworks) // This function has no return because it is working with lists of pointers.
-		// Finally, the data is properly enriched and we can begin shaping it for use.
-		// *** Enrichment Complete *** //
-		// *** Commence Shaping for use *** //
-		// First, our sls generator needs a list of networks and not a map of them
-		var networks []shasta.IPV4Network
-		for name, network := range shastaNetworks {
-			if network.Name == "" {
-				network.Name = name
-			}
-			networks = append(networks, *network)
-		}
-		// Generate SLS input state
-		// Verify there are enough cabinet subnets
-		cabinetSubnets := getCabinetSubnets(&networks)
-		numRiver := v.GetInt("river-cabinets")
-		numHill := v.GetInt("hill-cabinets")
-		numMountain := v.GetInt("mountain-cabinets")
+		// Build a set of networks we can use
+		shastaNetworks, err := BuildLiveCDNetworks(v, switches)
 
-		numCabinets := numRiver + numHill + numMountain
-		if len(cabinetSubnets) < numCabinets {
-			log.Fatalln("Insufficient subnets for", numCabinets, "cabinets, has only", len(cabinetSubnets))
-		} else if len(cabinetSubnets) > numCabinets {
-			log.Println("Warning: Using", numCabinets, "of", len(cabinetSubnets), "available subnets")
-		}
+		// Use our new networks and our list of logicalNCNs to distribute ips
+		shasta.AllocateIps(logicalNcns, shastaNetworks) // This function has no return because it is working with lists of pointers.
 
-		// Management Switch Information is included in the IP Reservations for each subnet
-		switchNet, err := shastaNetworks["HMN"].LookUpSubnet("bootstrap_dhcp")
-		reservedSwitches, _ := extractSwitchesfromReservations(switchNet)
-		slsSwitches := make(map[string]sls_common.GenericHardware)
-		for _, mySwitch := range reservedSwitches {
-			slsSwitches[mySwitch.Xname] = convertManagemenetSwitchToSLS(&mySwitch)
-		}
-
-		inputState := shasta.SLSGeneratorInputState{
-			// TODO What about the ManagementSwitch?
-			// ManagementSwitches: should be an array of sls_common.Hardware xname and ip addr are crucial
-			ManagementSwitches:  slsSwitches,
-			RiverCabinets:       getCabinets(sls_common.ClassRiver, v.GetInt("starting-river-cabinet"), cabinetSubnets[0:numRiver]),
-			HillCabinets:        getCabinets(sls_common.ClassHill, v.GetInt("starting-hill-cabinet"), cabinetSubnets[numRiver:numRiver+numHill]),
-			MountainCabinets:    getCabinets(sls_common.ClassMountain, v.GetInt("starting-mountain-cabinet"), cabinetSubnets[numRiver+numHill:]),
-			MountainStartingNid: v.GetInt("starting-mountain-nid"),
-			Networks:            convertIPV4NetworksToSLS(&networks),
-		}
-		slsState := shasta.GenerateSLSState(inputState, hmnRows)
-		err = csiFiles.WriteJSONConfig(filepath.Join(basepath, "sls_input_file.json"), &slsState)
-		if err != nil {
-			log.Fatalln("Failed to encode SLS state:", err)
-		}
-
-		// Now that SLS can tell us which NCNs match with which Xnames, we need to update the IP Reservations
+		// Now we can finally generate the slsState
+		slsState := prepareAndGenerateSLS(v, shastaNetworks, hmnRows)
+		// SLS can tell us which NCNs match with which Xnames, we need to update the IP Reservations
 		tempNcns, err := shasta.ExtractSLSNCNs(&slsState)
 		if err != nil {
 			log.Panic(err) // This should never happen.  I can't really imagine how it would.
 		}
+
+		// Merge the SLS NCN list with the NCN list we got at the beginning
+		for _, ncn := range logicalNcns {
+			for _, tempNCN := range tempNcns {
+				if ncn.Xname == tempNCN.Xname {
+					log.Printf("Found match for %v: %v \n", ncn.Xname, tempNCN)
+					ncn.Hostname = tempNCN.Hostname
+					ncn.Aliases = tempNCN.Aliases
+					ncn.BmcPort = tempNCN.BmcPort
+					log.Println("Updated to be :", ncn)
+				}
+			}
+		}
+
 		// Let it be known that nested loops like this are embarassing and hard to read, but I'm a sEnIOr DEveLOPeR
 		// YOLO
 		// https://www.reddit.com/r/ProgrammerHumor/comments/fokc7r/brrrrrrr/
 		for _, netName := range [4]string{"NMN", "HMN", "CAN", "MTL"} {
 			tempSubnet, err := shastaNetworks[netName].LookUpSubnet("bootstrap_dhcp")
+			// log.Printf("Processing %v:%v \n", netName, tempSubnet.Name)
 			if err != nil {
 				log.Panic(err)
 			} else {
@@ -160,17 +83,12 @@ var initCmd = &cobra.Command{
 					if ipam.NetIPInSlice(reservation.IPAddress, visited) > 0 {
 						log.Printf("%s is already in the list of reservations \n", reservation.IPAddress)
 					}
-					for index, ncn := range tempNcns {
+					for index, ncn := range logicalNcns {
+						// log.Printf("Processing %v:%v:%v with %v\n", netName, tempSubnet.Name, ncn.Xname, reservation.Comment)
 						if reservation.Comment == ncn.Xname {
-							reservation.Name = ncn.Hostnames[0]
+							reservation.Name = ncn.Hostname
 							// log.Printf("Setting hostname to %v for %v. \n", reservation.Name, reservation.Comment)
 							tempSubnet.IPReservations[index] = reservation
-							for lindex, lncn := range ncns {
-								if lncn.Xname == ncn.Xname {
-									lncn.Hostname = ncn.Hostnames[0]
-									ncns[lindex] = lncn
-								}
-							}
 						}
 					}
 					// Before we run throught the DHCP Update Range, we need to claim it's all good.
@@ -179,30 +97,11 @@ var initCmd = &cobra.Command{
 			}
 			tempSubnet.UpdateDHCPRange()
 		}
-
-		WriteNetworkFiles(basepath, shastaNetworks)
-		conf.IPV4Resolvers = strings.Split(viper.GetString("ipv4-resolvers"), ",")
-		conf.SiteServices.NtpPoolHostname = conf.NtpPoolHostname
-		csiFiles.WriteYAMLConfig(filepath.Join(basepath, "system_config.yaml"), conf)
-
-		csiFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/root_password.json"), shasta.DefaultRootPW)
-		csiFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/bmc_password.json"), shasta.DefaultBMCPW)
-		csiFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/mgmt_switch_password.json"), shasta.DefaultNetPW)
-		for _, ncn := range ncns {
-			if strings.HasPrefix(ncn.Hostname, "ncn-m001") {
-				log.Println("Generating Installer Node (CPT) interface configurations for:", ncn.Hostname)
-				WriteCPTNetworkConfig(filepath.Join(basepath, "cpt-files"), *ncn, shastaNetworks)
-			}
+		var ncns []shasta.LogicalNCN
+		for _, ncn := range logicalNcns {
+			ncns = append(ncns, *ncn)
 		}
-		WriteDNSMasqConfig(basepath, ncns, shastaNetworks)
-		WriteConmanConfig(filepath.Join(basepath, "conman.conf"), ncns, conf)
-		WriteMetalLBConfigMap(basepath, conf, v, shastaNetworks)
-		WriteBaseCampData(filepath.Join(basepath, "data.json"), conf, &slsState, ncnMeta)
-		// WriteNetworkFiles(basepath, shastaNetworks)
-
-		if v.GetString("manifest-release") != "" {
-			initiailzeManifestDir(shasta.DefaultManifestURL, "release/shasta-1.4", filepath.Join(basepath, "loftsman-manifests"))
-		}
+		writeOutput(v, shastaNetworks, slsState, ncns)
 	},
 }
 
@@ -226,6 +125,8 @@ func init() {
 	initCmd.Flags().String("can-cidr", shasta.DefaultCANString, "Overall IPv4 CIDR for all Customer Access subnets")
 	initCmd.Flags().String("can-static-pool", shasta.DefaultCANStaticString, "Overall IPv4 CIDR for static Customer Access addresses")
 	initCmd.Flags().String("can-dynamic-pool", shasta.DefaultCANPoolString, "Overall IPv4 CIDR for dynamic Customer Access addresses")
+	initCmd.Flags().String("can-gateway", "", "Gateway for NCNs on the CAN")
+	initCmd.MarkFlagRequired("can-gateway")
 
 	initCmd.Flags().String("mtl-cidr", shasta.DefaultMTLString, "Overall IPv4 CIDR for all Provisioning subnets")
 	initCmd.Flags().String("hsn-cidr", shasta.DefaultHSNString, "Overall IPv4 CIDR for all HSN subnets")
@@ -339,6 +240,117 @@ func setupDirectories(systemName string, v *viper.Viper) (string, error) {
 		}
 	}
 	return basepath, nil
+}
+
+func collectInput(v *viper.Viper) ([]shcd_parser.HMNRow, []*shasta.LogicalNCN, []*shasta.ManagementSwitch) {
+	// The installation requires a set of information in order to proceed
+	// First, we need some kind of representation of the physical hardware
+	// That is generally represented through the hmn_connections.json file
+	// which is literally a cabling map with metadata about the NCNs.
+	//
+	// From the hmn_connections file, we can create a set of HMNRow objects
+	// to use for populating SLS.
+	hmnRows, err := loadHMNConnectionsFile(v.GetString("hmn-connections"))
+	if err != nil {
+		log.Fatalf("unable to load hmn connections, %v \n", err)
+	}
+	//
+	// SLS also needs to know about our networking configuration.  In order to do that,
+	// we need to load the swtiches
+	switches, err := csiFiles.ReadSwitchCSV(v.GetString("switch-metadata"))
+	if err != nil {
+		log.Fatalln("Couldn't extract switches", err)
+	}
+
+	// This is techincally sufficient to generate an SLSState object, but to do so now
+	// would not include extended information about the NCNs and Network Switches.
+	//
+	// The first step in building the NCN map is to read the NCN Metadata file
+	ncns, err := csiFiles.ReadNodeCSV(v.GetString("ncn-metadata"))
+	if err != nil {
+		log.Fatalln("Couldn't extract ncns", err)
+	}
+	return hmnRows, ncns, switches
+}
+
+func enrichInput() {}
+
+func prepareAndGenerateSLS(v *viper.Viper, shastaNetworks map[string]*shasta.IPV4Network, hmnRows []shcd_parser.HMNRow) sls_common.SLSState {
+	var networks []shasta.IPV4Network
+	for name, network := range shastaNetworks {
+		if network.Name == "" {
+			network.Name = name
+		}
+		networks = append(networks, *network)
+	}
+	// Generate SLS input state
+	// Verify there are enough cabinet subnets
+	cabinetSubnets := getCabinetSubnets(&networks)
+	numRiver := v.GetInt("river-cabinets")
+	numHill := v.GetInt("hill-cabinets")
+	numMountain := v.GetInt("mountain-cabinets")
+
+	numCabinets := numRiver + numHill + numMountain
+	if len(cabinetSubnets) < numCabinets {
+		log.Fatalln("Insufficient subnets for", numCabinets, "cabinets, has only", len(cabinetSubnets))
+	} else if len(cabinetSubnets) > numCabinets {
+		log.Println("Warning: Using", numCabinets, "of", len(cabinetSubnets), "available subnets")
+	}
+
+	// Management Switch Information is included in the IP Reservations for each subnet
+	switchNet, err := shastaNetworks["HMN"].LookUpSubnet("bootstrap_dhcp")
+	if err != nil {
+		log.Fatalln("Couldn't find subnet for management switches in the HMN:", err)
+	}
+	reservedSwitches, _ := extractSwitchesfromReservations(switchNet)
+	slsSwitches := make(map[string]sls_common.GenericHardware)
+	for _, mySwitch := range reservedSwitches {
+		slsSwitches[mySwitch.Xname] = convertManagemenetSwitchToSLS(&mySwitch)
+	}
+
+	inputState := shasta.SLSGeneratorInputState{
+		// TODO What about the ManagementSwitch?
+		// ManagementSwitches: should be an array of sls_common.Hardware xname and ip addr are crucial
+		ManagementSwitches:  slsSwitches,
+		RiverCabinets:       getCabinets(sls_common.ClassRiver, v.GetInt("starting-river-cabinet"), cabinetSubnets[0:numRiver]),
+		HillCabinets:        getCabinets(sls_common.ClassHill, v.GetInt("starting-hill-cabinet"), cabinetSubnets[numRiver:numRiver+numHill]),
+		MountainCabinets:    getCabinets(sls_common.ClassMountain, v.GetInt("starting-mountain-cabinet"), cabinetSubnets[numRiver+numHill:]),
+		MountainStartingNid: v.GetInt("starting-mountain-nid"),
+		Networks:            convertIPV4NetworksToSLS(&networks),
+	}
+	slsState := shasta.GenerateSLSState(inputState, hmnRows)
+	return slsState
+}
+
+func writeOutput(v *viper.Viper, shastaNetworks map[string]*shasta.IPV4Network, slsState sls_common.SLSState, logicalNCNs []shasta.LogicalNCN) {
+	basepath, _ := setupDirectories(v.GetString("system-name"), v)
+	err := csiFiles.WriteJSONConfig(filepath.Join(basepath, "sls_input_file.json"), &slsState)
+	if err != nil {
+		log.Fatalln("Failed to encode SLS state:", err)
+	}
+	WriteNetworkFiles(basepath, shastaNetworks)
+	v.SetConfigType("yaml")
+	v.WriteConfigAs(filepath.Join(basepath, "system_config"))
+
+	csiFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/root_password.json"), shasta.DefaultRootPW)
+	csiFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/bmc_password.json"), shasta.DefaultBMCPW)
+	csiFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/mgmt_switch_password.json"), shasta.DefaultNetPW)
+
+	for _, ncn := range logicalNCNs {
+		// log.Println("Checking to see if we need CPT files for ", ncn.Hostname)
+		if strings.HasPrefix(ncn.Hostname, "ncn-m001") {
+			log.Println("Generating Installer Node (CPT) interface configurations for:", ncn.Hostname)
+			WriteCPTNetworkConfig(filepath.Join(basepath, "cpt-files"), ncn, shastaNetworks)
+		}
+	}
+	WriteDNSMasqConfig(basepath, logicalNCNs, shastaNetworks)
+	WriteConmanConfig(filepath.Join(basepath, "conman.conf"), logicalNCNs)
+	WriteMetalLBConfigMap(basepath, v, shastaNetworks)
+	WriteBaseCampData(filepath.Join(basepath, "data.json"), &slsState, logicalNCNs)
+
+	if v.GetString("manifest-release") != "" {
+		initiailzeManifestDir(shasta.DefaultManifestURL, "release/shasta-1.4", filepath.Join(basepath, "loftsman-manifests"))
+	}
 }
 
 /*

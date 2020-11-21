@@ -23,7 +23,7 @@ var HMNConfigTemplate = []byte(`
 # HMN:
 server=/hmn/
 address=/hmn/
-domain=hmn,{{.DHCPStart}},{{.DHCPEnd}},local
+domain=hmn,{{.CIDR.IP}},{{.DHCPEnd}},local
 interface-name=pit.hmn,{{.VlanID | printf "vlan%03d"}}
 dhcp-option=interace:{{.VlanID | printf "vlan%03d"}},option:domain-search,hmn
 interface={{.VlanID | printf "vlan%03d"}}
@@ -40,7 +40,7 @@ var MTLConfigTemplate = []byte(`
 # MTL:
 server=/mtl/
 address=/mtl/
-domain=mtl,{{.DHCPStart}},{{.DHCPEnd}},local
+domain=mtl,{{.CIDR.IP}},{{.DHCPEnd}},local
 dhcp-option=interface:bond0,option:domain-search,mtl
 interface=bond0
 interface-name=pit.mtl,bond0
@@ -60,7 +60,7 @@ var NMNConfigTemplate = []byte(`
 server=/nmn/
 address=/nmn/
 interface-name=pit.nmn,{{.VlanID | printf "vlan%03d"}}
-domain=nmn,{{.DHCPStart}},{{.DHCPEnd}},local
+domain=nmn,{{.CIDR.IP}},{{.DHCPEnd}},local
 dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:domain-search,nmn
 interface={{.VlanID | printf "vlan%03d"}}
 cname=packages.nmn,pit.nmn

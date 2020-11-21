@@ -18,7 +18,7 @@ import (
 )
 
 // BuildLiveCDNetworks creates an array of IPv4 Networks based on the supplied system configuration
-func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper, switches []*shasta.ManagementSwitch) (map[string]*shasta.IPV4Network, error) {
+func BuildLiveCDNetworks(v *viper.Viper, switches []*shasta.ManagementSwitch) (map[string]*shasta.IPV4Network, error) {
 	// our primitive ipam uses the number of cabinets to lay out a network for each one.
 	// It is per-cabinet type which is pretty annoying, but here we are.
 
@@ -145,7 +145,7 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper, switches []*s
 	tempCAN := shasta.DefaultCAN
 	// Update the CIDR from flags/viper
 	tempCAN.CIDR = v.GetString("can-cidr") // This is probably a /24
-	// Add a /28 for the Static Pool on vlan0007
+	// Add a /28 for the Static Pool
 	_, canStaticPool, err := net.ParseCIDR(v.GetString("can-static-pool"))
 	if err != nil {
 		log.Printf("Invalid can-static-pool.  Cowardly refusing to create it.")
@@ -167,11 +167,12 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper, switches []*s
 		pool.FullName = "CAN Dynamic MetalLB"
 	}
 	// Add a /26 for bootstrap dhcp
-	subnet, err = tempCAN.AddSubnet(net.CIDRMask(26, 32), "bootstrap_dhcp", int16(v.GetInt("hmn-bootstrap-vlan")))
+	subnet, err = tempCAN.AddSubnet(net.CIDRMask(26, 32), "bootstrap_dhcp", int16(v.GetInt("can-bootstrap-vlan")))
 	subnet.FullName = "CAN NCNs"
 	subnet.ReserveNetMgmtIPs(spineSwitches, leafSwitches, aggSwitches, cduSwitches, v.GetInt("management-net-ips"))
 	subnet.AddReservation("kubeapi-vip", "k8s-virtual-ip")
 	subnet.AddReservation("rgw-vip", "rgw-virtual-ip")
+	subnet.Gateway = net.ParseIP(v.GetString("can-gateway"))
 	networkMap["CAN"] = &tempCAN
 
 	return networkMap, nil
