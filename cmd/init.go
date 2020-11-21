@@ -61,10 +61,15 @@ var initCmd = &cobra.Command{
 		}
 		//
 		// SLS also needs to know about our networking configuration.  In order to do that,
-		// we need to split one or more large CIDRs into subnets per cabinet and add that to
+		// we need to load the swtiches
+		switches, err := csiFiles.ReadSwitchCSV(v.GetString("switch-metadata"))
+		if err != nil {
+			log.Fatalln("Couldn't extract switches", err)
+		}
+		// Now we need to split one or more large CIDRs into subnets per cabinet and add that to
 		// the SLS configuration.  We have sensible defaults, but most of this needs to be
 		// handled through ip address math with out internal ipam library
-		shastaNetworks, err := BuildLiveCDNetworks(conf, v)
+		shastaNetworks, err := BuildLiveCDNetworks(conf, v, switches)
 		// This is techincally sufficient to generate an SLSState object, but to do so now
 		// would not include extended information about the NCNs and Network Switches.
 		//
@@ -115,9 +120,9 @@ var initCmd = &cobra.Command{
 
 		// Management Switch Information is included in the IP Reservations for each subnet
 		switchNet, err := shastaNetworks["HMN"].LookUpSubnet("bootstrap_dhcp")
-		switches, _ := extractSwitchesfromReservations(switchNet)
+		reservedSwitches, _ := extractSwitchesfromReservations(switchNet)
 		slsSwitches := make(map[string]sls_common.GenericHardware)
-		for _, mySwitch := range switches {
+		for _, mySwitch := range reservedSwitches {
 			slsSwitches[mySwitch.Xname] = convertManagemenetSwitchToSLS(&mySwitch)
 		}
 
@@ -132,7 +137,6 @@ var initCmd = &cobra.Command{
 			Networks:            convertIPV4NetworksToSLS(&networks),
 		}
 		slsState := shasta.GenerateSLSState(inputState, hmnRows)
-
 		err = csiFiles.WriteJSONConfig(filepath.Join(basepath, "sls_input_file.json"), &slsState)
 		if err != nil {
 			log.Fatalln("Failed to encode SLS state:", err)
@@ -245,12 +249,8 @@ func init() {
 	initCmd.Flags().Int("starting-mountain-NID", 1000, "Starting NID for Compute Nodes")
 
 	// Use these flags to prepare the basecamp metadata json
-	initCmd.Flags().String("spine-switch-xnames", "", "Comma separated list of xnames for spine switches")
-	initCmd.MarkFlagRequired("spine-switch-xnames")
-	initCmd.Flags().String("leaf-switch-xnames", "", "Comma separated list of xnames for leaf switches")
-	initCmd.MarkFlagRequired("leaf-switch-xnames")
 	initCmd.Flags().String("bgp-asn", "65533", "The autonomous system number for BGP conversations")
-	initCmd.Flags().Int("management-net-ips", 0, "Additional number of ip addresses to reserve in each vlan for the management network")
+	initCmd.Flags().Int("management-net-ips", 0, "Additional number of ip addresses to reserve in each vlan for network equipment")
 
 	// Use these flags to set the default ncn bmc credentials for bootstrap
 	initCmd.Flags().String("bootstrap-ncn-bmc-user", "", "Username for connecting to the BMC on the initial NCNs")
@@ -265,6 +265,7 @@ func init() {
 	// Dealing with SLS precursors
 	initCmd.Flags().String("hmn-connections", "hmn_connections.json", "HMN Connections JSON Location (For generating an SLS File)")
 	initCmd.Flags().String("ncn-metadata", "ncn_metadata.csv", "CSV for mapping the mac addresses of the NCNs to their xnames")
+	initCmd.Flags().String("switch-metadata", "switch_metadata.csv", "CSV for mapping the mac addresses of the NCNs to their xnames")
 
 	// Loftsman Manifest Shasta-CFG
 	initCmd.Flags().String("manifest-release", "", "Loftsman Manifest Release Version (leave blank to prevent manifest generation)")
