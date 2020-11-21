@@ -10,10 +10,18 @@ import (
 	"net"
 )
 
+// BootstrapSwitchMetadata is a type that matches the switch_metadata.csv file as
+// Switch Xname, Type
+// The type can be CDU, Spine, Aggregation, or Leaf
+type BootstrapSwitchMetadata struct {
+	Xname string `json:"xname" csv:"Switch Xname"`
+	Type  string `json:"type" csv:"Type"`
+}
+
 // BootstrapNCNMetadata is a type that matches the ncn_metadata.csv file as
 // NCN xname,NCN Role,NCN Subrole,BMC MAC,BMC Switch Port,NMN MAC,NMN Switch Port
 type BootstrapNCNMetadata struct {
-	Xname     string   `json:"xname" csv:"NCN xname"`
+	Xname     string   `json:"xname" csv:"NCN Xname"`
 	Role      string   `json:"role" csv:"NCN Role"`
 	Subrole   string   `json:"subrole" csv:"NCN Subrole"`
 	BmcMac    string   `json:"bmc-mac" csv:"BMC MAC"`

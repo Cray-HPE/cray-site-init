@@ -15,7 +15,16 @@ import (
 // ReadSwitchCSV parses a CSV file into a list of ManagementSwitch structs
 func ReadSwitchCSV(filename string) ([]*shasta.ManagementSwitch, error) {
 	switches := []*shasta.ManagementSwitch{}
-	return switches, nil
+	switchMetadataFile, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, os.ModePerm)
+	if err != nil {
+		return switches, err
+	}
+	defer switchMetadataFile.Close()
+	err = gocsv.UnmarshalFile(switchMetadataFile, &switches)
+	if err != nil { // Load switches from file
+		return switches, nil
+	}
+	return switches, err
 }
 
 // ReadNodeCSV parses a CSV file into a list of NCN_bootstrap nodes for use by the installer

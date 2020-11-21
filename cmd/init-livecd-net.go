@@ -9,7 +9,6 @@ import (
 	"log"
 	"net"
 	"path/filepath"
-	"strings"
 	"text/template"
 
 	"github.com/spf13/viper"
@@ -19,13 +18,18 @@ import (
 )
 
 // BuildLiveCDNetworks creates an array of IPv4 Networks based on the supplied system configuration
-func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*shasta.IPV4Network, error) {
+func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper, switches []*shasta.ManagementSwitch) (map[string]*shasta.IPV4Network, error) {
 	// our primitive ipam uses the number of cabinets to lay out a network for each one.
 	// It is per-cabinet type which is pretty annoying, but here we are.
 
 	cabinetDetails := buildCabinetDetails(v)
 
 	var networkMap = make(map[string]*shasta.IPV4Network)
+
+	leafSwitches := switchXnamesByType(switches, "Leaf")
+	spineSwitches := switchXnamesByType(switches, "Spine")
+	aggSwitches := switchXnamesByType(switches, "Aggregation")
+	cduSwitches := switchXnamesByType(switches, "CDU")
 
 	//
 	// Start the NMN with out defaults
@@ -39,7 +43,7 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*
 		log.Printf("Couldn't add subnet: %v", err)
 	}
 	hardware.FullName = "NMN Management Networking Infrastructure"
-	hardware.ReserveNetMgmtIPs(strings.Split(v.GetString("spine-switch-xnames"), ","), strings.Split(v.GetString("leaf-switch-xnames"), ","), v.GetInt("management-net-ips"))
+	hardware.ReserveNetMgmtIPs(spineSwitches, leafSwitches, aggSwitches, cduSwitches, v.GetInt("management-net-ips"))
 	// Add a /26 for bootstrap dhcp
 	subnet, err := tempNMN.AddSubnet(net.CIDRMask(26, 32), "bootstrap_dhcp", int16(v.GetInt("nmn-bootstrap-vlan")))
 	subnet.FullName = "NMN NCNs"
@@ -54,7 +58,7 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*
 	uaisubnet.AddReservation("pbs_service", "pbs-service")
 	uaisubnet.AddReservation("pbs_comm_service", "pbs-comm-service")
 	// Divide the network into an appropriate number of subnets
-	tempNMN.GenSubnets(cabinetDetails, net.CIDRMask(22, 32), v.GetInt("management-net-ips"), v.GetString("spine-switch-xnames"), v.GetString("leaf-switch-xnames"))
+	tempNMN.GenSubnets(cabinetDetails, net.CIDRMask(22, 32))
 	networkMap["NMN"] = &tempNMN
 
 	//
@@ -69,15 +73,15 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*
 		log.Printf("Couldn't add subnet: %v", err)
 	}
 	hardware.FullName = "HMN Management Networking Infrastructure"
-	hardware.ReserveNetMgmtIPs(strings.Split(v.GetString("spine-switch-xnames"), ","), strings.Split(v.GetString("leaf-switch-xnames"), ","), v.GetInt("management-net-ips"))
+	hardware.ReserveNetMgmtIPs(spineSwitches, leafSwitches, aggSwitches, cduSwitches, v.GetInt("management-net-ips"))
 	// Add a /26 for bootstrap dhcp
 	subnet, err = tempHMN.AddSubnet(net.CIDRMask(26, 32), "bootstrap_dhcp", int16(v.GetInt("hmn-bootstrap-vlan")))
 	subnet.FullName = "HMN NCNs"
 
 	// TODO - removing this causes a "Couldn't find switch port for NCN error", but I don't want this
-	subnet.ReserveNetMgmtIPs(strings.Split(v.GetString("spine-switch-xnames"), ","), strings.Split(v.GetString("leaf-switch-xnames"), ","), v.GetInt("management-net-ips"))
+	subnet.ReserveNetMgmtIPs(spineSwitches, leafSwitches, aggSwitches, cduSwitches, v.GetInt("management-net-ips"))
 	// Divide the network into an appropriate number of subnets
-	tempHMN.GenSubnets(cabinetDetails, net.CIDRMask(22, 32), v.GetInt("management-net-ips"), v.GetString("spine-switch-xnames"), v.GetString("leaf-switch-xnames"))
+	tempHMN.GenSubnets(cabinetDetails, net.CIDRMask(22, 32))
 	networkMap["HMN"] = &tempHMN
 
 	//
@@ -88,7 +92,7 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*
 	// Update the CIDR from flags/viper
 	tempHSN.CIDR = v.GetString("hsn-cidr")
 	// Divide the network into an appropriate number of subnets
-	tempHSN.GenSubnets(cabinetDetails, net.CIDRMask(22, 32), v.GetInt("management-net-ips"), v.GetString("spine-switch-xnames"), v.GetString("leaf-switch-xnames"))
+	tempHSN.GenSubnets(cabinetDetails, net.CIDRMask(22, 32))
 	networkMap["HSN"] = &tempHSN
 
 	//
@@ -103,7 +107,7 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*
 		log.Printf("Couldn't add subnet: %v", err)
 	}
 	hardware.FullName = "MTL Management Networking Infrastructure"
-	hardware.ReserveNetMgmtIPs(strings.Split(v.GetString("spine-switch-xnames"), ","), strings.Split(v.GetString("leaf-switch-xnames"), ","), v.GetInt("management-net-ips"))
+	hardware.ReserveNetMgmtIPs(spineSwitches, leafSwitches, aggSwitches, cduSwitches, v.GetInt("management-net-ips"))
 	// No need to subdivide the mtl network by cabinets
 	subnet, err = tempMTL.AddSubnet(net.CIDRMask(24, 32), "bootstrap_dhcp", 0)
 	// TODO: Probably only really required for masters.
@@ -165,7 +169,7 @@ func BuildLiveCDNetworks(conf shasta.SystemConfig, v *viper.Viper) (map[string]*
 	// Add a /26 for bootstrap dhcp
 	subnet, err = tempCAN.AddSubnet(net.CIDRMask(26, 32), "bootstrap_dhcp", int16(v.GetInt("hmn-bootstrap-vlan")))
 	subnet.FullName = "CAN NCNs"
-	subnet.ReserveNetMgmtIPs(strings.Split(v.GetString("spine-switch-xnames"), ","), strings.Split(v.GetString("leaf-switch-xnames"), ","), v.GetInt("management-net-ips"))
+	subnet.ReserveNetMgmtIPs(spineSwitches, leafSwitches, aggSwitches, cduSwitches, v.GetInt("management-net-ips"))
 	subnet.AddReservation("kubeapi-vip", "k8s-virtual-ip")
 	subnet.AddReservation("rgw-vip", "rgw-virtual-ip")
 	networkMap["CAN"] = &tempCAN
@@ -211,6 +215,16 @@ func WriteCPTNetworkConfig(path string, ncn shasta.LogicalNCN, shastaNetworks ma
 		csiFiles.WriteTemplate(filepath.Join(path, fmt.Sprintf("ifcfg-vlan%03d", network.Vlan)), template.Must(template.New("vlan").Parse(string(VlanConfigTemplate))), network)
 	}
 	return nil
+}
+
+func switchXnamesByType(switches []*shasta.ManagementSwitch, switchType string) []string {
+	var xnames []string
+	for _, mswitch := range switches {
+		if mswitch.SwitchType == switchType {
+			xnames = append(xnames, mswitch.Xname)
+		}
+	}
+	return xnames
 }
 
 // VlanConfigTemplate is the text/template to bootstrap the install cd
