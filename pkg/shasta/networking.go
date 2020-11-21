@@ -5,7 +5,6 @@ Copyright 2020 Hewlett Packard Enterprise Development LP
 package shasta
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -141,7 +140,7 @@ func (iNet *IPV4Network) LookUpSubnet(name string) (*IPV4Subnet, error) {
 			return v, nil
 		}
 	}
-	return &IPV4Subnet{}, errors.New("Subnet not found")
+	return &IPV4Subnet{}, fmt.Errorf("Subnet not found %v", name)
 }
 
 // ReserveNetMgmtIPs reserves (n) IP addresses for management networking equipment

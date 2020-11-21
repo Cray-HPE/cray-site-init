@@ -212,7 +212,7 @@ func WriteDNSMasqConfig(path string, bootstrap []shasta.LogicalNCN, networks map
 				hmnIP = net.IPAddress
 			}
 		}
-		log.Println("Ready to build NCN list with:", v)
+		// log.Println("Ready to build NCN list with:", v)
 		ncn := DNSMasqNCN{
 			Hostname: v.Hostname,
 			NMNMac:   v.NmnMac,
@@ -246,7 +246,7 @@ func WriteDNSMasqConfig(path string, bootstrap []shasta.LogicalNCN, networks map
 		kubevip,
 		rgwvip,
 	}
-	log.Println("Ready to write data with NCNs:", ncns)
+	// log.Println("Ready to write data with NCNs:", ncns)
 	csiFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/statics.conf"), tpl1, data)
 
 	// get a pointer to the MTL

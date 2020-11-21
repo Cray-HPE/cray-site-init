@@ -60,13 +60,13 @@ type NCNInterface struct {
 
 // AllocateIps distributes IP reservations for each of the NCNs within the networks
 func AllocateIps(ncns []*LogicalNCN, networks map[string]*IPV4Network) {
-	lookup := func(name string, networks map[string]*IPV4Network) *IPV4Subnet {
+	lookup := func(name string, subnetName string, networks map[string]*IPV4Network) *IPV4Subnet {
 		tempNetwork := networks[name]
-		subnet, err := tempNetwork.LookUpSubnet("bootstrap_dhcp")
+		subnet, err := tempNetwork.LookUpSubnet(subnetName)
 		if err != nil {
-			log.Printf("couldn't find a bootstrap_dhcp subnet in the %v network", name)
+			log.Printf("couldn't find a %v subnet in the %v network \n", subnetName, name)
 		}
-		// log.Printf("found a bootstrap_dhcp subnet in the %v network", name)
+		// log.Printf("found a %v subnet in the %v network", subnetName, name)
 		return subnet
 	}
 
@@ -74,7 +74,10 @@ func AllocateIps(ncns []*LogicalNCN, networks map[string]*IPV4Network) {
 	netNames := [4]string{"CAN", "MTL", "NMN", "HMN"}
 	subnets := make(map[string]*IPV4Subnet)
 	for _, name := range netNames {
-		subnets[name] = lookup(name, networks)
+		subnets[name] = lookup(name, "bootstrap_dhcp", networks)
+		if name == "NMN" {
+			subnets[fmt.Sprintf("UAI-%v", name)] = lookup(name, "uai_macvlan", networks)
+		}
 	}
 
 	// Loop through the NCNs and then run through the networks to add reservations and assign ip addresses

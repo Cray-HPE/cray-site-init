@@ -7,7 +7,6 @@ package cmd
 import (
 	"io/ioutil"
 	"log"
-	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -19,7 +18,6 @@ import (
 	shcd_parser "stash.us.cray.com/HMS/hms-shcd-parser/pkg/shcd-parser"
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
 	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
-	"stash.us.cray.com/MTL/csi/pkg/ipam"
 	"stash.us.cray.com/MTL/csi/pkg/shasta"
 )
 
@@ -60,43 +58,39 @@ var initCmd = &cobra.Command{
 		for _, ncn := range logicalNcns {
 			for _, tempNCN := range tempNcns {
 				if ncn.Xname == tempNCN.Xname {
-					log.Printf("Found match for %v: %v \n", ncn.Xname, tempNCN)
+					// log.Printf("Found match for %v: %v \n", ncn.Xname, tempNCN)
 					ncn.Hostname = tempNCN.Hostname
 					ncn.Aliases = tempNCN.Aliases
 					ncn.BmcPort = tempNCN.BmcPort
-					log.Println("Updated to be :", ncn)
+					// log.Println("Updated to be :", ncn)
 				}
 			}
 		}
 
-		// Let it be known that nested loops like this are embarassing and hard to read, but I'm a sEnIOr DEveLOPeR
-		// YOLO
-		// https://www.reddit.com/r/ProgrammerHumor/comments/fokc7r/brrrrrrr/
+		// Cycle through the main networks and find the bootstrap_dhcp subnet
 		for _, netName := range [4]string{"NMN", "HMN", "CAN", "MTL"} {
+
 			tempSubnet, err := shastaNetworks[netName].LookUpSubnet("bootstrap_dhcp")
-			// log.Printf("Processing %v:%v \n", netName, tempSubnet.Name)
 			if err != nil {
 				log.Panic(err)
-			} else {
-				var visited []net.IP
-				for _, reservation := range tempSubnet.IPReservations {
-					if ipam.NetIPInSlice(reservation.IPAddress, visited) > 0 {
-						log.Printf("%s is already in the list of reservations \n", reservation.IPAddress)
-					}
-					for index, ncn := range logicalNcns {
-						// log.Printf("Processing %v:%v:%v with %v\n", netName, tempSubnet.Name, ncn.Xname, reservation.Comment)
-						if reservation.Comment == ncn.Xname {
-							reservation.Name = ncn.Hostname
-							// log.Printf("Setting hostname to %v for %v. \n", reservation.Name, reservation.Comment)
-							tempSubnet.IPReservations[index] = reservation
-						}
-					}
-					// Before we run throught the DHCP Update Range, we need to claim it's all good.
-					// log.Printf("%v Reservation[%v] %v - %v", netName, tmpIndex, reservation.IPAddress, reservation.Name)
-				}
 			}
+			// Loop the reservations and update the NCN reservations with hostnames
+			// we likely didn't have when we registered the resevation
+			updateReservations(tempSubnet, logicalNcns)
+			// Reset the DHCP Range to prevent overlaps
 			tempSubnet.UpdateDHCPRange()
+			// We expect a bootstrap_dhcp in every net, but uai_macvlan is only in
+			// the NMN range for today
+			if netName == "NMN" {
+				tempSubnet, err = shastaNetworks[netName].LookUpSubnet("uai_macvlan")
+				if err != nil {
+					log.Panic(err)
+				}
+				updateReservations(tempSubnet, logicalNcns)
+			}
 		}
+
+		// Switch from a list of pointers to a list of things before we write it out
 		var ncns []shasta.LogicalNCN
 		for _, ncn := range logicalNcns {
 			ncns = append(ncns, *ncn)
@@ -116,8 +110,10 @@ func init() {
 	initCmd.Flags().String("internal-domain", "unicos.shasta", "Internal Domain Name")
 	initCmd.Flags().String("ntp-pool", "time.nist.gov", "Hostname for Upstream NTP Pool")
 	initCmd.Flags().String("ipv4-resolvers", "8.8.8.8, 9.9.9.9", "List of IP Addresses for DNS")
-	initCmd.Flags().String("v2-registry", "https://packages.local/", "URL for default v2 registry used for both helm and containers")
-	initCmd.Flags().String("rpm-repository", "https://packages.local/repository/shasta-master", "URL for default rpm repository")
+	initCmd.Flags().String("v2-registry", "https://registry.nmn/", "URL for default v2 registry used for both helm and containers")
+	initCmd.Flags().String("rpm-repository", "https://packages.nmn/repository/shasta-master", "URL for default rpm repository")
+	initCmd.Flags().String("can-gateway", "", "Gateway for NCNs on the CAN")
+	initCmd.MarkFlagRequired("can-gateway")
 
 	// Default IPv4 Networks
 	initCmd.Flags().String("nmn-cidr", shasta.DefaultNMNString, "Overall IPv4 CIDR for all Node Management subnets")
@@ -125,8 +121,6 @@ func init() {
 	initCmd.Flags().String("can-cidr", shasta.DefaultCANString, "Overall IPv4 CIDR for all Customer Access subnets")
 	initCmd.Flags().String("can-static-pool", shasta.DefaultCANStaticString, "Overall IPv4 CIDR for static Customer Access addresses")
 	initCmd.Flags().String("can-dynamic-pool", shasta.DefaultCANPoolString, "Overall IPv4 CIDR for dynamic Customer Access addresses")
-	initCmd.Flags().String("can-gateway", "", "Gateway for NCNs on the CAN")
-	initCmd.MarkFlagRequired("can-gateway")
 
 	initCmd.Flags().String("mtl-cidr", shasta.DefaultMTLString, "Overall IPv4 CIDR for all Provisioning subnets")
 	initCmd.Flags().String("hsn-cidr", shasta.DefaultHSNString, "Overall IPv4 CIDR for all HSN subnets")
@@ -159,9 +153,6 @@ func init() {
 
 	initCmd.Flags().String("bootstrap-ncn-bmc-pass", "", "Password for connecting to the BMC on the initial NCNs")
 	initCmd.MarkFlagRequired("bootstrap-ncn-bmc-pass")
-
-	// Dealing with an SLS file
-	initCmd.Flags().String("from-sls-file", "", "SLS File Location")
 
 	// Dealing with SLS precursors
 	initCmd.Flags().String("hmn-connections", "hmn_connections.json", "HMN Connections JSON Location (For generating an SLS File)")
@@ -273,8 +264,6 @@ func collectInput(v *viper.Viper) ([]shcd_parser.HMNRow, []*shasta.LogicalNCN, [
 	return hmnRows, ncns, switches
 }
 
-func enrichInput() {}
-
 func prepareAndGenerateSLS(v *viper.Viper, shastaNetworks map[string]*shasta.IPV4Network, hmnRows []shcd_parser.HMNRow) sls_common.SLSState {
 	var networks []shasta.IPV4Network
 	for name, network := range shastaNetworks {
@@ -322,6 +311,19 @@ func prepareAndGenerateSLS(v *viper.Viper, shastaNetworks map[string]*shasta.IPV
 	return slsState
 }
 
+func updateReservations(tempSubnet *shasta.IPV4Subnet, logicalNcns []*shasta.LogicalNCN) {
+	// Loop the reservations and update the NCN reservations with hostnames
+	// we likely didn't have when we registered the resevation
+	for _, reservation := range tempSubnet.IPReservations {
+		for index, ncn := range logicalNcns {
+			if reservation.Comment == ncn.Xname {
+				reservation.Name = ncn.Hostname
+				tempSubnet.IPReservations[index] = reservation
+			}
+		}
+	}
+}
+
 func writeOutput(v *viper.Viper, shastaNetworks map[string]*shasta.IPV4Network, slsState sls_common.SLSState, logicalNCNs []shasta.LogicalNCN) {
 	basepath, _ := setupDirectories(v.GetString("system-name"), v)
 	err := csiFiles.WriteJSONConfig(filepath.Join(basepath, "sls_input_file.json"), &slsState)
@@ -352,35 +354,3 @@ func writeOutput(v *viper.Viper, shastaNetworks map[string]*shasta.IPV4Network, 
 		initiailzeManifestDir(shasta.DefaultManifestURL, "release/shasta-1.4", filepath.Join(basepath, "loftsman-manifests"))
 	}
 }
-
-/*
-	// Handle an SLSFile if one is provided
-	var slsState sls_common.SLSState
-	if v.GetString("from-sls-file") != "" {
-		log.Println("Loading from ", v.GetString("from-sls-file"))
-		slsState, err = shasta.ParseSLSFile(v.GetString("from-sls-file"))
-		if err != nil {
-			log.Fatal("Error loading the sls-file: ", err)
-		}
-		// Confirm that our slsState is valid
-		networks, err := shasta.ExtractSLSNetworks(&slsState)
-		if err != nil {
-			log.Printf("Couldn't extract networks because: %d \n", err)
-		} else {
-			log.Printf("Extracted %d networks \n", len(networks))
-		}
-		switches, err := shasta.ExtractSLSSwitches(&slsState)
-		if err != nil {
-			log.Printf("Couldn't extract switches because: %d \n", err)
-		} else {
-			log.Printf("Extracted %d switches \n", len(switches))
-		}
-		ncns, err := shasta.ExtractSLSNCNs(&slsState)
-		if err != nil {
-			log.Printf("Couldn't extract ncns because: %d \n", err)
-		} else {
-			log.Printf("Extracted %d management ncns \n", len(ncns))
-		}
-
-	}
-*/
