@@ -40,17 +40,23 @@ func BuildLiveCDNetworks(v *viper.Viper, switches []*shasta.ManagementSwitch) (m
 	// Add a /24 for Network Hardware
 	hardware, err := tempNMN.AddSubnet(net.CIDRMask(24, 32), "nmn_network_hardware", int16(v.GetInt("nmn-bootstrap-vlan")))
 	if err != nil {
-		log.Printf("Couldn't add subnet: %v", err)
+		log.Fatalf("Couln't add the network hardware subnet to the NMN: %v", err)
 	}
 	hardware.FullName = "NMN Management Networking Infrastructure"
 	hardware.ReserveNetMgmtIPs(spineSwitches, leafSwitches, aggSwitches, cduSwitches, v.GetInt("management-net-ips"))
 	// Add a /26 for bootstrap dhcp
 	subnet, err := tempNMN.AddSubnet(net.CIDRMask(26, 32), "bootstrap_dhcp", int16(v.GetInt("nmn-bootstrap-vlan")))
+	if err != nil {
+		log.Fatalf("Couln't add the bootstrap subnet to the NMN: %v", err)
+	}
 	subnet.FullName = "NMN NCNs"
 	subnet.AddReservation("kubeapi-vip", "k8s-virtual-ip")
 	subnet.AddReservation("rgw-vip", "rgw-virtual-ip")
 	// Add the macvlan network for uais
 	uaisubnet, err := tempNMN.AddSubnet(net.CIDRMask(23, 32), "uai_macvlan", int16(v.GetInt("nmn-bootstrap-vlan")))
+	if err != nil {
+		log.Fatalf("Couln't add the uai subnet to the NMN: %v", err)
+	}
 	uaisubnet.FullName = "NMN UAIs"
 	uaisubnet.AddReservation("uai_macvlan_bridge", "uai-macvlan-bridge")
 	uaisubnet.AddReservation("slurmctld_service", "slurmctld-service")
@@ -60,6 +66,8 @@ func BuildLiveCDNetworks(v *viper.Viper, switches []*shasta.ManagementSwitch) (m
 	// Divide the network into an appropriate number of subnets
 	tempNMN.GenSubnets(cabinetDetails, net.CIDRMask(22, 32))
 	networkMap["NMN"] = &tempNMN
+
+	log.Println("The Reservations List for the Bootstrap NMN is:", networkMap["NMN"].SubnetbyName("bootstrap_dhcp").IPReservations)
 
 	//
 	// Start the HMN with our defaults

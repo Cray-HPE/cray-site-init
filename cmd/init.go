@@ -67,6 +67,7 @@ var initCmd = &cobra.Command{
 			}
 		}
 
+		log.Println("The Reservations List for the Bootstrap NMN is:", shastaNetworks["NMN"].SubnetbyName("bootstrap_dhcp").IPReservations)
 		// Cycle through the main networks and find the bootstrap_dhcp subnet
 		for _, netName := range [4]string{"NMN", "HMN", "CAN", "MTL"} {
 
@@ -89,12 +90,15 @@ var initCmd = &cobra.Command{
 				updateReservations(tempSubnet, logicalNcns)
 			}
 		}
+		log.Println("The Reservations List for the Bootstrap NMN is:", shastaNetworks["NMN"].SubnetbyName("bootstrap_dhcp").IPReservations)
 
 		// Switch from a list of pointers to a list of things before we write it out
 		var ncns []shasta.LogicalNCN
 		for _, ncn := range logicalNcns {
 			ncns = append(ncns, *ncn)
 		}
+		globals, err := shasta.MakeBasecampGlobals(v, shastaNetworks, "NMN", "bootstrap_dhcp", "ncn-m001")
+		csiFiles.WriteJSONConfig(filepath.Join(".", "data-globals.json"), globals)
 		writeOutput(v, shastaNetworks, slsState, ncns)
 	},
 }
@@ -114,6 +118,10 @@ func init() {
 	initCmd.Flags().String("rpm-repository", "https://packages.nmn/repository/shasta-master", "URL for default rpm repository")
 	initCmd.Flags().String("can-gateway", "", "Gateway for NCNs on the CAN")
 	initCmd.MarkFlagRequired("can-gateway")
+	initCmd.Flags().String("ceph-cephfs-image", "dtr.dev.cray.com/cray/cray-cephfs-provisioner:0.1.0-nautilus-1.3", "The container image for the cephfs provisioner")
+	initCmd.Flags().String("ceph-rbd-image", "dtr.dev.cray.com/cray/cray-rbd-provisioner:0.1.0-nautilus-1.3", "The container image for the ceph rbd provisioner")
+	initCmd.Flags().String("chart-repo", "http://helmrepo.dev.cray.com:8080", "Upstream chart repo for use during the install")
+	initCmd.Flags().String("docker-image-registry", "dtr.dev.cray.com", "Upstream docker registry for use during the install")
 
 	// Default IPv4 Networks
 	initCmd.Flags().String("nmn-cidr", shasta.DefaultNMNString, "Overall IPv4 CIDR for all Node Management subnets")
@@ -314,8 +322,8 @@ func prepareAndGenerateSLS(v *viper.Viper, shastaNetworks map[string]*shasta.IPV
 func updateReservations(tempSubnet *shasta.IPV4Subnet, logicalNcns []*shasta.LogicalNCN) {
 	// Loop the reservations and update the NCN reservations with hostnames
 	// we likely didn't have when we registered the resevation
-	for _, reservation := range tempSubnet.IPReservations {
-		for index, ncn := range logicalNcns {
+	for index, reservation := range tempSubnet.IPReservations {
+		for _, ncn := range logicalNcns {
 			if reservation.Comment == ncn.Xname {
 				reservation.Name = ncn.Hostname
 				tempSubnet.IPReservations[index] = reservation
@@ -348,7 +356,7 @@ func writeOutput(v *viper.Viper, shastaNetworks map[string]*shasta.IPV4Network, 
 	WriteDNSMasqConfig(basepath, logicalNCNs, shastaNetworks)
 	WriteConmanConfig(filepath.Join(basepath, "conman.conf"), logicalNCNs)
 	WriteMetalLBConfigMap(basepath, v, shastaNetworks)
-	WriteBaseCampData(filepath.Join(basepath, "data.json"), &slsState, logicalNCNs)
+	WriteBaseCampData(filepath.Join(basepath, "data.json"), logicalNCNs)
 
 	if v.GetString("manifest-release") != "" {
 		initiailzeManifestDir(shasta.DefaultManifestURL, "release/shasta-1.4", filepath.Join(basepath, "loftsman-manifests"))

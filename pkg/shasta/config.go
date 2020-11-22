@@ -60,15 +60,6 @@ type CabinetDetail struct {
 	StartingCabinet int    `mapstructure:"starting-cabinet"`
 }
 
-// BGPPeering stores information about MetalLB Peering
-type BGPPeering struct {
-	// the two ends of the turtle
-}
-
-// PointToPoint is a structure for storing the Basics of Network Management
-type PointToPoint struct {
-}
-
 // SiteServices stores identity information for system services
 type SiteServices struct {
 	IPV4Resolvers   []net.IPAddr

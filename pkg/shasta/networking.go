@@ -143,6 +143,16 @@ func (iNet *IPV4Network) LookUpSubnet(name string) (*IPV4Subnet, error) {
 	return &IPV4Subnet{}, fmt.Errorf("Subnet not found %v", name)
 }
 
+// SubnetbyName Return a copy of the subnet by name or a blank subnet if it doesn't exists
+func (iNet IPV4Network) SubnetbyName(name string) IPV4Subnet {
+	for _, v := range iNet.Subnets {
+		if v.Name == name {
+			return *v
+		}
+	}
+	return IPV4Subnet{}
+}
+
 // ReserveNetMgmtIPs reserves (n) IP addresses for management networking equipment
 func (iSubnet *IPV4Subnet) ReserveNetMgmtIPs(spines []string, leafs []string, aggs []string, cdus []string, additional int) {
 	for i := 0; i < len(spines); i++ {
@@ -174,6 +184,15 @@ func (iSubnet *IPV4Subnet) ReservedIPs() []net.IP {
 		addresses = append(addresses, v.IPAddress)
 	}
 	return addresses
+}
+
+// ReservationsByName presents the IPReservations in a map by name
+func (iSubnet *IPV4Subnet) ReservationsByName() map[string]IPReservation {
+	reservations := make(map[string]IPReservation)
+	for _, v := range iSubnet.IPReservations {
+		reservations[v.Name] = v
+	}
+	return reservations
 }
 
 // UpdateDHCPRange resets the DHCPStart to exclude all IPReservations

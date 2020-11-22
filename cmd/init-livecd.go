@@ -23,6 +23,41 @@ func WriteNICConfigENV(path string, conf shasta.SystemConfig) {
 	log.Printf("NOT IMPLEMENTED")
 }
 
+func makeBaseCampfromNCNs(v *viper.Viper, ncns []shasta.LogicalNCN) (map[string]shasta.CloudInit, error) {
+	basecampConfig := make(map[string]shasta.CloudInit)
+	for _, ncn := range ncns {
+		tempAvailabilityZone, err := shasta.CabinetForXname(ncn.Xname)
+		if err != nil {
+			log.Printf("Couldn't generate cabinet name for %v: %v \n", ncn.Xname, err)
+		}
+		tempMetadata := shasta.MetaData{
+			Hostname:         ncn.Hostname,
+			InstanceID:       shasta.GenerateInstanceID(),
+			Region:           v.GetString("system-name"),
+			AvailabilityZone: tempAvailabilityZone,
+			ShastaRole:       "ncn-" + strings.ToLower(ncn.Subrole),
+		}
+		userDataMap := make(map[string]interface{})
+		if ncn.Subrole == "Storage" {
+			if strings.HasSuffix(ncn.Hostname, "001") {
+				userDataMap["runcmd"] = shasta.BasecampcephRunCMD
+			} else {
+				userDataMap["runcmd"] = shasta.BasecampcephWorkerRunCMD
+			}
+		} else {
+			userDataMap["runcmd"] = shasta.Basecampk8sRunCMD
+		}
+		userDataMap["hostname"] = ncn.Hostname
+		userDataMap["local_hostname"] = ncn.Hostname
+		basecampConfig[ncn.NmnMac] = shasta.CloudInit{
+			MetaData: tempMetadata,
+			UserData: userDataMap,
+		}
+	}
+
+	return basecampConfig, nil
+}
+
 func makeBaseCampfromSLS(sls *sls_common.SLSState, ncnMeta []shasta.LogicalNCN) (map[string]shasta.CloudInit, error) {
 	basecampConfig := make(map[string]shasta.CloudInit)
 	globalViper := viper.GetViper()
@@ -91,13 +126,13 @@ func makeBaseCampfromSLS(sls *sls_common.SLSState, ncnMeta []shasta.LogicalNCN) 
 }
 
 // WriteBaseCampData writes basecamp data.json for the installer
-func WriteBaseCampData(path string, sls *sls_common.SLSState, ncnMeta []shasta.LogicalNCN) {
-	basecampConfig, err := makeBaseCampfromSLS(sls, ncnMeta)
+func WriteBaseCampData(path string, ncns []shasta.LogicalNCN) {
+	v := viper.GetViper()
+	basecampConfig, err := makeBaseCampfromNCNs(v, ncns)
 	if err != nil {
 		log.Printf("Error extracting NCNs: %v", err)
 	}
 	csiFiles.WriteJSONConfig(path, basecampConfig)
-
 	// https://stash.us.cray.com/projects/MTL/repos/docs-non-compute-nodes/browse/example-data.json
 	/* Funky vars from the stopgap
 	export site_nic=em1
