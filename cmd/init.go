@@ -91,7 +91,7 @@ var initCmd = &cobra.Command{
 			}
 		}
 
-		// HACKey, re-run SLS generation to pickup IP reservations
+		// HACKey, re-run SLS generation to pickup IP reservations. In reality we need to only re-create the SLS network information
 		slsState = prepareAndGenerateSLS(v, shastaNetworks, hmnRows)
 
 		// Switch from a list of pointers to a list of things before we write it out
