@@ -341,6 +341,7 @@ func updateReservations(tempSubnet *shasta.IPV4Subnet, logicalNcns []*shasta.Log
 				reservation.Name = ncn.Hostname
 				reservation.Aliases = append(reservation.Aliases, fmt.Sprintf("%v-%v", ncn.Hostname, strings.ToLower(tempSubnet.NetName)))
 				reservation.Aliases = append(reservation.Aliases, fmt.Sprintf("time-%v", strings.ToLower(tempSubnet.NetName)))
+				reservation.Aliases = append(reservation.Aliases, fmt.Sprintf("time-%v.local", strings.ToLower(tempSubnet.NetName)))
 				tempSubnet.IPReservations[index] = reservation
 			}
 			if reservation.Comment == fmt.Sprintf("%v-mgmt", ncn.Xname) {
@@ -348,6 +349,10 @@ func updateReservations(tempSubnet *shasta.IPV4Subnet, logicalNcns []*shasta.Log
 				reservation.Aliases = append(reservation.Aliases, fmt.Sprintf("%v-mgmt", ncn.Hostname))
 				tempSubnet.IPReservations[index] = reservation
 			}
+		}
+		if tempSubnet.NetName == "NMN" {
+			reservation.Aliases = append(reservation.Aliases, fmt.Sprintf("%v.local", reservation.Name))
+			tempSubnet.IPReservations[index] = reservation
 		}
 	}
 }
