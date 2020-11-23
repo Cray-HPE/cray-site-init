@@ -15,12 +15,21 @@ import (
 // ReadSwitchCSV parses a CSV file into a list of ManagementSwitch structs
 func ReadSwitchCSV(filename string) ([]*shasta.ManagementSwitch, error) {
 	switches := []*shasta.ManagementSwitch{}
-	return switches, nil
+	switchMetadataFile, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, os.ModePerm)
+	if err != nil {
+		return switches, err
+	}
+	defer switchMetadataFile.Close()
+	err = gocsv.UnmarshalFile(switchMetadataFile, &switches)
+	if err != nil { // Load switches from file
+		return switches, nil
+	}
+	return switches, err
 }
 
 // ReadNodeCSV parses a CSV file into a list of NCN_bootstrap nodes for use by the installer
-func ReadNodeCSV(filename string) ([]*shasta.BootstrapNCNMetadata, error) {
-	nodes := []*shasta.BootstrapNCNMetadata{}
+func ReadNodeCSV(filename string) ([]*shasta.LogicalNCN, error) {
+	nodes := []*shasta.LogicalNCN{}
 	newNodes := []*shasta.NewBootstrapNCNMetadata{}
 
 	ncnMetadataFile, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, os.ModePerm)
@@ -32,13 +41,14 @@ func ReadNodeCSV(filename string) ([]*shasta.BootstrapNCNMetadata, error) {
 	err = gocsv.UnmarshalFile(ncnMetadataFile, &newNodes)
 	if err != nil {
 		for _, node := range newNodes {
-			nodes = append(nodes, &shasta.BootstrapNCNMetadata{
+			nodes = append(nodes, &shasta.LogicalNCN{
 				Xname:     node.Xname,
 				Role:      node.Role,
 				Subrole:   node.Subrole,
 				BmcMac:    node.BmcMac,
 				NmnMac:    node.BootstrapMac,
-				Bond0Macs: []string{node.Bond0Mac0, node.Bond0Mac1},
+				Bond0Mac0: node.Bond0Mac0,
+				Bond0Mac1: node.Bond0Mac1,
 			})
 		}
 		return nodes, nil

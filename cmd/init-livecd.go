@@ -23,7 +23,42 @@ func WriteNICConfigENV(path string, conf shasta.SystemConfig) {
 	log.Printf("NOT IMPLEMENTED")
 }
 
-func makeBaseCampfromSLS(conf shasta.SystemConfig, sls *sls_common.SLSState, ncnMeta []*shasta.BootstrapNCNMetadata) (map[string]shasta.CloudInit, error) {
+func makeBaseCampfromNCNs(v *viper.Viper, ncns []shasta.LogicalNCN) (map[string]shasta.CloudInit, error) {
+	basecampConfig := make(map[string]shasta.CloudInit)
+	for _, ncn := range ncns {
+		tempAvailabilityZone, err := shasta.CabinetForXname(ncn.Xname)
+		if err != nil {
+			log.Printf("Couldn't generate cabinet name for %v: %v \n", ncn.Xname, err)
+		}
+		tempMetadata := shasta.MetaData{
+			Hostname:         ncn.Hostname,
+			InstanceID:       shasta.GenerateInstanceID(),
+			Region:           v.GetString("system-name"),
+			AvailabilityZone: tempAvailabilityZone,
+			ShastaRole:       "ncn-" + strings.ToLower(ncn.Subrole),
+		}
+		userDataMap := make(map[string]interface{})
+		if ncn.Subrole == "Storage" {
+			if strings.HasSuffix(ncn.Hostname, "001") {
+				userDataMap["runcmd"] = shasta.BasecampcephRunCMD
+			} else {
+				userDataMap["runcmd"] = shasta.BasecampcephWorkerRunCMD
+			}
+		} else {
+			userDataMap["runcmd"] = shasta.Basecampk8sRunCMD
+		}
+		userDataMap["hostname"] = ncn.Hostname
+		userDataMap["local_hostname"] = ncn.Hostname
+		basecampConfig[ncn.NmnMac] = shasta.CloudInit{
+			MetaData: tempMetadata,
+			UserData: userDataMap,
+		}
+	}
+
+	return basecampConfig, nil
+}
+
+func makeBaseCampfromSLS(sls *sls_common.SLSState, ncnMeta []shasta.LogicalNCN) (map[string]shasta.CloudInit, error) {
 	basecampConfig := make(map[string]shasta.CloudInit)
 	globalViper := viper.GetViper()
 
@@ -59,7 +94,7 @@ func makeBaseCampfromSLS(conf shasta.SystemConfig, sls *sls_common.SLSState, ncn
 			log.Printf("Couldn't generate cabinet name for %v: %v \n", v.Xname, err)
 		}
 		tempMetadata := shasta.MetaData{
-			Hostname:         v.Hostnames[0],
+			Hostname:         v.Hostname,
 			InstanceID:       shasta.GenerateInstanceID(),
 			Region:           globalViper.GetString("system-name"),
 			AvailabilityZone: tempAvailabilityZone,
@@ -70,7 +105,7 @@ func makeBaseCampfromSLS(conf shasta.SystemConfig, sls *sls_common.SLSState, ncn
 				// log.Printf("Found %v in both lists. \n", value.Xname)
 				userDataMap := make(map[string]interface{})
 				if v.Subrole == "Storage" {
-					if strings.HasSuffix(v.Hostnames[0], "001") {
+					if strings.HasSuffix(v.Hostname, "001") {
 						userDataMap["runcmd"] = cephRunCMD
 					} else {
 						userDataMap["runcmd"] = cephWorkerRunCMD
@@ -78,8 +113,8 @@ func makeBaseCampfromSLS(conf shasta.SystemConfig, sls *sls_common.SLSState, ncn
 				} else {
 					userDataMap["runcmd"] = k8sRunCMD
 				}
-				userDataMap["hostname"] = v.Hostnames[0]
-				userDataMap["local_hostname"] = v.Hostnames[0]
+				userDataMap["hostname"] = v.Hostname
+				userDataMap["local_hostname"] = v.Hostname
 				basecampConfig[value.NmnMac] = shasta.CloudInit{
 					MetaData: tempMetadata,
 					UserData: userDataMap,
@@ -90,14 +125,14 @@ func makeBaseCampfromSLS(conf shasta.SystemConfig, sls *sls_common.SLSState, ncn
 	return basecampConfig, nil
 }
 
-// WriteBaseCampData writes basecamp data.json for the installer
-func WriteBaseCampData(path string, conf shasta.SystemConfig, sls *sls_common.SLSState, ncnMeta []*shasta.BootstrapNCNMetadata) {
-	basecampConfig, err := makeBaseCampfromSLS(conf, sls, ncnMeta)
+// WriteBasecampData writes basecamp data.json for the installer
+func WriteBasecampData(path string, ncns []shasta.LogicalNCN) {
+	v := viper.GetViper()
+	basecampConfig, err := makeBaseCampfromNCNs(v, ncns)
 	if err != nil {
 		log.Printf("Error extracting NCNs: %v", err)
 	}
 	csiFiles.WriteJSONConfig(path, basecampConfig)
-
 	// https://stash.us.cray.com/projects/MTL/repos/docs-non-compute-nodes/browse/example-data.json
 	/* Funky vars from the stopgap
 	export site_nic=em1
@@ -106,8 +141,15 @@ func WriteBaseCampData(path string, conf shasta.SystemConfig, sls *sls_common.SL
 	*/
 }
 
+// WriteBasecampInterface is a helper function until we are ready to put this data
+// into data.json.  That would require a bit of a refactor, but is totally
+// the right thing to do.
+func WriteBasecampInterface(path string, data interface{}) {
+	csiFiles.WriteJSONConfig(path, data)
+}
+
 // WriteConmanConfig provides conman configuration for the installer
-func WriteConmanConfig(path string, ncns []*shasta.LogicalNCN, conf shasta.SystemConfig) {
+func WriteConmanConfig(path string, ncns []shasta.LogicalNCN) {
 	type conmanLine struct {
 		Hostname string
 		User     string
@@ -125,7 +167,7 @@ func WriteConmanConfig(path string, ncns []*shasta.LogicalNCN, conf shasta.Syste
 			Hostname: k.Hostname,
 			User:     ncnBMCUser,
 			Pass:     ncnBMCPass,
-			IP:       k.BMCIp,
+			IP:       k.BmcIP,
 		})
 	}
 
@@ -134,7 +176,7 @@ func WriteConmanConfig(path string, ncns []*shasta.LogicalNCN, conf shasta.Syste
 }
 
 // WriteMetalLBConfigMap creates the yaml configmap
-func WriteMetalLBConfigMap(path string, conf shasta.SystemConfig, v *viper.Viper, networks map[string]*shasta.IPV4Network) {
+func WriteMetalLBConfigMap(path string, v *viper.Viper, networks map[string]*shasta.IPV4Network) {
 
 	// this lookup table should be redundant in the future
 	// when we can better hint which pool an endpoint should pull from
@@ -176,7 +218,7 @@ func WriteMetalLBConfigMap(path string, conf shasta.SystemConfig, v *viper.Viper
 }
 
 // WriteDNSMasqConfig writes the dnsmasq configuration files necssary for installation
-func WriteDNSMasqConfig(path string, bootstrap []*shasta.LogicalNCN, networks map[string]*shasta.IPV4Network) {
+func WriteDNSMasqConfig(path string, bootstrap []shasta.LogicalNCN, networks map[string]*shasta.IPV4Network) {
 	// DNSMasqNCN is the struct to manage NCNs within DNSMasq
 	type DNSMasqNCN struct {
 		Hostname string `form:"hostname"`
@@ -212,15 +254,15 @@ func WriteDNSMasqConfig(path string, bootstrap []*shasta.LogicalNCN, networks ma
 				hmnIP = net.IPAddress
 			}
 		}
-		// Get a new ip reservation for each one
+		// log.Println("Ready to build NCN list with:", v)
 		ncn := DNSMasqNCN{
 			Hostname: v.Hostname,
-			NMNMac:   v.NMNMac,
+			NMNMac:   v.NmnMac,
 			NMNIP:    nmnIP,
 			// MTLMac:   ,
 			MTLIP:  mtlIP,
-			BMCMac: v.BMCMac,
-			BMCIP:  v.BMCIp,
+			BMCMac: v.BmcMac,
+			BMCIP:  v.BmcIP,
 			CANIP:  canIP,
 			HMNIP:  hmnIP,
 		}
@@ -246,6 +288,7 @@ func WriteDNSMasqConfig(path string, bootstrap []*shasta.LogicalNCN, networks ma
 		kubevip,
 		rgwvip,
 	}
+	// log.Println("Ready to write data with NCNs:", ncns)
 	csiFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/statics.conf"), tpl1, data)
 
 	// get a pointer to the MTL
@@ -264,9 +307,10 @@ func writeConfig(name, path string, tpl template.Template, networks map[string]*
 	// get a pointer to the IPV4Network
 	tempNet := networks[name]
 	// get a pointer to the subnet
+	v := viper.GetViper()
 	bootstrapSubnet, _ := tempNet.LookUpSubnet("bootstrap_dhcp")
 	for _, reservation := range bootstrapSubnet.IPReservations {
-		if reservation.Name == "ncn-m001" {
+		if reservation.Name == v.GetString("install-ncn") {
 			bootstrapSubnet.Gateway = reservation.IPAddress
 		}
 	}

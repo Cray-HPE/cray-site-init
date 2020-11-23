@@ -5,7 +5,6 @@ Copyright 2020 Hewlett Packard Enterprise Development LP
 package shasta
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -40,6 +39,7 @@ type IPV4Subnet struct {
 	CIDR           net.IPNet       `yaml:"cidr"`
 	IPReservations []IPReservation `yaml:"ip_reservations"`
 	Name           string          `yaml:"name" form:"name" mapstructure:"name"`
+	NetName        string          `yaml:"net-name"`
 	VlanID         int16           `yaml:"vlan_id" form:"vlan_id" mapstructure:"vlan_id"`
 	Comment        string          `yaml:"comment"`
 	Gateway        net.IP          `yaml:"gateway"`
@@ -49,18 +49,18 @@ type IPV4Subnet struct {
 
 // ManagementSwitch is a type for managing Management switches
 type ManagementSwitch struct {
-	Xname               string `json:"xname" mapstructure:"xname" csv:"xname"` // Required for SLS
-	Name                string `json:"name" mapstructure:"name" csv:"-"`       // Required for SLS to update DNS
+	Xname               string `json:"xname" mapstructure:"xname" csv:"Switch Xname"` // Required for SLS
+	Name                string `json:"name" mapstructure:"name" csv:"-"`              // Required for SLS to update DNS
 	Brand               string `json:"brand" mapstructure:"brand" csv:"-"`
-	Model               string `json:"model" mapstructure:"model" csv:"model"`
+	Model               string `json:"model" mapstructure:"model" csv:"Model"`
 	Os                  string `json:"operating-system" mapstructure:"operating-system" csv:"-"`
 	Firmware            string `json:"firmware" mapstructure:"firmware" csv:"-"`
-	SwitchType          string `json:"type" mapstructure:"type" csv:"-"` //"CDU/Leaf/Spine"
-	ManagementInterface net.IP `json:"ip" mapstructure:"ip" csv:"-"`     // SNMP/REST interface IP (not a distinct BMC)  // Required for SLS
+	SwitchType          string `json:"type" mapstructure:"type" csv:"Type"` //"CDU/Leaf/Spine/Aggregation"
+	ManagementInterface net.IP `json:"ip" mapstructure:"ip" csv:"-"`        // SNMP/REST interface IP (not a distinct BMC)  // Required for SLS
 }
 
 // GenSubnets subdivides a network into a set of subnets
-func (iNet *IPV4Network) GenSubnets(cabinetDetails []CabinetDetail, mask net.IPMask, mgmtIPReservations int, spines string, leafs string) error {
+func (iNet *IPV4Network) GenSubnets(cabinetDetails []CabinetDetail, mask net.IPMask) error {
 
 	_, myNet, _ := net.ParseCIDR(iNet.CIDR)
 	mySubnets := iNet.AllocatedSubnets()
@@ -128,6 +128,7 @@ func (iNet *IPV4Network) AddSubnet(mask net.IPMask, name string, vlanID int16) (
 	iNet.Subnets = append(iNet.Subnets, &IPV4Subnet{
 		CIDR:    newSubnet,
 		Name:    name,
+		NetName: iNet.Name,
 		Gateway: ipam.Add(newSubnet.IP, 1),
 		VlanID:  vlanID,
 	})
@@ -141,21 +142,40 @@ func (iNet *IPV4Network) LookUpSubnet(name string) (*IPV4Subnet, error) {
 			return v, nil
 		}
 	}
-	return &IPV4Subnet{}, errors.New("Subnet not found")
+	return &IPV4Subnet{}, fmt.Errorf("Subnet not found %v", name)
+}
+
+// SubnetbyName Return a copy of the subnet by name or a blank subnet if it doesn't exists
+func (iNet IPV4Network) SubnetbyName(name string) IPV4Subnet {
+	for _, v := range iNet.Subnets {
+		if v.Name == name {
+			return *v
+		}
+	}
+	return IPV4Subnet{}
 }
 
 // ReserveNetMgmtIPs reserves (n) IP addresses for management networking equipment
-func (iSubnet *IPV4Subnet) ReserveNetMgmtIPs(spines []string, leafs []string, additional int) {
-	var n = len(spines) + len(leafs) + additional
-	for i := 0; i < n; i++ {
-		// First allocate the spines and then the leafs
-		if i < len(spines) {
-			iSubnet.AddReservation(fmt.Sprintf("sw-spine-%03d", i+1), spines[i])
-		} else if i < len(spines)+len(leafs) {
-			iSubnet.AddReservation(fmt.Sprintf("sw-leaf-%03d", i-len(spines)+1), leafs[i-len(spines)])
-		} else {
-			iSubnet.AddReservation(fmt.Sprintf("mgmt-net-stub-%03d", i+1), "")
-		}
+func (iSubnet *IPV4Subnet) ReserveNetMgmtIPs(spines []string, leafs []string, aggs []string, cdus []string, additional int) {
+	for i := 0; i < len(spines); i++ {
+		name := fmt.Sprintf("sw-spine-%03d", i+1)
+		iSubnet.AddReservation(name, spines[i])
+	}
+	for i := 0; i < len(leafs); i++ {
+		name := fmt.Sprintf("sw-leaf-%03d", i+1)
+		iSubnet.AddReservation(name, leafs[i])
+	}
+	for i := 0; i < len(aggs); i++ {
+		name := fmt.Sprintf("sw-agg-%03d", i+1)
+		iSubnet.AddReservation(name, aggs[i])
+	}
+	for i := 0; i < len(cdus); i++ {
+		name := fmt.Sprintf("sw-cdu-%03d", i+1)
+		iSubnet.AddReservation(name, cdus[i])
+	}
+	for i := 0; i < additional; i++ {
+		name := fmt.Sprintf("mgmt-net-stub-%03d", i+1)
+		iSubnet.AddReservation(name, "")
 	}
 }
 
@@ -166,6 +186,15 @@ func (iSubnet *IPV4Subnet) ReservedIPs() []net.IP {
 		addresses = append(addresses, v.IPAddress)
 	}
 	return addresses
+}
+
+// ReservationsByName presents the IPReservations in a map by name
+func (iSubnet *IPV4Subnet) ReservationsByName() map[string]IPReservation {
+	reservations := make(map[string]IPReservation)
+	for _, v := range iSubnet.IPReservations {
+		reservations[v.Name] = v
+	}
+	return reservations
 }
 
 // UpdateDHCPRange resets the DHCPStart to exclude all IPReservations

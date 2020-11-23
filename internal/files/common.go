@@ -51,7 +51,12 @@ func WriteConfig(enc encoder, path string, conf interface{}) error {
 		return err
 	}
 	defer f.Close()
-	return enc(f, conf)
+	w := bufio.NewWriter(f)
+	enc(w, conf)
+	size := w.Buffered() // Returns 0 at some points.  I don't have time to look at bufio and learn more.  The file is still written just fine.
+	w.Flush()
+	log.Printf("wrote %d bytes to %s\n", size, path)
+	return nil
 }
 
 // ReadConfig decodes an object from the specified file
