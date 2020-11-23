@@ -39,6 +39,7 @@ type IPV4Subnet struct {
 	CIDR           net.IPNet       `yaml:"cidr"`
 	IPReservations []IPReservation `yaml:"ip_reservations"`
 	Name           string          `yaml:"name" form:"name" mapstructure:"name"`
+	NetName        string          `yaml:"net-name"`
 	VlanID         int16           `yaml:"vlan_id" form:"vlan_id" mapstructure:"vlan_id"`
 	Comment        string          `yaml:"comment"`
 	Gateway        net.IP          `yaml:"gateway"`
@@ -127,6 +128,7 @@ func (iNet *IPV4Network) AddSubnet(mask net.IPMask, name string, vlanID int16) (
 	iNet.Subnets = append(iNet.Subnets, &IPV4Subnet{
 		CIDR:    newSubnet,
 		Name:    name,
+		NetName: iNet.Name,
 		Gateway: ipam.Add(newSubnet.IP, 1),
 		VlanID:  vlanID,
 	})
