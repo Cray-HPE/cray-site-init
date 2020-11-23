@@ -67,8 +67,6 @@ func BuildLiveCDNetworks(v *viper.Viper, switches []*shasta.ManagementSwitch) (m
 	tempNMN.GenSubnets(cabinetDetails, net.CIDRMask(22, 32))
 	networkMap["NMN"] = &tempNMN
 
-	log.Println("The Reservations List for the Bootstrap NMN is:", networkMap["NMN"].SubnetbyName("bootstrap_dhcp").IPReservations)
-
 	//
 	// Start the HMN with our defaults
 	//

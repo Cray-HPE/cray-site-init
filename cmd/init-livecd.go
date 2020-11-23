@@ -125,8 +125,8 @@ func makeBaseCampfromSLS(sls *sls_common.SLSState, ncnMeta []shasta.LogicalNCN) 
 	return basecampConfig, nil
 }
 
-// WriteBaseCampData writes basecamp data.json for the installer
-func WriteBaseCampData(path string, ncns []shasta.LogicalNCN) {
+// WriteBasecampData writes basecamp data.json for the installer
+func WriteBasecampData(path string, ncns []shasta.LogicalNCN) {
 	v := viper.GetViper()
 	basecampConfig, err := makeBaseCampfromNCNs(v, ncns)
 	if err != nil {
@@ -139,6 +139,13 @@ func WriteBaseCampData(path string, ncns []shasta.LogicalNCN) {
 	export bond_member0=p801p1
 	export bond_member1=p801p2
 	*/
+}
+
+// WriteBasecampInterface is a helper function until we are ready to put this data
+// into data.json.  That would require a bit of a refactor, but is totally
+// the right thing to do.
+func WriteBasecampInterface(path string, data interface{}) {
+	csiFiles.WriteJSONConfig(path, data)
 }
 
 // WriteConmanConfig provides conman configuration for the installer
@@ -300,9 +307,10 @@ func writeConfig(name, path string, tpl template.Template, networks map[string]*
 	// get a pointer to the IPV4Network
 	tempNet := networks[name]
 	// get a pointer to the subnet
+	v := viper.GetViper()
 	bootstrapSubnet, _ := tempNet.LookUpSubnet("bootstrap_dhcp")
 	for _, reservation := range bootstrapSubnet.IPReservations {
-		if reservation.Name == "ncn-m001" {
+		if reservation.Name == v.GetString("install-ncn") {
 			bootstrapSubnet.Gateway = reservation.IPAddress
 		}
 	}

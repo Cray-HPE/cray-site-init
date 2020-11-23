@@ -5,6 +5,7 @@ Copyright 2020 Hewlett Packard Enterprise Development LP
 package cmd
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -67,8 +68,7 @@ var initCmd = &cobra.Command{
 			}
 		}
 
-		log.Println("The Reservations List for the Bootstrap NMN is:", shastaNetworks["NMN"].SubnetbyName("bootstrap_dhcp").IPReservations)
-		// Cycle through the main networks and find the bootstrap_dhcp subnet
+		// Cycle through the main networks and update the reservations and dhcp ranges as necessary
 		for _, netName := range [4]string{"NMN", "HMN", "CAN", "MTL"} {
 
 			tempSubnet, err := shastaNetworks[netName].LookUpSubnet("bootstrap_dhcp")
@@ -90,16 +90,27 @@ var initCmd = &cobra.Command{
 				updateReservations(tempSubnet, logicalNcns)
 			}
 		}
-		log.Println("The Reservations List for the Bootstrap NMN is:", shastaNetworks["NMN"].SubnetbyName("bootstrap_dhcp").IPReservations)
 
 		// Switch from a list of pointers to a list of things before we write it out
 		var ncns []shasta.LogicalNCN
 		for _, ncn := range logicalNcns {
 			ncns = append(ncns, *ncn)
 		}
-		globals, err := shasta.MakeBasecampGlobals(v, shastaNetworks, "NMN", "bootstrap_dhcp", "ncn-m001")
-		csiFiles.WriteJSONConfig(filepath.Join(".", "data-globals.json"), globals)
-		writeOutput(v, shastaNetworks, slsState, ncns)
+		globals, err := shasta.MakeBasecampGlobals(v, shastaNetworks, "NMN", "bootstrap_dhcp", v.GetString("install-ncn"))
+
+		writeOutput(v, shastaNetworks, slsState, ncns, globals)
+
+		// Print Summary
+		fmt.Printf("\n\n===== %v Installation Summary =====\n\n", v.GetString("system-name"))
+		fmt.Printf("Installation Node: %v\n", v.GetString("install-ncn"))
+		fmt.Printf("Customer Access: %v GW: %v\n", v.GetString("can-cidr"), v.GetString("can-gateway"))
+		fmt.Printf("\tUpstream NTP: %v\n", v.GetString("ntp-pool"))
+		fmt.Printf("\tUpstream DNS: %v\n", v.GetString("ipv4-resolvers"))
+		fmt.Printf("System Information\n")
+		fmt.Printf("\tNCNs: %v\n", len(ncns))
+		fmt.Printf("\tMountain Compute Cabinets: %v\n", 0) //TODO: read from SLS
+		fmt.Printf("\tRiver Compute Cabinets: %v\n", 0)    //TODO: read from SLS
+		fmt.Printf("\tHill Compute Cabinets: %v\n", 0)     //TODO: read from SLS
 	},
 }
 
@@ -122,6 +133,7 @@ func init() {
 	initCmd.Flags().String("ceph-rbd-image", "dtr.dev.cray.com/cray/cray-rbd-provisioner:0.1.0-nautilus-1.3", "The container image for the ceph rbd provisioner")
 	initCmd.Flags().String("chart-repo", "http://helmrepo.dev.cray.com:8080", "Upstream chart repo for use during the install")
 	initCmd.Flags().String("docker-image-registry", "dtr.dev.cray.com", "Upstream docker registry for use during the install")
+	initCmd.Flags().String("install-ncn", "ncn-m003", "Hostname of the node to be used for installation")
 
 	// Default IPv4 Networks
 	initCmd.Flags().String("nmn-cidr", shasta.DefaultNMNString, "Overall IPv4 CIDR for all Node Management subnets")
@@ -226,6 +238,7 @@ func setupDirectories(systemName string, v *viper.Viper) (string, error) {
 		filepath.Join(basepath, "credentials"),
 		filepath.Join(basepath, "dnsmasq.d"),
 		filepath.Join(basepath, "cpt-files"),
+		filepath.Join(basepath, "basecamp"),
 	}
 	// Add the Manifest directory if needed
 	if v.GetString("manifest-release") != "" {
@@ -332,7 +345,7 @@ func updateReservations(tempSubnet *shasta.IPV4Subnet, logicalNcns []*shasta.Log
 	}
 }
 
-func writeOutput(v *viper.Viper, shastaNetworks map[string]*shasta.IPV4Network, slsState sls_common.SLSState, logicalNCNs []shasta.LogicalNCN) {
+func writeOutput(v *viper.Viper, shastaNetworks map[string]*shasta.IPV4Network, slsState sls_common.SLSState, logicalNCNs []shasta.LogicalNCN, globals interface{}) {
 	basepath, _ := setupDirectories(v.GetString("system-name"), v)
 	err := csiFiles.WriteJSONConfig(filepath.Join(basepath, "sls_input_file.json"), &slsState)
 	if err != nil {
@@ -348,7 +361,7 @@ func writeOutput(v *viper.Viper, shastaNetworks map[string]*shasta.IPV4Network, 
 
 	for _, ncn := range logicalNCNs {
 		// log.Println("Checking to see if we need CPT files for ", ncn.Hostname)
-		if strings.HasPrefix(ncn.Hostname, "ncn-m001") {
+		if strings.HasPrefix(ncn.Hostname, v.GetString("install-ncn")) {
 			log.Println("Generating Installer Node (CPT) interface configurations for:", ncn.Hostname)
 			WriteCPTNetworkConfig(filepath.Join(basepath, "cpt-files"), ncn, shastaNetworks)
 		}
@@ -356,7 +369,8 @@ func writeOutput(v *viper.Viper, shastaNetworks map[string]*shasta.IPV4Network, 
 	WriteDNSMasqConfig(basepath, logicalNCNs, shastaNetworks)
 	WriteConmanConfig(filepath.Join(basepath, "conman.conf"), logicalNCNs)
 	WriteMetalLBConfigMap(basepath, v, shastaNetworks)
-	WriteBaseCampData(filepath.Join(basepath, "data.json"), logicalNCNs)
+	WriteBasecampData(filepath.Join(basepath, "basecamp/data.json"), logicalNCNs)
+	WriteBasecampInterface(filepath.Join(basepath, "basecamp/data-globals.json"), globals)
 
 	if v.GetString("manifest-release") != "" {
 		initiailzeManifestDir(shasta.DefaultManifestURL, "release/shasta-1.4", filepath.Join(basepath, "loftsman-manifests"))

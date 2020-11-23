@@ -149,7 +149,6 @@ func MakeBasecampGlobals(v *viper.Viper, shastaNetworks map[string]*IPV4Network,
 		log.Fatalf("Couldn't find a '%v' subnet in the %v network for generating basecamp's data.json.  Install is doomed.", installSubnet, installNetwork)
 	}
 	reservations := tempSubnet.ReservationsByName()
-	log.Println(reservations)
 	var ncns []string
 	for k := range reservations {
 		if strings.HasPrefix(k, "ncn-") {
