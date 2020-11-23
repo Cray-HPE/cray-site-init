@@ -158,7 +158,7 @@ func BuildLiveCDNetworks(v *viper.Viper, switches []*shasta.ManagementSwitch) (m
 	} else {
 		static, err := tempCAN.AddSubnetbyCIDR(*canStaticPool, "can_metallb_static_pool", int16(v.GetInt("can-bootstrap-vlan")))
 		if err != nil {
-			log.Printf("Couldn't add subnet: %v", err)
+			log.Fatalf("Couldn't add MetalLB Static pool of %v to net %v: %v", v.GetString("can-static-pool"), tempCAN.CIDR, err)
 		}
 		static.FullName = "CAN Static Pool MetalLB"
 	}
@@ -168,7 +168,7 @@ func BuildLiveCDNetworks(v *viper.Viper, switches []*shasta.ManagementSwitch) (m
 	} else {
 		pool, err = tempCAN.AddSubnetbyCIDR(*canDynamicPool, "can_metallb_address_pool", int16(v.GetInt("can-bootstrap-vlan")))
 		if err != nil {
-			log.Printf("Couldn't add subnet: %v", err)
+			log.Fatalf("Couldn't add MetalLB Dynamic pool of %v to net %v: %v", v.GetString("can-dynamic-pool"), tempCAN.CIDR, err)
 		}
 		pool.FullName = "CAN Dynamic MetalLB"
 	}
