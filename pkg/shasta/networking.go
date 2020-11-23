@@ -51,7 +51,7 @@ type IPV4Subnet struct {
 type ManagementSwitch struct {
 	Xname               string `json:"xname" mapstructure:"xname" csv:"Switch Xname"` // Required for SLS
 	Name                string `json:"name" mapstructure:"name" csv:"-"`              // Required for SLS to update DNS
-	Brand               string `json:"brand" mapstructure:"brand" csv:"-"`
+	Brand               string `json:"brand" mapstructure:"brand" csv:"Brand"`
 	Model               string `json:"model" mapstructure:"model" csv:"Model"`
 	Os                  string `json:"operating-system" mapstructure:"operating-system" csv:"-"`
 	Firmware            string `json:"firmware" mapstructure:"firmware" csv:"-"`

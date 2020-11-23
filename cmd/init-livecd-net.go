@@ -98,7 +98,8 @@ func BuildLiveCDNetworks(v *viper.Viper, switches []*shasta.ManagementSwitch) (m
 	// Update the CIDR from flags/viper
 	tempHSN.CIDR = v.GetString("hsn-cidr")
 	// Divide the network into an appropriate number of subnets
-	tempHSN.GenSubnets(cabinetDetails, net.CIDRMask(22, 32))
+	// For 1.4 we will *NOT* subdivide
+	// tempHSN.GenSubnets(cabinetDetails, net.CIDRMask(22, 32))
 	networkMap["HSN"] = &tempHSN
 
 	//
