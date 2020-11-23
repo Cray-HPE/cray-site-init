@@ -278,7 +278,6 @@ func convertIPV4SubnetToSLS(s *shasta.IPV4Subnet) sls_common.IPV4Subnet {
 }
 
 func convertIPReservationToSLS(s *shasta.IPReservation) sls_common.IPReservation {
-	fmt.Println(s.Name, s.Aliases)
 	return sls_common.IPReservation{
 		IPAddress: s.IPAddress,
 		Name:      s.Name,
