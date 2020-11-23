@@ -91,6 +91,9 @@ var initCmd = &cobra.Command{
 			}
 		}
 
+		// HACKey, re-run SLS generation to pickup IP reservations
+		slsState = prepareAndGenerateSLS(v, shastaNetworks, hmnRows)
+
 		// Switch from a list of pointers to a list of things before we write it out
 		var ncns []shasta.LogicalNCN
 		for _, ncn := range logicalNcns {
