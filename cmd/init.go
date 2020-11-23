@@ -91,6 +91,9 @@ var initCmd = &cobra.Command{
 			}
 		}
 
+		// Update the SLSState with the updated network information
+		_, slsState.Networks = prepareNetworkSLS(shastaNetworks)
+
 		// Switch from a list of pointers to a list of things before we write it out
 		var ncns []shasta.LogicalNCN
 		for _, ncn := range logicalNcns {
@@ -285,7 +288,8 @@ func collectInput(v *viper.Viper) ([]shcd_parser.HMNRow, []*shasta.LogicalNCN, [
 	return hmnRows, ncns, switches
 }
 
-func prepareAndGenerateSLS(v *viper.Viper, shastaNetworks map[string]*shasta.IPV4Network, hmnRows []shcd_parser.HMNRow) sls_common.SLSState {
+func prepareNetworkSLS(shastaNetworks map[string]*shasta.IPV4Network) ([]shasta.IPV4Network, map[string]sls_common.Network) {
+	// Fix up the network names & create the SLS friendly version of the shasta networks
 	var networks []shasta.IPV4Network
 	for name, network := range shastaNetworks {
 		if network.Name == "" {
@@ -293,6 +297,12 @@ func prepareAndGenerateSLS(v *viper.Viper, shastaNetworks map[string]*shasta.IPV
 		}
 		networks = append(networks, *network)
 	}
+	return networks, convertIPV4NetworksToSLS(&networks)
+}
+
+func prepareAndGenerateSLS(v *viper.Viper, shastaNetworks map[string]*shasta.IPV4Network, hmnRows []shcd_parser.HMNRow) sls_common.SLSState {
+	networks, slsNetworks := prepareNetworkSLS(shastaNetworks)
+
 	// Generate SLS input state
 	// Verify there are enough cabinet subnets
 	cabinetSubnets := getCabinetSubnets(&networks)
@@ -326,7 +336,7 @@ func prepareAndGenerateSLS(v *viper.Viper, shastaNetworks map[string]*shasta.IPV
 		HillCabinets:        getCabinets(sls_common.ClassHill, v.GetInt("starting-hill-cabinet"), cabinetSubnets[numRiver:numRiver+numHill]),
 		MountainCabinets:    getCabinets(sls_common.ClassMountain, v.GetInt("starting-mountain-cabinet"), cabinetSubnets[numRiver+numHill:]),
 		MountainStartingNid: v.GetInt("starting-mountain-nid"),
-		Networks:            convertIPV4NetworksToSLS(&networks),
+		Networks:            slsNetworks,
 	}
 	slsState := shasta.GenerateSLSState(inputState, hmnRows)
 	return slsState
