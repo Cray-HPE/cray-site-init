@@ -295,6 +295,7 @@ func prepareNetworkSLS(shastaNetworks map[string]*shasta.IPV4Network) ([]shasta.
 		if network.Name == "" {
 			network.Name = name
 		}
+		networks = append(networks, *network)
 	}
 	return networks, convertIPV4NetworksToSLS(&networks)
 }
