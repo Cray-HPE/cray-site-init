@@ -78,7 +78,7 @@ func loadHMNConnectionsFile(path string) (rows []shcd_parser.HMNRow, err error) 
 	return
 }
 
-func loadNCNMetadataFile(path string) (ncns []*shasta.BootstrapNCNMetadata, err error) {
+func loadNCNMetadataFile(path string) (ncns []*shasta.LogicalNCN, err error) {
 	// I know this is a little silly, but it improves readability and
 	// gives us future flexibility
 	return csiFiles.ReadNodeCSV(path)

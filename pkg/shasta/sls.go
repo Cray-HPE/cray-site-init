@@ -98,8 +98,8 @@ func ExtractSLSNetworks(sls *sls_common.SLSState) ([]IPV4Network, error) {
 }
 
 // ExtractSLSNCNs pulls the port information for the BMCs of all Management Nodes
-func ExtractSLSNCNs(sls *sls_common.SLSState) ([]BootstrapNCNMetadata, error) {
-	var ncns []BootstrapNCNMetadata
+func ExtractSLSNCNs(sls *sls_common.SLSState) ([]LogicalNCN, error) {
+	var ncns []LogicalNCN
 	for key, node := range sls.Hardware {
 		if node.Type == sls_common.Node {
 			var extra sls_common.ComptypeNode
@@ -114,12 +114,13 @@ func ExtractSLSNCNs(sls *sls_common.SLSState) ([]BootstrapNCNMetadata, error) {
 				if err != nil { // Sometimes the port is not available.  We *should* be able to continue
 					log.Printf("%v %v\n", err, port)
 				}
-				ncns = append(ncns, BootstrapNCNMetadata{
-					Xname:     key,
-					Role:      extra.Role,
-					Subrole:   extra.SubRole,
-					Hostnames: extra.Aliases,
-					BmcPort:   mgmtSwitch + ":" + port,
+				ncns = append(ncns, LogicalNCN{
+					Xname:    key,
+					Role:     extra.Role,
+					Subrole:  extra.SubRole,
+					Hostname: extra.Aliases[0],
+					Aliases:  extra.Aliases,
+					BmcPort:  mgmtSwitch + ":" + port,
 				})
 			}
 

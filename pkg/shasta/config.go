@@ -10,18 +10,12 @@ import (
 	"net"
 )
 
-// BootstrapNCNMetadata is a type that matches the ncn_metadata.csv file as
-// NCN xname,NCN Role,NCN Subrole,BMC MAC,BMC Switch Port,NMN MAC,NMN Switch Port
-type BootstrapNCNMetadata struct {
-	Xname     string   `json:"xname" csv:"NCN xname"`
-	Role      string   `json:"role" csv:"NCN Role"`
-	Subrole   string   `json:"subrole" csv:"NCN Subrole"`
-	BmcMac    string   `json:"bmc-mac" csv:"BMC MAC"`
-	BmcPort   string   `json:"bmc-port" csv:"BMC Switch Port"`
-	NmnMac    string   `json:"nmn-mac" csv:"NMN MAC"`
-	NmnPort   string   `json:"nmn-port" csv:"NMN Switch Port"`
-	Hostnames []string `json:"hostnames" csv:"-"` // The "-" indicates that we do *not* expect this field to be in the CSV file
-	Bond0Macs []string `json:"bond0-macs" csv:"-"`
+// BootstrapSwitchMetadata is a type that matches the switch_metadata.csv file as
+// Switch Xname, Type
+// The type can be CDU, Spine, Aggregation, or Leaf
+type BootstrapSwitchMetadata struct {
+	Xname string `json:"xname" csv:"Switch Xname"`
+	Type  string `json:"type" csv:"Type"`
 }
 
 // NewBootstrapNCNMetadata is a type that matches the updated ncn_metadata.csv file as
@@ -36,19 +30,6 @@ type NewBootstrapNCNMetadata struct {
 	BootstrapMac string `json:"bootstrap-mac" csv:"Bootstrap MAC"`
 	Bond0Mac0    string `json:"bond0-mac0" csv:"Bond0 MAC0"`
 	Bond0Mac1    string `json:"bond0-mac1" csv:"Bond0 MAC1"`
-}
-
-// AsLogicalNCN converts from NCNMetadata to LogicalNCN.  It's unwise to try to reverse this.
-func (node BootstrapNCNMetadata) AsLogicalNCN() *LogicalNCN {
-	tempNCN := LogicalNCN{
-		Xname:      node.Xname,
-		Hostname:   node.GetHostname(),
-		ShastaRole: fmt.Sprintf("%v-%v", node.Role, node.Subrole),
-		Aliases:    node.Hostnames,
-		BMCMac:     node.BmcMac,
-		NMNMac:     node.NmnMac,
-	}
-	return &tempNCN
 }
 
 // SystemConfig stores the overall set of system configuration parameters
@@ -77,15 +58,6 @@ type CabinetDetail struct {
 	Kind            string `mapstructure:"cabinet-type"`
 	Cabinets        int    `mapstructure:"cabinets"`
 	StartingCabinet int    `mapstructure:"starting-cabinet"`
-}
-
-// BGPPeering stores information about MetalLB Peering
-type BGPPeering struct {
-	// the two ends of the turtle
-}
-
-// PointToPoint is a structure for storing the Basics of Network Management
-type PointToPoint struct {
 }
 
 // SiteServices stores identity information for system services
@@ -121,12 +93,9 @@ func GenerateInstanceID() string {
 }
 
 // GetHostname returns an explicit hostname if possible, otherwise the Xname, otherwise an empty string
-func (node BootstrapNCNMetadata) GetHostname() string {
-	if len(node.Hostnames) > 0 {
-		return node.Hostnames[1]
-	}
-	if node.Xname != "" {
+func (node LogicalNCN) GetHostname() string {
+	if node.Hostname == "" {
 		return node.Xname
 	}
-	return ""
+	return node.Hostname
 }
