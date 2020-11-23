@@ -28,11 +28,12 @@ var (
 
 // SLSGeneratorInputState is given to the SLS config generator in order to generator the SLS config file
 type SLSGeneratorInputState struct {
-	ManagementSwitches  map[string]sls_common.GenericHardware `json:"ManagementSwitches"` // SLS Type: comptype_mgmt_switch
-	RiverCabinets       map[string]sls_common.GenericHardware `json:"RiverCabinets"`      // SLS Type: comptype_cabinet
-	HillCabinets        map[string]sls_common.GenericHardware `json:"HillCabinets"`       // SLS Type: comptype_cabinet
-	MountainCabinets    map[string]sls_common.GenericHardware `json:"MountainCabinets"`   // SLS Type: comptype_cabinet
-	MountainStartingNid int                                   `json:"MountainStartingNid"`
+	ManagementSwitchBrands map[string]ManagementSwitchBrand      `json:"ManagementSwitchBrands"` // map[xname]MgmtSwitchBrand
+	ManagementSwitches     map[string]sls_common.GenericHardware `json:"ManagementSwitches"`     // SLS Type: comptype_mgmt_switch
+	RiverCabinets          map[string]sls_common.GenericHardware `json:"RiverCabinets"`          // SLS Type: comptype_cabinet
+	HillCabinets           map[string]sls_common.GenericHardware `json:"HillCabinets"`           // SLS Type: comptype_cabinet
+	MountainCabinets       map[string]sls_common.GenericHardware `json:"MountainCabinets"`       // SLS Type: comptype_cabinet
+	MountainStartingNid    int                                   `json:"MountainStartingNid"`
 
 	Networks map[string]sls_common.Network `json:"Networks"`
 }
@@ -540,19 +541,41 @@ func (g *SLSStateGenerator) getConnectionForNode(node sls_common.GenericHardware
 		destinationXname = node.Parent
 	}
 
-	connectionExtraProperties := sls_common.ComptypeMgmtSwitchConnector{
-		NodeNics:   []string{destinationXname},
-		VendorName: fmt.Sprintf("ethernet1/1/%s", destinationJackString),
+	// Determine Switch and MgmtSwitchConnector xnames
+	switchName := fmt.Sprintf("%sc0w%s", row.DestinationRack, destinationUString)
+	connectorXname := fmt.Sprintf("%sc0w%sj%s", row.DestinationRack, destinationUString, destinationJackString)
+
+	// Calculate the vendor name for the ethernet interface
+	// Dell switches use: ethernet1/1/1
+	// Aruba switches use: 1/1/1
+	switchBrand := ManagementSwitchBrandDell // If no switch brand given, assume dell
+	if sb, ok := g.inputState.ManagementSwitchBrands[switchName]; ok {
+		switchBrand = sb
+	}
+
+	var vendorName string
+	switch switchBrand {
+	case ManagementSwitchBrandDell:
+		vendorName = fmt.Sprintf("ethernet1/1/%s", destinationJackString)
+	case ManagementSwitchBrandAruba:
+		vendorName = fmt.Sprintf("1/1/%s", destinationJackString)
+	default:
+		g.logger.Fatal("Unknown Management Switch brand found for switch",
+			zap.Any("switchBrand", switchBrand),
+			zap.String("switchName", switchName),
+			zap.String("connectorXname", connectorXname))
 	}
 
 	connection = sls_common.GenericHardware{
-		Parent: fmt.Sprintf("%sc0w%s", row.DestinationRack, destinationUString),
-		Xname: fmt.Sprintf("%sc0w%sj%s",
-			row.DestinationRack, destinationUString, destinationJackString),
-		Type:               "comptype_mgmt_switch_connector",
-		Class:              "River",
-		TypeString:         "MgmtSwitchConnector",
-		ExtraPropertiesRaw: connectionExtraProperties,
+		Parent:     switchName,
+		Xname:      connectorXname,
+		Type:       "comptype_mgmt_switch_connector",
+		Class:      "River",
+		TypeString: "MgmtSwitchConnector",
+		ExtraPropertiesRaw: sls_common.ComptypeMgmtSwitchConnector{
+			NodeNics:   []string{destinationXname},
+			VendorName: vendorName,
+		},
 	}
 
 	return
