@@ -154,21 +154,21 @@ func BuildLiveCDNetworks(v *viper.Viper, switches []*shasta.ManagementSwitch) (m
 	// Add a /28 for the Static Pool
 	_, canStaticPool, err := net.ParseCIDR(v.GetString("can-static-pool"))
 	if err != nil {
-		log.Printf("Invalid can-static-pool.  Cowardly refusing to create it.")
+		log.Printf("IP Addressing Failure\nInvalid can-static-pool.  Cowardly refusing to create it.")
 	} else {
 		static, err := tempCAN.AddSubnetbyCIDR(*canStaticPool, "can_metallb_static_pool", int16(v.GetInt("can-bootstrap-vlan")))
 		if err != nil {
-			log.Fatalf("Couldn't add MetalLB Static pool of %v to net %v: %v", v.GetString("can-static-pool"), tempCAN.CIDR, err)
+			log.Fatalf("IP Addressing Failure\nCouldn't add MetalLB Static pool of %v to net %v: %v", v.GetString("can-static-pool"), tempCAN.CIDR, err)
 		}
 		static.FullName = "CAN Static Pool MetalLB"
 	}
 	_, canDynamicPool, err := net.ParseCIDR(v.GetString("can-dynamic-pool"))
 	if err != nil {
-		log.Printf("Invalid can-dynamic-pool.  Cowardly refusing to create it.")
+		log.Printf("IP Addressing Failure\nInvalid can-dynamic-pool.  Cowardly refusing to create it.")
 	} else {
 		pool, err = tempCAN.AddSubnetbyCIDR(*canDynamicPool, "can_metallb_address_pool", int16(v.GetInt("can-bootstrap-vlan")))
 		if err != nil {
-			log.Fatalf("Couldn't add MetalLB Dynamic pool of %v to net %v: %v", v.GetString("can-dynamic-pool"), tempCAN.CIDR, err)
+			log.Fatalf("IP Addressing Failure\nCouldn't add MetalLB Dynamic pool of %v to net %v: %v", v.GetString("can-dynamic-pool"), tempCAN.CIDR, err)
 		}
 		pool.FullName = "CAN Dynamic MetalLB"
 	}
