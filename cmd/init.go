@@ -392,7 +392,6 @@ func writeOutput(v *viper.Viper, shastaNetworks map[string]*shasta.IPV4Network, 
 	WriteConmanConfig(filepath.Join(basepath, "conman.conf"), logicalNCNs)
 	WriteMetalLBConfigMap(basepath, v, shastaNetworks)
 	WriteBasecampData(filepath.Join(basepath, "basecamp/data.json"), logicalNCNs, globals)
-	WriteBasecampInterface(filepath.Join(basepath, "basecamp/data-globals.json"), globals)
 
 	if v.GetString("manifest-release") != "" {
 		initiailzeManifestDir(shasta.DefaultManifestURL, "release/shasta-1.4", filepath.Join(basepath, "loftsman-manifests"))

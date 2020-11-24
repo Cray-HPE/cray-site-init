@@ -150,13 +150,6 @@ func WriteBasecampData(path string, ncns []shasta.LogicalNCN, globals interface{
 	*/
 }
 
-// WriteBasecampInterface is a helper function until we are ready to put this data
-// into data.json.  That would require a bit of a refactor, but is totally
-// the right thing to do.
-func WriteBasecampInterface(path string, data interface{}) {
-	csiFiles.WriteJSONConfig(path, data)
-}
-
 // WriteConmanConfig provides conman configuration for the installer
 func WriteConmanConfig(path string, ncns []shasta.LogicalNCN) {
 	type conmanLine struct {
