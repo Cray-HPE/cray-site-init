@@ -61,7 +61,7 @@ clean-all: clean clean-artifacts
 
 # Run tests
 test: build
-	go test ./cmd/... ./internal/... -coverprofile coverage.out
+	go test ./cmd/... ./internal/... ./pkg/... -coverprofile coverage.out
 
 tools:
 	go get -u golang.org/x/lint/golint

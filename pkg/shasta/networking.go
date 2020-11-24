@@ -13,6 +13,18 @@ import (
 	"stash.us.cray.com/MTL/csi/pkg/ipam"
 )
 
+// ManagementSwitchBrand known list of Management switch brands
+type ManagementSwitchBrand string
+
+// ManagementSwitchBrandAruba for Aruba Management switches
+const ManagementSwitchBrandAruba ManagementSwitchBrand = "Aruba"
+
+// ManagementSwitchBrandDell for Dell Management switches
+const ManagementSwitchBrandDell ManagementSwitchBrand = "Dell"
+
+// ManagementSwitchBrandMellanox for Mellanox Management switches
+const ManagementSwitchBrandMellanox ManagementSwitchBrand = "Mellanox"
+
 // IPReservation is a type for managing IP Reservations
 type IPReservation struct {
 	IPAddress net.IP   `yaml:"ip_address"`
@@ -49,14 +61,14 @@ type IPV4Subnet struct {
 
 // ManagementSwitch is a type for managing Management switches
 type ManagementSwitch struct {
-	Xname               string `json:"xname" mapstructure:"xname" csv:"Switch Xname"` // Required for SLS
-	Name                string `json:"name" mapstructure:"name" csv:"-"`              // Required for SLS to update DNS
-	Brand               string `json:"brand" mapstructure:"brand" csv:"Brand"`
-	Model               string `json:"model" mapstructure:"model" csv:"Model"`
-	Os                  string `json:"operating-system" mapstructure:"operating-system" csv:"-"`
-	Firmware            string `json:"firmware" mapstructure:"firmware" csv:"-"`
-	SwitchType          string `json:"type" mapstructure:"type" csv:"Type"` //"CDU/Leaf/Spine/Aggregation"
-	ManagementInterface net.IP `json:"ip" mapstructure:"ip" csv:"-"`        // SNMP/REST interface IP (not a distinct BMC)  // Required for SLS
+	Xname               string                `json:"xname" mapstructure:"xname" csv:"Switch Xname"` // Required for SLS
+	Name                string                `json:"name" mapstructure:"name" csv:"-"`              // Required for SLS to update DNS
+	Brand               ManagementSwitchBrand `json:"brand" mapstructure:"brand" csv:"Brand"`
+	Model               string                `json:"model" mapstructure:"model" csv:"Model"`
+	Os                  string                `json:"operating-system" mapstructure:"operating-system" csv:"-"`
+	Firmware            string                `json:"firmware" mapstructure:"firmware" csv:"-"`
+	SwitchType          string                `json:"type" mapstructure:"type" csv:"Type"` //"CDU/Leaf/Spine/Aggregation"
+	ManagementInterface net.IP                `json:"ip" mapstructure:"ip" csv:"-"`        // SNMP/REST interface IP (not a distinct BMC)  // Required for SLS
 }
 
 // GenSubnets subdivides a network into a set of subnets
