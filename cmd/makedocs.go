@@ -5,7 +5,6 @@ Copyright 2020 Hewlett Packard Enterprise Development LP
 package cmd
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -16,8 +15,8 @@ import (
 
 // makedocsCmd represents the makedocs command
 var makedocsCmd = &cobra.Command{
-	Use:   "makedocs",
-	Short: "Create a set of markdown files for the docs",
+	Use:   "makedocs [directory]",
+	Short: "Create a set of markdown files for the docs in the [directory] (docs/ is the default)",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
 
@@ -25,10 +24,22 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("makedocs called")
-		destination := "docs/"
-		basepath, err := filepath.Abs(filepath.Clean(destination))
-		os.Mkdir(basepath, 777)
+		var destinationDirectory string
+		if len(args) < 1 {
+			destinationDirectory = "docs/" // This is the default without passing an argument
+		} else {
+			destinationDirectory = args[0]
+		}
+		basepath, err := filepath.Abs(filepath.Clean(destinationDirectory))
+		_, err = os.Stat(basepath)
+		if err != nil {
+			// Assert that the error is actually a PathError or bail
+			_, ok := err.(*os.PathError)
+			if ok != true {
+				log.Fatalf("Error accessing %v :%v", basepath, err)
+			}
+		}
+		err = os.Mkdir(basepath, 0777)
 		err = doc.GenMarkdownTree(rootCmd, basepath)
 		if err != nil {
 			log.Fatal(err)
