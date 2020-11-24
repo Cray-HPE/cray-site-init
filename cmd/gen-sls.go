@@ -282,5 +282,6 @@ func convertIPReservationToSLS(s *shasta.IPReservation) sls_common.IPReservation
 		IPAddress: s.IPAddress,
 		Name:      s.Name,
 		Comment:   s.Comment,
+		Aliases:   s.Aliases,
 	}
 }
