@@ -22,6 +22,9 @@ const ManagementSwitchBrandAruba ManagementSwitchBrand = "Aruba"
 // ManagementSwitchBrandDell for Dell Management switches
 const ManagementSwitchBrandDell ManagementSwitchBrand = "Dell"
 
+// ManagementSwitchBrandMellanox for Mellanox Management switches
+const ManagementSwitchBrandMellanox ManagementSwitchBrand = "Mellanox"
+
 // IPReservation is a type for managing IP Reservations
 type IPReservation struct {
 	IPAddress net.IP   `yaml:"ip_address"`

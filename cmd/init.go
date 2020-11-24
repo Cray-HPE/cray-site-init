@@ -48,7 +48,7 @@ var initCmd = &cobra.Command{
 		shasta.AllocateIps(logicalNcns, shastaNetworks) // This function has no return because it is working with lists of pointers.
 
 		// Now we can finally generate the slsState
-		slsState := prepareAndGenerateSLS(v, shastaNetworks, hmnRows)
+		slsState := prepareAndGenerateSLS(v, shastaNetworks, hmnRows, switches)
 		// SLS can tell us which NCNs match with which Xnames, we need to update the IP Reservations
 		tempNcns, err := shasta.ExtractSLSNCNs(&slsState)
 		if err != nil {
@@ -258,7 +258,8 @@ func collectInput(v *viper.Viper) ([]shcd_parser.HMNRow, []*shasta.LogicalNCN, [
 	// The installation requires a set of information in order to proceed
 	// First, we need some kind of representation of the physical hardware
 	// That is generally represented through the hmn_connections.json file
-	// which is literally a cabling map with metadata about the NCNs.
+	// which is literally a cabling map with metadata about the NCNs and
+	// River Compute node BMCs, Columbia Rosetta Switches, and PDUs.
 	//
 	// From the hmn_connections file, we can create a set of HMNRow objects
 	// to use for populating SLS.
@@ -268,7 +269,7 @@ func collectInput(v *viper.Viper) ([]shcd_parser.HMNRow, []*shasta.LogicalNCN, [
 	}
 	//
 	// SLS also needs to know about our networking configuration.  In order to do that,
-	// we need to load the swtiches
+	// we need to load the switches
 	switches, err := csiFiles.ReadSwitchCSV(v.GetString("switch-metadata"))
 	if err != nil {
 		log.Fatalln("Couldn't extract switches", err)
@@ -285,7 +286,7 @@ func collectInput(v *viper.Viper) ([]shcd_parser.HMNRow, []*shasta.LogicalNCN, [
 	return hmnRows, ncns, switches
 }
 
-func prepareAndGenerateSLS(v *viper.Viper, shastaNetworks map[string]*shasta.IPV4Network, hmnRows []shcd_parser.HMNRow) sls_common.SLSState {
+func prepareAndGenerateSLS(v *viper.Viper, shastaNetworks map[string]*shasta.IPV4Network, hmnRows []shcd_parser.HMNRow, inputSwitches []*shasta.ManagementSwitch) sls_common.SLSState {
 	var networks []shasta.IPV4Network
 	for name, network := range shastaNetworks {
 		if network.Name == "" {
@@ -314,19 +315,24 @@ func prepareAndGenerateSLS(v *viper.Viper, shastaNetworks map[string]*shasta.IPV
 	}
 	reservedSwitches, _ := extractSwitchesfromReservations(switchNet)
 	slsSwitches := make(map[string]sls_common.GenericHardware)
+	switchBrands := make(map[string]shasta.ManagementSwitchBrand)
 	for _, mySwitch := range reservedSwitches {
 		slsSwitches[mySwitch.Xname] = convertManagemenetSwitchToSLS(&mySwitch)
 	}
 
+	// Extract Switch brands from data stored in switch_metdata.csv
+	for _, mySwitch := range inputSwitches {
+		switchBrands[mySwitch.Xname] = mySwitch.Brand
+	}
+
 	inputState := shasta.SLSGeneratorInputState{
-		// TODO What about the ManagementSwitch?
-		// ManagementSwitches: should be an array of sls_common.Hardware xname and ip addr are crucial
-		ManagementSwitches:  slsSwitches,
-		RiverCabinets:       getCabinets(sls_common.ClassRiver, v.GetInt("starting-river-cabinet"), cabinetSubnets[0:numRiver]),
-		HillCabinets:        getCabinets(sls_common.ClassHill, v.GetInt("starting-hill-cabinet"), cabinetSubnets[numRiver:numRiver+numHill]),
-		MountainCabinets:    getCabinets(sls_common.ClassMountain, v.GetInt("starting-mountain-cabinet"), cabinetSubnets[numRiver+numHill:]),
-		MountainStartingNid: v.GetInt("starting-mountain-nid"),
-		Networks:            convertIPV4NetworksToSLS(&networks),
+		ManagementSwitches:     slsSwitches,
+		ManagementSwitchBrands: switchBrands,
+		RiverCabinets:          getCabinets(sls_common.ClassRiver, v.GetInt("starting-river-cabinet"), cabinetSubnets[0:numRiver]),
+		HillCabinets:           getCabinets(sls_common.ClassHill, v.GetInt("starting-hill-cabinet"), cabinetSubnets[numRiver:numRiver+numHill]),
+		MountainCabinets:       getCabinets(sls_common.ClassMountain, v.GetInt("starting-mountain-cabinet"), cabinetSubnets[numRiver+numHill:]),
+		MountainStartingNid:    v.GetInt("starting-mountain-nid"),
+		Networks:               convertIPV4NetworksToSLS(&networks),
 	}
 	slsState := shasta.GenerateSLSState(inputState, hmnRows)
 	return slsState

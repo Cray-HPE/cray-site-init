@@ -545,12 +545,15 @@ func (g *SLSStateGenerator) getConnectionForNode(node sls_common.GenericHardware
 	switchName := fmt.Sprintf("%sc0w%s", row.DestinationRack, destinationUString)
 	connectorXname := fmt.Sprintf("%sc0w%sj%s", row.DestinationRack, destinationUString, destinationJackString)
 
-	// Calculate the vendor name for the ethernet interface
+	// Calculate the vendor name for the ethernet interfaces
 	// Dell switches use: ethernet1/1/1
 	// Aruba switches use: 1/1/1
-	switchBrand := ManagementSwitchBrandDell // If no switch brand given, assume dell
-	if sb, ok := g.inputState.ManagementSwitchBrands[switchName]; ok {
-		switchBrand = sb
+	switchBrand := g.inputState.ManagementSwitchBrands[switchName]
+	if switchBrand == "" {
+		g.logger.Fatal("Management Switch brand found not provided for switch",
+			zap.String("switchName", switchName),
+			zap.String("connectorXname", switchName),
+			zap.String("destinationXname", destinationXname))
 	}
 
 	var vendorName string
@@ -559,11 +562,20 @@ func (g *SLSStateGenerator) getConnectionForNode(node sls_common.GenericHardware
 		vendorName = fmt.Sprintf("ethernet1/1/%s", destinationJackString)
 	case ManagementSwitchBrandAruba:
 		vendorName = fmt.Sprintf("1/1/%s", destinationJackString)
+	case ManagementSwitchBrandMellanox:
+		// This should only occur when the HMN connections says that a BMC is connected to the
+		// spine/aggergation switch. Which should not happen.
+		g.logger.Fatal("Currently do no support MgmtSwitchConnector for Mellonox switches",
+			zap.Any("switchBrand", switchBrand),
+			zap.String("switchName", switchName),
+			zap.String("connectorXname", switchName),
+			zap.String("destinationXname", destinationXname))
 	default:
 		g.logger.Fatal("Unknown Management Switch brand found for switch",
 			zap.Any("switchBrand", switchBrand),
 			zap.String("switchName", switchName),
-			zap.String("connectorXname", connectorXname))
+			zap.String("connectorXname", switchName),
+			zap.String("destinationXname", destinationXname))
 	}
 
 	connection = sls_common.GenericHardware{

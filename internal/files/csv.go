@@ -22,9 +22,9 @@ func ReadSwitchCSV(filename string) ([]*shasta.ManagementSwitch, error) {
 	defer switchMetadataFile.Close()
 	err = gocsv.UnmarshalFile(switchMetadataFile, &switches)
 	if err != nil { // Load switches from file
-		return switches, nil
+		return switches, err
 	}
-	return switches, err
+	return switches, nil
 }
 
 // ReadNodeCSV parses a CSV file into a list of NCN_bootstrap nodes for use by the installer
