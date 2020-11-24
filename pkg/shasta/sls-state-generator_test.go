@@ -188,6 +188,9 @@ var HMNConnections = []shcd_parser.HMNRow{
 
 var TestSLSInputState = SLSGeneratorInputState{
 	ManagementSwitchBrands: map[string]ManagementSwitchBrand{
+		"x3000c0w22": ManagementSwitchBrandDell,
+		"x3000c0w38": ManagementSwitchBrandDell,
+		"x3001c0w21": ManagementSwitchBrandDell,
 		"x3001c0w42": ManagementSwitchBrandAruba,
 	},
 	ManagementSwitches: map[string]sls_common.GenericHardware{
