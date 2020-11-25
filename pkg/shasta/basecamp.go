@@ -113,7 +113,7 @@ var basecampGlobalString = `{
 	"kubernetes-pods-cidr": "10.32.0.0/12",
 	"kubernetes-services-cidr": "10.16.0.0/12",
 	"kubernetes-weave-mtu": "1460",
-	"ntp_local_nets": "~FIXME~ e.g. 10.252.0.0/17,10.254.0.0/17",
+	"ntp_local_nets": "~FIXME~ e.g. 10.252.0.0/17 10.254.0.0/17",
 	"ntp_peers": "~FIXME~ e.g. ncn-w001 ncn-w002 ncn-w003 ncn-s001 ncn-s002 ncn-s003 ncn-m001 ncn-m002 ncn-m003",
 	"num_storage_nodes": "3",
 	"rgw-virtual-ip": "~FIXME~ e.g. 10.252.2.100",
@@ -159,7 +159,7 @@ func MakeBasecampGlobals(v *viper.Viper, shastaNetworks map[string]*IPV4Network,
 	// dns-server should be the internal interface ip for the node running the installer
 	global["dns-server"] = reservations[installNCN].IPAddress.String()
 	// ntp_local_nets should be a list of NMN and HMN CIDRS
-	global["ntp_local_nets"] = strings.Join([]string{shastaNetworks["NMN"].CIDR, shastaNetworks["HMN"].CIDR}, ",")
+	global["ntp_local_nets"] = strings.Join([]string{shastaNetworks["NMN"].CIDR, shastaNetworks["HMN"].CIDR}, " ")
 	// first-master-hostname is used to ??? TODO:
 	global["first-master-hostname"] = "ncn-m002"
 	// "k8s-virtual-ip" is the nmn alias for k8s
