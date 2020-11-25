@@ -17,12 +17,6 @@ import (
 var makedocsCmd = &cobra.Command{
 	Use:   "makedocs [directory]",
 	Short: "Create a set of markdown files for the docs in the [directory] (docs/ is the default)",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		var destinationDirectory string
 		if len(args) < 1 {
