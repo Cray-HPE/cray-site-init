@@ -178,7 +178,7 @@ func WriteConmanConfig(path string, ncns []shasta.LogicalNCN) {
 }
 
 // WriteMetalLBConfigMap creates the yaml configmap
-func WriteMetalLBConfigMap(path string, v *viper.Viper, networks map[string]*shasta.IPV4Network) {
+func WriteMetalLBConfigMap(path string, v *viper.Viper, networks map[string]*shasta.IPV4Network, switches []*shasta.ManagementSwitch) {
 
 	// this lookup table should be redundant in the future
 	// when we can better hint which pool an endpoint should pull from
@@ -198,11 +198,18 @@ func WriteMetalLBConfigMap(path string, v *viper.Viper, networks map[string]*sha
 	configStruct.Networks = make(map[string]string)
 	configStruct.ASN = v.GetString("bgp-asn")
 
+	var spineSwitchXnames []string
+	for _, mgmtswitch := range switches {
+		if mgmtswitch.SwitchType == "Spine" {
+			spineSwitchXnames = append(spineSwitchXnames, mgmtswitch.Xname)
+		}
+	}
+
 	for name, network := range networks {
 		for _, subnet := range network.Subnets {
 			if name == "NMN" && subnet.Name == "nmn_network_hardware" {
 				for _, reservation := range subnet.IPReservations {
-					for _, switchXname := range strings.Split(v.GetString("spine-switch-xnames"), ",") {
+					for _, switchXname := range spineSwitchXnames {
 						if reservation.Comment == switchXname {
 							configStruct.SpineSwitches = append(configStruct.SpineSwitches, reservation.IPAddress.String())
 						}
