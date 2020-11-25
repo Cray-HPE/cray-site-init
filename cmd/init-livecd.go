@@ -7,6 +7,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"net"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -315,6 +316,9 @@ func writeConfig(name, path string, tpl template.Template, networks map[string]*
 		if reservation.Name == v.GetString("install-ncn") {
 			bootstrapSubnet.Gateway = reservation.IPAddress
 		}
+	}
+	if tempNet.Name == "CAN" {
+		bootstrapSubnet.Gateway = net.ParseIP(v.GetString("can-gateway"))
 	}
 	csiFiles.WriteTemplate(filepath.Join(path, fmt.Sprintf("dnsmasq.d/%v.conf", name)), &tpl, bootstrapSubnet)
 }
