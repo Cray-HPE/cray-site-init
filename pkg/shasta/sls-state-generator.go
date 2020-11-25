@@ -28,11 +28,12 @@ var (
 
 // SLSGeneratorInputState is given to the SLS config generator in order to generator the SLS config file
 type SLSGeneratorInputState struct {
-	ManagementSwitches  map[string]sls_common.GenericHardware `json:"ManagementSwitches"` // SLS Type: comptype_mgmt_switch
-	RiverCabinets       map[string]sls_common.GenericHardware `json:"RiverCabinets"`      // SLS Type: comptype_cabinet
-	HillCabinets        map[string]sls_common.GenericHardware `json:"HillCabinets"`       // SLS Type: comptype_cabinet
-	MountainCabinets    map[string]sls_common.GenericHardware `json:"MountainCabinets"`   // SLS Type: comptype_cabinet
-	MountainStartingNid int                                   `json:"MountainStartingNid"`
+	ManagementSwitchBrands map[string]ManagementSwitchBrand      `json:"ManagementSwitchBrands"` // map[xname]MgmtSwitchBrand
+	ManagementSwitches     map[string]sls_common.GenericHardware `json:"ManagementSwitches"`     // SLS Type: comptype_mgmt_switch
+	RiverCabinets          map[string]sls_common.GenericHardware `json:"RiverCabinets"`          // SLS Type: comptype_cabinet
+	HillCabinets           map[string]sls_common.GenericHardware `json:"HillCabinets"`           // SLS Type: comptype_cabinet
+	MountainCabinets       map[string]sls_common.GenericHardware `json:"MountainCabinets"`       // SLS Type: comptype_cabinet
+	MountainStartingNid    int                                   `json:"MountainStartingNid"`
 
 	Networks map[string]sls_common.Network `json:"Networks"`
 }
@@ -540,19 +541,53 @@ func (g *SLSStateGenerator) getConnectionForNode(node sls_common.GenericHardware
 		destinationXname = node.Parent
 	}
 
-	connectionExtraProperties := sls_common.ComptypeMgmtSwitchConnector{
-		NodeNics:   []string{destinationXname},
-		VendorName: fmt.Sprintf("ethernet1/1/%s", destinationJackString),
+	// Determine Switch and MgmtSwitchConnector xnames
+	switchName := fmt.Sprintf("%sc0w%s", row.DestinationRack, destinationUString)
+	connectorXname := fmt.Sprintf("%sc0w%sj%s", row.DestinationRack, destinationUString, destinationJackString)
+
+	// Calculate the vendor name for the ethernet interfaces
+	// Dell switches use: ethernet1/1/1
+	// Aruba switches use: 1/1/1
+	switchBrand := g.inputState.ManagementSwitchBrands[switchName]
+	if switchBrand == "" {
+		g.logger.Fatal("Management Switch brand found not provided for switch",
+			zap.String("switchName", switchName),
+			zap.String("connectorXname", switchName),
+			zap.String("destinationXname", destinationXname))
+	}
+
+	var vendorName string
+	switch switchBrand {
+	case ManagementSwitchBrandDell:
+		vendorName = fmt.Sprintf("ethernet1/1/%s", destinationJackString)
+	case ManagementSwitchBrandAruba:
+		vendorName = fmt.Sprintf("1/1/%s", destinationJackString)
+	case ManagementSwitchBrandMellanox:
+		// This should only occur when the HMN connections says that a BMC is connected to the
+		// spine/aggergation switch. Which should not happen.
+		g.logger.Fatal("Currently do no support MgmtSwitchConnector for Mellonox switches",
+			zap.Any("switchBrand", switchBrand),
+			zap.String("switchName", switchName),
+			zap.String("connectorXname", switchName),
+			zap.String("destinationXname", destinationXname))
+	default:
+		g.logger.Fatal("Unknown Management Switch brand found for switch",
+			zap.Any("switchBrand", switchBrand),
+			zap.String("switchName", switchName),
+			zap.String("connectorXname", switchName),
+			zap.String("destinationXname", destinationXname))
 	}
 
 	connection = sls_common.GenericHardware{
-		Parent: fmt.Sprintf("%sc0w%s", row.DestinationRack, destinationUString),
-		Xname: fmt.Sprintf("%sc0w%sj%s",
-			row.DestinationRack, destinationUString, destinationJackString),
-		Type:               "comptype_mgmt_switch_connector",
-		Class:              "River",
-		TypeString:         "MgmtSwitchConnector",
-		ExtraPropertiesRaw: connectionExtraProperties,
+		Parent:     switchName,
+		Xname:      connectorXname,
+		Type:       "comptype_mgmt_switch_connector",
+		Class:      "River",
+		TypeString: "MgmtSwitchConnector",
+		ExtraPropertiesRaw: sls_common.ComptypeMgmtSwitchConnector{
+			NodeNics:   []string{destinationXname},
+			VendorName: vendorName,
+		},
 	}
 
 	return

@@ -126,26 +126,28 @@ func makeBaseCampfromSLS(sls *sls_common.SLSState, ncnMeta []shasta.LogicalNCN) 
 }
 
 // WriteBasecampData writes basecamp data.json for the installer
-func WriteBasecampData(path string, ncns []shasta.LogicalNCN) {
+func WriteBasecampData(path string, ncns []shasta.LogicalNCN, globals interface{}) {
 	v := viper.GetViper()
 	basecampConfig, err := makeBaseCampfromNCNs(v, ncns)
 	if err != nil {
 		log.Printf("Error extracting NCNs: %v", err)
 	}
-	csiFiles.WriteJSONConfig(path, basecampConfig)
+	// To write this the way we want to consume it, we need to convert it to a map of strings and interfaces
+	data := make(map[string]interface{})
+	for k, v := range basecampConfig {
+		data[k] = v
+	}
+	globalMetadata := make(map[string]interface{})
+	globalMetadata["meta-data"] = globals.(map[string]string)
+	data["Global"] = globalMetadata
+
+	csiFiles.WriteJSONConfig(path, data)
 	// https://stash.us.cray.com/projects/MTL/repos/docs-non-compute-nodes/browse/example-data.json
 	/* Funky vars from the stopgap
 	export site_nic=em1
 	export bond_member0=p801p1
 	export bond_member1=p801p2
 	*/
-}
-
-// WriteBasecampInterface is a helper function until we are ready to put this data
-// into data.json.  That would require a bit of a refactor, but is totally
-// the right thing to do.
-func WriteBasecampInterface(path string, data interface{}) {
-	csiFiles.WriteJSONConfig(path, data)
 }
 
 // WriteConmanConfig provides conman configuration for the installer
