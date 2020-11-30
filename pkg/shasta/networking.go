@@ -149,12 +149,20 @@ func (iNet *IPV4Network) AddSubnet(mask net.IPMask, name string, vlanID int16) (
 
 // LookUpSubnet returns a subnet by name
 func (iNet *IPV4Network) LookUpSubnet(name string) (*IPV4Subnet, error) {
+	var found []*IPV4Subnet
 	for _, v := range iNet.Subnets {
 		if v.Name == name {
-			return v, nil
+			found = append(found, v)
 		}
 	}
-	return &IPV4Subnet{}, fmt.Errorf("Subnet not found %v", name)
+	if len(found) == 1 {
+		return found[0], nil
+	}
+	if len(found) > 1 {
+		log.Printf("Found %v subnets named %v in the %v network instead of just one \n", len(found), name, iNet.Name)
+		return found[0], fmt.Errorf("found %v subnets instead of just one", len(found))
+	}
+	return &IPV4Subnet{}, fmt.Errorf("subnet not found %v", name)
 }
 
 // SubnetbyName Return a copy of the subnet by name or a blank subnet if it doesn't exists
