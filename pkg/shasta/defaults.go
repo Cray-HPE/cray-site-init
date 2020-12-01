@@ -67,7 +67,10 @@ func IPNetfromCIDRString(mynet string) *net.IPNet {
 	return ipnet
 }
 
+// DefaultCabinetMask is the default subnet mask for each cabinet
 var DefaultCabinetMask = net.CIDRMask(22, 32)
+
+// DefaultNetworkingHardwareMask is the default subnet mask for a subnet that contains all networking hardware
 var DefaultNetworkingHardwareMask = net.CIDRMask(24, 32)
 
 // DefaultLoadBalancerNMN is a thing we need
@@ -145,6 +148,7 @@ var DefaultMTL = IPV4Network{
 	Comment:   "This network is only valid for the NCNs",
 }
 
+// DefaultHMNConfig is the set of defaults for mapping the HMN
 var DefaultHMNConfig = NetworkLayoutConfiguration{
 	Template:                        DefaultHMN,
 	SubdivideByCabinet:              true,
@@ -156,6 +160,7 @@ var DefaultHMNConfig = NetworkLayoutConfiguration{
 	DesiredBootstrapDHCPMask:        net.CIDRMask(24, 32),
 }
 
+// DefaultNMNConfig is the set of defaults for mapping the NMN
 var DefaultNMNConfig = NetworkLayoutConfiguration{
 	Template:                        DefaultNMN,
 	SubdivideByCabinet:              true,
@@ -167,6 +172,7 @@ var DefaultNMNConfig = NetworkLayoutConfiguration{
 	DesiredBootstrapDHCPMask:        net.CIDRMask(24, 32),
 }
 
+// DefaultHSNConfig is the set of defaults for mapping the HSN
 var DefaultHSNConfig = NetworkLayoutConfiguration{
 	Template:                        DefaultHSN,
 	SubdivideByCabinet:              false,
@@ -175,6 +181,7 @@ var DefaultHSNConfig = NetworkLayoutConfiguration{
 	IncludeUAISubnet:                false,
 }
 
+// DefaultCANConfig is the set of defaults for mapping the CAN
 var DefaultCANConfig = NetworkLayoutConfiguration{
 	Template:                        DefaultCAN,
 	SubdivideByCabinet:              false,
@@ -184,6 +191,7 @@ var DefaultCANConfig = NetworkLayoutConfiguration{
 	DesiredBootstrapDHCPMask:        net.CIDRMask(24, 32),
 }
 
+// DefaultMTLConfig is the set of defaults for mapping the MTL
 var DefaultMTLConfig = NetworkLayoutConfiguration{
 	Template:                        DefaultMTL,
 	SubdivideByCabinet:              false,
@@ -215,6 +223,7 @@ var DefaultNetPW = PasswordCredential{
 // DefaultManifestURL is the git URL for downloading the loftsman manifests for packaging
 var DefaultManifestURL string = "ssh://git@stash.us.cray.com:7999/shasta-cfg/stable.git"
 
+// DefaultUAISubnetReservations is the map of dns names and aliases
 var DefaultUAISubnetReservations = map[string]string{
 	"uai_macvlan_bridge": "uai-macvlan-bridge",
 	"slurmctld_service":  "slurmctld-service",
@@ -223,6 +232,7 @@ var DefaultUAISubnetReservations = map[string]string{
 	"pbs_comm_service":   "pbs-comm-service",
 }
 
+// DefaultMetalLBReservations is the map of dns names and aliases
 var DefaultMetalLBReservations = map[string]string{
 	"istio-ingressgateway":   "api-gw-service packages registry",
 	"rsyslog-aggregator":     "rsyslog-agg-service",
