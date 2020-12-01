@@ -144,7 +144,7 @@ func init() {
 	initCmd.Flags().String("ceph-rbd-image", "dtr.dev.cray.com/cray/cray-rbd-provisioner:0.1.0-nautilus-1.3", "The container image for the ceph rbd provisioner")
 	initCmd.Flags().String("chart-repo", "http://helmrepo.dev.cray.com:8080", "Upstream chart repo for use during the install")
 	initCmd.Flags().String("docker-image-registry", "dtr.dev.cray.com", "Upstream docker registry for use during the install")
-	initCmd.Flags().String("install-ncn", "ncn-m003", "Hostname of the node to be used for installation")
+	initCmd.Flags().String("install-ncn", "ncn-m001", "Hostname of the node to be used for installation")
 
 	// Default IPv4 Networks
 	initCmd.Flags().String("nmn-cidr", shasta.DefaultNMNString, "Overall IPv4 CIDR for all Node Management subnets")
