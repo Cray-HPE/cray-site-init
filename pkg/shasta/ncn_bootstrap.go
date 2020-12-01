@@ -71,7 +71,7 @@ func AllocateIps(ncns []*LogicalNCN, networks map[string]*IPV4Network) {
 	}
 
 	// Build a map of networks based on their names
-	netNames := [4]string{"CAN", "MTL", "NMN", "HMN"}
+	netNames := []string{"CAN", "MTL", "NMN", "HMN"}
 	subnets := make(map[string]*IPV4Subnet)
 	for _, name := range netNames {
 		subnets[name] = lookup(name, "bootstrap_dhcp", networks)
