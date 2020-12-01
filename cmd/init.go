@@ -109,7 +109,7 @@ var initCmd = &cobra.Command{
 		}
 		globals, err := shasta.MakeBasecampGlobals(v, shastaNetworks, "NMN", "bootstrap_dhcp", v.GetString("install-ncn"))
 
-		writeOutput(v, shastaNetworks, slsState, ncns, globals)
+		writeOutput(v, shastaNetworks, slsState, ncns, switches, globals)
 
 		// Print Summary
 		fmt.Printf("\n\n===== %v Installation Summary =====\n\n", v.GetString("system-name"))
@@ -381,7 +381,7 @@ func updateReservations(tempSubnet *shasta.IPV4Subnet, logicalNcns []*shasta.Log
 	}
 }
 
-func writeOutput(v *viper.Viper, shastaNetworks map[string]*shasta.IPV4Network, slsState sls_common.SLSState, logicalNCNs []shasta.LogicalNCN, globals interface{}) {
+func writeOutput(v *viper.Viper, shastaNetworks map[string]*shasta.IPV4Network, slsState sls_common.SLSState, logicalNCNs []shasta.LogicalNCN, switches []*shasta.ManagementSwitch, globals interface{}) {
 	basepath, _ := setupDirectories(v.GetString("system-name"), v)
 	err := csiFiles.WriteJSONConfig(filepath.Join(basepath, "sls_input_file.json"), &slsState)
 	if err != nil {
@@ -404,7 +404,7 @@ func writeOutput(v *viper.Viper, shastaNetworks map[string]*shasta.IPV4Network, 
 	}
 	WriteDNSMasqConfig(basepath, logicalNCNs, shastaNetworks)
 	WriteConmanConfig(filepath.Join(basepath, "conman.conf"), logicalNCNs)
-	WriteMetalLBConfigMap(basepath, v, shastaNetworks)
+	WriteMetalLBConfigMap(basepath, v, shastaNetworks, switches)
 	WriteBasecampData(filepath.Join(basepath, "basecamp/data.json"), logicalNCNs, globals)
 
 	if v.GetString("manifest-release") != "" {
