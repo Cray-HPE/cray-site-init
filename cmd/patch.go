@@ -11,7 +11,7 @@ import (
 var patchCmd = &cobra.Command{
 	Use:   "patch",
 	Short: "Apply patch operations",
-	Long:  `
+	Long: `
 Runs patch operations against the CRAY.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
