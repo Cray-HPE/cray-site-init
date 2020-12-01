@@ -108,12 +108,20 @@ func buildCabinetDetails(v *viper.Viper) []shasta.CabinetDetail {
 
 // WriteCPTNetworkConfig writes the Network Configuration details for the installation node  (CPT)
 func WriteCPTNetworkConfig(path string, ncn shasta.LogicalNCN, shastaNetworks map[string]*shasta.IPV4Network) error {
-	// log.Println("Interface Networks:", ncn.Networks)
+	log.Println("Interface Networks:", ncn.Networks)
 	// log.Println("Networks are:", shastaNetworks)
-	csiFiles.WriteTemplate(filepath.Join(path, "ifcfg-bond0"), template.Must(template.New("bond0").Parse(string(Bond0ConfigTemplate))), ncn)
+	var bond0Net shasta.NCNNetwork
+	for _, network := range ncn.Networks {
+		if network.NetworkName == "MTL" {
+			bond0Net = network
+		}
+	}
+	csiFiles.WriteTemplate(filepath.Join(path, "ifcfg-bond0"), template.Must(template.New("bond0").Parse(string(Bond0ConfigTemplate))), bond0Net)
 	csiFiles.WriteTemplate(filepath.Join(path, "ifcfg-lan0"), template.Must(template.New("lan0").Parse(string(Lan0ConfigTemplate))), ncn)
 	for _, network := range ncn.Networks {
-		csiFiles.WriteTemplate(filepath.Join(path, fmt.Sprintf("ifcfg-vlan%03d", network.Vlan)), template.Must(template.New("vlan").Parse(string(VlanConfigTemplate))), network)
+		if network.Vlan != 0 {
+			csiFiles.WriteTemplate(filepath.Join(path, fmt.Sprintf("ifcfg-vlan%03d", network.Vlan)), template.Must(template.New("vlan").Parse(string(VlanConfigTemplate))), network)
+		}
 	}
 	return nil
 }
@@ -230,19 +238,19 @@ STARTMODE='auto'
 
 // Bond0ConfigTemplate is the text/template for setting up the bond on the install NCN
 var Bond0ConfigTemplate = []byte(`
-NAME='Internal Interface'
+NAME='Internal Interface'# Select the NIC(s) for access to the CRAY.
 
 # Select the NIC(s) for access.
-BONDING_SLAVE0='{{.Bond0Mac0}}'
-BONDING_SLAVE1='{{.Bond0Mac1}}'
+BONDING_SLAVE0='p1p1'
+BONDING_SLAVE1='p10p1' # Set static IP (becomes "preferred" if dhcp is enabled)
 
 # Set static IP (becomes "preferred" if dhcp is enabled)
 BOOTPROTO='static'
-IPADDR=''    # i.e. '192.168.64.1/20'
-PREFIXLEN='' # i.e. '20'
+IPADDR='{{.CIDR}}'    # i.e. '192.168.64.1/20'
+PREFIXLEN='{{.Mask}}' # i.e. '20'
 
 # CHANGE AT OWN RISK:
-BONDING_MODULE_OPTS='mode=802.3ad miimon=100 lacp_rate=fast xmit_hash_policy=layer2+3'
+BONDING_MODULE_OPTS='mode=802.3ad miimon=100 lacp_rate=fast xmit_hash_policy=layer2+3'# DO NOT CHANGE THESE:
 
 # DO NOT CHANGE THESE:
 ONBOOT='yes'
