@@ -12,7 +12,7 @@ import (
 var rawCmd = &cobra.Command{
 	Use:   "raw",
 	Short: "A collection of commands for generating raw yaml",
-	Long: ``,
+	Long:  ``,
 }
 
 func init() {

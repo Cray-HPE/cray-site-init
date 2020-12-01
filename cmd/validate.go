@@ -5,16 +5,14 @@ Copyright 2020 Hewlett Packard Enterprise Development LP
 */
 import (
 	"fmt"
-	"log"
-	"os/exec"
-
-	"strconv"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"log"
+	"os/exec"
 )
 
-var validateNetwork, validateServices, validateDNS, validateMtu, validateCeph, validateK8s, validateAll string
+var lastFailure error
+var validateNetwork, validateServices, validateDNS, validateMtu, validateCeph, validateK8s, validateAll bool
 
 // validateCmd represents the validate command
 var validateCmd = &cobra.Command{
@@ -23,16 +21,16 @@ var validateCmd = &cobra.Command{
 	Long:  `Validates certain requirements needed for effectively running the liveCD.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		if s, err := strconv.ParseBool(validateServices); err == nil {
-			log.Println("[csi] VALIDATING SERVICES: ", s)
+		if validateServices || validateAll {
+			log.Println("[csi] VALIDATING SERVICES")
 			runCommand("systemctl status dnsmasq")
 			runCommand("systemctl status nexus")
 			runCommand("systemctl status basecamp")
 			runCommand("podman container ls -a")
 		}
 
-		if n, err := strconv.ParseBool(validateNetwork); err == nil {
-			log.Println("[csi] VALIDATING NETWORK: ", n)
+		if validateNetwork || validateAll {
+			log.Println("[csi] VALIDATING NETWORK")
 			runCommand("ip a show lan0")
 			runCommand("ip a show bond0")
 			runCommand("ip a show vlan002")
@@ -40,26 +38,31 @@ var validateCmd = &cobra.Command{
 			runCommand("ip a show vlan007")
 		}
 
-		if d, err := strconv.ParseBool(validateDNS); err == nil {
-			log.Println("[csi] VALIDATING DNS: ", d)
+		if validateDNS || validateAll {
+			log.Println("[csi] VALIDATING DNS")
 			runCommand("grep -Eo ncn-.*-mgmt /var/lib/misc/dnsmasq.leases | sort")
 		}
 
-		if m, err := strconv.ParseBool(validateMtu); err == nil {
-			log.Println("[csi] VALIDATING MTU: ", m)
-			log.Println("[csi] MANUAL ACTION: verify the MTU of the spine ports connected to the NCNs is set to 9216")
+		if validateMtu || validateAll {
+			log.Println("[csi] VALIDATING MTU")
+			log.Printf("[csi] MANUAL ACTION: run the following snippet on a SPINE switch if reachable and verify MTU of the NCN ports is set to 9216\n\n\t# show interface status | include ^Mpo\n\n")
 		}
 
-		if c, err := strconv.ParseBool(validateCeph); err == nil {
-			log.Println("[csi] VALIDATING CEPH: ", c)
-			log.Println("[csi] MANUAL ACTION: run 'ceph -s' on a storage node if booted")
+		if validateCeph || validateAll {
+			log.Println("[csi] VALIDATING CEPH")
+			log.Printf("[csi] MANUAL ACTION: run the following snippet on a STORAGE node if booted and verify ceph quroum (should see all 3 storage in report)\n\n\t# ceph -s\n\n")
 		}
 
-		if k, err := strconv.ParseBool(validateK8s); err == nil {
-			log.Println("[csi] VALIDATING K8S: ", k)
-			log.Println("[csi] MANUAL ACTION: run 'kubectl get storageclass' on a storage node if booted and verify if 3 classes are available")
-			log.Println("[csi] MANUAL ACTION: run 'kubectl get nodes' on a manager node if booted to verify all nodes are in the cluister")
-			log.Println("[csi] MANUAL ACTION: run 'kubectl get po -n kube-system' on a manager node if booted to verify all nodes are in the cluister")
+		if validateK8s || validateAll {
+			log.Println("[csi] VALIDATING K8S")
+			log.Printf("[csi] MANUAL ACTION 1: run the following snippet on a STORAGE node if booted and verify if 3 classes are available\n\n\t# kubectl get storageclass\n\n")
+			log.Printf("[csi] MANUAL ACTION 2: run the following snippet on a MANAGER node if booted to verify all nodes are in the cluister\n\n\t# kubectl get nodes\n\n")
+			log.Printf("[csi] MANUAL ACTION 3: run the following snippet on a MANAGER node if booted to verify all nodes are in the cluister\n\n\t# kubectl get po -n kube-system\n\n")
+		}
+
+		// For now, if lastFailure is set then we failed.
+		if lastFailure != nil {
+			log.Fatal("Failed; see scrollback for test errors.")
 		}
 	},
 }
@@ -70,22 +73,20 @@ func runCommand(shellCode string) {
 	stdoutStderr, err := cmd.CombinedOutput()
 	fmt.Printf("%s\n", stdoutStderr)
 	if err != nil {
-		// Don't fail yet.  For now, we're just automating what humans currently do
-		// This also gives an overview of the current state of things in one command
-		// log.Fatal(err)
+		lastFailure = err
 		log.Println(err)
 	}
 }
 
 func init() {
 	pitCmd.AddCommand(validateCmd)
-	viper.SetEnvPrefix("pit") // will be uppercased automatically
+	viper.SetEnvPrefix("pit")
 	viper.AutomaticEnv()
-	validateCmd.Flags().StringVarP(&validateNetwork, "network", "n", viper.GetString("validate_network"), "Validate the network when booted into the LiveCD (env: PIT_VALIDATE_NETWORK)")
-	validateCmd.Flags().StringVarP(&validateServices, "services", "s", viper.GetString("validate_services"), "Validate services when booted into the LiveCD (env: PIT_VALIDATE_SERVICES)")
-	validateCmd.Flags().StringVarP(&validateDNS, "dns-dhcp", "d", viper.GetString("validate_dns_dhcp"), "Validate the DNS leases (env: PIT_VALIDATE_DNS_DHCP)")
-	validateCmd.Flags().StringVarP(&validateMtu, "mtu", "m", viper.GetString("validate_mtu"), "Validate the MTU of the spine ports (env: PIT_VALIDATE_MTU)")
-	validateCmd.Flags().StringVarP(&validateCeph, "ceph", "c", viper.GetString("validate_ceph"), "Validate Ceph is working (env: PIT_VALIDATE_CEPH)")
-	validateCmd.Flags().StringVarP(&validateK8s, "k8s", "k", viper.GetString("validate_k8s"), "Validate Kubernetes is working (env: PIT_VALIDATE_K8S)")
-	validateCmd.Flags().StringVarP(&validateAll, "all", "a", viper.GetString("validate_all"), "Validate everything (env: PIT_VALIDATE_ALL)")
+	validateCmd.Flags().BoolVarP(&validateNetwork, "network", "n", viper.GetBool("validate_network"), "Validate the network when booted into the LiveCD (env: PIT_VALIDATE_NETWORK)")
+	validateCmd.Flags().BoolVarP(&validateServices, "services", "s", viper.GetBool("validate_services"), "Validate services when booted into the LiveCD (env: PIT_VALIDATE_SERVICES)")
+	validateCmd.Flags().BoolVarP(&validateDNS, "dns-dhcp", "d", viper.GetBool("validate_dns_dhcp"), "Validate the DNS leases (env: PIT_VALIDATE_DNS_DHCP)")
+	validateCmd.Flags().BoolVarP(&validateMtu, "mtu", "m", viper.GetBool("validate_mtu"), "Validate the MTU of the spine ports (env: PIT_VALIDATE_MTU)")
+	validateCmd.Flags().BoolVarP(&validateCeph, "ceph", "c", viper.GetBool("validate_ceph"), "Validate Ceph is working (env: PIT_VALIDATE_CEPH)")
+	validateCmd.Flags().BoolVarP(&validateK8s, "k8s", "k", viper.GetBool("validate_k8s"), "Validate Kubernetes is working (env: PIT_VALIDATE_K8S)")
+	validateCmd.Flags().BoolVarP(&validateAll, "all", "a", viper.GetBool("validate_all"), "Validate everything (env: PIT_VALIDATE_ALL)")
 }
