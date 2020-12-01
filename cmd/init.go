@@ -135,6 +135,7 @@ func init() {
 	initCmd.Flags().String("site-domain", "dev.cray.com", "Site Domain Name")
 	initCmd.Flags().String("internal-domain", "unicos.shasta", "Internal Domain Name")
 	initCmd.Flags().String("ntp-pool", "time.nist.gov", "Hostname for Upstream NTP Pool")
+	initCmd.MarkFlagRequired("ntp-pool")
 	initCmd.Flags().String("ipv4-resolvers", "8.8.8.8, 9.9.9.9", "List of IP Addresses for DNS")
 	initCmd.Flags().String("v2-registry", "https://registry.nmn/", "URL for default v2 registry used for both helm and containers")
 	initCmd.Flags().String("rpm-repository", "https://packages.nmn/repository/shasta-master", "URL for default rpm repository")
