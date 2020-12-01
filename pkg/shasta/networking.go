@@ -84,7 +84,7 @@ func (iNet *IPV4Network) GenSubnets(cabinetDetails []CabinetDetail, mask net.IPM
 			newSubnet, err := ipam.Free(*myNet, mask, mySubnets)
 			mySubnets = append(mySubnets, newSubnet)
 			if err != nil {
-				log.Printf("Couldn't add subnet because %v \n", err)
+				log.Printf("Gensubnets couldn't add subnet because %v \n", err)
 				return err
 			}
 			tempSubnet := IPV4Subnet{
@@ -134,7 +134,6 @@ func (iNet *IPV4Network) AddSubnet(mask net.IPMask, name string, vlanID int16) (
 	_, myNet, _ := net.ParseCIDR(iNet.CIDR)
 	newSubnet, err := ipam.Free(*myNet, mask, iNet.AllocatedSubnets())
 	if err != nil {
-		log.Printf("Couldn't add subnet because %v \n", err)
 		return &tempSubnet, err
 	}
 	iNet.Subnets = append(iNet.Subnets, &IPV4Subnet{
@@ -147,9 +146,26 @@ func (iNet *IPV4Network) AddSubnet(mask net.IPMask, name string, vlanID int16) (
 	return iNet.Subnets[len(iNet.Subnets)-1], nil
 }
 
+// AddBiggestSubnet allocates the largest subnet possible within the requested network and mask
+func (iNet *IPV4Network) AddBiggestSubnet(mask net.IPMask, name string, vlanID int16) (*IPV4Subnet, error) {
+	// Try for the largest available and go smaller if needed
+	maskSize, _ := mask.Size() // the second output of this function is 32 for ipv4 or 64 for ipv6
+	for i := maskSize; i < 29; i++ {
+		// log.Printf("Trying to find room for a /%d mask in %v \n", i, iNet.Name)
+		newSubnet, err := iNet.AddSubnet(net.CIDRMask(i, 32), name, vlanID)
+		if err == nil {
+			return newSubnet, nil
+		}
+	}
+	return &IPV4Subnet{}, fmt.Errorf("no room for %v subnet within %v (tried from /%d to /29)", name, iNet.Name, maskSize)
+}
+
 // LookUpSubnet returns a subnet by name
 func (iNet *IPV4Network) LookUpSubnet(name string) (*IPV4Subnet, error) {
 	var found []*IPV4Subnet
+	if len(iNet.Subnets) == 0 {
+		return &IPV4Subnet{}, fmt.Errorf("subnet not found %v", name)
+	}
 	for _, v := range iNet.Subnets {
 		if v.Name == name {
 			found = append(found, v)
@@ -254,4 +270,46 @@ func (iSubnet *IPV4Subnet) AddReservation(name, comment string) *IPReservation {
 		return &iSubnet.IPReservations[len(iSubnet.IPReservations)-1]
 	}
 
+}
+
+// NetworkLayoutConfiguration is the internal configuration structure for shasta networks
+type NetworkLayoutConfiguration struct {
+	Template                        IPV4Network
+	ReservationHostnames            []string
+	IncludeBootstrapDHCP            bool
+	DesiredBootstrapDHCPMask        net.IPMask
+	IncludeNetworkingHardwareSubnet bool
+	AdditionalNetworkingSpace       int
+	NetworkingHardwareNetmask       net.IPMask
+	BaseVlan                        int16
+	SubdivideByCabinet              bool
+	IncludeUAISubnet                bool
+	CabinetDetails                  []CabinetDetail
+	CabinetCIDR                     net.IPMask
+	ManagementSwitches              []*ManagementSwitch
+}
+
+// IsValid provides feedback about any problems with the configuration
+func (nlc *NetworkLayoutConfiguration) IsValid() (bool, error) {
+	if nlc.IncludeNetworkingHardwareSubnet {
+		if len(nlc.ManagementSwitches) < 1 {
+			return false, fmt.Errorf("can't build networking hardware subnets without ManagementSwitches")
+		}
+	}
+	if nlc.SubdivideByCabinet {
+		if len(nlc.CabinetDetails) < 1 {
+			return false, fmt.Errorf("can't build per cabinet subnets without a list of cabinet details")
+		}
+	}
+	return true, nil
+}
+
+// GenLayoutConfiguration creates a configuration from a default template and booleans
+func GenLayoutConfiguration(template IPV4Network, IncludeBootstrapDHCP bool, IncludeNetworkingHardware bool, SubdivideByCabinet bool) NetworkLayoutConfiguration {
+	return NetworkLayoutConfiguration{
+		Template:                        template,
+		IncludeBootstrapDHCP:            IncludeBootstrapDHCP,
+		IncludeNetworkingHardwareSubnet: IncludeBootstrapDHCP,
+		SubdivideByCabinet:              SubdivideByCabinet,
+	}
 }

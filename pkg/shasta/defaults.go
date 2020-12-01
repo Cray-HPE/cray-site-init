@@ -67,6 +67,9 @@ func IPNetfromCIDRString(mynet string) *net.IPNet {
 	return ipnet
 }
 
+var DefaultCabinetMask = net.CIDRMask(22, 32)
+var DefaultNetworkingHardwareMask = net.CIDRMask(24, 32)
+
 // DefaultLoadBalancerNMN is a thing we need
 var DefaultLoadBalancerNMN = IPV4Network{
 	FullName: "Node Management Network LoadBalancers",
@@ -142,6 +145,55 @@ var DefaultMTL = IPV4Network{
 	Comment:   "This network is only valid for the NCNs",
 }
 
+var DefaultHMNConfig = NetworkLayoutConfiguration{
+	Template:                        DefaultHMN,
+	SubdivideByCabinet:              true,
+	IncludeBootstrapDHCP:            true,
+	IncludeNetworkingHardwareSubnet: false,
+	IncludeUAISubnet:                false,
+	CabinetCIDR:                     DefaultCabinetMask,
+	NetworkingHardwareNetmask:       DefaultNetworkingHardwareMask,
+	DesiredBootstrapDHCPMask:        net.CIDRMask(24, 32),
+}
+
+var DefaultNMNConfig = NetworkLayoutConfiguration{
+	Template:                        DefaultNMN,
+	SubdivideByCabinet:              true,
+	IncludeBootstrapDHCP:            true,
+	IncludeNetworkingHardwareSubnet: true,
+	IncludeUAISubnet:                true,
+	CabinetCIDR:                     DefaultCabinetMask,
+	NetworkingHardwareNetmask:       DefaultNetworkingHardwareMask,
+	DesiredBootstrapDHCPMask:        net.CIDRMask(24, 32),
+}
+
+var DefaultHSNConfig = NetworkLayoutConfiguration{
+	Template:                        DefaultHSN,
+	SubdivideByCabinet:              false,
+	IncludeBootstrapDHCP:            false,
+	IncludeNetworkingHardwareSubnet: false,
+	IncludeUAISubnet:                false,
+}
+
+var DefaultCANConfig = NetworkLayoutConfiguration{
+	Template:                        DefaultCAN,
+	SubdivideByCabinet:              false,
+	IncludeBootstrapDHCP:            true,
+	IncludeNetworkingHardwareSubnet: false,
+	IncludeUAISubnet:                false,
+	DesiredBootstrapDHCPMask:        net.CIDRMask(24, 32),
+}
+
+var DefaultMTLConfig = NetworkLayoutConfiguration{
+	Template:                        DefaultMTL,
+	SubdivideByCabinet:              false,
+	IncludeBootstrapDHCP:            true,
+	IncludeNetworkingHardwareSubnet: true,
+	IncludeUAISubnet:                false,
+	NetworkingHardwareNetmask:       DefaultNetworkingHardwareMask,
+	DesiredBootstrapDHCPMask:        net.CIDRMask(24, 32),
+}
+
 // DefaultRootPW is the default root password
 var DefaultRootPW = PasswordCredential{
 	Username: "root",
@@ -162,3 +214,18 @@ var DefaultNetPW = PasswordCredential{
 
 // DefaultManifestURL is the git URL for downloading the loftsman manifests for packaging
 var DefaultManifestURL string = "ssh://git@stash.us.cray.com:7999/shasta-cfg/stable.git"
+
+var DefaultUAISubnetReservations = map[string]string{
+	"uai_macvlan_bridge": "uai-macvlan-bridge",
+	"slurmctld_service":  "slurmctld-service",
+	"slurmdbd_service":   "slurmdbd-service",
+	"pbs_service":        "pbs-service",
+	"pbs_comm_service":   "pbs-comm-service",
+}
+
+var DefaultMetalLBReservations = map[string]string{
+	"istio-ingressgateway":   "api-gw-service packages registry",
+	"rsyslog-aggregator":     "rsyslog-agg-service",
+	"rsyslog-aggregator-udp": "rsyslog-agg-service-udp",
+	"cray-tftp":              "tftp-service",
+}
