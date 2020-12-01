@@ -36,7 +36,7 @@ flags (and/or Shasta 1.3 configuration files). It can also validate that a set o
 configuration details are accurate before attempting to use them for installation.
 
 Configs aside, this will prepare USB sticks for deploying on baremetal or for recovery and
-traige.`,
+triage.`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		return initializeFlagswithViper(cmd)
 	},
