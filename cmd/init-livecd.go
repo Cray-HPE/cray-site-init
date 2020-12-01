@@ -24,9 +24,18 @@ func WriteNICConfigENV(path string, conf shasta.SystemConfig) {
 	log.Printf("NOT IMPLEMENTED")
 }
 
-func makeBaseCampfromNCNs(v *viper.Viper, ncns []shasta.LogicalNCN) (map[string]shasta.CloudInit, error) {
+func makeBaseCampfromNCNs(v *viper.Viper, ncns []shasta.LogicalNCN, shastaNetworks map[string]*shasta.IPV4Network) (map[string]shasta.CloudInit, error) {
 	basecampConfig := make(map[string]shasta.CloudInit)
+	uaiMacvlanSubnet, err := shastaNetworks["NMN"].LookUpSubnet("uai_macvlan")
+	if err != nil {
+		log.Fatal("basecamp_gen: Couldn't find the macvlan subnet in the NMN")
+	}
+	uaiReservations := uaiMacvlanSubnet.ReservationsByName()
 	for _, ncn := range ncns {
+		mac0Interface := make(map[string]interface{})
+		mac0Interface["ip"] = uaiReservations[ncn.Hostname].IPAddress
+		mac0Interface["mask"] = uaiMacvlanSubnet.CIDR.String()
+
 		tempAvailabilityZone, err := shasta.CabinetForXname(ncn.Xname)
 		if err != nil {
 			log.Printf("Couldn't generate cabinet name for %v: %v \n", ncn.Xname, err)
@@ -50,6 +59,7 @@ func makeBaseCampfromNCNs(v *viper.Viper, ncns []shasta.LogicalNCN) (map[string]
 		}
 		userDataMap["hostname"] = ncn.Hostname
 		userDataMap["local_hostname"] = ncn.Hostname
+		userDataMap["mac0"] = mac0Interface
 		basecampConfig[ncn.NmnMac] = shasta.CloudInit{
 			MetaData: tempMetadata,
 			UserData: userDataMap,
@@ -127,9 +137,9 @@ func makeBaseCampfromSLS(sls *sls_common.SLSState, ncnMeta []shasta.LogicalNCN) 
 }
 
 // WriteBasecampData writes basecamp data.json for the installer
-func WriteBasecampData(path string, ncns []shasta.LogicalNCN, globals interface{}) {
+func WriteBasecampData(path string, ncns []shasta.LogicalNCN, shastaNetworks map[string]*shasta.IPV4Network, globals interface{}) {
 	v := viper.GetViper()
-	basecampConfig, err := makeBaseCampfromNCNs(v, ncns)
+	basecampConfig, err := makeBaseCampfromNCNs(v, ncns, shastaNetworks)
 	if err != nil {
 		log.Printf("Error extracting NCNs: %v", err)
 	}
