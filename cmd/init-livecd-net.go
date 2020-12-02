@@ -126,7 +126,7 @@ func WriteCPTNetworkConfig(path string, ncn shasta.LogicalNCN, shastaNetworks ma
 	return nil
 }
 
-func switchXnamesByType(switches []*shasta.ManagementSwitch, switchType string) []string {
+func switchXnamesByType(switches []*shasta.ManagementSwitch, switchType shasta.ManagementSwitchType) []string {
 	var xnames []string
 	for _, mswitch := range switches {
 		if mswitch.SwitchType == switchType {

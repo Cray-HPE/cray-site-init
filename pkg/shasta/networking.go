@@ -25,6 +25,29 @@ const ManagementSwitchBrandDell ManagementSwitchBrand = "Dell"
 // ManagementSwitchBrandMellanox for Mellanox Management switches
 const ManagementSwitchBrandMellanox ManagementSwitchBrand = "Mellanox"
 
+// ManagementSwitchType the type of manamgnt switch CDU/Leaf/Spine/Aggregation
+type ManagementSwitchType string
+
+const ManagementSwitchTypeCDU ManagementSwitchType = "CDU"
+const ManagementSwitchTypeLeaf ManagementSwitchType = "Leaf"
+const ManagementSwitchTypeSpine ManagementSwitchType = "Spine"
+const ManagementSwitchTypeAggregation ManagementSwitchType = "Aggregation"
+
+func IsManagementSwitchTypeValid(mst ManagementSwitchType) bool {
+	switch mst {
+	case ManagementSwitchTypeAggregation:
+		fallthrough
+	case ManagementSwitchTypeCDU:
+		fallthrough
+	case ManagementSwitchTypeLeaf:
+		fallthrough
+	case ManagementSwitchTypeSpine:
+		return true
+	}
+
+	return false
+}
+
 // IPReservation is a type for managing IP Reservations
 type IPReservation struct {
 	IPAddress net.IP   `yaml:"ip_address"`
@@ -67,7 +90,7 @@ type ManagementSwitch struct {
 	Model               string                `json:"model" mapstructure:"model" csv:"Model"`
 	Os                  string                `json:"operating-system" mapstructure:"operating-system" csv:"-"`
 	Firmware            string                `json:"firmware" mapstructure:"firmware" csv:"-"`
-	SwitchType          string                `json:"type" mapstructure:"type" csv:"Type"` //"CDU/Leaf/Spine/Aggregation"
+	SwitchType          ManagementSwitchType  `json:"type" mapstructure:"type" csv:"Type"` //"CDU/Leaf/Spine/Aggregation"
 	ManagementInterface net.IP                `json:"ip" mapstructure:"ip" csv:"-"`        // SNMP/REST interface IP (not a distinct BMC)  // Required for SLS
 }
 

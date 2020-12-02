@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	base "stash.us.cray.com/HMS/hms-base"
 	shcd_parser "stash.us.cray.com/HMS/hms-shcd-parser/pkg/shcd-parser"
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
 	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
@@ -58,22 +59,15 @@ var initCmd = &cobra.Command{
 		// Now we can finally generate the slsState
 		slsState := prepareAndGenerateSLS(v, shastaNetworks, hmnRows, switches)
 		// SLS can tell us which NCNs match with which Xnames, we need to update the IP Reservations
-		tempNcns, err := shasta.ExtractSLSNCNs(&slsState)
+		slsNcns, err := shasta.ExtractSLSNCNs(&slsState)
 		if err != nil {
 			log.Panic(err) // This should never happen.  I can't really imagine how it would.
 		}
 
 		// Merge the SLS NCN list with the NCN list we got at the beginning
-		for _, ncn := range logicalNcns {
-			for _, tempNCN := range tempNcns {
-				if ncn.Xname == tempNCN.Xname {
-					// log.Printf("Found match for %v: %v \n", ncn.Xname, tempNCN)
-					ncn.Hostname = tempNCN.Hostname
-					ncn.Aliases = tempNCN.Aliases
-					ncn.BmcPort = tempNCN.BmcPort
-					// log.Println("Updated to be :", ncn)
-				}
-			}
+		err = mergeNCNs(logicalNcns, slsNcns)
+		if err != nil {
+			log.Fatalln("Failed to merge NCNs:", err) // TODO rephrase
 		}
 
 		// Cycle through the main networks and update the reservations and dhcp ranges as necessary
@@ -279,12 +273,16 @@ func collectInput(v *viper.Viper) ([]shcd_parser.HMNRow, []*shasta.LogicalNCN, [
 	if err != nil {
 		log.Fatalf("unable to load hmn connections, %v \n", err)
 	}
-	//
+
 	// SLS also needs to know about our networking configuration.  In order to do that,
 	// we need to load the switches
 	switches, err := csiFiles.ReadSwitchCSV(v.GetString("switch-metadata"))
 	if err != nil {
 		log.Fatalln("Couldn't extract switches", err)
+	}
+
+	if err := validateSwitchInput(switches); err != nil {
+		log.Fatalln("witch-metadata validation failed: ", err)
 	}
 
 	// This is techincally sufficient to generate an SLSState object, but to do so now
@@ -295,7 +293,102 @@ func collectInput(v *viper.Viper) ([]shcd_parser.HMNRow, []*shasta.LogicalNCN, [
 	if err != nil {
 		log.Fatalln("Couldn't extract ncns", err)
 	}
+
+	if err := validateNCNInput(ncns); err != nil {
+		log.Fatalln("ncn-metadata validation failed: ", err)
+	}
+
 	return hmnRows, ncns, switches
+}
+
+func validateSwitchInput(switches []*shasta.ManagementSwitch) error {
+	// Validate the data that was read in switch_metadata.csv. We are inforcing 3 constaints:
+	// 1. Validate the xname is valid
+	// 2. The specified switch type is valid
+	// 3. The HMS type for the xname matches the type of switch being used
+
+	for _, mySwitch := range switches {
+		xname := mySwitch.Xname
+		// Verify xname is valid
+		if !base.IsHMSCompIDValid(xname) {
+			return fmt.Errorf("invalid xname for Switch: %s", xname)
+		}
+
+		// Verify that the specify management switch type is one of the known values
+		if !shasta.IsManagementSwitchTypeValid(mySwitch.SwitchType) {
+			return fmt.Errorf("invalid management switch type: %s %s", xname, mySwitch.SwitchType)
+		}
+
+		// Now we need to verify that the correct switch xname format was used for the different
+		// types of management switches.
+		hmsType := base.GetHMSType(xname)
+		switch mySwitch.SwitchType {
+		case shasta.ManagementSwitchTypeLeaf:
+			if hmsType != base.MgmtSwitch {
+				return fmt.Errorf("invalid xname used for Leaf switch: %s,  should use xXcCwW format", xname)
+			}
+		case shasta.ManagementSwitchTypeSpine:
+			fallthrough
+		case shasta.ManagementSwitchTypeAggregation:
+			if hmsType != base.MgmtHLSwitch {
+				return fmt.Errorf("invalid xname used for Spine/Aggergation switch: %s, should use xXcChHsS format", xname)
+			}
+		case shasta.ManagementSwitchTypeCDU:
+			if hmsType != base.CDUMgmtSwitch {
+				return fmt.Errorf("invalid xname used for CDU switch: %s, should use dDwW format", xname)
+			}
+		default:
+			return fmt.Errorf("invalid switch type for xname: %s", xname)
+		}
+	}
+
+	return nil
+}
+
+func validateNCNInput(ncns []*shasta.LogicalNCN) error {
+	// Validate the xnames in the data from ncn_metadata.csv have valid xnames
+
+	for _, ncn := range ncns {
+		xname := ncn.Xname
+
+		// First off verify that this is a valid xname
+		if !base.IsHMSCompIDValid(xname) {
+			return fmt.Errorf("invalid xname for NCN: %s", xname)
+		}
+
+		// Next, verify that the xname is type of Node
+		if base.GetHMSType(xname) != base.Node {
+			return fmt.Errorf("invalid type %s for NCN xname: %s", base.GetHMSTypeString(xname), xname)
+		}
+	}
+
+	return nil
+}
+
+func mergeNCNs(logicalNcns []*shasta.LogicalNCN, slsNCNs []shasta.LogicalNCN) error {
+	// Merge the SLS NCN list with the NCN list from ncn-metadata
+	for _, ncn := range logicalNcns {
+		found := false
+		for _, slsNCN := range slsNCNs {
+			if ncn.Xname == slsNCN.Xname {
+				// log.Printf("Found match for %v: %v \n", ncn.Xname, tempNCN)
+				ncn.Hostname = slsNCN.Hostname
+				ncn.Aliases = slsNCN.Aliases
+				ncn.BmcPort = slsNCN.BmcPort
+				// log.Println("Updated to be :", ncn)
+
+				found = true
+				break
+			}
+		}
+
+		// All NCNs from ncn-metadata need to appear in the generated SLS state
+		if !found {
+			return fmt.Errorf("failed to find NCN from ncn-metadata in generated SLS State: %s", ncn.Xname)
+		}
+	}
+
+	return nil
 }
 
 func prepareNetworkSLS(shastaNetworks map[string]*shasta.IPV4Network) ([]shasta.IPV4Network, map[string]sls_common.Network) {
