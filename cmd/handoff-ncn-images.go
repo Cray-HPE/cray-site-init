@@ -80,7 +80,7 @@ func init() {
 	handoffNCNImagesCmd.Flags().StringVar(&squashFSPath, "squashfs-path", "",
 		"Path to the squashfs image to upload")
 	_ = handoffNCNImagesCmd.MarkFlagRequired("squashfs-path")
-	handoffNCNImagesCmd.Flags().StringVar(&squashFSName, "squashfs-name", "squashfs",
+	handoffNCNImagesCmd.Flags().StringVar(&squashFSName, "squashfs-name", "filesystem.squashfs",
 		"Name to set for squashfs in S3")
 }
 
