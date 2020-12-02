@@ -105,6 +105,11 @@ var initCmd = &cobra.Command{
 
 		writeOutput(v, shastaNetworks, slsState, ncns, switches, globals)
 
+		// Gather SLS information for summary
+		slsMountainCabinets := shasta.GetSLSCabinets(slsState, sls_common.ClassMountain)
+		slsHillCabinets := shasta.GetSLSCabinets(slsState, sls_common.ClassHill)
+		slsRiverCabinets := shasta.GetSLSCabinets(slsState, sls_common.ClassRiver)
+
 		// Print Summary
 		fmt.Printf("\n\n===== %v Installation Summary =====\n\n", v.GetString("system-name"))
 		fmt.Printf("Installation Node: %v\n", v.GetString("install-ncn"))
@@ -113,9 +118,9 @@ var initCmd = &cobra.Command{
 		fmt.Printf("\tUpstream DNS: %v\n", v.GetString("ipv4-resolvers"))
 		fmt.Printf("System Information\n")
 		fmt.Printf("\tNCNs: %v\n", len(ncns))
-		fmt.Printf("\tMountain Compute Cabinets: %v\n", 0) //TODO: read from SLS
-		fmt.Printf("\tRiver Compute Cabinets: %v\n", 0)    //TODO: read from SLS
-		fmt.Printf("\tHill Compute Cabinets: %v\n", 0)     //TODO: read from SLS
+		fmt.Printf("\tMountain Compute Cabinets: %v\n", len(slsMountainCabinets))
+		fmt.Printf("\tHill Compute Cabinets: %v\n", len(slsHillCabinets))
+		fmt.Printf("\tRiver Compute Cabinets: %v\n", len(slsRiverCabinets))
 	},
 }
 
