@@ -433,23 +433,33 @@ func prepareAndGenerateSLS(v *viper.Viper, shastaNetworks map[string]*shasta.IPV
 	reservedSwitches, _ := extractSwitchesfromReservations(switchNet)
 	slsSwitches := make(map[string]sls_common.GenericHardware)
 	for _, mySwitch := range reservedSwitches {
-		slsSwitches[mySwitch.Xname] = convertManagemenetSwitchToSLS(&mySwitch)
-	}
+		xname := mySwitch.Xname
 
-	// Extract Switch brands from data stored in switch_metdata.csv
-	switchBrands := make(map[string]shasta.ManagementSwitchBrand)
-	for _, mySwitch := range inputSwitches {
-		switchBrands[mySwitch.Xname] = mySwitch.Brand
+		// Extract Switch brand from data stored in switch_metdata.csv
+		for _, inputSwitch := range inputSwitches {
+			if inputSwitch.Xname == xname {
+				mySwitch.Brand = inputSwitch.Brand
+				break
+			}
+		}
+		if mySwitch.Brand == "" {
+			log.Fatalln("Couldn't determine switch brand for:", xname)
+		}
+
+		// Create SLS version of the switch
+		slsSwitches[mySwitch.Xname], err = convertManagementSwitchToSLS(&mySwitch)
+		if err != nil {
+			log.Fatalln("Couldn't get SLS management switch representation:", err)
+		}
 	}
 
 	inputState := shasta.SLSGeneratorInputState{
-		ManagementSwitches:     slsSwitches,
-		ManagementSwitchBrands: switchBrands,
-		RiverCabinets:          getCabinets(sls_common.ClassRiver, v.GetInt("starting-river-cabinet"), cabinetSubnets[0:numRiver]),
-		HillCabinets:           getCabinets(sls_common.ClassHill, v.GetInt("starting-hill-cabinet"), cabinetSubnets[numRiver:numRiver+numHill]),
-		MountainCabinets:       getCabinets(sls_common.ClassMountain, v.GetInt("starting-mountain-cabinet"), cabinetSubnets[numRiver+numHill:]),
-		MountainStartingNid:    v.GetInt("starting-mountain-nid"),
-		Networks:               slsNetworks,
+		ManagementSwitches:  slsSwitches,
+		RiverCabinets:       getCabinets(sls_common.ClassRiver, v.GetInt("starting-river-cabinet"), cabinetSubnets[0:numRiver]),
+		HillCabinets:        getCabinets(sls_common.ClassHill, v.GetInt("starting-hill-cabinet"), cabinetSubnets[numRiver:numRiver+numHill]),
+		MountainCabinets:    getCabinets(sls_common.ClassMountain, v.GetInt("starting-mountain-cabinet"), cabinetSubnets[numRiver+numHill:]),
+		MountainStartingNid: v.GetInt("starting-mountain-nid"),
+		Networks:            slsNetworks,
 	}
 	slsState := shasta.GenerateSLSState(inputState, hmnRows)
 	return slsState

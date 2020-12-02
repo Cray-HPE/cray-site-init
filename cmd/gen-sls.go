@@ -180,25 +180,61 @@ func getCabinets(cabinetClass sls_common.CabinetType, startingIndex int, cabinet
 	return cabinets
 }
 
-func convertManagemenetSwitchToSLS(s *shasta.ManagementSwitch) sls_common.GenericHardware {
-	return sls_common.GenericHardware{
-		Parent:     base.GetHMSCompParent(s.Xname),
-		Xname:      s.Xname,
-		Type:       sls_common.MgmtSwitch,
-		TypeString: base.MgmtSwitch,
-		Class:      sls_common.ClassRiver,
-		ExtraPropertiesRaw: sls_common.ComptypeMgmtSwitch{
-			IP4Addr:          s.ManagementInterface.String(), // TODO Test
-			Model:            s.Model,
-			SNMPAuthPassword: fmt.Sprintf("vault://hms-creds/%s", s.Xname),
-			SNMPAuthProtocol: "MD5",
-			SNMPPrivPassword: fmt.Sprintf("vault://hms-creds/%s", s.Xname),
-			SNMPPrivProtocol: "DES",
-			SNMPUsername:     "testuser",
+func convertManagementSwitchToSLS(s *shasta.ManagementSwitch) (sls_common.GenericHardware, error) {
+	switch s.SwitchType {
+	case shasta.ManagementSwitchTypeLeaf:
+		return sls_common.GenericHardware{
+			Parent:     base.GetHMSCompParent(s.Xname),
+			Xname:      s.Xname,
+			Type:       sls_common.MgmtSwitch,
+			TypeString: base.MgmtSwitch,
+			Class:      sls_common.ClassRiver,
+			ExtraPropertiesRaw: sls_common.ComptypeMgmtSwitch{
+				IP4Addr:          s.ManagementInterface.String(),
+				Brand:            s.Brand.String(),
+				Model:            s.Model,
+				SNMPAuthPassword: fmt.Sprintf("vault://hms-creds/%s", s.Xname),
+				SNMPAuthProtocol: "MD5",
+				SNMPPrivPassword: fmt.Sprintf("vault://hms-creds/%s", s.Xname),
+				SNMPPrivProtocol: "DES",
+				SNMPUsername:     "testuser",
 
-			Aliases: []string{s.Name},
-		},
+				Aliases: []string{s.Name},
+			},
+		}, nil
+	case shasta.ManagementSwitchTypeAggregation:
+		fallthrough
+	case shasta.ManagementSwitchTypeSpine:
+		return sls_common.GenericHardware{
+			Parent:     base.GetHMSCompParent(s.Xname),
+			Xname:      s.Xname,
+			Type:       sls_common.MgmtHLSwitch,
+			TypeString: base.MgmtHLSwitch,
+			Class:      sls_common.ClassRiver,
+			ExtraPropertiesRaw: sls_common.ComptypeMgmtHLSwitch{
+				IP4Addr: s.ManagementInterface.String(),
+				Brand:   s.Brand.String(),
+				Model:   s.Model,
+				Aliases: []string{s.Name},
+			},
+		}, nil
+
+	case shasta.ManagementSwitchTypeCDU:
+		return sls_common.GenericHardware{
+			Parent:     base.GetHMSCompParent(s.Xname),
+			Xname:      s.Xname,
+			Type:       sls_common.CDUMgmtSwitch,
+			TypeString: base.CDUMgmtSwitch,
+			Class:      sls_common.ClassMountain,
+			ExtraPropertiesRaw: sls_common.ComptypeCDUMgmtSwitch{
+				Brand:   s.Brand.String(),
+				Model:   s.Model,
+				Aliases: []string{s.Name},
+			},
+		}, nil
 	}
+
+	return sls_common.GenericHardware{}, fmt.Errorf("unknown management switch type: %s", s.SwitchType)
 }
 
 func extractSwitchesfromReservations(subnet *shasta.IPV4Subnet) ([]shasta.ManagementSwitch, error) {
@@ -208,7 +244,15 @@ func extractSwitchesfromReservations(subnet *shasta.IPV4Subnet) ([]shasta.Manage
 			switches = append(switches, shasta.ManagementSwitch{
 				Xname:               reservation.Comment,
 				Name:                reservation.Name,
-				SwitchType:          "spine",
+				SwitchType:          shasta.ManagementSwitchTypeSpine,
+				ManagementInterface: reservation.IPAddress,
+			})
+		}
+		if strings.HasPrefix(reservation.Name, "sw-agg") {
+			switches = append(switches, shasta.ManagementSwitch{
+				Xname:               reservation.Comment,
+				Name:                reservation.Name,
+				SwitchType:          shasta.ManagementSwitchTypeAggregation,
 				ManagementInterface: reservation.IPAddress,
 			})
 		}
@@ -216,7 +260,15 @@ func extractSwitchesfromReservations(subnet *shasta.IPV4Subnet) ([]shasta.Manage
 			switches = append(switches, shasta.ManagementSwitch{
 				Xname:               reservation.Comment,
 				Name:                reservation.Name,
-				SwitchType:          "leaf",
+				SwitchType:          shasta.ManagementSwitchTypeLeaf,
+				ManagementInterface: reservation.IPAddress,
+			})
+		}
+		if strings.HasPrefix(reservation.Name, "sw-cdu") {
+			switches = append(switches, shasta.ManagementSwitch{
+				Xname:               reservation.Comment,
+				Name:                reservation.Name,
+				SwitchType:          shasta.ManagementSwitchTypeCDU,
 				ManagementInterface: reservation.IPAddress,
 			})
 		}

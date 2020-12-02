@@ -25,6 +25,10 @@ const ManagementSwitchBrandDell ManagementSwitchBrand = "Dell"
 // ManagementSwitchBrandMellanox for Mellanox Management switches
 const ManagementSwitchBrandMellanox ManagementSwitchBrand = "Mellanox"
 
+func (msb ManagementSwitchBrand) String() string {
+	return string(msb)
+}
+
 // ManagementSwitchType the type of management switch CDU/Leaf/Spine/Aggregation
 type ManagementSwitchType string
 
