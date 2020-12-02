@@ -25,14 +25,22 @@ const ManagementSwitchBrandDell ManagementSwitchBrand = "Dell"
 // ManagementSwitchBrandMellanox for Mellanox Management switches
 const ManagementSwitchBrandMellanox ManagementSwitchBrand = "Mellanox"
 
-// ManagementSwitchType the type of manamgnt switch CDU/Leaf/Spine/Aggregation
+// ManagementSwitchType the type of management switch CDU/Leaf/Spine/Aggregation
 type ManagementSwitchType string
 
+// ManagementSwitchTypeCDU is the type for CDU Management switches
 const ManagementSwitchTypeCDU ManagementSwitchType = "CDU"
+
+// ManagementSwitchTypeLeaf is the type for Leaf Management switches
 const ManagementSwitchTypeLeaf ManagementSwitchType = "Leaf"
+
+// ManagementSwitchTypeSpine is the type for Spine Management switches
 const ManagementSwitchTypeSpine ManagementSwitchType = "Spine"
+
+// ManagementSwitchTypeAggregation is the type for Aggregation Management switches
 const ManagementSwitchTypeAggregation ManagementSwitchType = "Aggregation"
 
+// IsManagementSwitchTypeValid validates the given ManagementSwitchType
 func IsManagementSwitchTypeValid(mst ManagementSwitchType) bool {
 	switch mst {
 	case ManagementSwitchTypeAggregation:
