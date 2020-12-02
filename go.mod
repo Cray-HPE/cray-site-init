@@ -19,7 +19,7 @@ require (
 	k8s.io/client-go v0.19.0
 	k8s.io/utils v0.0.0-20201110183641-67b214c5f920 // indirect
 	stash.us.cray.com/HMS/hms-base v1.7.1
-	stash.us.cray.com/HMS/hms-s3 v1.3.0
+	stash.us.cray.com/HMS/hms-s3 v1.5.0
 	stash.us.cray.com/HMS/hms-shcd-parser v0.0.0-20200612211515-3e74e1e2ad9d
 	stash.us.cray.com/HMS/hms-sls v1.5.0
 )

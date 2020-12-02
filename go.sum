@@ -784,6 +784,8 @@ stash.us.cray.com/HMS/hms-base v1.7.1/go.mod h1:2bT2ZeXBgXsrIsAtw0P6ILlTNilgOzzp
 stash.us.cray.com/HMS/hms-compcredentials v1.6.2/go.mod h1:xPUM1YBlT6BJqddI+Wtge5bdqXO17Ms6lKzG7fJ4tMI=
 stash.us.cray.com/HMS/hms-s3 v1.3.0 h1:AsBFZJIwQy9cVaQ18XKPLWkPjZ8TcJnZDpCulrOjl7w=
 stash.us.cray.com/HMS/hms-s3 v1.3.0/go.mod h1:xKLCUsDR8h/+Balso4cSXXOqIaAS9cfLj3dDJB3NkK8=
+stash.us.cray.com/HMS/hms-s3 v1.5.0 h1:8Y0kq5MByFEwlh1Ggi5sV/QAypZUWoSfizFV0fEM2t4=
+stash.us.cray.com/HMS/hms-s3 v1.5.0/go.mod h1:MFPhPEgOL+FEPZ0/AJNtWIsHJKgvxga4QJPbC0rYFBs=
 stash.us.cray.com/HMS/hms-securestorage v1.6.2/go.mod h1:M/GDP7bAUry/cf7Ez41RNSFodFpmn52KAgPyGL9+Tck=
 stash.us.cray.com/HMS/hms-securestorage v1.7.0/go.mod h1:/tRNXYwCBvVdbhu6a+i5R3Jftag4x8921qWwA+jo4JA=
 stash.us.cray.com/HMS/hms-shcd-parser v0.0.0-20200612211515-3e74e1e2ad9d h1:muqI9S9fHod93mIh9PoOwY+TaTpe96Xy1j9RcbPetDQ=
