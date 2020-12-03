@@ -308,10 +308,8 @@ func collectInput(v *viper.Viper) ([]shcd_parser.HMNRow, []*shasta.LogicalNCN, [
 		log.Fatalln("ncn-metadata validation failed: ", err)
 	}
 
-	if len(ncns) == 0 {
-		log.Fatal("Unable to extract NCNs from ncn metadata csv")
-	}
-
+	// TODO: At somepoint it would be worthwhile to move this validation logic into validateNCNInput
+	// but tweak it so we don't call log.Fatal so we make it unit testable.
 	var mustFail = false
 	for _, ncn := range ncns {
 		if !ncn.IsValid() {
@@ -373,8 +371,12 @@ func validateSwitchInput(switches []*shasta.ManagementSwitch) error {
 }
 
 func validateNCNInput(ncns []*shasta.LogicalNCN) error {
-	// Validate the xnames in the data from ncn_metadata.csv have valid xnames
+	// Validate that there is an non-zero number of NCNs extracted from ncn_metadata.csv
+	if len(ncns) == 0 {
+		return fmt.Errorf("Unable to extract NCNs from ncn metadata csv")
+	}
 
+	// Validate the xnames in the data from ncn_metadata.csv have valid xnames and types
 	for _, ncn := range ncns {
 		xname := ncn.Xname
 

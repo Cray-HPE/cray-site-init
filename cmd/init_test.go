@@ -153,6 +153,13 @@ func (suite *InitCmdTestSuite) TestValidateNCNInput_WrongXNameType() {
 	suite.Equal(errors.New("invalid type NodeBMC for NCN xname: x3000c0s3b0"), err)
 }
 
+func (suite *InitCmdTestSuite) TestValidateNCNInput_ZeroNCNs() {
+	ncns := []*shasta.LogicalNCN{}
+
+	err := validateNCNInput(ncns)
+	suite.Equal(errors.New("Unable to extract NCNs from ncn metadata csv"), err)
+}
+
 func (suite *InitCmdTestSuite) TestMergeNCNs_HappyPath() {
 	ncns := []*shasta.LogicalNCN{
 		{Xname: "x3000c0s1b0n0", Role: "Management", Subrole: "Master"},

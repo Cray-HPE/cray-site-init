@@ -36,7 +36,7 @@ type LogicalNCN struct {
 	Cabinet          string         `yaml:"cabinet" json:"cabinet" csv:"-"` // Use to establish availability zone
 }
 
-// IsValid is a vlaidator that checks for a minimum set of info
+// IsValid is a validator that checks for a minimum set of info
 func (lncn *LogicalNCN) IsValid() bool {
 	if lncn.Xname == "" {
 		return false
