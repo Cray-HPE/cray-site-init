@@ -141,7 +141,7 @@ func (mySwitch *ManagementSwitch) Validate() error {
 		fallthrough
 	case ManagementSwitchTypeAggregation:
 		if hmsType != base.MgmtHLSwitch {
-			return fmt.Errorf("invalid xname used for Spine/Aggergation switch: %s, should use xXcChHsS format", xname)
+			return fmt.Errorf("invalid xname used for Spine/Aggregation switch: %s, should use xXcChHsS format", xname)
 		}
 	case ManagementSwitchTypeCDU:
 		if hmsType != base.CDUMgmtSwitch {

@@ -60,7 +60,7 @@ func (suite *NetworkingTestSuite) TestValidateSwitch_WrongXnameTypes() {
 			Xname: "x10c0w14", SwitchType: ManagementSwitchTypeSpine,
 			Brand: ManagementSwitchBrandAruba,
 		},
-		expectedError: errors.New("invalid xname used for Spine/Aggergation switch: x10c0w14, should use xXcChHsS format"),
+		expectedError: errors.New("invalid xname used for Spine/Aggregation switch: x10c0w14, should use xXcChHsS format"),
 	}, {
 		// Spine using CDUMgmtSwitch, should be using MgmtHLSwitch
 		mySwitch: ManagementSwitch{
@@ -68,7 +68,7 @@ func (suite *NetworkingTestSuite) TestValidateSwitch_WrongXnameTypes() {
 			SwitchType: ManagementSwitchTypeSpine,
 			Brand:      ManagementSwitchBrandAruba,
 		},
-		expectedError: errors.New("invalid xname used for Spine/Aggergation switch: d10w14, should use xXcChHsS format"),
+		expectedError: errors.New("invalid xname used for Spine/Aggregation switch: d10w14, should use xXcChHsS format"),
 	}, {
 		// Aggergation using MgmtSwitch, should be using MgmtHLSwitch
 		mySwitch: ManagementSwitch{
@@ -76,7 +76,7 @@ func (suite *NetworkingTestSuite) TestValidateSwitch_WrongXnameTypes() {
 			SwitchType: ManagementSwitchTypeAggregation,
 			Brand:      ManagementSwitchBrandAruba,
 		},
-		expectedError: errors.New("invalid xname used for Spine/Aggergation switch: x20c0w14, should use xXcChHsS format"),
+		expectedError: errors.New("invalid xname used for Spine/Aggregation switch: x20c0w14, should use xXcChHsS format"),
 	}, {
 		// Aggergation using CDUMgmtSwitch, should be using MgmtHLSwitch
 		mySwitch: ManagementSwitch{
@@ -84,7 +84,7 @@ func (suite *NetworkingTestSuite) TestValidateSwitch_WrongXnameTypes() {
 			SwitchType: ManagementSwitchTypeAggregation,
 			Brand:      ManagementSwitchBrandAruba,
 		},
-		expectedError: errors.New("invalid xname used for Spine/Aggergation switch: d20w14, should use xXcChHsS format"),
+		expectedError: errors.New("invalid xname used for Spine/Aggregation switch: d20w14, should use xXcChHsS format"),
 	}, {
 		// CDU using MgmtHLSwitch, should be using CDUMgmtSwitch
 		mySwitch: ManagementSwitch{

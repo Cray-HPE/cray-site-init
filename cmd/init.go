@@ -291,7 +291,9 @@ func collectInput(v *viper.Viper) ([]shcd_parser.HMNRow, []*shasta.LogicalNCN, [
 	}
 
 	if err := validateSwitchInput(switches); err != nil {
-		log.Fatalln("switch-metadata validation failed:", err)
+		log.Println("Unable to get reasonable Switches from your csv")
+		log.Println("Does your header match the preferred style? Switch Xname,Type,Brand")
+		log.Fatal("CSV Parsing failed.  Can't continue.")
 	}
 
 	// This is techincally sufficient to generate an SLSState object, but to do so now
@@ -304,25 +306,26 @@ func collectInput(v *viper.Viper) ([]shcd_parser.HMNRow, []*shasta.LogicalNCN, [
 	}
 
 	if err := validateNCNInput(ncns); err != nil {
-		log.Fatalln("ncn-metadata validation failed:", err)
-	}
-	if err != nil {
 		log.Println("Unable to get reasonable NCNs from your csv")
 		log.Println("Does your header match the preferred style? Xname,Role,Subrole,BMC MAC,Bootstrap MAC,Bond0 MAC0,Bond0 MAC1")
 		log.Fatal("CSV Parsing failed.  Can't continue.")
-
 	}
 
 	return hmnRows, ncns, switches
 }
 
 func validateSwitchInput(switches []*shasta.ManagementSwitch) error {
+	// Validate that there is an non-zero number of NCNs extracted from ncn_metadata.csv
+	if len(switches) == 0 {
+		return fmt.Errorf("Unable to extract Switches from switch metadata csv")
+	}
+
 	// Validate each Switch
 	var mustFail = false
 	for _, mySwitch := range switches {
 		if err := mySwitch.Validate(); err != nil {
 			mustFail = true
-			log.Println("Switch (", mySwitch.Xname, ") from csv is invalid:", err)
+			log.Println("Switch from csv is invalid:", err)
 		}
 	}
 
@@ -344,7 +347,7 @@ func validateNCNInput(ncns []*shasta.LogicalNCN) error {
 	for _, ncn := range ncns {
 		if err := ncn.Validate(); err != nil {
 			mustFail = true
-			log.Println("NCN from csv is invalid", ncn)
+			log.Println("NCN from csv is invalid", ncn, err)
 		}
 	}
 
