@@ -58,13 +58,14 @@ func ReadNodeCSV(filename string) ([]*shasta.LogicalNCN, error) {
 	// Be Kind Rewind https://www.imdb.com/title/tt0799934/
 	ncnMetadataFile.Seek(0, io.SeekStart)
 	err = gocsv.UnmarshalFile(ncnMetadataFile, &nodes)
-	if err != nil { // Load nodes from file
+	if err == nil { // Load nodes from file
 		return nodes, nil
 	}
 
 	if newErr != nil {
 		if err != nil {
-			log.Fatal("Unable to parse ncn_metadata with either format because ", err, newErr)
+			log.Println("Unable to parse ncn_metadata with new style because ", newErr)
+			log.Fatal("Unable to parse ncn_metadata with old format because ", err)
 		}
 		log.Fatal("Unable to parse ncn_metadata with new style because ", newErr)
 	}
