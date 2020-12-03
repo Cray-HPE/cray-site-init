@@ -298,7 +298,20 @@ func collectInput(v *viper.Viper) ([]shcd_parser.HMNRow, []*shasta.LogicalNCN, [
 	if len(ncns) == 0 {
 		log.Fatal("Unable to extract NCNs from ncn metadata csv")
 	}
-	log.Println(ncns)
+
+	var mustFail = false
+	for _, ncn := range ncns {
+		if !ncn.IsValid() {
+			mustFail = true
+			log.Println("NCN from csv is invalid", ncn)
+		}
+	}
+	if mustFail {
+		log.Println("Unable to get reasonable NCNs from your csv")
+		log.Println("Does your header match the preferred style? Xname,Role,Subrole,BMC MAC,Bootstrap MAC,Bond0 MAC0,Bond0 MAC1")
+		log.Fatal("CSV Parsing failed.  Can't continue.")
+
+	}
 	return hmnRows, ncns, switches
 }
 

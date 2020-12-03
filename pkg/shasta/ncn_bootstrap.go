@@ -36,6 +36,20 @@ type LogicalNCN struct {
 	Cabinet          string         `yaml:"cabinet" json:"cabinet" csv:"-"` // Use to establish availability zone
 }
 
+// IsValid is a vlaidator that checks for a minimum set of info
+func (lncn *LogicalNCN) IsValid() bool {
+	if lncn.Xname == "" {
+		return false
+	}
+	if lncn.Role == "" {
+		return false
+	}
+	if lncn.Subrole == "" {
+		return false
+	}
+	return true
+}
+
 // NCNNetwork holds information about networks
 type NCNNetwork struct {
 	NetworkName   string `json:"network-name"`

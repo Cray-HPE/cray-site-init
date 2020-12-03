@@ -42,6 +42,7 @@ func ReadNodeCSV(filename string) ([]*shasta.LogicalNCN, error) {
 	newErr := gocsv.UnmarshalFile(ncnMetadataFile, &newNodes)
 	if newErr == nil {
 		for _, node := range newNodes {
+			// log.Println("Appending ", node)
 			nodes = append(nodes, &shasta.LogicalNCN{
 				Xname:     node.Xname,
 				Role:      node.Role,
