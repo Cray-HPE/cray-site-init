@@ -19,11 +19,6 @@ import (
 	"stash.us.cray.com/MTL/csi/pkg/shasta"
 )
 
-// WriteNICConfigENV sets environment variables for nic bonding and configuration
-func WriteNICConfigENV(path string, conf shasta.SystemConfig) {
-	log.Printf("NOT IMPLEMENTED")
-}
-
 func makeBaseCampfromNCNs(v *viper.Viper, ncns []shasta.LogicalNCN, shastaNetworks map[string]*shasta.IPV4Network) (map[string]shasta.CloudInit, error) {
 	basecampConfig := make(map[string]shasta.CloudInit)
 	uaiMacvlanSubnet, err := shastaNetworks["NMN"].LookUpSubnet("uai_macvlan")
