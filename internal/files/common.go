@@ -53,9 +53,9 @@ func WriteConfig(enc encoder, path string, conf interface{}) error {
 	defer f.Close()
 	w := bufio.NewWriter(f)
 	enc(w, conf)
-	size := w.Buffered() // Returns 0 at some points.  I don't have time to look at bufio and learn more.  The file is still written just fine.
 	w.Flush()
-	log.Printf("wrote %d bytes to %s\n", size, path)
+	info, _ := f.Stat()
+	log.Printf("wrote %d bytes to %s\n", info.Size(), path)
 	return nil
 }
 
