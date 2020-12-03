@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"log"
 	"strings"
+
+	base "stash.us.cray.com/HMS/hms-base"
 )
 
 // LogicalNCN is the main struct for NCNs
@@ -36,18 +38,29 @@ type LogicalNCN struct {
 	Cabinet          string         `yaml:"cabinet" json:"cabinet" csv:"-"` // Use to establish availability zone
 }
 
-// IsValid is a validator that checks for a minimum set of info
-func (lncn *LogicalNCN) IsValid() bool {
-	if lncn.Xname == "" {
-		return false
+// Validate is a validator that checks for a minimum set of info
+func (lncn *LogicalNCN) Validate() error {
+	xname := lncn.Xname
+
+	// First off verify that this is a valid xname
+	if !base.IsHMSCompIDValid(xname) {
+		return fmt.Errorf("invalid xname for NCN: %s", xname)
 	}
+
+	// Next, verify that the xname is type of Node
+	if base.GetHMSType(xname) != base.Node {
+		return fmt.Errorf("invalid type %s for NCN xname: %s", base.GetHMSTypeString(xname), xname)
+	}
+
 	if lncn.Role == "" {
-		return false
+		// TODO Verify the role against the listing of valid Roles
+		return fmt.Errorf("empty role")
 	}
 	if lncn.Subrole == "" {
-		return false
+		// TODO Verify the role against the listing of valid SubRoles
+		return fmt.Errorf("empty sub-role")
 	}
-	return true
+	return nil
 }
 
 // NCNNetwork holds information about networks

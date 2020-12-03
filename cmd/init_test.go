@@ -58,7 +58,10 @@ func (suite *InitCmdTestSuite) TestValidateSwitchInput_InvalidXname() {
 
 func (suite *InitCmdTestSuite) TestValidateSwitchInput_WrongXNameTypes() {
 	// Test validate with valid xnames, but check that we are enforcing that the
-	// different switch types are using hte correct names
+	// different switch types are using hte correct names.
+	//
+	// The validateSwitchInput function reports the same error if 1 or more switches
+	// had validation issues.
 
 	tests := []struct {
 		mySwitch      shasta.ManagementSwitch
@@ -69,7 +72,7 @@ func (suite *InitCmdTestSuite) TestValidateSwitchInput_WrongXNameTypes() {
 			Xname: "x10c0w14", SwitchType: shasta.ManagementSwitchTypeSpine,
 			Brand: shasta.ManagementSwitchBrandAruba,
 		},
-		expectedError: errors.New("invalid xname used for Spine/Aggergation switch: x10c0w14, should use xXcChHsS format"),
+		expectedError: errors.New("ncn_metadata.csv contains invalid NCN data"),
 	}, {
 		// Spine using CDUMgmtSwitch, should be using MgmtHLSwitch
 		mySwitch: shasta.ManagementSwitch{
@@ -77,7 +80,7 @@ func (suite *InitCmdTestSuite) TestValidateSwitchInput_WrongXNameTypes() {
 			SwitchType: shasta.ManagementSwitchTypeSpine,
 			Brand:      shasta.ManagementSwitchBrandAruba,
 		},
-		expectedError: errors.New("invalid xname used for Spine/Aggergation switch: d10w14, should use xXcChHsS format"),
+		expectedError: errors.New("ncn_metadata.csv contains invalid NCN data"),
 	}, {
 		// Aggergation using MgmtSwitch, should be using MgmtHLSwitch
 		mySwitch: shasta.ManagementSwitch{
@@ -85,7 +88,7 @@ func (suite *InitCmdTestSuite) TestValidateSwitchInput_WrongXNameTypes() {
 			SwitchType: shasta.ManagementSwitchTypeAggregation,
 			Brand:      shasta.ManagementSwitchBrandAruba,
 		},
-		expectedError: errors.New("invalid xname used for Spine/Aggergation switch: x20c0w14, should use xXcChHsS format"),
+		expectedError: errors.New("ncn_metadata.csv contains invalid NCN data"),
 	}, {
 		// Aggergation using CDUMgmtSwitch, should be using MgmtHLSwitch
 		mySwitch: shasta.ManagementSwitch{
@@ -93,7 +96,7 @@ func (suite *InitCmdTestSuite) TestValidateSwitchInput_WrongXNameTypes() {
 			SwitchType: shasta.ManagementSwitchTypeAggregation,
 			Brand:      shasta.ManagementSwitchBrandAruba,
 		},
-		expectedError: errors.New("invalid xname used for Spine/Aggergation switch: d20w14, should use xXcChHsS format"),
+		expectedError: errors.New("ncn_metadata.csv contains invalid NCN data"),
 	}, {
 		// CDU using MgmtHLSwitch, should be using CDUMgmtSwitch
 		mySwitch: shasta.ManagementSwitch{
@@ -101,7 +104,7 @@ func (suite *InitCmdTestSuite) TestValidateSwitchInput_WrongXNameTypes() {
 			SwitchType: shasta.ManagementSwitchTypeCDU,
 			Brand:      shasta.ManagementSwitchBrandAruba,
 		},
-		expectedError: errors.New("invalid xname used for CDU switch: x30c0w14, should use dDwW format"),
+		expectedError: errors.New("ncn_metadata.csv contains invalid NCN data"),
 	}, {
 		// CDU using MgmtSwitch, should be using CDUMgmtSwitch
 		mySwitch: shasta.ManagementSwitch{
@@ -109,7 +112,7 @@ func (suite *InitCmdTestSuite) TestValidateSwitchInput_WrongXNameTypes() {
 			SwitchType: shasta.ManagementSwitchTypeCDU,
 			Brand:      shasta.ManagementSwitchBrandAruba,
 		},
-		expectedError: errors.New("invalid xname used for CDU switch: x30c0h14s1, should use dDwW format"),
+		expectedError: errors.New("ncn_metadata.csv contains invalid NCN data"),
 	}}
 
 	for _, test := range tests {
@@ -117,14 +120,13 @@ func (suite *InitCmdTestSuite) TestValidateSwitchInput_WrongXNameTypes() {
 		err := validateSwitchInput(switches)
 		suite.Equal(test.expectedError, err)
 	}
-
 }
 
 func (suite *InitCmdTestSuite) TestValidateNCNInput_HappyPath() {
 	ncns := []*shasta.LogicalNCN{
-		{Xname: "x3000c0s1b0n0"},
-		{Xname: "x3000c0s2b0n0"},
-		{Xname: "x3000c0s3b0n0"},
+		{Xname: "x3000c0s1b0n0", Role: "Management", Subrole: "Master"},
+		{Xname: "x3000c0s2b0n0", Role: "Management", Subrole: "Worker"},
+		{Xname: "x3000c0s3b0n0", Role: "Management", Subrole: "Storage"},
 	}
 
 	err := validateNCNInput(ncns)
@@ -133,24 +135,24 @@ func (suite *InitCmdTestSuite) TestValidateNCNInput_HappyPath() {
 
 func (suite *InitCmdTestSuite) TestValidateNCNInput_InvalidXName() {
 	ncns := []*shasta.LogicalNCN{
-		{Xname: "x3000c0s1b0n0"},
-		{Xname: "foo"},
-		{Xname: "x3000c0s3b0n0"},
+		{Xname: "x3000c0s1b0n0", Role: "Management", Subrole: "Master"},
+		{Xname: "foo", Role: "Management", Subrole: "Worker"},
+		{Xname: "x3000c0s3b0n0", Role: "Management", Subrole: "Storage"},
 	}
 
 	err := validateNCNInput(ncns)
-	suite.Equal(errors.New("invalid xname for NCN: foo"), err)
+	suite.Equal(errors.New("ncn_metadata.csv contains invalid NCN data"), err)
 }
 
 func (suite *InitCmdTestSuite) TestValidateNCNInput_WrongXNameType() {
 	ncns := []*shasta.LogicalNCN{
-		{Xname: "x3000c0s1b0n0"},
-		{Xname: "x3000c0s2b0n0"},
-		{Xname: "x3000c0s3b0"},
+		{Xname: "x3000c0s1b0n0", Role: "Management", Subrole: "Master"},
+		{Xname: "x3000c0s2b0n0", Role: "Management", Subrole: "Worker"},
+		{Xname: "x3000c0s3b0", Role: "Management", Subrole: "Storage"},
 	}
 
 	err := validateNCNInput(ncns)
-	suite.Equal(errors.New("invalid type NodeBMC for NCN xname: x3000c0s3b0"), err)
+	suite.Equal(errors.New("ncn_metadata.csv contains invalid NCN data"), err)
 }
 
 func (suite *InitCmdTestSuite) TestValidateNCNInput_ZeroNCNs() {

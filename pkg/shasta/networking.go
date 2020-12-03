@@ -9,6 +9,7 @@ import (
 	"log"
 	"net"
 
+	base "stash.us.cray.com/HMS/hms-base"
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
 	"stash.us.cray.com/MTL/csi/pkg/ipam"
 )
@@ -108,6 +109,49 @@ type ManagementSwitch struct {
 	Firmware            string                `json:"firmware" mapstructure:"firmware" csv:"-"`
 	SwitchType          ManagementSwitchType  `json:"type" mapstructure:"type" csv:"Type"` //"CDU/Leaf/Spine/Aggregation"
 	ManagementInterface net.IP                `json:"ip" mapstructure:"ip" csv:"-"`        // SNMP/REST interface IP (not a distinct BMC)  // Required for SLS
+}
+
+// Validate ManagementSwitch contents
+func (mySwitch *ManagementSwitch) Validate() error {
+	// Validate the data that was read in switch_metadata.csv. We are inforcing 3 constaints:
+	// 1. Validate the xname is valid
+	// 2. The specified switch type is valid
+	// 3. The HMS type for the xname matches the type of switch being used
+
+	xname := mySwitch.Xname
+	// Verify xname is valid
+	if !base.IsHMSCompIDValid(xname) {
+		return fmt.Errorf("invalid xname for Switch: %s", xname)
+	}
+
+	// Verify that the specify management switch type is one of the known values
+	if !IsManagementSwitchTypeValid(mySwitch.SwitchType) {
+		return fmt.Errorf("invalid management switch type: %s %s", xname, mySwitch.SwitchType)
+	}
+
+	// Now we need to verify that the correct switch xname format was used for the different
+	// types of management switches.
+	hmsType := base.GetHMSType(xname)
+	switch mySwitch.SwitchType {
+	case ManagementSwitchTypeLeaf:
+		if hmsType != base.MgmtSwitch {
+			return fmt.Errorf("invalid xname used for Leaf switch: %s,  should use xXcCwW format", xname)
+		}
+	case ManagementSwitchTypeSpine:
+		fallthrough
+	case ManagementSwitchTypeAggregation:
+		if hmsType != base.MgmtHLSwitch {
+			return fmt.Errorf("invalid xname used for Spine/Aggergation switch: %s, should use xXcChHsS format", xname)
+		}
+	case ManagementSwitchTypeCDU:
+		if hmsType != base.CDUMgmtSwitch {
+			return fmt.Errorf("invalid xname used for CDU switch: %s, should use dDwW format", xname)
+		}
+	default:
+		return fmt.Errorf("invalid switch type for xname: %s", xname)
+	}
+
+	return nil
 }
 
 // GenSubnets subdivides a network into a set of subnets

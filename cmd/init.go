@@ -16,7 +16,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	base "stash.us.cray.com/HMS/hms-base"
 	shcd_parser "stash.us.cray.com/HMS/hms-shcd-parser/pkg/shcd-parser"
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
 	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
@@ -292,7 +291,7 @@ func collectInput(v *viper.Viper) ([]shcd_parser.HMNRow, []*shasta.LogicalNCN, [
 	}
 
 	if err := validateSwitchInput(switches); err != nil {
-		log.Fatalln("switch-metadata validation failed: ", err)
+		log.Fatalln("switch-metadata validation failed:", err)
 	}
 
 	// This is techincally sufficient to generate an SLSState object, but to do so now
@@ -305,66 +304,30 @@ func collectInput(v *viper.Viper) ([]shcd_parser.HMNRow, []*shasta.LogicalNCN, [
 	}
 
 	if err := validateNCNInput(ncns); err != nil {
-		log.Fatalln("ncn-metadata validation failed: ", err)
+		log.Fatalln("ncn-metadata validation failed:", err)
 	}
-
-	// TODO: At somepoint it would be worthwhile to move this validation logic into validateNCNInput
-	// but tweak it so we don't call log.Fatal so we make it unit testable.
-	var mustFail = false
-	for _, ncn := range ncns {
-		if !ncn.IsValid() {
-			mustFail = true
-			log.Println("NCN from csv is invalid", ncn)
-		}
-	}
-	if mustFail {
+	if err != nil {
 		log.Println("Unable to get reasonable NCNs from your csv")
 		log.Println("Does your header match the preferred style? Xname,Role,Subrole,BMC MAC,Bootstrap MAC,Bond0 MAC0,Bond0 MAC1")
 		log.Fatal("CSV Parsing failed.  Can't continue.")
 
 	}
+
 	return hmnRows, ncns, switches
 }
 
 func validateSwitchInput(switches []*shasta.ManagementSwitch) error {
-	// Validate the data that was read in switch_metadata.csv. We are inforcing 3 constaints:
-	// 1. Validate the xname is valid
-	// 2. The specified switch type is valid
-	// 3. The HMS type for the xname matches the type of switch being used
-
+	// Validate each Switch
+	var mustFail = false
 	for _, mySwitch := range switches {
-		xname := mySwitch.Xname
-		// Verify xname is valid
-		if !base.IsHMSCompIDValid(xname) {
-			return fmt.Errorf("invalid xname for Switch: %s", xname)
+		if err := mySwitch.Validate(); err != nil {
+			mustFail = true
+			log.Println("Switch (", mySwitch.Xname, ") from csv is invalid:", err)
 		}
+	}
 
-		// Verify that the specify management switch type is one of the known values
-		if !shasta.IsManagementSwitchTypeValid(mySwitch.SwitchType) {
-			return fmt.Errorf("invalid management switch type: %s %s", xname, mySwitch.SwitchType)
-		}
-
-		// Now we need to verify that the correct switch xname format was used for the different
-		// types of management switches.
-		hmsType := base.GetHMSType(xname)
-		switch mySwitch.SwitchType {
-		case shasta.ManagementSwitchTypeLeaf:
-			if hmsType != base.MgmtSwitch {
-				return fmt.Errorf("invalid xname used for Leaf switch: %s,  should use xXcCwW format", xname)
-			}
-		case shasta.ManagementSwitchTypeSpine:
-			fallthrough
-		case shasta.ManagementSwitchTypeAggregation:
-			if hmsType != base.MgmtHLSwitch {
-				return fmt.Errorf("invalid xname used for Spine/Aggergation switch: %s, should use xXcChHsS format", xname)
-			}
-		case shasta.ManagementSwitchTypeCDU:
-			if hmsType != base.CDUMgmtSwitch {
-				return fmt.Errorf("invalid xname used for CDU switch: %s, should use dDwW format", xname)
-			}
-		default:
-			return fmt.Errorf("invalid switch type for xname: %s", xname)
-		}
+	if mustFail {
+		return fmt.Errorf("switch_metadata.csv contains invalid NCN data")
 	}
 
 	return nil
@@ -376,19 +339,17 @@ func validateNCNInput(ncns []*shasta.LogicalNCN) error {
 		return fmt.Errorf("Unable to extract NCNs from ncn metadata csv")
 	}
 
-	// Validate the xnames in the data from ncn_metadata.csv have valid xnames and types
+	// Validate each NCN
+	var mustFail = false
 	for _, ncn := range ncns {
-		xname := ncn.Xname
-
-		// First off verify that this is a valid xname
-		if !base.IsHMSCompIDValid(xname) {
-			return fmt.Errorf("invalid xname for NCN: %s", xname)
+		if err := ncn.Validate(); err != nil {
+			mustFail = true
+			log.Println("NCN from csv is invalid", ncn)
 		}
+	}
 
-		// Next, verify that the xname is type of Node
-		if base.GetHMSType(xname) != base.Node {
-			return fmt.Errorf("invalid type %s for NCN xname: %s", base.GetHMSTypeString(xname), xname)
-		}
+	if mustFail {
+		return fmt.Errorf("ncn_metadata.csv contains invalid NCN data")
 	}
 
 	return nil
