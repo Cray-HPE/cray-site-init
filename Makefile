@@ -31,7 +31,7 @@ endif
 	doc \
 	version
 
-all: fmt lint tidy build
+all: tools fmt lint tidy build
 
 help:
 	@echo 'Usage: make <OPTIONS> ... <TARGETS>'
