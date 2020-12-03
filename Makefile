@@ -31,7 +31,7 @@ endif
 	doc \
 	version
 
-all: fmt lint build
+all: fmt lint tidy build
 
 help:
 	@echo 'Usage: make <OPTIONS> ... <TARGETS>'
@@ -48,6 +48,7 @@ help:
 	@echo '    vet                Run go vet.'
 	@echo '    lint               Run golint.'
 	@echo '    fmt                Run go fmt.'
+	@echo '    tidy               Run go mod tidy.'
 	@echo '    env                Display Go environment.'
 	@echo '    build              Build project for current platform.'
 	@echo '    doc                Start Go documentation server on port 8080.'
@@ -84,7 +85,7 @@ tools:
 vet: version
 	go vet -v ./...
 
-lint: tools
+lint:
 	golint -set_exit_status  ./...
 
 fmt:
@@ -96,6 +97,9 @@ env:
 # Run against the configured Kubernetes cluster in ~/.kube/configs
 run: build
 	go run ./main.go$(TARGET) $>
+
+tidy:
+	go mod tidy
 
 build: fmt
 	go build -o bin/csi -ldflags "\
