@@ -330,7 +330,7 @@ func validateSwitchInput(switches []*shasta.ManagementSwitch) error {
 	}
 
 	if mustFail {
-		return fmt.Errorf("switch_metadata.csv contains invalid NCN data")
+		return fmt.Errorf("switch_metadata.csv contains invalid switch data")
 	}
 
 	return nil

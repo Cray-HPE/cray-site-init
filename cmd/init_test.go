@@ -53,7 +53,7 @@ func (suite *InitCmdTestSuite) TestValidateSwitchInput_InvalidXname() {
 	}
 
 	err := validateSwitchInput(switches)
-	suite.Equal(errors.New("invalid xname for Switch: x3000c0w15L"), err)
+	suite.Equal(errors.New("switch_metadata.csv contains invalid switch data"), err)
 }
 
 func (suite *InitCmdTestSuite) TestValidateSwitchInput_WrongXNameTypes() {
@@ -72,7 +72,7 @@ func (suite *InitCmdTestSuite) TestValidateSwitchInput_WrongXNameTypes() {
 			Xname: "x10c0w14", SwitchType: shasta.ManagementSwitchTypeSpine,
 			Brand: shasta.ManagementSwitchBrandAruba,
 		},
-		expectedError: errors.New("ncn_metadata.csv contains invalid NCN data"),
+		expectedError: errors.New("switch_metadata.csv contains invalid switch data"),
 	}, {
 		// Spine using CDUMgmtSwitch, should be using MgmtHLSwitch
 		mySwitch: shasta.ManagementSwitch{
@@ -80,7 +80,7 @@ func (suite *InitCmdTestSuite) TestValidateSwitchInput_WrongXNameTypes() {
 			SwitchType: shasta.ManagementSwitchTypeSpine,
 			Brand:      shasta.ManagementSwitchBrandAruba,
 		},
-		expectedError: errors.New("ncn_metadata.csv contains invalid NCN data"),
+		expectedError: errors.New("switch_metadata.csv contains invalid switch data"),
 	}, {
 		// Aggergation using MgmtSwitch, should be using MgmtHLSwitch
 		mySwitch: shasta.ManagementSwitch{
@@ -88,7 +88,7 @@ func (suite *InitCmdTestSuite) TestValidateSwitchInput_WrongXNameTypes() {
 			SwitchType: shasta.ManagementSwitchTypeAggregation,
 			Brand:      shasta.ManagementSwitchBrandAruba,
 		},
-		expectedError: errors.New("ncn_metadata.csv contains invalid NCN data"),
+		expectedError: errors.New("switch_metadata.csv contains invalid switch data"),
 	}, {
 		// Aggergation using CDUMgmtSwitch, should be using MgmtHLSwitch
 		mySwitch: shasta.ManagementSwitch{
@@ -96,7 +96,7 @@ func (suite *InitCmdTestSuite) TestValidateSwitchInput_WrongXNameTypes() {
 			SwitchType: shasta.ManagementSwitchTypeAggregation,
 			Brand:      shasta.ManagementSwitchBrandAruba,
 		},
-		expectedError: errors.New("ncn_metadata.csv contains invalid NCN data"),
+		expectedError: errors.New("switch_metadata.csv contains invalid switch data"),
 	}, {
 		// CDU using MgmtHLSwitch, should be using CDUMgmtSwitch
 		mySwitch: shasta.ManagementSwitch{
@@ -104,7 +104,7 @@ func (suite *InitCmdTestSuite) TestValidateSwitchInput_WrongXNameTypes() {
 			SwitchType: shasta.ManagementSwitchTypeCDU,
 			Brand:      shasta.ManagementSwitchBrandAruba,
 		},
-		expectedError: errors.New("ncn_metadata.csv contains invalid NCN data"),
+		expectedError: errors.New("switch_metadata.csv contains invalid switch data"),
 	}, {
 		// CDU using MgmtSwitch, should be using CDUMgmtSwitch
 		mySwitch: shasta.ManagementSwitch{
@@ -112,7 +112,7 @@ func (suite *InitCmdTestSuite) TestValidateSwitchInput_WrongXNameTypes() {
 			SwitchType: shasta.ManagementSwitchTypeCDU,
 			Brand:      shasta.ManagementSwitchBrandAruba,
 		},
-		expectedError: errors.New("ncn_metadata.csv contains invalid NCN data"),
+		expectedError: errors.New("switch_metadata.csv contains invalid switch data"),
 	}}
 
 	for _, test := range tests {
