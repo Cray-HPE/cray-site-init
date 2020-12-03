@@ -108,14 +108,11 @@ func buildCabinetDetails(v *viper.Viper) []shasta.CabinetDetail {
 
 // WriteCPTNetworkConfig writes the Network Configuration details for the installation node  (CPT)
 func WriteCPTNetworkConfig(path string, ncn shasta.LogicalNCN, shastaNetworks map[string]*shasta.IPV4Network) error {
-<<<<<<< HEAD
 	type Route struct {
 		CIDR    net.IP
 		Mask    net.IP
 		Gateway net.IP
 	}
-=======
->>>>>>> match upstream to fix merge conflict
 	var bond0Net shasta.NCNNetwork
 	for _, network := range ncn.Networks {
 		if network.NetworkName == "MTL" {
