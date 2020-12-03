@@ -71,7 +71,7 @@ var initCmd = &cobra.Command{
 		// Merge the SLS NCN list with the NCN list we got at the beginning
 		err = mergeNCNs(logicalNcns, slsNcns)
 		if err != nil {
-			log.Fatalln("Failed to merge NCNs:", err) // TODO rephrase
+			log.Fatalln(err)
 		}
 
 		// Cycle through the main networks and update the reservations and dhcp ranges as necessary
