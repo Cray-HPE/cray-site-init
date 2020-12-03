@@ -131,11 +131,13 @@ func WriteCPTNetworkConfig(path string, ncn shasta.LogicalNCN, shastaNetworks ma
 	csiFiles.WriteTemplate(filepath.Join(path, "ifcfg-bond0"), template.Must(template.New("bond0").Parse(string(Bond0ConfigTemplate))), bond0Net)
 	csiFiles.WriteTemplate(filepath.Join(path, "ifcfg-lan0"), template.Must(template.New("lan0").Parse(string(Lan0ConfigTemplate))), ncn)
 	for _, network := range ncn.Networks {
-		if network.Vlan != 0 {
-			csiFiles.WriteTemplate(filepath.Join(path, fmt.Sprintf("ifcfg-vlan%03d", network.Vlan)), template.Must(template.New("vlan").Parse(string(VlanConfigTemplate))), network)
-		}
-		if network.NetworkName == "NMN" {
-			csiFiles.WriteTemplate(filepath.Join(path, fmt.Sprintf("ifroute-vlan%03d", network.Vlan)), template.Must(template.New("vlan").Parse(string(VlanRouteTemplate))), []Route{metalLBRoute})
+		if stringInSlice(network.NetworkName, []string{"HMN", "NMN", "MTL", "CAN"}) {
+			if network.Vlan != 0 {
+				csiFiles.WriteTemplate(filepath.Join(path, fmt.Sprintf("ifcfg-vlan%03d", network.Vlan)), template.Must(template.New("vlan").Parse(string(VlanConfigTemplate))), network)
+			}
+			if network.NetworkName == "NMN" {
+				csiFiles.WriteTemplate(filepath.Join(path, fmt.Sprintf("ifroute-vlan%03d", network.Vlan)), template.Must(template.New("vlan").Parse(string(VlanRouteTemplate))), []Route{metalLBRoute})
+			}
 		}
 	}
 	return nil
@@ -333,3 +335,12 @@ NETCONFIG_NIS_STATIC_DOMAIN=""
 NETCONFIG_NIS_STATIC_SERVERS=""
 WIRELESS_REGULATORY_DOMAIN=''
 `)
+
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
+}

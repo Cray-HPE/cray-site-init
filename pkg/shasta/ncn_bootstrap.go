@@ -93,14 +93,15 @@ func AllocateIps(ncns []*LogicalNCN, networks map[string]*IPV4Network) {
 			reservation := subnet.AddReservation(ncn.Xname, ncn.Xname)
 			// log.Printf("Adding %v %v reservation for %v(%v) at %v \n", netName, subnet.Name, ncn.Xname, ncn.Xname, reservation.IPAddress.String())
 			prefixLen := strings.Split(subnet.CIDR.String(), "/")[1]
-			ncn.Networks = append(ncn.Networks, NCNNetwork{
+			tempNetwork := NCNNetwork{
 				NetworkName: netName,
 				IPAddress:   reservation.IPAddress.String(),
 				Vlan:        int(subnet.VlanID),
 				FullName:    subnet.FullName,
 				CIDR:        strings.Join([]string{reservation.IPAddress.String(), prefixLen}, "/"),
 				Mask:        prefixLen,
-			})
+			}
+			ncn.Networks = append(ncn.Networks, tempNetwork)
 
 		}
 	}

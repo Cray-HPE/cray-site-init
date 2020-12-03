@@ -20,6 +20,7 @@ import (
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
 	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
 	"stash.us.cray.com/MTL/csi/pkg/shasta"
+	"stash.us.cray.com/MTL/csi/pkg/version"
 )
 
 // initCmd represents the init command
@@ -119,9 +120,11 @@ var initCmd = &cobra.Command{
 		fmt.Printf("\tUpstream DNS: %v\n", v.GetString("ipv4-resolvers"))
 		fmt.Printf("System Information\n")
 		fmt.Printf("\tNCNs: %v\n", len(ncns))
-		fmt.Printf("\tMountain Compute Cabinets: %v\n", 0) //TODO: read from SLS
-		fmt.Printf("\tRiver Compute Cabinets: %v\n", 0)    //TODO: read from SLS
-		fmt.Printf("\tHill Compute Cabinets: %v\n", 0)     //TODO: read from SLS
+
+		fmt.Printf("Version Information\n\t%s\n\t%s\n", version.Get().GitCommit, version.Get())
+		// fmt.Printf("\tMountain Compute Cabinets: %v\n", 0) //TODO: read from SLS
+		// fmt.Printf("\tRiver Compute Cabinets: %v\n", 0)    //TODO: read from SLS
+		// fmt.Printf("\tHill Compute Cabinets: %v\n", 0)     //TODO: read from SLS
 	},
 }
 
