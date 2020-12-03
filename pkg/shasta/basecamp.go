@@ -118,7 +118,10 @@ var basecampGlobalString = `{
 	"num_storage_nodes": "3",
 	"rgw-virtual-ip": "~FIXME~ e.g. 10.252.2.100",
 	"upstream_ntp_server": "~FIXME~",
-	"wipe-ceph-osds": "yes"
+	"wipe-ceph-osds": "yes",
+	"system-name": "~FIXME~",
+	"site-domain": "~FIXME~",
+	"internal-domain": "~FIXME~"
 	}`
 
 // MakeBasecampGlobals uses the defaults above to create a suitable k/v pairing for the
