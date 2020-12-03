@@ -1,0 +1,213 @@
+/*
+Copyright 2020 Hewlett Packard Enterprise Development LP
+*/
+
+package cmd
+
+import (
+	"errors"
+	"net"
+	"testing"
+
+	"github.com/stretchr/testify/suite"
+	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
+	"stash.us.cray.com/MTL/csi/pkg/shasta"
+)
+
+type GenSLSTestSuite struct {
+	suite.Suite
+}
+
+func (suite *GenSLSTestSuite) TestConvertManagementSwitchToSLS_HappyPath() {
+	tests := []struct {
+		csiSwitch   shasta.ManagementSwitch
+		expectedSLS sls_common.GenericHardware
+	}{{
+		// Leaf Switch
+		csiSwitch: shasta.ManagementSwitch{
+			Xname:               "x3000c0w14",
+			Name:                "sw-leaf-001",
+			ManagementInterface: net.ParseIP("10.254.0.2"),
+			SwitchType:          shasta.ManagementSwitchTypeLeaf,
+			Brand:               shasta.ManagementSwitchBrandAruba,
+			Model:               "6300M",
+		},
+		expectedSLS: sls_common.GenericHardware{
+			Parent:     "x3000c0",
+			Xname:      "x3000c0w14",
+			Type:       "comptype_mgmt_switch",
+			TypeString: "MgmtSwitch",
+			Class:      "River",
+			ExtraPropertiesRaw: sls_common.ComptypeMgmtSwitch{
+				IP4Addr:          "10.254.0.2",
+				Brand:            "Aruba",
+				Model:            "6300M",
+				SNMPAuthPassword: "vault://hms-creds/x3000c0w14",
+				SNMPAuthProtocol: "MD5",
+				SNMPPrivPassword: "vault://hms-creds/x3000c0w14",
+				SNMPPrivProtocol: "DES",
+				SNMPUsername:     "testuser",
+				Aliases:          []string{"sw-leaf-001"},
+			},
+		},
+	}, {
+		// Spine Switch
+		csiSwitch: shasta.ManagementSwitch{
+			Xname:               "x3000c0h13s1",
+			Name:                "sw-spine-001",
+			ManagementInterface: net.ParseIP("10.254.0.2"),
+			SwitchType:          shasta.ManagementSwitchTypeSpine,
+			Brand:               shasta.ManagementSwitchBrandAruba,
+			Model:               "8325",
+		},
+		expectedSLS: sls_common.GenericHardware{
+			Parent:     "x3000c0h13",
+			Xname:      "x3000c0h13s1",
+			Type:       "comptype_hl_switch",
+			TypeString: "MgmtHLSwitch",
+			Class:      "River",
+			ExtraPropertiesRaw: sls_common.ComptypeMgmtHLSwitch{
+				IP4Addr: "10.254.0.2",
+				Brand:   "Aruba",
+				Model:   "8325",
+				Aliases: []string{"sw-spine-001"},
+			},
+		},
+	}, {
+		// Aggergation Switch
+		csiSwitch: shasta.ManagementSwitch{
+			Xname:               "x3000c0h13s1",
+			Name:                "sw-agg-001",
+			ManagementInterface: net.ParseIP("10.254.0.2"),
+			SwitchType:          shasta.ManagementSwitchTypeAggregation,
+			Brand:               shasta.ManagementSwitchBrandAruba,
+			Model:               "8325",
+		},
+		expectedSLS: sls_common.GenericHardware{
+			Parent:     "x3000c0h13",
+			Xname:      "x3000c0h13s1",
+			Type:       "comptype_hl_switch",
+			TypeString: "MgmtHLSwitch",
+			Class:      "River",
+			ExtraPropertiesRaw: sls_common.ComptypeMgmtHLSwitch{
+				IP4Addr: "10.254.0.2",
+				Brand:   "Aruba",
+				Model:   "8325",
+				Aliases: []string{"sw-agg-001"},
+			},
+		},
+	}, {
+		// CDU Mgmt Switch
+		csiSwitch: shasta.ManagementSwitch{
+			Xname:               "d10w10",
+			Name:                "sw-cdu-001",
+			ManagementInterface: net.ParseIP("10.254.0.2"),
+			SwitchType:          shasta.ManagementSwitchTypeCDU,
+			Brand:               shasta.ManagementSwitchBrandDell,
+			Model:               "8325",
+		},
+		expectedSLS: sls_common.GenericHardware{
+			Parent:     "d10",
+			Xname:      "d10w10",
+			Type:       "comptype_cdu_mgmt_switch",
+			TypeString: "CDUMgmtSwitch",
+			Class:      "Mountain",
+			ExtraPropertiesRaw: sls_common.ComptypeCDUMgmtSwitch{
+				Brand:   "Dell",
+				Model:   "8325",
+				Aliases: []string{"sw-cdu-001"},
+			},
+		},
+	}}
+
+	for _, test := range tests {
+		slsSwitch, err := convertManagementSwitchToSLS(&test.csiSwitch)
+		suite.NoError(err)
+		suite.Equal(test.expectedSLS, slsSwitch)
+	}
+}
+
+func (suite *GenSLSTestSuite) TestConvertManagementSwitchToSLS_InvalidSwitchType() {
+	tests := []struct {
+		csiSwitch     shasta.ManagementSwitch
+		expectedError error
+	}{{
+		// Missing Switch Type
+		csiSwitch: shasta.ManagementSwitch{
+			Xname:               "x3000c0w14",
+			Name:                "sw-leaf-001",
+			ManagementInterface: net.ParseIP("10.254.0.2"),
+			Brand:               shasta.ManagementSwitchBrandAruba,
+			Model:               "6300M",
+		},
+		expectedError: errors.New("unknown management switch type: "),
+	}, {
+		// Invalid switch type
+		csiSwitch: shasta.ManagementSwitch{
+			Xname:               "x3000c0w14",
+			Name:                "sw-leaf-001",
+			ManagementInterface: net.ParseIP("10.254.0.2"),
+			SwitchType:          shasta.ManagementSwitchType("foobar"),
+			Brand:               shasta.ManagementSwitchBrandAruba,
+			Model:               "6300M",
+		},
+		expectedError: errors.New("unknown management switch type: foobar"),
+	}}
+
+	for _, test := range tests {
+		_, err := convertManagementSwitchToSLS(&test.csiSwitch)
+		suite.Equal(test.expectedError, err)
+	}
+}
+
+func (suite *GenSLSTestSuite) TestExtractSwitchesfromReservations() {
+	subnet := &shasta.IPV4Subnet{
+		IPReservations: []shasta.IPReservation{{
+			Comment:   "x3000c0w14",
+			Name:      "sw-leaf-001",
+			IPAddress: net.ParseIP("10.254.0.2"),
+		}, {
+			Comment:   "x3000c0h13s1",
+			Name:      "sw-spine-001",
+			IPAddress: net.ParseIP("10.254.0.3"),
+		}, {
+			Comment:   "x3000c0h12s1",
+			Name:      "sw-agg-001",
+			IPAddress: net.ParseIP("10.254.0.4"),
+		}, {
+			Comment:   "d10w10",
+			Name:      "sw-cdu-001",
+			IPAddress: net.ParseIP("10.254.0.5"),
+		}},
+	}
+
+	expectedOutput := []shasta.ManagementSwitch{{
+		Xname:               "x3000c0w14",
+		Name:                "sw-leaf-001",
+		SwitchType:          "Leaf",
+		ManagementInterface: net.ParseIP("10.254.0.2"),
+	}, {
+		Xname:               "x3000c0h13s1",
+		Name:                "sw-spine-001",
+		SwitchType:          "Spine",
+		ManagementInterface: net.ParseIP("10.254.0.3"),
+	}, {
+		Xname:               "x3000c0h12s1",
+		Name:                "sw-agg-001",
+		SwitchType:          "Aggregation",
+		ManagementInterface: net.ParseIP("10.254.0.4"),
+	}, {
+		Xname:               "d10w10",
+		Name:                "sw-cdu-001",
+		SwitchType:          "CDU",
+		ManagementInterface: net.ParseIP("10.254.0.5"),
+	}}
+
+	extractedSwitches, err := extractSwitchesfromReservations(subnet)
+	suite.NoError(err)
+	suite.Equal(expectedOutput, extractedSwitches)
+}
+
+func TestGenSLSTestSuite(t *testing.T) {
+	suite.Run(t, new(GenSLSTestSuite))
+}
