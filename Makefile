@@ -1,6 +1,19 @@
 SHELL := /bin/bash
 VERSION := $(shell cat .version)
 
+GO_FILES?=$$(find . -name '*.go' |grep -v vendor)
+TAG?=latest
+
+.GIT_COMMIT=$(shell git rev-parse HEAD)
+.GIT_VERSION=$(shell git describe --tags 2>/dev/null || echo "$(.GIT_COMMIT)")
+.FS_VERSION=$(shell cat .version)
+.GIT_UNTRACKEDCHANGES := $(shell git status --porcelain --untracked-files=no)
+.BUILDTIME=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+ifneq ($(.GIT_UNTRACKEDCHANGES),)
+	.GIT_COMMIT := $(.GIT_COMMIT)-dirty
+endif
+
+
 .PHONY: \
 	help \
 	run \
@@ -85,7 +98,11 @@ run: build
 	go run ./main.go$(TARGET) $>
 
 build: fmt
-	go build -o bin/csi ./main.go
+	go build -o bin/csi -ldflags "\
+	-X stash.us.cray.com/MTL/csi/pkg/version.gitVersion=${.GIT_VERSION} \
+	-X stash.us.cray.com/MTL/csi/pkg/version.fsVersion=${.FS_VERSION} \
+	-X stash.us.cray.com/MTL/csi/pkg/version.buildDate=${.BUILDTIME} \
+	-X stash.us.cray.com/MTL/csi/pkg/version.sha1ver=${.GIT_COMMIT}"
 
 doc:
 	godoc -http=:8080 -index
