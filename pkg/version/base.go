@@ -1,28 +1,11 @@
 package version
 
-// Base version information.
-//
-// This is the fallback data used when version information from git is not
-// provided via go ldflags. It provides an approximation of the Kubernetes
-// version for ad-hoc builds (e.g. `go build`) that cannot get the version
-// information from git.
-//
-// If you are looking at these fields in the git tree, they look
-// strange. They are modified on the fly by the build process. The
-// in-tree values are dummy values used for "git archive", which also
-// works for GitHub tar downloads.
-//
-
 var (
-	gitMajor string // major version, always numeric
-	gitMinor string // minor version, numeric possibly followed by "+"
-
-	// NOTE: The $Format strings are replaced during 'git archive' thanks to the
-	// companion .gitattributes file containing 'export-subst' in this same
-	// directory.  See also https://git-scm.com/docs/gitattributes
-	gitVersion   = "v0.0.0-master+$Format:%h$"
-	gitCommit    = "$Format:%H$" // sha1 from git, output of $(git rev-parse HEAD)
-	gitTreeState = ""            // state of git tree, either "clean" or "dirty"
-
-	buildDate = "1970-01-01T00:00:00Z" // build date in ISO8601 format, output of $(date -u +'%Y-%m-%dT%H:%M:%SZ')
+	sha1ver    string                   // sha1 revision used to build the program
+	gitVersion string                   // git tag version
+	fsVersion  string                   // .version contents
+	buildTime  string                   // when the executable was built
+	fsMajor    string                   // major version, always numeric
+	fsMinor    string                   // minor version, numeric possibly followed by "+"
+	buildDate  = "1970-01-01T00:00:00Z" // build date in ISO8601 format, output of $(date -u +'%Y-%m-%dT%H:%M:%SZ')
 )

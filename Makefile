@@ -6,8 +6,9 @@ TAG?=latest
 
 .GIT_COMMIT=$(shell git rev-parse HEAD)
 .GIT_VERSION=$(shell git describe --tags 2>/dev/null || echo "$(.GIT_COMMIT)")
+.FS_VERSION=$(shell cat .version)
 .GIT_UNTRACKEDCHANGES := $(shell git status --porcelain --untracked-files=no)
-.BUILDTIME=$(shell date -u +"%Y-%m-%dT%H:%M:%S%Z")
+.BUILDTIME=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 ifneq ($(.GIT_UNTRACKEDCHANGES),)
 	.GIT_COMMIT := $(.GIT_COMMIT)-dirty
 endif
@@ -98,9 +99,10 @@ run: build
 
 build: fmt
 	go build -o bin/csi -ldflags "\
-	-X stash.us.cray.com/MTL/csi/cmd.sha1ver=${.GIT_COMMIT} \
-	-X stash.us.cray.com/MTL/csi/cmd.gitVersion=${.GIT_VERSION} \
-	-X stash.us.cray.com/MTL/csi/cmd.buildTime=${.BUILDTIME}"
+	-X stash.us.cray.com/MTL/csi/pkg/version.gitVersion=${.GIT_VERSION} \
+	-X stash.us.cray.com/MTL/csi/pkg/version.fsVersion=${.FS_VERSION} \
+	-X stash.us.cray.com/MTL/csi/pkg/version.buildDate=${.BUILDTIME} \
+	-X stash.us.cray.com/MTL/csi/pkg/version.sha1ver=${.GIT_COMMIT}"
 
 doc:
 	godoc -http=:8080 -index
