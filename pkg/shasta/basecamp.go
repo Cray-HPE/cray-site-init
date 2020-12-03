@@ -161,7 +161,7 @@ func MakeBasecampGlobals(v *viper.Viper, shastaNetworks map[string]*IPV4Network,
 	// ntp_local_nets should be a list of NMN and HMN CIDRS
 	global["ntp_local_nets"] = strings.Join([]string{shastaNetworks["NMN"].CIDR, shastaNetworks["HMN"].CIDR}, " ")
 	// first-master-hostname is used to ??? TODO:
-	global["first-master-hostname"] = "ncn-m002"
+	global["first-master-hostname"] = "ncn-m001"
 	// "k8s-virtual-ip" is the nmn alias for k8s
 	global["k8s-virtual-ip"] = reservations["kubeapi-vip"].IPAddress.String()
 	global["rgw-virtual-ip"] = reservations["rgw-vip"].IPAddress.String()

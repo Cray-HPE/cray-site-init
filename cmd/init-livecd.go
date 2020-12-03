@@ -213,7 +213,7 @@ func WriteMetalLBConfigMap(path string, v *viper.Viper, networks map[string]*sha
 
 	for name, network := range networks {
 		for _, subnet := range network.Subnets {
-			if name == "NMN" && subnet.Name == "nmn_network_hardware" {
+			if name == "NMN" && subnet.Name == "bootstrap_dhcp" {
 				for _, reservation := range subnet.IPReservations {
 					for _, switchXname := range spineSwitchXnames {
 						if reservation.Comment == switchXname {

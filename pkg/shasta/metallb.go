@@ -12,19 +12,19 @@ kind: ConfigMap
 metadata:
   namespace: metallb-system
   name: config
-data:
-  config: |
-	peers:{{range .SpineSwitches}}
-	- peer-address: {{ . }}
-	  peer-asn: {{ $.ASN }}
-	  my-asn: {{ $.ASN }}
-	  {{- end}}
-	address-pools:{{range $name, $subnet := .Networks}}
-	- name: {{$name}}
-	  protocol: bgp
-	  addresses:
-	  - {{ $subnet }}
-	{{- end}}
+  data:
+    config: |
+      peers:{{range .SpineSwitches}}
+      - peer-address: {{ . }}
+        peer-asn: {{ $.ASN }}
+        my-asn: {{ $.ASN }}
+        {{- end}}
+      address-pools:{{range $name, $subnet := .Networks}}
+      - name: {{$name}}
+        protocol: bgp
+        addresses:
+        - {{ $subnet }}
+      {{- end}}
 `)
 
 // MetalLBConfigMap holds information needed by the MetalLBConfigMapTemplate
