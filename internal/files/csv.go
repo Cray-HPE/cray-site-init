@@ -6,6 +6,7 @@ package files
 
 import (
 	"io"
+	"log"
 	"os"
 
 	"github.com/gocarina/gocsv"
@@ -38,8 +39,8 @@ func ReadNodeCSV(filename string) ([]*shasta.LogicalNCN, error) {
 	}
 	defer ncnMetadataFile.Close()
 	// In 1.4, we have a new format for this file.  Try that first and then fall back to the older style if necessary
-	err = gocsv.UnmarshalFile(ncnMetadataFile, &newNodes)
-	if err != nil {
+	newErr := gocsv.UnmarshalFile(ncnMetadataFile, &newNodes)
+	if newErr == nil {
 		for _, node := range newNodes {
 			nodes = append(nodes, &shasta.LogicalNCN{
 				Xname:     node.Xname,
@@ -60,5 +61,13 @@ func ReadNodeCSV(filename string) ([]*shasta.LogicalNCN, error) {
 	if err != nil { // Load nodes from file
 		return nodes, nil
 	}
+
+	if newErr != nil {
+		if err != nil {
+			log.Fatal("Unable to parse ncn_metadata with either format because ", err, newErr)
+		}
+		log.Fatal("Unable to parse ncn_metadata with new style because ", newErr)
+	}
+
 	return nodes, err
 }

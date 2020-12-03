@@ -295,6 +295,10 @@ func collectInput(v *viper.Viper) ([]shcd_parser.HMNRow, []*shasta.LogicalNCN, [
 	if err != nil {
 		log.Fatalln("Couldn't extract ncns", err)
 	}
+	if len(ncns) == 0 {
+		log.Fatal("Unable to extract NCNs from ncn metadata csv")
+	}
+	log.Println(ncns)
 	return hmnRows, ncns, switches
 }
 
