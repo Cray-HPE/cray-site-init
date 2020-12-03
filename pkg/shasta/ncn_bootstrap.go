@@ -36,6 +36,20 @@ type LogicalNCN struct {
 	Cabinet          string         `yaml:"cabinet" json:"cabinet" csv:"-"` // Use to establish availability zone
 }
 
+// IsValid is a vlaidator that checks for a minimum set of info
+func (lncn *LogicalNCN) IsValid() bool {
+	if lncn.Xname == "" {
+		return false
+	}
+	if lncn.Role == "" {
+		return false
+	}
+	if lncn.Subrole == "" {
+		return false
+	}
+	return true
+}
+
 // NCNNetwork holds information about networks
 type NCNNetwork struct {
 	NetworkName   string `json:"network-name"`
@@ -93,14 +107,15 @@ func AllocateIps(ncns []*LogicalNCN, networks map[string]*IPV4Network) {
 			reservation := subnet.AddReservation(ncn.Xname, ncn.Xname)
 			// log.Printf("Adding %v %v reservation for %v(%v) at %v \n", netName, subnet.Name, ncn.Xname, ncn.Xname, reservation.IPAddress.String())
 			prefixLen := strings.Split(subnet.CIDR.String(), "/")[1]
-			ncn.Networks = append(ncn.Networks, NCNNetwork{
+			tempNetwork := NCNNetwork{
 				NetworkName: netName,
 				IPAddress:   reservation.IPAddress.String(),
 				Vlan:        int(subnet.VlanID),
 				FullName:    subnet.FullName,
 				CIDR:        strings.Join([]string{reservation.IPAddress.String(), prefixLen}, "/"),
 				Mask:        prefixLen,
-			})
+			}
+			ncn.Networks = append(ncn.Networks, tempNetwork)
 
 		}
 	}

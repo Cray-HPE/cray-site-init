@@ -21,6 +21,7 @@ import (
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
 	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
 	"stash.us.cray.com/MTL/csi/pkg/shasta"
+	"stash.us.cray.com/MTL/csi/pkg/version"
 )
 
 // initCmd represents the init command
@@ -124,6 +125,7 @@ var initCmd = &cobra.Command{
 		fmt.Printf("\tMountain Compute Cabinets: %v\n", len(slsMountainCabinets))
 		fmt.Printf("\tHill Compute Cabinets: %v\n", len(slsHillCabinets))
 		fmt.Printf("\tRiver Compute Cabinets: %v\n", len(slsRiverCabinets))
+		fmt.Printf("Version Information\n\t%s\n\t%s\n", version.Get().GitCommit, version.Get())
 	},
 }
 
@@ -306,6 +308,23 @@ func collectInput(v *viper.Viper) ([]shcd_parser.HMNRow, []*shasta.LogicalNCN, [
 		log.Fatalln("ncn-metadata validation failed: ", err)
 	}
 
+	if len(ncns) == 0 {
+		log.Fatal("Unable to extract NCNs from ncn metadata csv")
+	}
+
+	var mustFail = false
+	for _, ncn := range ncns {
+		if !ncn.IsValid() {
+			mustFail = true
+			log.Println("NCN from csv is invalid", ncn)
+		}
+	}
+	if mustFail {
+		log.Println("Unable to get reasonable NCNs from your csv")
+		log.Println("Does your header match the preferred style? Xname,Role,Subrole,BMC MAC,Bootstrap MAC,Bond0 MAC0,Bond0 MAC1")
+		log.Fatal("CSV Parsing failed.  Can't continue.")
+
+	}
 	return hmnRows, ncns, switches
 }
 
@@ -501,6 +520,7 @@ func writeOutput(v *viper.Viper, shastaNetworks map[string]*shasta.IPV4Network, 
 	}
 	WriteNetworkFiles(basepath, shastaNetworks)
 	v.SetConfigType("yaml")
+	v.Set("VersionInfo", version.Get())
 	v.WriteConfigAs(filepath.Join(basepath, "system_config"))
 
 	csiFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/root_password.json"), shasta.DefaultRootPW)

@@ -77,11 +77,11 @@ var StaticConfigTemplate = []byte(`
 # Static Configurations
 {{range .NCNS}}
 # DHCP Entries for {{.Hostname}}
-dhcp-host={{.NMNMac}},{{.NMNIP}},{{.Hostname}},infinite # NMN
-dhcp-host={{.MTLMac}},{{.MTLIP}},{{.Hostname}},infinite # MTL
-dhcp-host={{.NMNMac}},{{.HMNIP}},{{.Hostname}},infinite # HMN
-dhcp-host={{.NMNMac}},{{.CANIP}},{{.Hostname}},infinite # CAN
-dhcp-host={{.BMCMac}},{{.BMCIP}},{{.Hostname}}-mgmt,infinite #HMN
+dhcp-host={{.NMNMac}},{{.NMNIP}},{{.Hostname}},20m # NMN
+dhcp-host={{.MTLMac}},{{.MTLIP}},{{.Hostname}},20m # MTL
+dhcp-host={{.NMNMac}},{{.HMNIP}},{{.Hostname}},20m # HMN
+dhcp-host={{.NMNMac}},{{.CANIP}},{{.Hostname}},20m # CAN
+dhcp-host={{.BMCMac}},{{.BMCIP}},{{.Hostname}}-mgmt,20m #HMN
 # Host Record Entries for {{.Hostname}}
 host-record={{.Hostname}},{{.Hostname}}.can,{{.CANIP}}
 host-record={{.Hostname}},{{.Hostname}}.hmn,{{.HMNIP}}

@@ -108,19 +108,36 @@ func buildCabinetDetails(v *viper.Viper) []shasta.CabinetDetail {
 
 // WriteCPTNetworkConfig writes the Network Configuration details for the installation node  (CPT)
 func WriteCPTNetworkConfig(path string, ncn shasta.LogicalNCN, shastaNetworks map[string]*shasta.IPV4Network) error {
-	log.Println("Interface Networks:", ncn.Networks)
-	// log.Println("Networks are:", shastaNetworks)
+	type Route struct {
+		CIDR    net.IP
+		Mask    net.IP
+		Gateway net.IP
+	}
 	var bond0Net shasta.NCNNetwork
 	for _, network := range ncn.Networks {
 		if network.NetworkName == "MTL" {
 			bond0Net = network
 		}
 	}
+	_, metalNet, _ := net.ParseCIDR(shastaNetworks["NMNLB"].CIDR)
+	nmnNetNet, _ := shastaNetworks["NMN"].LookUpSubnet("network_hardware")
+
+	metalLBRoute := Route{
+		CIDR:    metalNet.IP,
+		Mask:    net.IP(metalNet.Mask),
+		Gateway: nmnNetNet.Gateway,
+	}
+
 	csiFiles.WriteTemplate(filepath.Join(path, "ifcfg-bond0"), template.Must(template.New("bond0").Parse(string(Bond0ConfigTemplate))), bond0Net)
 	csiFiles.WriteTemplate(filepath.Join(path, "ifcfg-lan0"), template.Must(template.New("lan0").Parse(string(Lan0ConfigTemplate))), ncn)
 	for _, network := range ncn.Networks {
-		if network.Vlan != 0 {
-			csiFiles.WriteTemplate(filepath.Join(path, fmt.Sprintf("ifcfg-vlan%03d", network.Vlan)), template.Must(template.New("vlan").Parse(string(VlanConfigTemplate))), network)
+		if stringInSlice(network.NetworkName, []string{"HMN", "NMN", "MTL", "CAN"}) {
+			if network.Vlan != 0 {
+				csiFiles.WriteTemplate(filepath.Join(path, fmt.Sprintf("ifcfg-vlan%03d", network.Vlan)), template.Must(template.New("vlan").Parse(string(VlanConfigTemplate))), network)
+			}
+			if network.NetworkName == "NMN" {
+				csiFiles.WriteTemplate(filepath.Join(path, fmt.Sprintf("ifroute-vlan%03d", network.Vlan)), template.Must(template.New("vlan").Parse(string(VlanRouteTemplate))), []Route{metalLBRoute})
+			}
 		}
 	}
 	return nil
@@ -236,6 +253,13 @@ ONBOOT='yes'
 STARTMODE='auto'
 `)
 
+// VlanRouteTemplate allows us to add static routes to the vlan(s) on the CPT node
+var VlanRouteTemplate = []byte(`
+{{- range . -}}
+{{.CIDR}} {{.Gateway}} {{.Mask}} -
+{{ end -}}
+`)
+
 // Bond0ConfigTemplate is the text/template for setting up the bond on the install NCN
 var Bond0ConfigTemplate = []byte(`
 NAME='Internal Interface'# Select the NIC(s) for access to the CRAY.
@@ -311,3 +335,12 @@ NETCONFIG_NIS_STATIC_DOMAIN=""
 NETCONFIG_NIS_STATIC_SERVERS=""
 WIRELESS_REGULATORY_DOMAIN=''
 `)
+
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
+}
