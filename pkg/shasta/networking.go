@@ -16,6 +16,10 @@ import (
 // ManagementSwitchBrand known list of Management switch brands
 type ManagementSwitchBrand string
 
+func (msb ManagementSwitchBrand) String() string {
+	return string(msb)
+}
+
 // ManagementSwitchBrandAruba for Aruba Management switches
 const ManagementSwitchBrandAruba ManagementSwitchBrand = "Aruba"
 
@@ -24,10 +28,6 @@ const ManagementSwitchBrandDell ManagementSwitchBrand = "Dell"
 
 // ManagementSwitchBrandMellanox for Mellanox Management switches
 const ManagementSwitchBrandMellanox ManagementSwitchBrand = "Mellanox"
-
-func (msb ManagementSwitchBrand) String() string {
-	return string(msb)
-}
 
 // ManagementSwitchType the type of management switch CDU/Leaf/Spine/Aggregation
 type ManagementSwitchType string
@@ -43,6 +43,10 @@ const ManagementSwitchTypeSpine ManagementSwitchType = "Spine"
 
 // ManagementSwitchTypeAggregation is the type for Aggregation Management switches
 const ManagementSwitchTypeAggregation ManagementSwitchType = "Aggregation"
+
+func (mst ManagementSwitchType) String() string {
+	return string(mst)
+}
 
 // IsManagementSwitchTypeValid validates the given ManagementSwitchType
 func IsManagementSwitchTypeValid(mst ManagementSwitchType) bool {

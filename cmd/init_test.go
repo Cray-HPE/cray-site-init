@@ -16,7 +16,107 @@ type InitCmdTestSuite struct {
 	suite.Suite
 }
 
-func (suite *InitCmdTestSuite) TestValidateSwitchInput() {
+func (suite *InitCmdTestSuite) TestValidateSwitchInput_HappyPath() {
+	switches := []*shasta.ManagementSwitch{
+		{
+			Xname: "x3000c0w14", SwitchType: shasta.ManagementSwitchTypeLeaf,
+			Brand: shasta.ManagementSwitchBrandAruba,
+		}, {
+			Xname:      "x3000c0h13s1",
+			SwitchType: shasta.ManagementSwitchTypeSpine,
+			Brand:      shasta.ManagementSwitchBrandAruba,
+		}, {
+			Xname:      "x3000c0h12s1",
+			SwitchType: shasta.ManagementSwitchTypeAggregation,
+			Brand:      shasta.ManagementSwitchBrandAruba,
+		}, {
+			Xname:      "d10w10",
+			SwitchType: shasta.ManagementSwitchTypeCDU,
+			Brand:      shasta.ManagementSwitchBrandDell,
+		},
+	}
+
+	err := validateSwitchInput(switches)
+	suite.NoError(err)
+}
+
+func (suite *InitCmdTestSuite) TestValidateSwitchInput_InvalidXname() {
+	switches := []*shasta.ManagementSwitch{
+		{ // Valid Xname
+			Xname: "x3000c0w14", SwitchType: shasta.ManagementSwitchTypeLeaf,
+			Brand: shasta.ManagementSwitchBrandAruba,
+		}, { // Invalid Xname
+			Xname:      "x3000c0w15L",
+			SwitchType: shasta.ManagementSwitchTypeSpine,
+			Brand:      shasta.ManagementSwitchBrandAruba,
+		},
+	}
+
+	err := validateSwitchInput(switches)
+	suite.Equal(errors.New("invalid xname for Switch: x3000c0w15L"), err)
+}
+
+func (suite *InitCmdTestSuite) TestValidateSwitchInput_WrongXNameTypes() {
+	// Test validate with valid xnames, but check that we are enforcing that the
+	// different switch types are using hte correct names
+
+	tests := []struct {
+		mySwitch      shasta.ManagementSwitch
+		expectedError error
+	}{{
+		// Spine using MgmtSwitch, should be using MgmtHLSwitch
+		mySwitch: shasta.ManagementSwitch{
+			Xname: "x10c0w14", SwitchType: shasta.ManagementSwitchTypeSpine,
+			Brand: shasta.ManagementSwitchBrandAruba,
+		},
+		expectedError: errors.New("invalid xname used for Spine/Aggergation switch: x10c0w14, should use xXcChHsS format"),
+	}, {
+		// Spine using CDUMgmtSwitch, should be using MgmtHLSwitch
+		mySwitch: shasta.ManagementSwitch{
+			Xname:      "d10w14",
+			SwitchType: shasta.ManagementSwitchTypeSpine,
+			Brand:      shasta.ManagementSwitchBrandAruba,
+		},
+		expectedError: errors.New("invalid xname used for Spine/Aggergation switch: d10w14, should use xXcChHsS format"),
+	}, {
+		// Aggergation using MgmtSwitch, should be using MgmtHLSwitch
+		mySwitch: shasta.ManagementSwitch{
+			Xname:      "x20c0w14",
+			SwitchType: shasta.ManagementSwitchTypeAggregation,
+			Brand:      shasta.ManagementSwitchBrandAruba,
+		},
+		expectedError: errors.New("invalid xname used for Spine/Aggergation switch: x20c0w14, should use xXcChHsS format"),
+	}, {
+		// Aggergation using CDUMgmtSwitch, should be using MgmtHLSwitch
+		mySwitch: shasta.ManagementSwitch{
+			Xname:      "d20w14",
+			SwitchType: shasta.ManagementSwitchTypeAggregation,
+			Brand:      shasta.ManagementSwitchBrandAruba,
+		},
+		expectedError: errors.New("invalid xname used for Spine/Aggergation switch: d20w14, should use xXcChHsS format"),
+	}, {
+		// CDU using MgmtHLSwitch, should be using CDUMgmtSwitch
+		mySwitch: shasta.ManagementSwitch{
+			Xname:      "x30c0w14",
+			SwitchType: shasta.ManagementSwitchTypeCDU,
+			Brand:      shasta.ManagementSwitchBrandAruba,
+		},
+		expectedError: errors.New("invalid xname used for CDU switch: x30c0w14, should use dDwW format"),
+	}, {
+		// CDU using MgmtSwitch, should be using CDUMgmtSwitch
+		mySwitch: shasta.ManagementSwitch{
+			Xname:      "x30c0h14s1",
+			SwitchType: shasta.ManagementSwitchTypeCDU,
+			Brand:      shasta.ManagementSwitchBrandAruba,
+		},
+		expectedError: errors.New("invalid xname used for CDU switch: x30c0h14s1, should use dDwW format"),
+	}}
+
+	for _, test := range tests {
+		switches := []*shasta.ManagementSwitch{&test.mySwitch}
+		err := validateSwitchInput(switches)
+		suite.Equal(test.expectedError, err)
+	}
 
 }
 
@@ -39,7 +139,7 @@ func (suite *InitCmdTestSuite) TestValidateNCNInput_InvalidXName() {
 	}
 
 	err := validateNCNInput(ncns)
-	suite.Error(errors.New("invalid xname for NCN: foo"), err)
+	suite.Equal(errors.New("invalid xname for NCN: foo"), err)
 }
 
 func (suite *InitCmdTestSuite) TestValidateNCNInput_WrongXNameType() {
@@ -50,7 +150,7 @@ func (suite *InitCmdTestSuite) TestValidateNCNInput_WrongXNameType() {
 	}
 
 	err := validateNCNInput(ncns)
-	suite.Error(errors.New("invalid type NodeBMC for NCN xname: x3000c0s3b0"), err)
+	suite.Equal(errors.New("invalid type NodeBMC for NCN xname: x3000c0s3b0"), err)
 }
 
 func (suite *InitCmdTestSuite) TestMergeNCNs_HappyPath() {
@@ -98,7 +198,7 @@ func (suite *InitCmdTestSuite) TestMergeNCNs_MissingXnameInSLS() {
 	}
 
 	err := mergeNCNs(ncns, slsNCNs)
-	suite.Error(errors.New("failed to find NCN from ncn-metadata in generated SLS State: x3000c0s7b0n0"), err)
+	suite.Equal(errors.New("failed to find NCN from ncn-metadata in generated SLS State: x3000c0s7b0n0"), err)
 }
 
 func TestInitCmdTestSuite(t *testing.T) {

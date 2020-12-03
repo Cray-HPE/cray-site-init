@@ -52,6 +52,9 @@ var initCmd = &cobra.Command{
 
 		// Build a set of networks we can use
 		shastaNetworks, err := BuildLiveCDNetworks(v, switches)
+		if err != nil {
+			log.Panic(err)
+		}
 
 		// Use our new networks and our list of logicalNCNs to distribute ips
 		shasta.AllocateIps(logicalNcns, shastaNetworks) // This function has no return because it is working with lists of pointers.
@@ -287,7 +290,7 @@ func collectInput(v *viper.Viper) ([]shcd_parser.HMNRow, []*shasta.LogicalNCN, [
 	}
 
 	if err := validateSwitchInput(switches); err != nil {
-		log.Fatalln("witch-metadata validation failed: ", err)
+		log.Fatalln("switch-metadata validation failed: ", err)
 	}
 
 	// This is techincally sufficient to generate an SLSState object, but to do so now
