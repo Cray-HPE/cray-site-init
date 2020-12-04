@@ -197,3 +197,15 @@ func CabinetForXname(xname string) (string, error) {
 	}
 	return matches[0], nil
 }
+
+// GetSLSCabinets will get all of the cabinets from SLS of the specified class
+func GetSLSCabinets(state sls_common.SLSState, class sls_common.CabinetType) []sls_common.GenericHardware {
+	cabinets := []sls_common.GenericHardware{}
+	for _, hardware := range state.Hardware {
+		if hardware.Type == sls_common.Cabinet && hardware.Class == class {
+			cabinets = append(cabinets, hardware)
+		}
+	}
+
+	return cabinets
+}

@@ -187,17 +187,11 @@ var HMNConnections = []shcd_parser.HMNRow{
 }
 
 var TestSLSInputState = SLSGeneratorInputState{
-	ManagementSwitchBrands: map[string]ManagementSwitchBrand{
-		"x3000c0w22": ManagementSwitchBrandDell,
-		"x3000c0w38": ManagementSwitchBrandDell,
-		"x3001c0w21": ManagementSwitchBrandDell,
-		"x3001c0w42": ManagementSwitchBrandAruba,
-	},
 	ManagementSwitches: map[string]sls_common.GenericHardware{
-		"x3000c0w22": buildMgmtSwitch("x3000", "x3000c0w22", "sw-leaf01", "10.254.0.2"),
-		"x3000c0w38": buildMgmtSwitch("x3000", "x3000c0w38", "sw-leaf02", "10.254.0.3"),
-		"x3001c0w21": buildMgmtSwitch("x3000", "x3001c0w21", "sw-leaf03", "10.254.0.4"),
-		"x3001c0w42": buildMgmtSwitch("x3000", "x3001c0w42", "sw-leaf04", "10.254.0.42"),
+		"x3000c0w22": buildMgmtSwitch("x3000", "x3000c0w22", "sw-leaf01", "10.254.0.2", ManagementSwitchBrandDell),
+		"x3000c0w38": buildMgmtSwitch("x3000", "x3000c0w38", "sw-leaf02", "10.254.0.3", ManagementSwitchBrandDell),
+		"x3001c0w21": buildMgmtSwitch("x3000", "x3001c0w21", "sw-leaf03", "10.254.0.4", ManagementSwitchBrandDell),
+		"x3001c0w42": buildMgmtSwitch("x3000", "x3001c0w42", "sw-leaf04", "10.254.0.42", ManagementSwitchBrandAruba),
 	},
 
 	RiverCabinets: map[string]sls_common.GenericHardware{
@@ -233,7 +227,7 @@ var TestSLSInputState = SLSGeneratorInputState{
 	MountainStartingNid: 1000,
 }
 
-func buildMgmtSwitch(parent, xname, name, ipAddress string) sls_common.GenericHardware {
+func buildMgmtSwitch(parent, xname, name, ipAddress string, brand ManagementSwitchBrand) sls_common.GenericHardware {
 	return sls_common.GenericHardware{
 		Parent:     parent,
 		Xname:      xname,
@@ -242,6 +236,7 @@ func buildMgmtSwitch(parent, xname, name, ipAddress string) sls_common.GenericHa
 		TypeString: base.MgmtSwitch,
 		ExtraPropertiesRaw: sls_common.ComptypeMgmtSwitch{
 			IP4Addr:          ipAddress,
+			Brand:            brand.String(),
 			Model:            "S3048T-ON",
 			SNMPAuthPassword: "vault://hms-creds/" + xname,
 			SNMPAuthProtocol: "MD5",

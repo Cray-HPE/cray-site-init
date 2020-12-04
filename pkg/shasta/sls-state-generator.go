@@ -28,12 +28,11 @@ var (
 
 // SLSGeneratorInputState is given to the SLS config generator in order to generator the SLS config file
 type SLSGeneratorInputState struct {
-	ManagementSwitchBrands map[string]ManagementSwitchBrand      `json:"ManagementSwitchBrands"` // map[xname]MgmtSwitchBrand
-	ManagementSwitches     map[string]sls_common.GenericHardware `json:"ManagementSwitches"`     // SLS Type: comptype_mgmt_switch
-	RiverCabinets          map[string]sls_common.GenericHardware `json:"RiverCabinets"`          // SLS Type: comptype_cabinet
-	HillCabinets           map[string]sls_common.GenericHardware `json:"HillCabinets"`           // SLS Type: comptype_cabinet
-	MountainCabinets       map[string]sls_common.GenericHardware `json:"MountainCabinets"`       // SLS Type: comptype_cabinet
-	MountainStartingNid    int                                   `json:"MountainStartingNid"`
+	ManagementSwitches  map[string]sls_common.GenericHardware `json:"ManagementSwitches"` // SLS Type: comptype_mgmt_switch
+	RiverCabinets       map[string]sls_common.GenericHardware `json:"RiverCabinets"`      // SLS Type: comptype_cabinet
+	HillCabinets        map[string]sls_common.GenericHardware `json:"HillCabinets"`       // SLS Type: comptype_cabinet
+	MountainCabinets    map[string]sls_common.GenericHardware `json:"MountainCabinets"`   // SLS Type: comptype_cabinet
+	MountainStartingNid int                                   `json:"MountainStartingNid"`
 
 	Networks map[string]sls_common.Network `json:"Networks"`
 }
@@ -545,10 +544,24 @@ func (g *SLSStateGenerator) getConnectionForNode(node sls_common.GenericHardware
 	switchName := fmt.Sprintf("%sc0w%s", row.DestinationRack, destinationUString)
 	connectorXname := fmt.Sprintf("%sc0w%sj%s", row.DestinationRack, destinationUString, destinationJackString)
 
-	// Calculate the vendor name for the ethernet interfaces
-	// Dell switches use: ethernet1/1/1
-	// Aruba switches use: 1/1/1
-	switchBrand := g.inputState.ManagementSwitchBrands[switchName]
+	// Get the brand for this switch
+	mgmtSwitch, ok := g.inputState.ManagementSwitches[switchName]
+	if !ok {
+		g.logger.Fatal("Unable to find management switch",
+			zap.String("switchName", switchName),
+			zap.String("connectorXname", switchName),
+			zap.String("destinationXname", destinationXname))
+	}
+
+	ep, ok := mgmtSwitch.ExtraPropertiesRaw.(sls_common.ComptypeMgmtSwitch)
+	if !ok {
+		g.logger.Fatal("Unable to get management switch extra properties",
+			zap.String("switchName", switchName),
+			zap.String("connectorXname", switchName),
+			zap.String("destinationXname", destinationXname))
+	}
+	switchBrand := ep.Brand
+
 	if switchBrand == "" {
 		g.logger.Fatal("Management Switch brand found not provided for switch",
 			zap.String("switchName", switchName),
@@ -556,16 +569,19 @@ func (g *SLSStateGenerator) getConnectionForNode(node sls_common.GenericHardware
 			zap.String("destinationXname", destinationXname))
 	}
 
+	// Calculate the vendor name for the ethernet interfaces
+	// Dell switches use: ethernet1/1/1
+	// Aruba switches use: 1/1/1
 	var vendorName string
 	switch switchBrand {
-	case ManagementSwitchBrandDell:
+	case ManagementSwitchBrandDell.String():
 		vendorName = fmt.Sprintf("ethernet1/1/%s", destinationJackString)
-	case ManagementSwitchBrandAruba:
+	case ManagementSwitchBrandAruba.String():
 		vendorName = fmt.Sprintf("1/1/%s", destinationJackString)
-	case ManagementSwitchBrandMellanox:
+	case ManagementSwitchBrandMellanox.String():
 		// This should only occur when the HMN connections says that a BMC is connected to the
 		// spine/aggergation switch. Which should not happen.
-		g.logger.Fatal("Currently do no support MgmtSwitchConnector for Mellonox switches",
+		g.logger.Fatal("Currently do no support MgmtSwitchConnector for Mellanox switches",
 			zap.Any("switchBrand", switchBrand),
 			zap.String("switchName", switchName),
 			zap.String("connectorXname", switchName),

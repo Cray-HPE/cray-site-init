@@ -52,6 +52,9 @@ var initCmd = &cobra.Command{
 
 		// Build a set of networks we can use
 		shastaNetworks, err := BuildLiveCDNetworks(v, switches)
+		if err != nil {
+			log.Panic(err)
+		}
 
 		// Use our new networks and our list of logicalNCNs to distribute ips
 		shasta.AllocateIps(logicalNcns, shastaNetworks) // This function has no return because it is working with lists of pointers.
@@ -59,22 +62,15 @@ var initCmd = &cobra.Command{
 		// Now we can finally generate the slsState
 		slsState := prepareAndGenerateSLS(v, shastaNetworks, hmnRows, switches)
 		// SLS can tell us which NCNs match with which Xnames, we need to update the IP Reservations
-		tempNcns, err := shasta.ExtractSLSNCNs(&slsState)
+		slsNcns, err := shasta.ExtractSLSNCNs(&slsState)
 		if err != nil {
 			log.Panic(err) // This should never happen.  I can't really imagine how it would.
 		}
 
 		// Merge the SLS NCN list with the NCN list we got at the beginning
-		for _, ncn := range logicalNcns {
-			for _, tempNCN := range tempNcns {
-				if ncn.Xname == tempNCN.Xname {
-					// log.Printf("Found match for %v: %v \n", ncn.Xname, tempNCN)
-					ncn.Hostname = tempNCN.Hostname
-					ncn.Aliases = tempNCN.Aliases
-					ncn.BmcPort = tempNCN.BmcPort
-					// log.Println("Updated to be :", ncn)
-				}
-			}
+		err = mergeNCNs(logicalNcns, slsNcns)
+		if err != nil {
+			log.Fatalln(err)
 		}
 
 		// Cycle through the main networks and update the reservations and dhcp ranges as necessary
@@ -112,6 +108,11 @@ var initCmd = &cobra.Command{
 
 		writeOutput(v, shastaNetworks, slsState, ncns, switches, globals)
 
+		// Gather SLS information for summary
+		slsMountainCabinets := shasta.GetSLSCabinets(slsState, sls_common.ClassMountain)
+		slsHillCabinets := shasta.GetSLSCabinets(slsState, sls_common.ClassHill)
+		slsRiverCabinets := shasta.GetSLSCabinets(slsState, sls_common.ClassRiver)
+
 		// Print Summary
 		fmt.Printf("\n\n===== %v Installation Summary =====\n\n", v.GetString("system-name"))
 		fmt.Printf("Installation Node: %v\n", v.GetString("install-ncn"))
@@ -120,11 +121,10 @@ var initCmd = &cobra.Command{
 		fmt.Printf("\tUpstream DNS: %v\n", v.GetString("ipv4-resolvers"))
 		fmt.Printf("System Information\n")
 		fmt.Printf("\tNCNs: %v\n", len(ncns))
-
+		fmt.Printf("\tMountain Compute Cabinets: %v\n", len(slsMountainCabinets))
+		fmt.Printf("\tHill Compute Cabinets: %v\n", len(slsHillCabinets))
+		fmt.Printf("\tRiver Compute Cabinets: %v\n", len(slsRiverCabinets))
 		fmt.Printf("Version Information\n\t%s\n\t%s\n", version.Get().GitCommit, version.Get())
-		// fmt.Printf("\tMountain Compute Cabinets: %v\n", 0) //TODO: read from SLS
-		// fmt.Printf("\tRiver Compute Cabinets: %v\n", 0)    //TODO: read from SLS
-		// fmt.Printf("\tHill Compute Cabinets: %v\n", 0)     //TODO: read from SLS
 	},
 }
 
@@ -282,12 +282,18 @@ func collectInput(v *viper.Viper) ([]shcd_parser.HMNRow, []*shasta.LogicalNCN, [
 	if err != nil {
 		log.Fatalf("unable to load hmn connections, %v \n", err)
 	}
-	//
+
 	// SLS also needs to know about our networking configuration.  In order to do that,
 	// we need to load the switches
 	switches, err := csiFiles.ReadSwitchCSV(v.GetString("switch-metadata"))
 	if err != nil {
 		log.Fatalln("Couldn't extract switches", err)
+	}
+
+	if err := validateSwitchInput(switches); err != nil {
+		log.Println("Unable to get reasonable Switches from your csv")
+		log.Println("Does your header match the preferred style? Switch Xname,Type,Brand")
+		log.Fatal("CSV Parsing failed.  Can't continue.")
 	}
 
 	// This is techincally sufficient to generate an SLSState object, but to do so now
@@ -298,24 +304,84 @@ func collectInput(v *viper.Viper) ([]shcd_parser.HMNRow, []*shasta.LogicalNCN, [
 	if err != nil {
 		log.Fatalln("Couldn't extract ncns", err)
 	}
-	if len(ncns) == 0 {
-		log.Fatal("Unable to extract NCNs from ncn metadata csv")
-	}
 
-	var mustFail = false
-	for _, ncn := range ncns {
-		if !ncn.IsValid() {
-			mustFail = true
-			log.Println("NCN from csv is invalid", ncn)
-		}
-	}
-	if mustFail {
+	if err := validateNCNInput(ncns); err != nil {
 		log.Println("Unable to get reasonable NCNs from your csv")
 		log.Println("Does your header match the preferred style? Xname,Role,Subrole,BMC MAC,Bootstrap MAC,Bond0 MAC0,Bond0 MAC1")
 		log.Fatal("CSV Parsing failed.  Can't continue.")
-
 	}
+
 	return hmnRows, ncns, switches
+}
+
+func validateSwitchInput(switches []*shasta.ManagementSwitch) error {
+	// Validate that there is an non-zero number of NCNs extracted from ncn_metadata.csv
+	if len(switches) == 0 {
+		return fmt.Errorf("Unable to extract Switches from switch metadata csv")
+	}
+
+	// Validate each Switch
+	var mustFail = false
+	for _, mySwitch := range switches {
+		if err := mySwitch.Validate(); err != nil {
+			mustFail = true
+			log.Println("Switch from csv is invalid:", err)
+		}
+	}
+
+	if mustFail {
+		return fmt.Errorf("switch_metadata.csv contains invalid switch data")
+	}
+
+	return nil
+}
+
+func validateNCNInput(ncns []*shasta.LogicalNCN) error {
+	// Validate that there is an non-zero number of NCNs extracted from ncn_metadata.csv
+	if len(ncns) == 0 {
+		return fmt.Errorf("Unable to extract NCNs from ncn metadata csv")
+	}
+
+	// Validate each NCN
+	var mustFail = false
+	for _, ncn := range ncns {
+		if err := ncn.Validate(); err != nil {
+			mustFail = true
+			log.Println("NCN from csv is invalid", ncn, err)
+		}
+	}
+
+	if mustFail {
+		return fmt.Errorf("ncn_metadata.csv contains invalid NCN data")
+	}
+
+	return nil
+}
+
+func mergeNCNs(logicalNcns []*shasta.LogicalNCN, slsNCNs []shasta.LogicalNCN) error {
+	// Merge the SLS NCN list with the NCN list from ncn-metadata
+	for _, ncn := range logicalNcns {
+		found := false
+		for _, slsNCN := range slsNCNs {
+			if ncn.Xname == slsNCN.Xname {
+				// log.Printf("Found match for %v: %v \n", ncn.Xname, tempNCN)
+				ncn.Hostname = slsNCN.Hostname
+				ncn.Aliases = slsNCN.Aliases
+				ncn.BmcPort = slsNCN.BmcPort
+				// log.Println("Updated to be :", ncn)
+
+				found = true
+				break
+			}
+		}
+
+		// All NCNs from ncn-metadata need to appear in the generated SLS state
+		if !found {
+			return fmt.Errorf("failed to find NCN from ncn-metadata in generated SLS State: %s", ncn.Xname)
+		}
+	}
+
+	return nil
 }
 
 func prepareNetworkSLS(shastaNetworks map[string]*shasta.IPV4Network) ([]shasta.IPV4Network, map[string]sls_common.Network) {
@@ -355,23 +421,33 @@ func prepareAndGenerateSLS(v *viper.Viper, shastaNetworks map[string]*shasta.IPV
 	reservedSwitches, _ := extractSwitchesfromReservations(switchNet)
 	slsSwitches := make(map[string]sls_common.GenericHardware)
 	for _, mySwitch := range reservedSwitches {
-		slsSwitches[mySwitch.Xname] = convertManagemenetSwitchToSLS(&mySwitch)
-	}
+		xname := mySwitch.Xname
 
-	// Extract Switch brands from data stored in switch_metdata.csv
-	switchBrands := make(map[string]shasta.ManagementSwitchBrand)
-	for _, mySwitch := range inputSwitches {
-		switchBrands[mySwitch.Xname] = mySwitch.Brand
+		// Extract Switch brand from data stored in switch_metdata.csv
+		for _, inputSwitch := range inputSwitches {
+			if inputSwitch.Xname == xname {
+				mySwitch.Brand = inputSwitch.Brand
+				break
+			}
+		}
+		if mySwitch.Brand == "" {
+			log.Fatalln("Couldn't determine switch brand for:", xname)
+		}
+
+		// Create SLS version of the switch
+		slsSwitches[mySwitch.Xname], err = convertManagementSwitchToSLS(&mySwitch)
+		if err != nil {
+			log.Fatalln("Couldn't get SLS management switch representation:", err)
+		}
 	}
 
 	inputState := shasta.SLSGeneratorInputState{
-		ManagementSwitches:     slsSwitches,
-		ManagementSwitchBrands: switchBrands,
-		RiverCabinets:          getCabinets(sls_common.ClassRiver, v.GetInt("starting-river-cabinet"), cabinetSubnets[0:numRiver]),
-		HillCabinets:           getCabinets(sls_common.ClassHill, v.GetInt("starting-hill-cabinet"), cabinetSubnets[numRiver:numRiver+numHill]),
-		MountainCabinets:       getCabinets(sls_common.ClassMountain, v.GetInt("starting-mountain-cabinet"), cabinetSubnets[numRiver+numHill:]),
-		MountainStartingNid:    v.GetInt("starting-mountain-nid"),
-		Networks:               slsNetworks,
+		ManagementSwitches:  slsSwitches,
+		RiverCabinets:       getCabinets(sls_common.ClassRiver, v.GetInt("starting-river-cabinet"), cabinetSubnets[0:numRiver]),
+		HillCabinets:        getCabinets(sls_common.ClassHill, v.GetInt("starting-hill-cabinet"), cabinetSubnets[numRiver:numRiver+numHill]),
+		MountainCabinets:    getCabinets(sls_common.ClassMountain, v.GetInt("starting-mountain-cabinet"), cabinetSubnets[numRiver+numHill:]),
+		MountainStartingNid: v.GetInt("starting-mountain-nid"),
+		Networks:            slsNetworks,
 	}
 	slsState := shasta.GenerateSLSState(inputState, hmnRows)
 	return slsState
