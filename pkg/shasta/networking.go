@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strings"
 
 	base "stash.us.cray.com/HMS/hms-base"
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
@@ -328,6 +329,25 @@ func (iSubnet *IPV4Subnet) UpdateDHCPRange() {
 		ip = ipam.Add(ip, 1)
 	}
 	iSubnet.DHCPEnd = ipam.Add(ipam.Broadcast(iSubnet.CIDR), -1)
+}
+
+// AddReservationWithPin adds a new IP reservation to the subnet with the last octet pinned
+func (iSubnet *IPV4Subnet) AddReservationWithPin(name, comment string, pin uint8) *IPReservation {
+	// Grab the "floor" of the subnet and alter the last byte to match the pinned byte
+	newIP := make(net.IP, 4)
+	newIP = iSubnet.CIDR.IP
+	if len(newIP) == 16 {
+		newIP[15] = pin
+	} else {
+		newIP[3] = pin
+	}
+	iSubnet.IPReservations = append(iSubnet.IPReservations, IPReservation{
+		IPAddress: newIP,
+		Name:      name,
+		Comment:   comment,
+		Aliases:   strings.Split(comment, ","),
+	})
+	return &iSubnet.IPReservations[len(iSubnet.IPReservations)-1]
 }
 
 // AddReservation adds a new IP reservation to the subnet
