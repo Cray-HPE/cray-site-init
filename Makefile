@@ -31,7 +31,7 @@ endif
 	doc \
 	version
 
-all: tools fmt lint tidy build
+all: tools fmt lint reset build
 
 help:
 	@echo 'Usage: make <OPTIONS> ... <TARGETS>'
@@ -100,6 +100,10 @@ run: build
 
 tidy:
 	go mod tidy
+
+reset:
+	rm go.mod go.sum
+	git checkout go.mod go.sum
 
 build: fmt
 	go build -o bin/csi -ldflags "\
