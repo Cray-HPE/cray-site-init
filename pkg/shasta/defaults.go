@@ -85,7 +85,7 @@ var DefaultLoadBalancerNMN = IPV4Network{
 
 // DefaultLoadBalancerHMN is a thing we need
 var DefaultLoadBalancerHMN = IPV4Network{
-	FullName: "Node Management Network LoadBalancers",
+	FullName: "Hardware Management Network LoadBalancers",
 	CIDR:     DefaultHMNLBString,
 	Name:     "HMNLB",
 	MTU:      9000,

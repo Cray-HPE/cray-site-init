@@ -58,26 +58,28 @@ var initCmd = &cobra.Command{
 			log.Panic(err)
 		}
 
-		// Once we have validated our networks, go through and replace the gateway and netmask on the
-		// uai, dhcp, and network hardware subnets to better support the 1.3 network swtich configuration
-		// *** This is a HACK ***
-		for _, netName := range []string{"NMN", "HMN", "MTL"} {
-			// Grab the supernet details for use in HACK substitution
+		if v.GetBool("supernet") {
+			// Once we have validated our networks, go through and replace the gateway and netmask on the
+			// uai, dhcp, and network hardware subnets to better support the 1.3 network swtich configuration
+			// *** This is a HACK ***
+			for _, netName := range []string{"NMN", "HMN", "MTL"} {
+				// Grab the supernet details for use in HACK substitution
 
-			supernetIP, superNet, err := net.ParseCIDR(shastaNetworks[netName].CIDR)
-			if err != nil {
-				log.Fatal("Couldn't parse the CIDR for ", netName)
-			}
-			for _, subnetName := range []string{"bootstrap_dhcp", "uai_macvlan", "network_hardware"} {
-				tempSubnet, err := shastaNetworks[netName].LookUpSubnet(subnetName)
-				if err == nil {
-					// Replace the standard netmask with the supernet netmask
-					// Replace the standard gateway with the supernet gateway
-					// ** HACK ** We're dong this here to bypass all sanity checks
-					// This **WILL** cause an overlap of broadcast domains, but is required
-					// for reducing switch configuration changes from 1.3 to 1.4
-					tempSubnet.Gateway = ipam.Add(supernetIP, 1)
-					tempSubnet.CIDR.Mask = superNet.Mask
+				supernetIP, superNet, err := net.ParseCIDR(shastaNetworks[netName].CIDR)
+				if err != nil {
+					log.Fatal("Couldn't parse the CIDR for ", netName)
+				}
+				for _, subnetName := range []string{"bootstrap_dhcp", "uai_macvlan", "network_hardware"} {
+					tempSubnet, err := shastaNetworks[netName].LookUpSubnet(subnetName)
+					if err == nil {
+						// Replace the standard netmask with the supernet netmask
+						// Replace the standard gateway with the supernet gateway
+						// ** HACK ** We're dong this here to bypass all sanity checks
+						// This **WILL** cause an overlap of broadcast domains, but is required
+						// for reducing switch configuration changes from 1.3 to 1.4
+						tempSubnet.Gateway = ipam.Add(supernetIP, 1)
+						tempSubnet.CIDR.Mask = superNet.Mask
+					}
 				}
 			}
 		}
@@ -146,12 +148,21 @@ var initCmd = &cobra.Command{
 		fmt.Printf("Customer Access: %v GW: %v\n", v.GetString("can-cidr"), v.GetString("can-gateway"))
 		fmt.Printf("\tUpstream NTP: %v\n", v.GetString("ntp-pool"))
 		fmt.Printf("\tUpstream DNS: %v\n", v.GetString("ipv4-resolvers"))
+		fmt.Println("Networking")
+		for netName, tempNet := range shastaNetworks {
+			fmt.Printf("\t* %v %v with %d subnets \n", tempNet.FullName, tempNet.CIDR, len(tempNet.Subnets))
+			if v.GetBool("supernet") && stringInSlice(netName, []string{"NMN", "HMN", "MTL"}) {
+				supernetIP, superNet, _ := net.ParseCIDR(shastaNetworks[netName].CIDR)
+				maskSize, _ := superNet.Mask.Size()
+				fmt.Printf("\t   Supernet enabled - Using /%v as netmask and %v as Gateway\n", maskSize, ipam.Add(supernetIP, 1))
+			}
+		}
 		fmt.Printf("System Information\n")
 		fmt.Printf("\tNCNs: %v\n", len(ncns))
 		fmt.Printf("\tMountain Compute Cabinets: %v\n", len(slsMountainCabinets))
 		fmt.Printf("\tHill Compute Cabinets: %v\n", len(slsHillCabinets))
 		fmt.Printf("\tRiver Compute Cabinets: %v\n", len(slsRiverCabinets))
-		fmt.Printf("Version Information\n\t%s\n\t%s\n", version.Get().GitCommit, version.Get())
+		fmt.Printf("CSI Version Information\n\t%s\n\t%s\n", version.Get().GitCommit, version.Get())
 	},
 }
 
@@ -186,6 +197,8 @@ func init() {
 
 	initCmd.Flags().String("mtl-cidr", shasta.DefaultMTLString, "Overall IPv4 CIDR for all Provisioning subnets")
 	initCmd.Flags().String("hsn-cidr", shasta.DefaultHSNString, "Overall IPv4 CIDR for all HSN subnets")
+
+	initCmd.Flags().Bool("supernet", true, "Use the supernet mask and gateway for NCNs and Switches")
 
 	// Bootstrap VLANS
 	initCmd.Flags().Int("nmn-bootstrap-vlan", shasta.DefaultNMNVlan, "Bootstrap VLAN for the NMN")
