@@ -29,11 +29,11 @@ Handy Netmask Cheet Sheet
 
 const (
 	// DefaultHMNString is the Default HMN String (vlan004)
-	DefaultHMNString = "10.254.1.1/16"
+	DefaultHMNString = "10.254.0.0/16"
 	// DefaultHMNVlan is the default HMN Bootstrap Vlan
 	DefaultHMNVlan = 4
 	// DefaultNMNString is the Default NMN String (vlan002)
-	DefaultNMNString = "10.252.1.0/16"
+	DefaultNMNString = "10.252.0.0/16"
 	// DefaultNMNVlan is the default NMN Bootstrap Vlan
 	DefaultNMNVlan = 2
 	// DefaultNMNLBString is the default LoadBalancer CIDR for the NMN
