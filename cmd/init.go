@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -19,6 +20,7 @@ import (
 	shcd_parser "stash.us.cray.com/HMS/hms-shcd-parser/pkg/shcd-parser"
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
 	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
+	"stash.us.cray.com/MTL/csi/pkg/ipam"
 	"stash.us.cray.com/MTL/csi/pkg/shasta"
 	"stash.us.cray.com/MTL/csi/pkg/version"
 )
@@ -73,7 +75,7 @@ var initCmd = &cobra.Command{
 			log.Fatalln(err)
 		}
 
-		// Cycle through the main networks and update the reservations and dhcp ranges as necessary
+		// Cycle through the main networks and update the reservations, masks and dhcp ranges as necessary
 		for _, netName := range [4]string{"NMN", "HMN", "CAN", "MTL"} {
 
 			tempSubnet, err := shastaNetworks[netName].LookUpSubnet("bootstrap_dhcp")
@@ -83,6 +85,14 @@ var initCmd = &cobra.Command{
 			// Loop the reservations and update the NCN reservations with hostnames
 			// we likely didn't have when we registered the resevation
 			updateReservations(tempSubnet, logicalNcns)
+			// Replace the standard netmask with the supernet netmask
+			// Replace the standard gateway with the supernet gateway
+			// ** HACK ** We're dong this here to bypass all sanity checks
+			// This **WILL** cause an overlap of broadcast domains, but is required
+			// for reducing switch configuration changes from 1.3 to 1.4
+			supernetIP, superNet, _ := net.ParseCIDR(shastaNetworks[netName].CIDR)
+			tempSubnet.Gateway = ipam.Add(supernetIP, 1)
+			tempSubnet.CIDR.Mask = superNet.Mask
 			// Reset the DHCP Range to prevent overlaps
 			tempSubnet.UpdateDHCPRange()
 			// We expect a bootstrap_dhcp in every net, but uai_macvlan is only in
@@ -93,6 +103,8 @@ var initCmd = &cobra.Command{
 					log.Panic(err)
 				}
 				updateReservations(tempSubnet, logicalNcns)
+				tempSubnet.Gateway = ipam.Add(supernetIP, 1)
+				tempSubnet.CIDR.Mask = superNet.Mask
 			}
 		}
 
