@@ -294,14 +294,24 @@ func WriteDNSMasqConfig(path string, bootstrap []shasta.LogicalNCN, networks map
 		}
 	}
 
+	var apigwAliases, apigwIP string
+	nmnlbNet, _ := networks["NMNLB"].LookUpSubnet("nmn_metallb_address_pool")
+	apigw := nmnlbNet.ReservationsByName()["istio-ingressgateway"]
+	apigwAliases = strings.Join(strings.Split(apigw.Comment, " "), ",")
+	apigwIP = apigw.IPAddress.String()
+
 	data := struct {
-		NCNS    []DNSMasqNCN
-		KUBEVIP string
-		RGWVIP  string
+		NCNS         []DNSMasqNCN
+		KUBEVIP      string
+		RGWVIP       string
+		APIGWALIASES string
+		APIGWIP      string
 	}{
 		ncns,
 		kubevip,
 		rgwvip,
+		apigwAliases,
+		apigwIP,
 	}
 	// log.Println("Ready to write data with NCNs:", ncns)
 	csiFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/statics.conf"), tpl1, data)
