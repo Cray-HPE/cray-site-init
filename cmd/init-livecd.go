@@ -297,7 +297,7 @@ func WriteDNSMasqConfig(path string, bootstrap []shasta.LogicalNCN, networks map
 	var apigwAliases, apigwIP string
 	nmnlbNet, _ := networks["NMNLB"].LookUpSubnet("nmn_metallb_address_pool")
 	apigw := nmnlbNet.ReservationsByName()["istio-ingressgateway"]
-	apigwAliases = strings.Join(strings.Split(apigw.Comment, " "), ",")
+	apigwAliases = strings.Join(apigw.Aliases, ",")
 	apigwIP = apigw.IPAddress.String()
 
 	data := struct {
