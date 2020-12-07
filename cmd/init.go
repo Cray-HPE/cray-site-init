@@ -60,7 +60,7 @@ var initCmd = &cobra.Command{
 
 		if v.GetBool("supernet") {
 			// Once we have validated our networks, go through and replace the gateway and netmask on the
-			// uai, dhcp, and network hardware subnets to better support the 1.3 network swtich configuration
+			// uai, dhcp, and network hardware subnets to better support the 1.3 network switch configuration
 			// *** This is a HACK ***
 			for _, netName := range []string{"NMN", "HMN", "MTL"} {
 				// Grab the supernet details for use in HACK substitution
