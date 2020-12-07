@@ -77,7 +77,8 @@ var initCmd = &cobra.Command{
 
 		// Cycle through the main networks and update the reservations, masks and dhcp ranges as necessary
 		for _, netName := range [4]string{"NMN", "HMN", "CAN", "MTL"} {
-
+			// Grab the supernet details for use in HACK substitution
+			supernetIP, superNet, _ := net.ParseCIDR(shastaNetworks[netName].CIDR)
 			tempSubnet, err := shastaNetworks[netName].LookUpSubnet("bootstrap_dhcp")
 			if err != nil {
 				log.Panic(err)
@@ -90,7 +91,6 @@ var initCmd = &cobra.Command{
 			// ** HACK ** We're dong this here to bypass all sanity checks
 			// This **WILL** cause an overlap of broadcast domains, but is required
 			// for reducing switch configuration changes from 1.3 to 1.4
-			supernetIP, superNet, _ := net.ParseCIDR(shastaNetworks[netName].CIDR)
 			tempSubnet.Gateway = ipam.Add(supernetIP, 1)
 			tempSubnet.CIDR.Mask = superNet.Mask
 			// Reset the DHCP Range to prevent overlaps
@@ -106,6 +106,12 @@ var initCmd = &cobra.Command{
 				tempSubnet.Gateway = ipam.Add(supernetIP, 1)
 				tempSubnet.CIDR.Mask = superNet.Mask
 			}
+			netManagementSubnet, err := shastaNetworks[netName].LookUpSubnet("network_hardware")
+			if err == nil {
+				netManagementSubnet.Gateway = ipam.Add(supernetIP, 1)
+				netManagementSubnet.CIDR.Mask = superNet.Mask
+			}
+
 		}
 
 		// Update the SLSState with the updated network information
