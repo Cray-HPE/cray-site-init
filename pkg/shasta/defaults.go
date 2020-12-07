@@ -232,6 +232,7 @@ var DefaultUAISubnetReservations = map[string]string{
 	"pbs_comm_service":   "pbs-comm-service",
 }
 
+<<<<<<< HEAD
 // PinnedReservation is a simple struct to work with our abomination of a PinnedMetalLBReservations
 type PinnedReservation struct {
 	IPByte  uint8
@@ -250,4 +251,12 @@ var PinnedMetalLBReservations = map[string]PinnedReservation{
 	"cray-tftp":            {60, []string{"tftp-service"}},
 	"docker-registry":      {73, []string{"docker_registry_service"}},
 	"slingshot-kafka":      {75, []string{"slingshot_kafka_extern_service"}},
+=======
+// DefaultMetalLBReservations is the map of dns names and aliases
+var DefaultMetalLBReservations = map[string]string{
+	"istio-ingressgateway":   "api-gw-service packages registry spire.local api_gw_service api_gw_service.local  registry.local packages packages.local",
+	"rsyslog-aggregator":     "rsyslog-agg-service",
+	"rsyslog-aggregator-udp": "rsyslog-agg-service-udp",
+	"cray-tftp":              "tftp-service",
+>>>>>>> Adding additional aliases for the api gateway
 }
