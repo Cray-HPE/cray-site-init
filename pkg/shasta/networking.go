@@ -331,14 +331,25 @@ func (iSubnet *IPV4Subnet) UpdateDHCPRange() {
 	iSubnet.DHCPEnd = ipam.Add(ipam.Broadcast(iSubnet.CIDR), -1)
 }
 
-// AddReservationWithPin adds a new IP reservation to the subnet with the last octet pinned
+// AddReservationWithPin adds a new IPv4 reservation to the subnet with the last octet pinned
 func (iSubnet *IPV4Subnet) AddReservationWithPin(name, comment string, pin uint8) *IPReservation {
 	// Grab the "floor" of the subnet and alter the last byte to match the pinned byte
+	// modulo 4/16 bit ip addresses
+	// Worth noting that I could not seem to do this by copying the IP from the struct into a new
+	// net.IP struct and moddifying only the last byte.  I suspected complier error, but as every
+	// good programmer knows, it's probably not a compiler error and the time to debug the compiler
+	// is not *NOW*
 	newIP := make(net.IP, 4)
-	newIP = iSubnet.CIDR.IP
-	if len(newIP) == 16 {
-		newIP[15] = pin
-	} else {
+	if len(iSubnet.CIDR.IP) == 4 {
+		newIP[0] = iSubnet.CIDR.IP[0]
+		newIP[1] = iSubnet.CIDR.IP[1]
+		newIP[2] = iSubnet.CIDR.IP[2]
+		newIP[3] = pin
+	}
+	if len(iSubnet.CIDR.IP) == 16 {
+		newIP[0] = iSubnet.CIDR.IP[12]
+		newIP[1] = iSubnet.CIDR.IP[13]
+		newIP[2] = iSubnet.CIDR.IP[14]
 		newIP[3] = pin
 	}
 	iSubnet.IPReservations = append(iSubnet.IPReservations, IPReservation{
