@@ -58,6 +58,30 @@ var initCmd = &cobra.Command{
 			log.Panic(err)
 		}
 
+		// Once we have validated our networks, go through and replace the gateway and netmask on the
+		// uai, dhcp, and network hardware subnets to better support the 1.3 network swtich configuration
+		// *** This is a HACK ***
+		for _, netName := range []string{"NMN", "HMN", "MTL"} {
+			// Grab the supernet details for use in HACK substitution
+
+			supernetIP, superNet, err := net.ParseCIDR(shastaNetworks[netName].CIDR)
+			if err != nil {
+				log.Fatal("Couldn't parse the CIDR for ", netName)
+			}
+			for _, subnetName := range []string{"bootstrap_dhcp", "uai_macvlan", "network_hardware"} {
+				tempSubnet, err := shastaNetworks[netName].LookUpSubnet(subnetName)
+				if err == nil {
+					// Replace the standard netmask with the supernet netmask
+					// Replace the standard gateway with the supernet gateway
+					// ** HACK ** We're dong this here to bypass all sanity checks
+					// This **WILL** cause an overlap of broadcast domains, but is required
+					// for reducing switch configuration changes from 1.3 to 1.4
+					tempSubnet.Gateway = ipam.Add(supernetIP, 1)
+					tempSubnet.CIDR.Mask = superNet.Mask
+				}
+			}
+		}
+
 		// Use our new networks and our list of logicalNCNs to distribute ips
 		shasta.AllocateIps(logicalNcns, shastaNetworks) // This function has no return because it is working with lists of pointers.
 
@@ -78,7 +102,6 @@ var initCmd = &cobra.Command{
 		// Cycle through the main networks and update the reservations, masks and dhcp ranges as necessary
 		for _, netName := range [4]string{"NMN", "HMN", "CAN", "MTL"} {
 			// Grab the supernet details for use in HACK substitution
-			supernetIP, superNet, _ := net.ParseCIDR(shastaNetworks[netName].CIDR)
 			tempSubnet, err := shastaNetworks[netName].LookUpSubnet("bootstrap_dhcp")
 			if err != nil {
 				log.Panic(err)
@@ -86,14 +109,7 @@ var initCmd = &cobra.Command{
 			// Loop the reservations and update the NCN reservations with hostnames
 			// we likely didn't have when we registered the resevation
 			updateReservations(tempSubnet, logicalNcns)
-			// Replace the standard netmask with the supernet netmask
-			// Replace the standard gateway with the supernet gateway
-			// ** HACK ** We're dong this here to bypass all sanity checks
-			// This **WILL** cause an overlap of broadcast domains, but is required
-			// for reducing switch configuration changes from 1.3 to 1.4
-			tempSubnet.Gateway = ipam.Add(supernetIP, 1)
-			tempSubnet.CIDR.Mask = superNet.Mask
-			// Reset the DHCP Range to prevent overlaps
+
 			tempSubnet.UpdateDHCPRange()
 			// We expect a bootstrap_dhcp in every net, but uai_macvlan is only in
 			// the NMN range for today
@@ -103,13 +119,6 @@ var initCmd = &cobra.Command{
 					log.Panic(err)
 				}
 				updateReservations(tempSubnet, logicalNcns)
-				tempSubnet.Gateway = ipam.Add(supernetIP, 1)
-				tempSubnet.CIDR.Mask = superNet.Mask
-			}
-			netManagementSubnet, err := shastaNetworks[netName].LookUpSubnet("network_hardware")
-			if err == nil {
-				netManagementSubnet.Gateway = ipam.Add(supernetIP, 1)
-				netManagementSubnet.CIDR.Mask = superNet.Mask
 			}
 
 		}
