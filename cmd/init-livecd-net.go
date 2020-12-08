@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/viper"
 
 	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
+	"stash.us.cray.com/MTL/csi/pkg/ipam"
 	"stash.us.cray.com/MTL/csi/pkg/shasta"
 )
 
@@ -217,6 +218,8 @@ func createNetFromLayoutConfig(conf shasta.NetworkLayoutConfiguration, v *viper.
 	// Add the macvlan/uai subnet(s)
 	if conf.IncludeUAISubnet {
 		uaisubnet, err := tempNet.AddSubnet(net.CIDRMask(23, 32), "uai_macvlan", conf.BaseVlan)
+		supernetIP, _, _ := net.ParseCIDR(tempNet.CIDR)
+		uaisubnet.Gateway = ipam.Add(supernetIP, 1)
 		if err != nil {
 			log.Fatalf("Couln't add the uai subnet to the %v Network: %v", tempNet.Name, err)
 		}
