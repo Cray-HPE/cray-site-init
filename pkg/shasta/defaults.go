@@ -6,6 +6,7 @@ package shasta
 
 import (
 	"net"
+	"strings"
 )
 
 /*
@@ -246,6 +247,26 @@ type PinnedReservation struct {
 //
 var PinnedMetalLBReservations = map[string]PinnedReservation{
 	"istio-ingressgateway": {71, []string{"api-gw-service", "packages", "registry"}},
+	"rsyslog-aggregator":   {72, []string{"rsyslog-agg-service"}},
+	"cray-tftp":            {60, []string{"tftp-service"}},
+	"docker-registry":      {73, []string{"docker_registry_service"}},
+	"slingshot-kafka":      {75, []string{"slingshot_kafka_extern_service"}},
+}
+
+// PinnedReservation is a simple struct to work with our abomination of a PinnedMetalLBReservations
+type PinnedReservation struct {
+	IPByte  uint8
+	Aliases []string
+}
+
+// PinnedMetalLBReservations is the map of dns names and aliases with the
+// required final octet of th ip address
+// *** This structure is only necessary to pin ip addresses as we shift from 1.3 to 1.4 ***
+// *** *** *** To anyone editing this code in the future, PLEASE DON'T MAKE IT BETTER *** *** ***
+// *** *** *** This code is written to be thrown away with a fully dynamic ip addressing scheme *** *** ***
+//
+var PinnedMetalLBReservations = map[string]PinnedReservation{
+	"istio-ingressgateway": {71, strings.Split("api-gw-service packages registry spire.local api_gw_service api_gw_service.local  registry.local packages packages.local spire", " ")},
 	"rsyslog-aggregator":   {72, []string{"rsyslog-agg-service"}},
 	"cray-tftp":            {60, []string{"tftp-service"}},
 	"docker-registry":      {73, []string{"docker_registry_service"}},

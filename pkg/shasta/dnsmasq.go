@@ -91,6 +91,7 @@ host-record={{.Hostname}},{{.Hostname}}.mtl,{{.MTLIP}}
 # Virtual IP Addresses for k8s and the rados gateway
 host-record=kubeapi-vip,kubeapi-vip.nmn,{{.KUBEVIP}} # k8s-virtual-ip
 host-record=rgw-vip,rgw-vip.nmn,{{.RGWVIP}} # rgw-virtual-ip
+host-record={{.APIGWALIASES}},{{.APIGWIP}} # api gateway
 
 cname=kubernetes-api.vshasta.io,ncn-m001
 `)
