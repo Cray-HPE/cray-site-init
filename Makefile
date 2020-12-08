@@ -9,6 +9,9 @@ TAG?=latest
 .FS_VERSION=$(shell cat .version)
 .GIT_UNTRACKEDCHANGES := $(shell git status --porcelain --untracked-files=no)
 .BUILDTIME=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+CHANGELOG_VERSION_ORIG=$(grep -m1 \## CHANGELOG.MD | sed -e "s/\].*\$//" |sed -e "s/^.*\[//")
+CHANGELOG_VERSION=$(shell grep -m1 \ \[[0-9]*.[0-9]*.[0-9]*\] CHANGELOG.MD | sed -e "s/\].*$$//" |sed -e "s/^.*\[//")
+
 ifneq ($(.GIT_UNTRACKEDCHANGES),)
 	.GIT_COMMIT := $(.GIT_COMMIT)-dirty
 endif
@@ -117,3 +120,7 @@ doc:
 
 version:
 	@go version
+
+update-version: build
+	@echo 'Version = ${CHANGELOG_VERSION}'
+	echo ${CHANGELOG_VERSION} > .version
