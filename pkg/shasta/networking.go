@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strings"
 
 	base "stash.us.cray.com/HMS/hms-base"
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
@@ -328,6 +329,36 @@ func (iSubnet *IPV4Subnet) UpdateDHCPRange() {
 		ip = ipam.Add(ip, 1)
 	}
 	iSubnet.DHCPEnd = ipam.Add(ipam.Broadcast(iSubnet.CIDR), -1)
+}
+
+// AddReservationWithPin adds a new IPv4 reservation to the subnet with the last octet pinned
+func (iSubnet *IPV4Subnet) AddReservationWithPin(name, comment string, pin uint8) *IPReservation {
+	// Grab the "floor" of the subnet and alter the last byte to match the pinned byte
+	// modulo 4/16 bit ip addresses
+	// Worth noting that I could not seem to do this by copying the IP from the struct into a new
+	// net.IP struct and moddifying only the last byte.  I suspected complier error, but as every
+	// good programmer knows, it's probably not a compiler error and the time to debug the compiler
+	// is not *NOW*
+	newIP := make(net.IP, 4)
+	if len(iSubnet.CIDR.IP) == 4 {
+		newIP[0] = iSubnet.CIDR.IP[0]
+		newIP[1] = iSubnet.CIDR.IP[1]
+		newIP[2] = iSubnet.CIDR.IP[2]
+		newIP[3] = pin
+	}
+	if len(iSubnet.CIDR.IP) == 16 {
+		newIP[0] = iSubnet.CIDR.IP[12]
+		newIP[1] = iSubnet.CIDR.IP[13]
+		newIP[2] = iSubnet.CIDR.IP[14]
+		newIP[3] = pin
+	}
+	iSubnet.IPReservations = append(iSubnet.IPReservations, IPReservation{
+		IPAddress: newIP,
+		Name:      name,
+		Comment:   comment,
+		Aliases:   strings.Split(comment, ","),
+	})
+	return &iSubnet.IPReservations[len(iSubnet.IPReservations)-1]
 }
 
 // AddReservation adds a new IP reservation to the subnet

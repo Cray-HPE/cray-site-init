@@ -54,13 +54,12 @@ func BuildLiveCDNetworks(v *viper.Viper, switches []*shasta.ManagementSwitch) (m
 	// Start the NMN Load Balancer with our Defaults
 	//
 	tempNMNLoadBalancer := shasta.DefaultLoadBalancerNMN
-	// Add a /25 for the Load Balancers
+	// Add a /24 for the Load Balancers
 	pool, _ := tempNMNLoadBalancer.AddSubnet(net.CIDRMask(24, 32), "nmn_metallb_address_pool", int16(v.GetInt("nmn-bootstrap-vlan")))
 	pool.FullName = "NMN MetalLB"
-	pool.AddReservation("istio-ingressgateway", "api-gw-service packages registry")
-	pool.AddReservation("rsyslog-aggregator", "rsyslog-agg-service")
-	pool.AddReservation("rsyslog-aggregator-udp", "rsyslog-agg-service-udp")
-	pool.AddReservation("cray-tftp", "tftp-service")
+	for nme, rsrv := range shasta.PinnedMetalLBReservations {
+		pool.AddReservationWithPin(nme, strings.Join(rsrv.Aliases, ","), rsrv.IPByte)
+	}
 	networkMap["NMNLB"] = &tempNMNLoadBalancer
 
 	//
@@ -69,10 +68,9 @@ func BuildLiveCDNetworks(v *viper.Viper, switches []*shasta.ManagementSwitch) (m
 	tempHMNLoadBalancer := shasta.DefaultLoadBalancerHMN
 	pool, _ = tempHMNLoadBalancer.AddSubnet(net.CIDRMask(24, 32), "hmn_metallb_address_pool", int16(v.GetInt("hmn-bootstrap-vlan")))
 	pool.FullName = "HMN MetalLB"
-	pool.AddReservation("istio-ingressgateway-hmn", "api-gw-service packages registry")
-	pool.AddReservation("rsyslog-aggregator-hmn", "rsyslog-agg-service")
-	pool.AddReservation("rsyslog-aggregator-hmn-udp", "rsyslog-agg-service-udp")
-	pool.AddReservation("cray-tftp-hmn", "tftp-service")
+	for nme, rsrv := range shasta.PinnedMetalLBReservations {
+		pool.AddReservationWithPin(nme, strings.Join(rsrv.Aliases, ","), rsrv.IPByte)
+	}
 	networkMap["HMNLB"] = &tempHMNLoadBalancer
 
 	return networkMap, nil
