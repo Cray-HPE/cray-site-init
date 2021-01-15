@@ -57,6 +57,25 @@ const (
 	DefaultMTLString = "10.1.1.0/16"
 )
 
+// InstallerDefaults holds all of our defaults
+var InstallerDefaults = SystemConfig{
+	SystemName:      "sn-2024",
+	SiteDomain:      "dev.cray.com",
+	NtpPoolHostname: "time.nist.gov",
+	RpmRegistry:     "https://packages.nmn/repository/shasta-master",
+	V2Registry:      "https://registry.nmn/",
+	Install: InstallConfig{
+		NCN:                 "ncn-m001",
+		NCNBondMembers:      "p1p1,p1p2",
+		SiteNIC:             "em1",
+		SitePrefix:          "/20",
+		CephCephfsImage:     "dtr.dev.cray.com/cray/cray-cephfs-provisioner:0.1.0-nautilus-1.3",
+		CephRBDImage:        "dtr.dev.cray.com/cray/cray-rbd-provisioner:0.1.0-nautilus-1.3",
+		ChartRepo:           "http://helmrepo.dev.cray.com:8080",
+		DockerImageRegistry: "dtr.dev.cray.com",
+	},
+}
+
 // IPNetfromCIDRString converts from a string to an net.IPNet struct
 func IPNetfromCIDRString(mynet string) *net.IPNet {
 	_, ipnet, _ := net.ParseCIDR(mynet)
@@ -241,9 +260,10 @@ type PinnedReservation struct {
 // *** *** *** This code is written to be thrown away with a fully dynamic ip addressing scheme *** *** ***
 //
 var PinnedMetalLBReservations = map[string]PinnedReservation{
-	"istio-ingressgateway": {71, strings.Split("api-gw-service api-gw-service-nmn.local packages registry spire.local api_gw_service api_gw_service.local registry.local packages packages.local spire", " ")},
-	"rsyslog-aggregator":   {72, []string{"rsyslog-agg-service"}},
-	"cray-tftp":            {60, []string{"tftp-service"}},
-	"docker-registry":      {73, []string{"docker_registry_service"}},
-	"slingshot-kafka":      {75, []string{"slingshot_kafka_extern_service"}},
+	"istio-ingressgateway":       {71, strings.Split("api-gw-service packages registry spire.local api_gw_service registry.local packages packages.local spire", " ")},
+	"istio-ingressgateway-local": {81, []string{"api-gw-service.local"}},
+	"rsyslog-aggregator":         {72, []string{"rsyslog-agg-service"}},
+	"cray-tftp":                  {60, []string{"tftp-service"}},
+	"docker-registry":            {73, []string{"docker_registry_service"}},
+	"slingshot-kafka":            {75, []string{"slingshot_kafka_extern_service"}},
 }

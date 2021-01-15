@@ -14,6 +14,7 @@ replace stash.us.cray.com/HMS/hms-securestorage => stash.us.cray.com/HMS/hms-sec
 replace stash.us.cray.com/HMS/hms-shcd-parser => stash.us.cray.com/HMS/hms-shcd-parser v1.1.2
 
 require (
+	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef
 	github.com/evanphx/json-patch v4.9.0+incompatible
 	github.com/gocarina/gocsv v0.0.0-20200925213129-04be9ee2e1a2
 	github.com/imdario/mergo v0.3.11 // indirect
