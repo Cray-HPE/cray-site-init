@@ -5,12 +5,13 @@ Copyright 2020 Hewlett Packard Enterprise Development LP
 */
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"path"
+
+	"github.com/spf13/cobra"
 )
 
 // getCmd represents the get command
@@ -62,7 +63,7 @@ func GetArtifact(dirpath string, url string) (err error) {
 		}
 
 	} else {
-		fmt.Errorf("Missing or malformed URL")
+		return fmt.Errorf("Missing or malformed URL: %v", url)
 	}
 
 	return nil
