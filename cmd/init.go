@@ -513,7 +513,7 @@ func appendIfMissing(slice []string, item string) []string {
 
 func prepareAndGenerateSLS(cd []shasta.CabinetDetail, shastaNetworks map[string]*shasta.IPV4Network, hmnRows []shcd_parser.HMNRow, inputSwitches []*shasta.ManagementSwitch, applicationNodeConfig shasta.SLSGeneratorApplicationNodeConfig, startingNid int) sls_common.SLSState {
 	// Management Switch Information is included in the IP Reservations for each subnet
-	switchNet, err := shastaNetworks["HMN"].LookUpSubnet("bootstrap_dhcp")
+	switchNet, err := shastaNetworks["HMN"].LookUpSubnet("network_hardware")
 	if err != nil {
 		log.Fatalln("Couldn't find subnet for management switches in the HMN:", err)
 	}
