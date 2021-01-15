@@ -325,6 +325,16 @@ func (iSubnet *IPV4Subnet) ReservationsByName() map[string]IPReservation {
 	return reservations
 }
 
+// LookupReservation searches the subnet for an IPReservation that matches the name provided
+func (iSubnet *IPV4Subnet) LookupReservation(resName string) IPReservation {
+	for _, v := range iSubnet.IPReservations {
+		if resName == v.Name {
+			return v
+		}
+	}
+	return IPReservation{}
+}
+
 // TotalIPAddresses returns the number of ip addresses in a subnet see UsableHostAddresses
 func (iSubnet *IPV4Subnet) TotalIPAddresses() int {
 	maskSize, _ := iSubnet.CIDR.Mask.Size()

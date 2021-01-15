@@ -603,6 +603,7 @@ func writeOutput(v *viper.Viper, shastaNetworks map[string]*shasta.IPV4Network, 
 	csiFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/root_password.json"), shasta.DefaultRootPW)
 	csiFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/bmc_password.json"), shasta.DefaultBMCPW)
 	csiFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/mgmt_switch_password.json"), shasta.DefaultNetPW)
+	csiFiles.WriteYAMLConfig(filepath.Join(basepath, "customizations.yaml"), shasta.GenCustomizationsYaml(logicalNCNs, shastaNetworks))
 
 	for _, ncn := range logicalNCNs {
 		// log.Println("Checking to see if we need CPT files for ", ncn.Hostname)

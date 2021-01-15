@@ -7,6 +7,7 @@ package shasta
 import (
 	"fmt"
 	"log"
+	"net"
 	"strings"
 
 	base "stash.us.cray.com/HMS/hms-base"
@@ -69,6 +70,16 @@ func (lncn *LogicalNCN) Normalize() error {
 	lncn.Xname = base.NormalizeHMSCompID(lncn.Xname)
 
 	return nil
+}
+
+// GetIP takes in a netname and returns an IP address for that netname
+func (lncn *LogicalNCN) GetIP(netName string) net.IP {
+	for _, inet := range lncn.Networks {
+		if inet.NetworkName == netName {
+			return net.ParseIP(inet.IPAddress)
+		}
+	}
+	return net.IP{}
 }
 
 // NCNNetwork holds information about networks
