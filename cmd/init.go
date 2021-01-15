@@ -574,6 +574,9 @@ func updateReservations(tempSubnet *shasta.IPV4Subnet, logicalNcns []*shasta.Log
 				reservation.Aliases = append(reservation.Aliases, fmt.Sprintf("%v-%v", ncn.Hostname, strings.ToLower(tempSubnet.NetName)))
 				reservation.Aliases = append(reservation.Aliases, fmt.Sprintf("time-%v", strings.ToLower(tempSubnet.NetName)))
 				reservation.Aliases = append(reservation.Aliases, fmt.Sprintf("time-%v.local", strings.ToLower(tempSubnet.NetName)))
+				if strings.ToLower(ncn.Subrole) == "storage" && strings.ToLower(tempSubnet.NetName) == "hmn" {
+					reservation.Aliases = append(reservation.Aliases, "rgw-vip.hmn")
+				}
 				tempSubnet.IPReservations[index] = reservation
 			}
 			if reservation.Comment == fmt.Sprintf("%v-mgmt", ncn.Xname) {

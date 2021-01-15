@@ -31,7 +31,7 @@ cname=packages.hmn,pit.hmn
 cname=registry.hmn,pit.hmn
 dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:dns-server,{{.Gateway}}
 dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:ntp-server,{{.Gateway}}
-dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:router,{{.Gateway}}
+dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:router,{{.SupernetRouter}}
 dhcp-range=interface:{{.VlanID | printf "vlan%03d"}},{{.DHCPStart}},{{.DHCPEnd}},10m
 `)
 
@@ -46,7 +46,7 @@ interface=bond0
 interface-name=pit.mtl,bond0
 dhcp-option=interface:bond0,option:dns-server,{{.Gateway}}
 dhcp-option=interface:bond0,option:ntp-server,{{.Gateway}}
-dhcp-option=interface:bond0,option:router,{{.Gateway}}
+dhcp-option=interface:bond0,option:router,{{.SupernetRouter}}
 dhcp-range=interface:bond0,{{.DHCPStart}},{{.DHCPEnd}},10m
 `)
 
@@ -63,7 +63,7 @@ cname=packages.nmn,pit.nmn
 cname=registry.nmn,pit.nmn
 dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:dns-server,{{.Gateway}}
 dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:ntp-server,{{.Gateway}}
-dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:router,{{.Gateway}}
+dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:router,{{.SupernetRouter}}
 dhcp-range=interface:{{.VlanID | printf "vlan%03d"}},{{.DHCPStart}},{{.DHCPEnd}},10m
 `)
 
