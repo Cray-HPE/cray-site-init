@@ -215,6 +215,7 @@ func WriteDNSMasqConfig(path string, v *viper.Viper, bootstrap []shasta.LogicalN
 	mtlBootstrapSubnet, _ := mtlNet.LookUpSubnet("bootstrap_dhcp")
 	tmpGateway := mtlBootstrapSubnet.Gateway
 	mtlBootstrapSubnet.Gateway = net.ParseIP(mainMtlIP)
+	mtlBootstrapSubnet.SupernetRouter = genPinnedIP(mtlBootstrapSubnet.CIDR.IP, uint8(1))
 	csiFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/MTL.conf"), tpl5, mtlBootstrapSubnet)
 	mtlBootstrapSubnet.Gateway = tmpGateway
 
@@ -238,5 +239,23 @@ func writeConfig(name, path string, tpl template.Template, networks map[string]*
 	if tempNet.Name == "CAN" {
 		bootstrapSubnet.Gateway = net.ParseIP(v.GetString("can-gateway"))
 	}
+	bootstrapSubnet.SupernetRouter = genPinnedIP(bootstrapSubnet.CIDR.IP, uint8(1))
 	csiFiles.WriteTemplate(filepath.Join(path, fmt.Sprintf("dnsmasq.d/%v.conf", name)), &tpl, bootstrapSubnet)
+}
+
+func genPinnedIP(ip net.IP, pin uint8) net.IP {
+	newIP := make(net.IP, 4)
+	if len(ip) == 4 {
+		newIP[0] = ip[0]
+		newIP[1] = ip[1]
+		newIP[2] = ip[2]
+		newIP[3] = pin
+	}
+	if len(ip) == 16 {
+		newIP[0] = ip[12]
+		newIP[1] = ip[13]
+		newIP[2] = ip[14]
+		newIP[3] = pin
+	}
+	return newIP
 }
