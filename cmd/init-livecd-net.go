@@ -255,7 +255,7 @@ func createNetFromLayoutConfig(conf shasta.NetworkLayoutConfiguration, v *viper.
 				subnet.AddReservation("can-switch-2", "")
 
 			} else {
-				subnet.ReserveNetMgmtIPs(spineSwitches, leafSwitches, aggSwitches, cduSwitches, conf.AdditionalNetworkingSpace)
+				subnet.ReserveNetMgmtIPs([]string{}, []string{}, []string{}, []string{}, conf.AdditionalNetworkingSpace)
 			}
 			subnet.AddReservation("kubeapi-vip", "k8s-virtual-ip")
 			subnet.AddReservation("rgw-vip", "rgw-virtual-ip")
