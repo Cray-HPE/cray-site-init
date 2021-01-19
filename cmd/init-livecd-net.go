@@ -265,8 +265,8 @@ func createNetFromLayoutConfig(conf shasta.NetworkLayoutConfiguration, v *viper.
 	// Add the macvlan/uai subnet(s)
 	if conf.IncludeUAISubnet {
 		uaisubnet, err := tempNet.AddSubnet(net.CIDRMask(23, 32), "uai_macvlan", conf.BaseVlan)
-		supernetIP, _, _ := net.ParseCIDR(tempNet.CIDR)
-		uaisubnet.Gateway = ipam.Add(supernetIP, 1)
+		_, supernetNet, _ := net.ParseCIDR(tempNet.CIDR)
+		uaisubnet.Gateway = ipam.Add(supernetNet.IP, 1)
 		if err != nil {
 			log.Fatalf("Couln't add the uai subnet to the %v Network: %v", tempNet.Name, err)
 		}
@@ -287,7 +287,7 @@ func createNetFromLayoutConfig(conf shasta.NetworkLayoutConfiguration, v *viper.
 func ApplySupernetHack(tempNetPtr *shasta.IPV4Network) {
 	// Replace the gateway and netmask on the to better support the 1.3 network switch configuration
 	// *** This is a HACK ***
-	supernetIP, superNet, err := net.ParseCIDR(tempNetPtr.CIDR)
+	_, superNet, err := net.ParseCIDR(tempNetPtr.CIDR)
 	if err != nil {
 		log.Fatal("Couldn't parse the CIDR for ", tempNetPtr.Name)
 	}
@@ -300,7 +300,7 @@ func ApplySupernetHack(tempNetPtr *shasta.IPV4Network) {
 			// ** HACK ** We're doing this here to bypass all sanity checks
 			// This **WILL** cause an overlap of broadcast domains, but is required
 			// for reducing switch configuration changes from 1.3 to 1.4
-			tempSubnet.Gateway = ipam.Add(supernetIP, 1)
+			tempSubnet.Gateway = ipam.Add(superNet.IP, 1)
 			tempSubnet.CIDR.Mask = superNet.Mask
 		}
 	}
