@@ -110,8 +110,8 @@ func WriteMetalLBConfigMap(path string, v *viper.Viper, networks map[string]*sha
 					configStruct.Networks[val] = subnet.CIDR.String()
 				}
 			}
-			configStruct.Networks["customer-access"] = v.GetString("can-static-pool")
-			configStruct.Networks["customer-access-dynamic"] = v.GetString("can-dynamic-pool")
+			configStruct.Networks["customer-access-static"] = v.GetString("can-static-pool")
+			configStruct.Networks["customer-access"] = v.GetString("can-dynamic-pool")
 		}
 	}
 	csiFiles.WriteTemplate(filepath.Join(path, "metallb.yaml"), tpl, configStruct)
