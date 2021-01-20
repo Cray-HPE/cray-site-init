@@ -9,66 +9,38 @@ import (
 	"github.com/spf13/viper"
 	"log"
 	"os/exec"
+	"path/filepath"
 )
 
 var lastFailure error
-var validateNetwork, validateServices, validateDNS, validateMtu, validateCeph, validateK8s, validateAll bool
+var livecdPreflight, ncnPreflight, validateCeph, validateK8s bool
 
 // validateCmd represents the validate command
 var validateCmd = &cobra.Command{
 	Use:   "validate",
-	Short: "Validates the PIT liveCD during setup",
-	Long:  `Validates certain requirements needed for effectively running the liveCD.`,
+	Short: "Runs unit tests",
+	Long:  `Runs unit tests and validates a working livecd and NCN deployment.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		if validateServices || validateAll {
-			log.Println("[csi] VALIDATING SERVICES")
-			runCommand("systemctl status dnsmasq")
-			runCommand("systemctl status nexus")
-			runCommand("systemctl status basecamp")
-			runCommand("podman container ls -a")
+		if livecdPreflight {
+			runCommand(filepath.Join("/opt/cray/tests/install/livecd/automated/", "livecd-preflight-checks"))
 		}
 
-		if validateNetwork || validateAll {
-			log.Println("[csi] VALIDATING NETWORK")
-			runCommand("ip a show lan0")
-			runCommand("ip a show bond0")
-			runCommand("ip a show vlan002")
-			runCommand("ip a show vlan004")
-			runCommand("ip a show vlan007")
+		if ncnPreflight {
+			runCommand(filepath.Join("/opt/cray/tests/install/livecd/automated/", "ncn-preflight-checks"))
 		}
 
-		if validateDNS || validateAll {
-			log.Println("[csi] VALIDATING DNS")
-			runCommand("grep -Eo ncn-.*-mgmt /var/lib/misc/dnsmasq.leases | sort")
+		if validateCeph {
+			runCommand(filepath.Join("/opt/cray/tests/install/livecd/automated/", "ncn-storage-checks"))
 		}
 
-		if validateMtu || validateAll {
-			log.Println("[csi] VALIDATING MTU")
-			log.Printf("[csi] MANUAL ACTION: run the following snippet on a SPINE switch if reachable and verify MTU of the NCN ports is set to 9216\n\n\t# show interface status | include ^Mpo\n\n")
-		}
-
-		if validateCeph || validateAll {
-			log.Println("[csi] VALIDATING CEPH")
-			log.Printf("[csi] MANUAL ACTION: run the following snippet on a STORAGE node if booted and verify ceph quroum (should see all 3 storage in report)\n\n\t# ceph -s\n\n")
-		}
-
-		if validateK8s || validateAll {
-			log.Println("[csi] VALIDATING K8S")
-			log.Printf("[csi] MANUAL ACTION 1: run the following snippet on a STORAGE node if booted and verify if 3 classes are available\n\n\t# kubectl get storageclass\n\n")
-			log.Printf("[csi] MANUAL ACTION 2: run the following snippet on a MANAGER node if booted to verify all nodes are in the cluister\n\n\t# kubectl get nodes\n\n")
-			log.Printf("[csi] MANUAL ACTION 3: run the following snippet on a MANAGER node if booted to verify all nodes are in the cluister\n\n\t# kubectl get po -n kube-system\n\n")
-		}
-
-		// For now, if lastFailure is set then we failed.
-		if lastFailure != nil {
-			log.Fatal("Failed; see scrollback for test errors.")
+		if validateK8s {
+			runCommand(filepath.Join("/opt/cray/tests/install/livecd/automated/", "ncn-kubernetes-checks"))
 		}
 	},
 }
 
 func runCommand(shellCode string) {
-	log.Println("[csi] Running...", shellCode)
 	cmd := exec.Command("bash", "-c", shellCode)
 	stdoutStderr, err := cmd.CombinedOutput()
 	fmt.Printf("%s\n", stdoutStderr)
@@ -82,11 +54,8 @@ func init() {
 	pitCmd.AddCommand(validateCmd)
 	viper.SetEnvPrefix("pit")
 	viper.AutomaticEnv()
-	validateCmd.Flags().BoolVarP(&validateNetwork, "network", "n", viper.GetBool("validate_network"), "Validate the network when booted into the LiveCD (env: PIT_VALIDATE_NETWORK)")
-	validateCmd.Flags().BoolVarP(&validateServices, "services", "s", viper.GetBool("validate_services"), "Validate services when booted into the LiveCD (env: PIT_VALIDATE_SERVICES)")
-	validateCmd.Flags().BoolVarP(&validateDNS, "dns-dhcp", "d", viper.GetBool("validate_dns_dhcp"), "Validate the DNS leases (env: PIT_VALIDATE_DNS_DHCP)")
-	validateCmd.Flags().BoolVarP(&validateMtu, "mtu", "m", viper.GetBool("validate_mtu"), "Validate the MTU of the spine ports (env: PIT_VALIDATE_MTU)")
-	validateCmd.Flags().BoolVarP(&validateCeph, "ceph", "c", viper.GetBool("validate_ceph"), "Validate Ceph is working (env: PIT_VALIDATE_CEPH)")
-	validateCmd.Flags().BoolVarP(&validateK8s, "k8s", "k", viper.GetBool("validate_k8s"), "Validate Kubernetes is working (env: PIT_VALIDATE_K8S)")
-	validateCmd.Flags().BoolVarP(&validateAll, "all", "a", viper.GetBool("validate_all"), "Validate everything (env: PIT_VALIDATE_ALL)")
+	validateCmd.Flags().BoolVarP(&livecdPreflight, "livecd-preflight", "l", false, "Run LiveCD pre-flight tests")
+	validateCmd.Flags().BoolVarP(&ncnPreflight, "ncn-preflight", "n", false, "Run NCN pre-flight tests")
+	validateCmd.Flags().BoolVarP(&validateCeph, "ceph", "c", false, "Validate that Ceph is working")
+	validateCmd.Flags().BoolVarP(&validateK8s, "k8s", "k", false, "Validate that Kubernetes is working")
 }
