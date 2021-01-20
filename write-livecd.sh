@@ -190,8 +190,7 @@ unmount_partitions $usb
 # to know now vs. when it fails the checkmedia during boot.
 # Emit a warning if the command is not there
 if ! eval command -v checkmedia; then
-  error "Unable to validate ISO.  Please install checkmedia and try again."
-  exit 4
+  info "Unable to validate ISO using 'checkmedia'."
 else
   info "Validating ISO via checkmedia"
   checkmedia $iso_file
