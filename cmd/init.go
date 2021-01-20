@@ -177,9 +177,9 @@ var initCmd = &cobra.Command{
 		for netName, tempNet := range shastaNetworks {
 			fmt.Printf("\t* %v %v with %d subnets \n", tempNet.FullName, tempNet.CIDR, len(tempNet.Subnets))
 			if v.GetBool("supernet") && stringInSlice(netName, []string{"NMN", "HMN", "MTL", "CAN"}) {
-				supernetIP, superNet, _ := net.ParseCIDR(shastaNetworks[netName].CIDR)
+				_, superNet, _ := net.ParseCIDR(shastaNetworks[netName].CIDR)
 				maskSize, _ := superNet.Mask.Size()
-				fmt.Printf("\t\tSupernet enabled - Using /%v as netmask and %v as Gateway\n", maskSize, ipam.Add(supernetIP, 1))
+				fmt.Printf("\t\tSupernet enabled - Using /%v as netmask and %v as Gateway\n", maskSize, ipam.Add(superNet.IP, 1))
 			}
 		}
 		fmt.Printf("System Information\n")

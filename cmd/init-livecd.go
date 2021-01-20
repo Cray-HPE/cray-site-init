@@ -239,7 +239,10 @@ func writeConfig(name, path string, tpl template.Template, networks map[string]*
 	if tempNet.Name == "CAN" {
 		bootstrapSubnet.Gateway = net.ParseIP(v.GetString("can-gateway"))
 	}
-	bootstrapSubnet.SupernetRouter = genPinnedIP(bootstrapSubnet.CIDR.IP, uint8(1))
+	// Normalize the CIDR before using it
+	_, superNet, _ := net.ParseCIDR(bootstrapSubnet.CIDR.String())
+	bootstrapSubnet.SupernetRouter = genPinnedIP(superNet.IP, uint8(1))
+	log.Printf("Templating %s with %v as the Gateway.\n", name, bootstrapSubnet.SupernetRouter)
 	csiFiles.WriteTemplate(filepath.Join(path, fmt.Sprintf("dnsmasq.d/%v.conf", name)), &tpl, bootstrapSubnet)
 }
 
