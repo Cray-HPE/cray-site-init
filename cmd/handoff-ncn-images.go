@@ -23,6 +23,12 @@ import (
 
 const s3ACL = "public-read"
 
+// We need these to be constant so that later when we do the BSS handoff we know the right value.
+const kernelName = "kernel"
+const initrdName = "initrd.img.xz"
+const k8sSquashFSName = "k8s-filesystem.squashfs"
+const cephSquashFSName = "ceph-filesystem.squashfs"
+
 var (
 	s3Client *hms_s3.S3Client
 
@@ -32,11 +38,9 @@ var (
 	s3BucketName string
 
 	kernelPath   string
-	kernelName   string
 	initrdPath   string
-	initrdName   string
-	squashFSPath string
-	squashFSName string
+	k8sSquashFSPath string
+	cephSquashFSPath string
 )
 
 // handoffCmd represents the handoff command
@@ -68,17 +72,14 @@ func init() {
 
 	handoffNCNImagesCmd.Flags().StringVar(&kernelPath, "kernel-path", "/var/www/kernel",
 		"Path to the kernel image to upload")
-	handoffNCNImagesCmd.Flags().StringVar(&kernelName, "kernel-name", "kernel",
-		"Name to set for kernel in S3")
 	handoffNCNImagesCmd.Flags().StringVar(&initrdPath, "initrd-path", "/var/www/initrd.img.xz",
 		"Path to the initrd image to upload")
-	handoffNCNImagesCmd.Flags().StringVar(&initrdName, "initrd-name", "initrd",
-		"Name to set for initrd in S3")
-	handoffNCNImagesCmd.Flags().StringVar(&squashFSPath, "squashfs-path", "",
-		"Path to the squashfs image to upload")
-	_ = handoffNCNImagesCmd.MarkFlagRequired("squashfs-path")
-	handoffNCNImagesCmd.Flags().StringVar(&squashFSName, "squashfs-name", "filesystem.squashfs",
-		"Name to set for squashfs in S3")
+	handoffNCNImagesCmd.Flags().StringVar(&k8sSquashFSPath, "k8s-squashfs-path", "",
+		"Path to the squashfs image to upload for K8s NCNs")
+	_ = handoffNCNImagesCmd.MarkFlagRequired("k8s-squashfs-path")
+	handoffNCNImagesCmd.Flags().StringVar(&cephSquashFSPath, "ceph-squashfs-path", "",
+		"Path to the squashfs image to upload for CEPH NCNs")
+	_ = handoffNCNImagesCmd.MarkFlagRequired("ceph-squashfs-path")
 }
 
 func uploadFile(filePath string, s3KeyName string) {
@@ -148,6 +149,8 @@ func uploadNCNImagesS3() {
 	uploadFile(initrdPath, initrdName)
 	fmt.Println("Successfully uploaded initrd.")
 
-	uploadFile(squashFSPath, squashFSName)
-	fmt.Println("Successfully uploaded squash FS.")
+	uploadFile(k8sSquashFSPath, k8sSquashFSName)
+	fmt.Println("Successfully uploaded K8s squash FS.")
+	uploadFile(cephSquashFSPath, cephSquashFSName)
+	fmt.Println("Successfully uploaded CEPH squash FS.")
 }
