@@ -228,6 +228,22 @@ func createNetFromLayoutConfig(conf shasta.NetworkLayoutConfiguration, v *viper.
 		}
 	}
 
+	// Initialize the required subnet for the HSN
+	// This will be the entire network but is required to store IPReservations for DNS naming
+	if tempNet.Name == "HSN" {
+		fmt.Println("HERE")
+		_, hsnDefaultSubnet, err := net.ParseCIDR(v.GetString("hsn-cidr"))
+		if err != nil {
+			log.Printf("IP Addressing Failure\nInvalid hsn-cidr.  Cowardly refusing to create it.")
+		} else {
+			subnet, err := tempNet.AddSubnetbyCIDR(*hsnDefaultSubnet, "hsn_base_subnet", int16(shasta.DefaultHSN.VlanRange[0]))
+			if err != nil {
+				log.Fatalf("IP Addressing Failure\nCouldn't add hsn_base_subnet of %v to net %v: %v", v.GetString("hsn-cidr"), tempNet.CIDR, err)
+			}
+			subnet.FullName = "HSN Base Subnet"
+		}
+	}
+
 	// Process the dedicated Networking Hardware Subnet
 	if conf.IncludeNetworkingHardwareSubnet {
 		// create the subnet
