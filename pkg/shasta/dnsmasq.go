@@ -73,16 +73,19 @@ var StaticConfigTemplate = []byte(`
 # Static Configurations
 {{range .NCNS}}
 # DHCP Entries for {{.Hostname}}
-dhcp-host={{.NMNMac}},{{.NMNIP}},{{.Hostname}},20m # NMN
-dhcp-host={{.NMNMac}},{{.MTLIP}},{{.Hostname}},20m # MTL
-dhcp-host={{.NMNMac}},{{.HMNIP}},{{.Hostname}},20m # HMN
-dhcp-host={{.NMNMac}},{{.CANIP}},{{.Hostname}},20m # CAN
+dhcp-host=id:{{.Xname}},set:{{.Hostname}},{{.NMNMac}},{{.NMNIP}},{{.Hostname}},20m # NMN
+dhcp-host=id:{{.Xname}},set:{{.Hostname}},{{.NMNMac}},{{.MTLIP}},{{.Hostname}},20m # MTL
+dhcp-host=id:{{.Xname}},set:{{.Hostname}},{{.NMNMac}},{{.HMNIP}},{{.Hostname}},20m # HMN
+dhcp-host=id:{{.Xname}},set:{{.Hostname}},{{.NMNMac}},{{.CANIP}},{{.Hostname}},20m # CAN
 dhcp-host={{.BMCMac}},{{.BMCIP}},{{.Hostname}}-mgmt,20m #HMN
 # Host Record Entries for {{.Hostname}}
 host-record={{.Hostname}},{{.Hostname}}.can,{{.CANIP}}
 host-record={{.Hostname}},{{.Hostname}}.hmn,{{.HMNIP}}
 host-record={{.Hostname}},{{.Hostname}}.nmn,{{.NMNIP}}
 host-record={{.Hostname}},{{.Hostname}}.mtl,{{.MTLIP}}
+host-record={{.Xname}},{{.Hostname}}.nmn,{{.NMNIP}}
+# Override root-path with {{.Hostname}}'s xname
+dhcp-option-force=tag:{{.Hostname}},17,{{.Xname}}
 {{end}}
 # Virtual IP Addresses for k8s and the rados gateway
 host-record=kubeapi-vip,kubeapi-vip.nmn,{{.KUBEVIP}} # k8s-virtual-ip

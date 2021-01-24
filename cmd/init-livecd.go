@@ -121,6 +121,7 @@ func WriteMetalLBConfigMap(path string, v *viper.Viper, networks map[string]*sha
 func WriteDNSMasqConfig(path string, v *viper.Viper, bootstrap []shasta.LogicalNCN, networks map[string]*shasta.IPV4Network) {
 	// DNSMasqNCN is the struct to manage NCNs within DNSMasq
 	type DNSMasqNCN struct {
+		Xname    string `form:"xname"`
 		Hostname string `form:"hostname"`
 		NMNMac   string `form:"nmn-mac"`
 		NMNIP    string `form:"nmn-ip"`
@@ -155,6 +156,7 @@ func WriteDNSMasqConfig(path string, v *viper.Viper, bootstrap []shasta.LogicalN
 		}
 		// log.Println("Ready to build NCN list with:", v)
 		ncn := DNSMasqNCN{
+			Xname:    tmpNcn.Xname,
 			Hostname: tmpNcn.Hostname,
 			NMNMac:   tmpNcn.NmnMac,
 			NMNIP:    nmnIP,
