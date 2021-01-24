@@ -577,6 +577,10 @@ func updateReservations(tempSubnet *shasta.IPV4Subnet, logicalNcns []*shasta.Log
 				if strings.ToLower(ncn.Subrole) == "storage" && strings.ToLower(tempSubnet.NetName) == "hmn" {
 					reservation.Aliases = append(reservation.Aliases, "rgw-vip.hmn")
 				}
+				if strings.ToLower(tempSubnet.NetName) == "nmn" {
+					// The xname of a NCN will point to its NMN IP address
+					reservation.Aliases = append(reservation.Aliases, ncn.Xname)
+				}
 				tempSubnet.IPReservations[index] = reservation
 			}
 			if reservation.Comment == fmt.Sprintf("%v-mgmt", ncn.Xname) {
