@@ -1,4 +1,4 @@
-@Library("dst-shared@master") _
+@Library("dst-shared@release/shasta-1.4") _
 rpmBuild(
     specfile : "cray-site-init.spec",
     product : "csm",
