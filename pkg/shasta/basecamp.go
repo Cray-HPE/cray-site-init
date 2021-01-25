@@ -176,6 +176,14 @@ func MakeBasecampHostRecords(ncns []LogicalNCN, shastaNetworks map[string]*IPV4N
 	// using installNCN value as the host that pit.nmn will point to
 	pitres := nmnNetwork.ReservationsByName()[installNCN]
 	hostrecords = append(hostrecords, BasecampHostRecord{pitres.IPAddress.String(), []string{"pit", "pit.nmn"}})
+
+	// Add entries for the switches
+	nmnNetNetwork, _ := shastaNetworks["NMN"].LookUpSubnet("network_hardware")
+	for _, tmpReservation := range nmnNetNetwork.IPReservations {
+		if strings.HasPrefix(tmpReservation.Name, "sw-") {
+			hostrecords = append(hostrecords, BasecampHostRecord{tmpReservation.IPAddress.String(), []string{tmpReservation.Name}})
+		}
+	}
 	return hostrecords
 }
 
