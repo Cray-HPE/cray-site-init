@@ -144,7 +144,7 @@ type BasecampHostRecord struct {
 }
 
 // MakeBasecampHostRecords uses the ncns to generate a list of host ips and their names for use in /etc/hosts
-func MakeBasecampHostRecords(ncns []LogicalNCN, shastaNetworks map[string]*IPV4Network) interface{} {
+func MakeBasecampHostRecords(ncns []LogicalNCN, shastaNetworks map[string]*IPV4Network, installNCN string) interface{} {
 	var hostrecords []BasecampHostRecord
 	hmnNetwork, _ := shastaNetworks["HMN"].LookUpSubnet("bootstrap_dhcp")
 	for _, ncn := range ncns {
@@ -173,6 +173,9 @@ func MakeBasecampHostRecords(ncns []LogicalNCN, shastaNetworks map[string]*IPV4N
 	rgwres := nmnNetwork.ReservationsByName()["rgw-vip"]
 	hostrecords = append(hostrecords, BasecampHostRecord{rgwres.IPAddress.String(), []string{rgwres.Name, fmt.Sprintf("%s.nmn", rgwres.Name)}})
 
+	// using installNCN value as the host that pit.nmn will point to
+	pitres := nmnNetwork.ReservationsByName()[installNCN]
+	hostrecords = append(hostrecords, BasecampHostRecord{pitres.IPAddress.String(), []string{"pit", "pit.nmn"}})
 	return hostrecords
 }
 
@@ -225,7 +228,7 @@ func MakeBasecampGlobals(v *viper.Viper, logicalNcns []LogicalNCN, shastaNetwork
 	global["k8s-virtual-ip"] = reservations["kubeapi-vip"].IPAddress.String()
 	global["rgw-virtual-ip"] = reservations["rgw-vip"].IPAddress.String()
 	global["ntp_peers"] = strings.Join(ncns, " ")
-	global["host_records"] = MakeBasecampHostRecords(logicalNcns, shastaNetworks)
+	global["host_records"] = MakeBasecampHostRecords(logicalNcns, shastaNetworks, installNCN)
 
 	return global, nil
 }
