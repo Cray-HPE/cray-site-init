@@ -264,6 +264,7 @@ var PinnedMetalLBReservations = map[string]PinnedReservation{
 	"istio-ingressgateway-local": {81, []string{"api-gw-service.local"}},
 	"rsyslog-aggregator":         {72, []string{"rsyslog-agg-service"}},
 	"cray-tftp":                  {60, []string{"tftp-service"}},
+	"unbound":                    {74, []string{"unbound"}},
 	"docker-registry":            {73, []string{"docker_registry_service"}},
 	"slingshot-kafka":            {75, []string{"slingshot_kafka_extern_service"}},
 }

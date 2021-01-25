@@ -44,6 +44,7 @@ type CustomizationsNetworking struct {
 		NmnTftp            net.IP   `yaml:"nmn_tftp" valid:"ipv4,required"`
 		HmnTftp            net.IP   `yaml:"hmn_tftp" valid:"ipv4,required"`
 		NmnAPIGateway      net.IP   `yaml:"nmn_api_gw" valid:"ipv4,required"`
+		NmnUnbound         net.IP   `yaml:"nmn_unbound" valid:"ipv4,required"`
 		NmnAPIGatewayLocal net.IP   `yaml:"nmn_api_gw_local" valid:"ipv4,required"`
 		HmnAPIGateway      net.IP   `yaml:"hmn_api_gw" valid:"ipv4,required"`
 		NcnMasters         []net.IP `yaml:"nmn_ncn_masters" valid:"required"`
@@ -119,6 +120,7 @@ func GenCustomizationsYaml(ncns []LogicalNCN, shastaNetworks map[string]*IPV4Net
 			NmnTftp            net.IP   "yaml:\"nmn_tftp\" valid:\"ipv4,required\""
 			HmnTftp            net.IP   "yaml:\"hmn_tftp\" valid:\"ipv4,required\""
 			NmnAPIGateway      net.IP   "yaml:\"nmn_api_gw\" valid:\"ipv4,required\""
+			NmnUnbound         net.IP   "yaml:\"nmn_unbound\" valid:\"ipv4,required\""
 			NmnAPIGatewayLocal net.IP   "yaml:\"nmn_api_gw_local\" valid:\"ipv4,required\""
 			HmnAPIGateway      net.IP   "yaml:\"hmn_api_gw\" valid:\"ipv4,required\""
 			NcnMasters         []net.IP "yaml:\"nmn_ncn_masters\" valid:\"required\""
@@ -129,6 +131,7 @@ func GenCustomizationsYaml(ncns []LogicalNCN, shastaNetworks map[string]*IPV4Net
 			NmnTftp:            nmnLBs.LookupReservation("cray-tftp").IPAddress,
 			HmnTftp:            hmnLBs.LookupReservation("cray-tftp").IPAddress,
 			NmnAPIGateway:      nmnLBs.LookupReservation("istio-ingressgateway").IPAddress,
+			NmnUnbound:         nmnLBs.LookupReservation("unbound").IPAddress,
 			NmnAPIGatewayLocal: nmnLBs.LookupReservation("istio-ingressgateway-local").IPAddress,
 			HmnAPIGateway:      hmnLBs.LookupReservation("istio-ingressgateway").IPAddress,
 			NcnMasters:         masters,
