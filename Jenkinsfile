@@ -1,5 +1,7 @@
 @Library("dst-shared@master") _
 rpmBuild(
+    githubPushRepo: "Cray-HPE/cray-site-init",
+    githubPushBranches : "(release/.*|main)",
     specfile : "cray-site-init.spec",
     product : "csm",
     target_node : "ncn",
