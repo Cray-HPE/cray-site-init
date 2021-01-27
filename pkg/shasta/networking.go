@@ -174,7 +174,7 @@ func (iNet *IPV4Network) GenSubnets(cabinetDetails []CabinetDetail, mask net.IPM
 
 	for _, cabinetDetail := range cabinetDetails {
 
-		for _, i := range cabinetDetail.CabinetIDs {
+		for j, i := range cabinetDetail.CabinetIDs {
 			newSubnet, err := ipam.Free(*myNet, mask, mySubnets)
 			mySubnets = append(mySubnets, newSubnet)
 			if err != nil {
@@ -186,7 +186,11 @@ func (iNet *IPV4Network) GenSubnets(cabinetDetails []CabinetDetail, mask net.IPM
 				Name:    fmt.Sprintf("cabinet_%d", i),
 				Gateway: ipam.Add(newSubnet.IP, 1),
 				// Reserving the first vlan in the range for a non-cabinet aligned vlan if needed in the future.
-				VlanID: iNet.VlanRange[1] + int16(i),
+				VlanID: iNet.VlanRange[1] + int16(j),
+			}
+			if tempSubnet.VlanID > 4095 {
+				log.Fatalf("Something very strange has happened...\n\n\nGenSubnets tried to build the %v network and give %v cabinet %v a vlanid above 4095 (%v)", iNet.Name, cabinetDetail.Kind, i, tempSubnet.VlanID)
+
 			}
 			// Bump the DHCP Start IP past the gateway
 			tempSubnet.DHCPStart = ipam.Add(tempSubnet.CIDR.IP, len(tempSubnet.IPReservations)+2)
