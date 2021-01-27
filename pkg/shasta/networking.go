@@ -409,6 +409,13 @@ func (iSubnet *IPV4Subnet) AddReservationWithPin(name, comment string, pin uint8
 	return &iSubnet.IPReservations[len(iSubnet.IPReservations)-1]
 }
 
+// AddReservationAlias adds an alias to a reservation if it doesn't already exist
+func (iReserv *IPReservation) AddReservationAlias(alias string) {
+	if !stringInSlice(alias, iReserv.Aliases) {
+		iReserv.Aliases = append(iReserv.Aliases, alias)
+	}
+}
+
 // AddReservation adds a new IP reservation to the subnet
 func (iSubnet *IPV4Subnet) AddReservation(name, comment string) *IPReservation {
 	myReservedIPs := iSubnet.ReservedIPs()
