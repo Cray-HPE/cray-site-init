@@ -218,6 +218,8 @@ func WriteDNSMasqConfig(path string, v *viper.Viper, bootstrap []shasta.LogicalN
 	tmpGateway := mtlBootstrapSubnet.Gateway
 	mtlBootstrapSubnet.Gateway = net.ParseIP(mainMtlIP)
 	mtlBootstrapSubnet.SupernetRouter = genPinnedIP(mtlBootstrapSubnet.CIDR.IP, uint8(1))
+	nmnLBSubnet, _ := networks["NMNLB"].LookUpSubnet("nmn_metallb_address_pool")
+	mtlBootstrapSubnet.DNSServer = nmnLBSubnet.LookupReservation("unbound").IPAddress
 	csiFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/MTL.conf"), tpl5, mtlBootstrapSubnet)
 	mtlBootstrapSubnet.Gateway = tmpGateway
 
@@ -244,7 +246,8 @@ func writeConfig(name, path string, tpl template.Template, networks map[string]*
 	// Normalize the CIDR before using it
 	_, superNet, _ := net.ParseCIDR(bootstrapSubnet.CIDR.String())
 	bootstrapSubnet.SupernetRouter = genPinnedIP(superNet.IP, uint8(1))
-	log.Printf("Templating %s with %v as the Gateway.\n", name, bootstrapSubnet.SupernetRouter)
+	nmnLBSubnet, _ := networks["NMNLB"].LookUpSubnet("nmn_metallb_address_pool")
+	bootstrapSubnet.DNSServer = nmnLBSubnet.LookupReservation("unbound").IPAddress
 	csiFiles.WriteTemplate(filepath.Join(path, fmt.Sprintf("dnsmasq.d/%v.conf", name)), &tpl, bootstrapSubnet)
 }
 
