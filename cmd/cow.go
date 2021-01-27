@@ -7,6 +7,7 @@ Copyright 2020 Hewlett Packard Enterprise Development LP
 import (
 	"github.com/spf13/cobra"
 	"os"
+	"fmt"
 	"path/filepath"
 )
 
@@ -32,6 +33,17 @@ var cowCmd = &cobra.Command{
 		copyAllFiles(filepath.Join(args[1], "cpt-files/"), filepath.Join(args[0], "rw/etc/sysconfig/network/"))
 		// dnsmasq.d are all dnsmasq configs, so they can go in /etc/dnsmasq.d
 		copyAllFiles(filepath.Join(args[1], "dnsmasq.d/"), filepath.Join(args[0], "rw/etc/dnsmasq.d/"))
+
+		// conman config enables the service to work at first boot when using a usb
+		conmanSrc := filepath.Join(args[1], "conman.conf")
+		conmanDest := filepath.Join(args[0], "rw/etc/conman.conf")
+		fmt.Printf("%s> %s", PadRight(filepath.Base(conmanSrc), "-", 30), conmanDest)
+		copyErr := copyFile(conmanSrc, conmanDest)
+		if copyErr != nil {
+			fmt.Printf("...Failed %q\n", copyErr)
+		} else {
+			fmt.Printf("...OK\n")
+		}
 	},
 }
 
