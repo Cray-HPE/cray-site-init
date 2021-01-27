@@ -311,6 +311,7 @@ func createNetFromLayoutConfig(conf shasta.NetworkLayoutConfiguration, v *viper.
 				reservation.AddReservationAlias(alias)
 			}
 		}
+		log.Println("Added the MacVlan Subnet at ", uaisubnet.CIDR.String())
 	}
 	// Build out the per-cabinet subnets
 	if conf.SubdivideByCabinet {
@@ -327,7 +328,7 @@ func ApplySupernetHack(tempNetPtr *shasta.IPV4Network) {
 	if err != nil {
 		log.Fatal("Couldn't parse the CIDR for ", tempNetPtr.Name)
 	}
-	for _, subnetName := range []string{"bootstrap_dhcp", "uai_macvlan", "network_hardware",
+	for _, subnetName := range []string{"bootstrap_dhcp", "network_hardware",
 		"can_metallb_static_pool", "can_metallb_address_pool"} {
 		tempSubnet, err := tempNetPtr.LookUpSubnet(subnetName)
 		if err == nil {
