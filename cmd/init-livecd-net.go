@@ -305,11 +305,13 @@ func createNetFromLayoutConfig(conf shasta.NetworkLayoutConfiguration, v *viper.
 			log.Fatalf("Couln't add the uai subnet to the %v Network: %v", tempNet.Name, err)
 		}
 		uaisubnet.FullName = "NMN UAIs"
-		for reservationName, reservationAlias := range shasta.DefaultUAISubnetReservations {
-			uaisubnet.AddReservation(reservationName, reservationAlias)
+		for reservationName, reservationComment := range shasta.DefaultUAISubnetReservations {
+			reservation := uaisubnet.AddReservation(reservationName, strings.Join(reservationComment, ","))
+			for _, alias := range reservationComment {
+				reservation.AddReservationAlias(alias)
+			}
 		}
 	}
-
 	// Build out the per-cabinet subnets
 	if conf.SubdivideByCabinet {
 		tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR)
