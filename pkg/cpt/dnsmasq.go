@@ -2,7 +2,9 @@
 Copyright 2020 Hewlett Packard Enterprise Development LP
 */
 
-package shasta
+package cpt
+
+import "stash.us.cray.com/MTL/csi/pkg/csi"
 
 // CANConfigTemplate manages the CAN portion of the DNSMasq configuration
 var CANConfigTemplate = []byte(`
@@ -99,6 +101,6 @@ cname=kubernetes-api.vshasta.io,ncn-m001
 
 // DNSMasqBootstrapNetwork holds information for configuring DNSMasq on the LiveCD
 type DNSMasqBootstrapNetwork struct {
-	Subnet    IPV4Subnet
+	Subnet    csi.IPV4Subnet
 	Interface string
 }

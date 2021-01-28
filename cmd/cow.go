@@ -5,9 +5,9 @@ Copyright 2020 Hewlett Packard Enterprise Development LP
 */
 
 import (
+	"fmt"
 	"github.com/spf13/cobra"
 	"os"
-	"fmt"
 	"path/filepath"
 )
 
