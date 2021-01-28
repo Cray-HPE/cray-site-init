@@ -2,7 +2,7 @@
 Copyright 2020 Hewlett Packard Enterprise Development LP
 */
 
-package shasta
+package cpt
 
 //PasswordCredential is a struct for holding username/password credentials
 type PasswordCredential struct {

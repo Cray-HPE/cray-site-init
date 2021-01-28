@@ -13,8 +13,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
+	"stash.us.cray.com/MTL/csi/pkg/csi"
 	"stash.us.cray.com/MTL/csi/pkg/ipam"
-	"stash.us.cray.com/MTL/csi/pkg/shasta"
 )
 
 // subnetCmd represents the subnet command
@@ -25,7 +25,7 @@ var subnetCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		v := viper.GetViper()
-		var n shasta.IPV4Subnet
+		var n csi.IPV4Subnet
 		err := v.Unmarshal(&n)
 		if err != nil {
 			log.Fatalf("unable to decode configuration into usable struct, %v \n", err)

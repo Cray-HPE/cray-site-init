@@ -13,15 +13,16 @@ import (
 	"text/template"
 
 	"github.com/spf13/viper"
+	"stash.us.cray.com/MTL/csi/pkg/cpt"
+	"stash.us.cray.com/MTL/csi/pkg/csi"
 
 	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
-	"stash.us.cray.com/MTL/csi/pkg/shasta"
 )
 
 // WriteBasecampData writes basecamp data.json for the installer
-func WriteBasecampData(path string, ncns []shasta.LogicalNCN, shastaNetworks map[string]*shasta.IPV4Network, globals interface{}) {
+func WriteBasecampData(path string, ncns []csi.LogicalNCN, shastaNetworks map[string]*csi.IPV4Network, globals interface{}) {
 	v := viper.GetViper()
-	basecampConfig, err := shasta.MakeBaseCampfromNCNs(v, ncns, shastaNetworks)
+	basecampConfig, err := cpt.MakeBaseCampfromNCNs(v, ncns, shastaNetworks)
 	if err != nil {
 		log.Printf("Error extracting NCNs: %v", err)
 	}
@@ -38,7 +39,7 @@ func WriteBasecampData(path string, ncns []shasta.LogicalNCN, shastaNetworks map
 }
 
 // WriteConmanConfig provides conman configuration for the installer
-func WriteConmanConfig(path string, ncns []shasta.LogicalNCN) {
+func WriteConmanConfig(path string, ncns []csi.LogicalNCN) {
 	type conmanLine struct {
 		Hostname string
 		User     string
@@ -60,12 +61,12 @@ func WriteConmanConfig(path string, ncns []shasta.LogicalNCN) {
 		})
 	}
 
-	tpl6, _ := template.New("conmanconfig").Parse(string(shasta.ConmanConfigTemplate))
+	tpl6, _ := template.New("conmanconfig").Parse(string(cpt.ConmanConfigTemplate))
 	csiFiles.WriteTemplate(path, tpl6, conmanNCNs)
 }
 
 // WriteMetalLBConfigMap creates the yaml configmap
-func WriteMetalLBConfigMap(path string, v *viper.Viper, networks map[string]*shasta.IPV4Network, switches []*shasta.ManagementSwitch) {
+func WriteMetalLBConfigMap(path string, v *viper.Viper, networks map[string]*csi.IPV4Network, switches []*csi.ManagementSwitch) {
 
 	// this lookup table should be redundant in the future
 	// when we can better hint which pool an endpoint should pull from
@@ -77,11 +78,11 @@ func WriteMetalLBConfigMap(path string, v *viper.Viper, networks map[string]*sha
 		// "can_metallb_static_pool":  "customer-access-static",
 	}
 
-	tpl, err := template.New("mtllbconfigmap").Parse(string(shasta.MetalLBConfigMapTemplate))
+	tpl, err := template.New("mtllbconfigmap").Parse(string(cpt.MetalLBConfigMapTemplate))
 	if err != nil {
 		log.Printf("The template failed to render because: %v \n", err)
 	}
-	var configStruct shasta.MetalLBConfigMap
+	var configStruct cpt.MetalLBConfigMap
 	configStruct.Networks = make(map[string]string)
 	configStruct.ASN = v.GetString("bgp-asn")
 
@@ -152,7 +153,7 @@ func getMetalLBPeerSwitches(bgpPeers string, configStruct shasta.MetalLBConfigMa
 }
 
 // WriteDNSMasqConfig writes the dnsmasq configuration files necssary for installation
-func WriteDNSMasqConfig(path string, v *viper.Viper, bootstrap []shasta.LogicalNCN, networks map[string]*shasta.IPV4Network) {
+func WriteDNSMasqConfig(path string, v *viper.Viper, bootstrap []csi.LogicalNCN, networks map[string]*csi.IPV4Network) {
 	// DNSMasqNCN is the struct to manage NCNs within DNSMasq
 	type DNSMasqNCN struct {
 		Xname    string `form:"xname"`
@@ -204,11 +205,11 @@ func WriteDNSMasqConfig(path string, v *viper.Viper, bootstrap []shasta.LogicalN
 		ncns = append(ncns, ncn)
 	}
 
-	tpl1, _ := template.New("statics").Parse(string(shasta.StaticConfigTemplate))
-	tpl2, _ := template.New("canconfig").Parse(string(shasta.CANConfigTemplate))
-	tpl3, _ := template.New("hmnconfig").Parse(string(shasta.HMNConfigTemplate))
-	tpl4, _ := template.New("nmnconfig").Parse(string(shasta.NMNConfigTemplate))
-	tpl5, _ := template.New("mtlconfig").Parse(string(shasta.MTLConfigTemplate))
+	tpl1, _ := template.New("statics").Parse(string(cpt.StaticConfigTemplate))
+	tpl2, _ := template.New("canconfig").Parse(string(cpt.CANConfigTemplate))
+	tpl3, _ := template.New("hmnconfig").Parse(string(cpt.HMNConfigTemplate))
+	tpl4, _ := template.New("nmnconfig").Parse(string(cpt.NMNConfigTemplate))
+	tpl5, _ := template.New("mtlconfig").Parse(string(cpt.MTLConfigTemplate))
 
 	var kubevip, rgwvip string
 	nmnSubnet, _ := networks["NMN"].LookUpSubnet("bootstrap_dhcp")
@@ -263,7 +264,7 @@ func WriteDNSMasqConfig(path string, v *viper.Viper, bootstrap []shasta.LogicalN
 	writeConfig("NMN", path, *tpl4, networks)
 }
 
-func writeConfig(name, path string, tpl template.Template, networks map[string]*shasta.IPV4Network) {
+func writeConfig(name, path string, tpl template.Template, networks map[string]*csi.IPV4Network) {
 	// get a pointer to the IPV4Network
 	tempNet := networks[name]
 	// get a pointer to the subnet
