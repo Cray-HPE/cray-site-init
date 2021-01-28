@@ -239,12 +239,12 @@ var DefaultNetPW = PasswordCredential{
 var DefaultManifestURL string = "ssh://git@stash.us.cray.com:7999/shasta-cfg/stable.git"
 
 // DefaultUAISubnetReservations is the map of dns names and aliases
-var DefaultUAISubnetReservations = map[string]string{
-	"uai_macvlan_bridge": "uai-macvlan-bridge",
-	"slurmctld_service":  "slurmctld-service",
-	"slurmdbd_service":   "slurmdbd-service",
-	"pbs_service":        "pbs-service",
-	"pbs_comm_service":   "pbs-comm-service",
+var DefaultUAISubnetReservations = map[string][]string{
+	"uai_macvlan_bridge": {"uai-macvlan-bridge"},
+	"slurmctld_service":  {"slurmctld-service", "slurmctld-service-nmn"},
+	"slurmdbd_service":   {"slurmdbd-service", "slurmdbd-service-nmn"},
+	"pbs_service":        {"pbs-service", "pbs-service-nmn"},
+	"pbs_comm_service":   {"pbs-comm-service", "pbs-comm-service-nmn"},
 }
 
 // PinnedReservation is a simple struct to work with our abomination of a PinnedMetalLBReservations
