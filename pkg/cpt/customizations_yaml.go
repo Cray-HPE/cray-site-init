@@ -2,7 +2,7 @@
 Copyright 2020 Hewlett Packard Enterprise Development LP
 */
 
-package shasta
+package cpt
 
 import (
 	"fmt"
@@ -13,6 +13,7 @@ import (
 	valid "github.com/asaskevich/govalidator"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
+	"stash.us.cray.com/MTL/csi/pkg/csi"
 )
 
 // CustomizationsWLM is the struct for holding all WLM related values for customizations.yaml
@@ -88,7 +89,7 @@ func processYaml(input string) map[string]interface{} {
 }
 
 // GenCustomizationsYaml generates our configurations.yaml nested struct
-func GenCustomizationsYaml(ncns []LogicalNCN, shastaNetworks map[string]*IPV4Network) CustomizationsYaml {
+func GenCustomizationsYaml(ncns []csi.LogicalNCN, shastaNetworks map[string]*csi.IPV4Network) CustomizationsYaml {
 	v := viper.GetViper()
 	systemName := v.GetString("system-name")
 	siteDomain := v.GetString("site-domain")

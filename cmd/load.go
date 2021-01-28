@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 	shcd_parser "stash.us.cray.com/HMS/hms-shcd-parser/pkg/shcd-parser"
 	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
-	"stash.us.cray.com/MTL/csi/pkg/shasta"
+	"stash.us.cray.com/MTL/csi/pkg/csi"
 )
 
 // loadCmd represents the load command
@@ -45,19 +45,19 @@ func init() {
 	configCmd.AddCommand(loadCmd)
 }
 
-func loadSystemConfig(path string) (sysconf shasta.SystemConfig, err error) {
+func loadSystemConfig(path string) (sysconf csi.SystemConfig, err error) {
 	err = csiFiles.ReadYAMLConfig(path, &sysconf)
 	return
 }
 
-func loadNetwork(path string) (network shasta.IPV4Network, err error) {
+func loadNetwork(path string) (network csi.IPV4Network, err error) {
 	err = csiFiles.ReadJSONConfig(path, &network)
 	return
 }
 
-func extractNetworks(basepath string) ([]shasta.IPV4Network, error) {
+func extractNetworks(basepath string) ([]csi.IPV4Network, error) {
 	// TODO: Handle incoming error?
-	var networks []shasta.IPV4Network
+	var networks []csi.IPV4Network
 	err := filepath.Walk(basepath,
 		func(path string, info os.FileInfo, err error) error {
 			if info.Mode().IsRegular() {
@@ -78,14 +78,14 @@ func loadHMNConnectionsFile(path string) (rows []shcd_parser.HMNRow, err error) 
 	return
 }
 
-func loadNCNMetadataFile(path string) (ncns []*shasta.LogicalNCN, err error) {
+func loadNCNMetadataFile(path string) (ncns []*csi.LogicalNCN, err error) {
 	// I know this is a little silly, but it improves readability and
 	// gives us future flexibility
-	return csiFiles.ReadNodeCSV(path)
+	return csi.ReadNodeCSV(path)
 }
 
-func loadMgmtMetadataFile(path string) (switches []*shasta.ManagementSwitch, err error) {
+func loadMgmtMetadataFile(path string) (switches []*csi.ManagementSwitch, err error) {
 	// I know this is a little silly, but it improves readability and
 	// gives us future flexibility
-	return csiFiles.ReadSwitchCSV(path)
+	return csi.ReadSwitchCSV(path)
 }

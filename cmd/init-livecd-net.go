@@ -6,7 +6,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"net"
 	"path/filepath"
 	"strings"
@@ -14,135 +13,25 @@ import (
 
 	"github.com/spf13/viper"
 
-	"stash.us.cray.com/MTL/csi/internal/files"
 	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
-	"stash.us.cray.com/MTL/csi/pkg/ipam"
-	"stash.us.cray.com/MTL/csi/pkg/shasta"
+	"stash.us.cray.com/MTL/csi/pkg/csi"
 )
 
-// BuildLiveCDNetworks creates an array of IPv4 Networks based on the supplied system configuration
-func BuildLiveCDNetworks(v *viper.Viper, internalCabinetDetails []shasta.CabinetDetail, switches []*shasta.ManagementSwitch) (map[string]*shasta.IPV4Network, error) {
-	var networkMap = make(map[string]*shasta.IPV4Network)
-
-	var internalNetConfigs = make(map[string]shasta.NetworkLayoutConfiguration)
-	internalNetConfigs["HMN"] = shasta.DefaultHMNConfig
-	internalNetConfigs["CAN"] = shasta.DefaultCANConfig
-	internalNetConfigs["NMN"] = shasta.DefaultNMNConfig
-	internalNetConfigs["HSN"] = shasta.DefaultHSNConfig
-	internalNetConfigs["MTL"] = shasta.DefaultMTLConfig
-
-	for name, layout := range internalNetConfigs {
-		myLayout := layout
-
-		// Update with computed fields
-		myLayout.CabinetDetails = internalCabinetDetails
-		myLayout.ManagementSwitches = switches
-
-		// Update with flags
-		myLayout.BaseVlan = int16(v.GetInt(fmt.Sprintf("%v-bootstrap-vlan", strings.ToLower(name))))
-		myLayout.Template.CIDR = v.GetString(fmt.Sprintf("%v-cidr", strings.ToLower(name)))
-		myLayout.AdditionalNetworkingSpace = v.GetInt("management-net-ips")
-
-		netPtr, err := createNetFromLayoutConfig(myLayout, v)
-		if err != nil {
-			log.Fatalf("Couldn't add %v Network because %v", name, err)
-		}
-		networkMap[name] = netPtr
-	}
-
-	//
-	// Start the NMN Load Balancer with our Defaults
-	//
-	tempNMNLoadBalancer := shasta.DefaultLoadBalancerNMN
-	// Add a /24 for the Load Balancers
-	pool, _ := tempNMNLoadBalancer.AddSubnet(net.CIDRMask(24, 32), "nmn_metallb_address_pool", int16(v.GetInt("nmn-bootstrap-vlan")))
-	pool.FullName = "NMN MetalLB"
-	for nme, rsrv := range shasta.PinnedMetalLBReservations {
-		pool.AddReservationWithPin(nme, strings.Join(rsrv.Aliases, ","), rsrv.IPByte)
-	}
-	networkMap["NMNLB"] = &tempNMNLoadBalancer
-
-	//
-	// Start the HMN Load Balancer with our Defaults
-	//
-	tempHMNLoadBalancer := shasta.DefaultLoadBalancerHMN
-	pool, _ = tempHMNLoadBalancer.AddSubnet(net.CIDRMask(24, 32), "hmn_metallb_address_pool", int16(v.GetInt("hmn-bootstrap-vlan")))
-	pool.FullName = "HMN MetalLB"
-	for nme, rsrv := range shasta.PinnedMetalLBReservations {
-		// Because of the hack to pin ip addresses, we've got an overloaded datastructure in defaults.
-		// We need to prune it here before we write it out.  It's pretty ugly, but we plan to throw all of this code away when ip pinning is no longer necessary
-		if nme == "istio-ingressgateway" {
-			var hmnAliases []string
-			for _, alias := range rsrv.Aliases {
-				if !strings.HasSuffix(alias, ".local") {
-					if !stringInSlice(alias, []string{"packages", "registry"}) {
-						hmnAliases = append(hmnAliases, alias)
-
-					}
-				}
-			}
-			pool.AddReservationWithPin(nme, strings.Join(hmnAliases, ","), rsrv.IPByte)
-
-		} else {
-
-			pool.AddReservationWithPin(nme, strings.Join(rsrv.Aliases, ","), rsrv.IPByte)
-		}
-
-	}
-	networkMap["HMNLB"] = &tempHMNLoadBalancer
-
-	return networkMap, nil
-}
-
 // WriteNetworkFiles persistes our network configuration to disk in a directory of yaml files
-func WriteNetworkFiles(basepath string, networks map[string]*shasta.IPV4Network) {
+func WriteNetworkFiles(basepath string, networks map[string]*csi.IPV4Network) {
 	for k, v := range networks {
 		csiFiles.WriteYAMLConfig(filepath.Join(basepath, fmt.Sprintf("networks/%v.yaml", k)), v)
 	}
 }
 
-func positionInCabinetList(kind string, cabs []shasta.CabinetDetail) (int, error) {
-	for i, cab := range cabs {
-		if cab.Kind == kind {
-			return i, nil
-		}
-	}
-	return 0, fmt.Errorf("%s not found", kind)
-}
-
-func buildCabinetDetails(v *viper.Viper) []shasta.CabinetDetail {
-	var cabDetailFile shasta.CabinetDetailFile
-	if v.IsSet("cabinets-yaml") {
-		err := files.ReadYAMLConfig(v.GetString("cabinets-yaml"), &cabDetailFile)
-		if err != nil {
-			log.Fatalf("Unable to parse cabinets-yaml file: %s\nError: %v", v.GetString("cabinets-yaml"), err)
-		}
-	}
-	for _, cabType := range []string{"river", "mountain", "hill"} {
-		pos, err := positionInCabinetList(cabType, cabDetailFile.Cabinets)
-		if err != nil {
-			var tmpCabinet shasta.CabinetDetail
-			tmpCabinet.Kind = cabType
-			tmpCabinet.Cabinets = v.GetInt(fmt.Sprintf("%s-cabinets", cabType))
-			tmpCabinet.StartingCabinet = v.GetInt(fmt.Sprintf("starting-%s-cabinet", cabType))
-			tmpCabinet.PopulateIds()
-			cabDetailFile.Cabinets = append(cabDetailFile.Cabinets, tmpCabinet)
-		} else {
-			cabDetailFile.Cabinets[pos].Cabinets = cabDetailFile.Cabinets[pos].Length()
-			cabDetailFile.Cabinets[pos].PopulateIds()
-		}
-	}
-	return cabDetailFile.Cabinets
-}
-
 // WriteCPTNetworkConfig writes the Network Configuration details for the installation node  (CPT)
-func WriteCPTNetworkConfig(path string, v *viper.Viper, ncn shasta.LogicalNCN, shastaNetworks map[string]*shasta.IPV4Network) error {
+func WriteCPTNetworkConfig(path string, v *viper.Viper, ncn csi.LogicalNCN, shastaNetworks map[string]*csi.IPV4Network) error {
 	type Route struct {
 		CIDR    net.IP
 		Mask    net.IP
 		Gateway net.IP
 	}
-	var bond0Net shasta.NCNNetwork
+	var bond0Net csi.NCNNetwork
 	for _, network := range ncn.Networks {
 		if network.NetworkName == "MTL" {
 			bond0Net = network
@@ -201,145 +90,6 @@ func WriteCPTNetworkConfig(path string, v *viper.Viper, ncn shasta.LogicalNCN, s
 		}
 	}
 	return nil
-}
-
-func switchXnamesByType(switches []*shasta.ManagementSwitch, switchType shasta.ManagementSwitchType) []string {
-	var xnames []string
-	for _, mswitch := range switches {
-		if mswitch.SwitchType == switchType {
-			xnames = append(xnames, mswitch.Xname)
-		}
-	}
-	return xnames
-}
-
-func createNetFromLayoutConfig(conf shasta.NetworkLayoutConfiguration, v *viper.Viper) (*shasta.IPV4Network, error) {
-	// start with the defaults
-	tempNet := conf.Template
-	// figure out what switches we have
-	leafSwitches := switchXnamesByType(conf.ManagementSwitches, "Leaf")
-	spineSwitches := switchXnamesByType(conf.ManagementSwitches, "Spine")
-	aggSwitches := switchXnamesByType(conf.ManagementSwitches, "Aggregation")
-	cduSwitches := switchXnamesByType(conf.ManagementSwitches, "CDU")
-
-	// Do all the special stuff for the CAN
-	if tempNet.Name == "CAN" {
-		_, canStaticPool, err := net.ParseCIDR(v.GetString("can-static-pool"))
-		if err != nil {
-			log.Printf("IP Addressing Failure\nInvalid can-static-pool.  Cowardly refusing to create it.")
-		} else {
-			static, err := tempNet.AddSubnetbyCIDR(*canStaticPool, "can_metallb_static_pool", int16(v.GetInt("can-bootstrap-vlan")))
-			if err != nil {
-				log.Fatalf("IP Addressing Failure\nCouldn't add MetalLB Static pool of %v to net %v: %v", v.GetString("can-static-pool"), tempNet.CIDR, err)
-			}
-			static.FullName = "CAN Static Pool MetalLB"
-		}
-		_, canDynamicPool, err := net.ParseCIDR(v.GetString("can-dynamic-pool"))
-		if err != nil {
-			log.Printf("IP Addressing Failure\nInvalid can-dynamic-pool.  Cowardly refusing to create it.")
-		} else {
-			pool, err := tempNet.AddSubnetbyCIDR(*canDynamicPool, "can_metallb_address_pool", int16(v.GetInt("can-bootstrap-vlan")))
-			if err != nil {
-				log.Fatalf("IP Addressing Failure\nCouldn't add MetalLB Dynamic pool of %v to net %v: %v", v.GetString("can-dynamic-pool"), tempNet.CIDR, err)
-			}
-			pool.FullName = "CAN Dynamic MetalLB"
-		}
-	}
-
-	// Initialize the required subnet for the HSN
-	// This will be the entire network but is required to store IPReservations for DNS naming
-	if tempNet.Name == "HSN" {
-		_, hsnDefaultSubnet, err := net.ParseCIDR(v.GetString("hsn-cidr"))
-		if err != nil {
-			log.Printf("IP Addressing Failure\nInvalid hsn-cidr.  Cowardly refusing to create it.")
-		} else {
-			subnet, err := tempNet.AddSubnetbyCIDR(*hsnDefaultSubnet, "hsn_base_subnet", int16(shasta.DefaultHSN.VlanRange[0]))
-			if err != nil {
-				log.Fatalf("IP Addressing Failure\nCouldn't add hsn_base_subnet of %v to net %v: %v", v.GetString("hsn-cidr"), tempNet.CIDR, err)
-			}
-			subnet.FullName = "HSN Base Subnet"
-		}
-	}
-
-	// Process the dedicated Networking Hardware Subnet
-	if conf.IncludeNetworkingHardwareSubnet {
-		// create the subnet
-		hardwareSubnet, err := tempNet.AddSubnet(conf.NetworkingHardwareNetmask, "network_hardware", conf.BaseVlan)
-		if err != nil {
-			return &tempNet, fmt.Errorf("unable to add network hardware subnet to %v because %v", conf.Template.Name, err)
-		}
-		// populate it with base information
-		hardwareSubnet.FullName = fmt.Sprintf("%v Management Network Infrastructure", tempNet.Name)
-		hardwareSubnet.ReserveNetMgmtIPs(spineSwitches, leafSwitches, aggSwitches, cduSwitches, conf.AdditionalNetworkingSpace)
-	}
-
-	// Set up the Boostrap DHCP subnet(s)
-	if conf.IncludeBootstrapDHCP {
-		var subnet *shasta.IPV4Subnet
-		subnet, err := tempNet.AddBiggestSubnet(conf.DesiredBootstrapDHCPMask, "bootstrap_dhcp", conf.BaseVlan)
-		if err != nil {
-			return &tempNet, fmt.Errorf("unable to add bootstrap_dhcp subnet to %v because %v", conf.Template.Name, err)
-		}
-		subnet.FullName = fmt.Sprintf("%v Bootstrap DHCP Subnet", tempNet.Name)
-		if tempNet.Name == "NMN" || tempNet.Name == "CAN" || tempNet.Name == "HMN" {
-			if tempNet.Name == "CAN" {
-				subnet.Gateway = net.ParseIP(v.GetString("can-gateway"))
-				subnet.AddReservation("can-switch-1", "")
-				subnet.AddReservation("can-switch-2", "")
-
-			} else {
-				subnet.ReserveNetMgmtIPs([]string{}, []string{}, []string{}, []string{}, conf.AdditionalNetworkingSpace)
-			}
-			subnet.AddReservation("kubeapi-vip", "k8s-virtual-ip")
-			subnet.AddReservation("rgw-vip", "rgw-virtual-ip")
-		}
-	}
-
-	// Add the macvlan/uai subnet(s)
-	if conf.IncludeUAISubnet {
-		uaisubnet, err := tempNet.AddSubnet(net.CIDRMask(23, 32), "uai_macvlan", conf.BaseVlan)
-		_, supernetNet, _ := net.ParseCIDR(tempNet.CIDR)
-		uaisubnet.Gateway = ipam.Add(supernetNet.IP, 1)
-		if err != nil {
-			log.Fatalf("Couln't add the uai subnet to the %v Network: %v", tempNet.Name, err)
-		}
-		uaisubnet.FullName = "NMN UAIs"
-		for reservationName, reservationComment := range shasta.DefaultUAISubnetReservations {
-			reservation := uaisubnet.AddReservation(reservationName, strings.Join(reservationComment, ","))
-			for _, alias := range reservationComment {
-				reservation.AddReservationAlias(alias)
-			}
-		}
-		log.Println("Added the MacVlan Subnet at ", uaisubnet.CIDR.String())
-	}
-	// Build out the per-cabinet subnets
-	if conf.SubdivideByCabinet {
-		tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR)
-	}
-	return &tempNet, nil
-}
-
-// ApplySupernetHack applys a dirty hack.
-func ApplySupernetHack(tempNetPtr *shasta.IPV4Network) {
-	// Replace the gateway and netmask on the to better support the 1.3 network switch configuration
-	// *** This is a HACK ***
-	_, superNet, err := net.ParseCIDR(tempNetPtr.CIDR)
-	if err != nil {
-		log.Fatal("Couldn't parse the CIDR for ", tempNetPtr.Name)
-	}
-	for _, subnetName := range []string{"bootstrap_dhcp", "network_hardware",
-		"can_metallb_static_pool", "can_metallb_address_pool"} {
-		tempSubnet, err := tempNetPtr.LookUpSubnet(subnetName)
-		if err == nil {
-			// Replace the standard netmask with the supernet netmask
-			// Replace the standard gateway with the supernet gateway
-			// ** HACK ** We're doing this here to bypass all sanity checks
-			// This **WILL** cause an overlap of broadcast domains, but is required
-			// for reducing switch configuration changes from 1.3 to 1.4
-			tempSubnet.Gateway = ipam.Add(superNet.IP, 1)
-			tempSubnet.CIDR.Mask = superNet.Mask
-		}
-	}
 }
 
 // VlanConfigTemplate is the text/template to bootstrap the install cd

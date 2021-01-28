@@ -2,7 +2,7 @@
 Copyright 2020 Hewlett Packard Enterprise Development LP
 */
 
-package shasta
+package cpt
 
 import (
 	"encoding/json"
@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/spf13/viper"
+	"stash.us.cray.com/MTL/csi/pkg/csi"
 )
 
 // MetaData is part of the cloud-init stucture and
@@ -140,7 +141,7 @@ type BasecampHostRecord struct {
 }
 
 // MakeBasecampHostRecords uses the ncns to generate a list of host ips and their names for use in /etc/hosts
-func MakeBasecampHostRecords(ncns []LogicalNCN, shastaNetworks map[string]*IPV4Network, installNCN string) interface{} {
+func MakeBasecampHostRecords(ncns []csi.LogicalNCN, shastaNetworks map[string]*csi.IPV4Network, installNCN string) interface{} {
 	var hostrecords []BasecampHostRecord
 	hmnNetwork, _ := shastaNetworks["HMN"].LookUpSubnet("bootstrap_dhcp")
 	for _, ncn := range ncns {
@@ -185,7 +186,7 @@ func MakeBasecampHostRecords(ncns []LogicalNCN, shastaNetworks map[string]*IPV4N
 
 // MakeBasecampGlobals uses the defaults above to create a suitable k/v pairing for the
 // Globals in data.json for basecamp
-func MakeBasecampGlobals(v *viper.Viper, logicalNcns []LogicalNCN, shastaNetworks map[string]*IPV4Network, installNetwork string, installSubnet string, installNCN string) (map[string]interface{}, error) {
+func MakeBasecampGlobals(v *viper.Viper, logicalNcns []csi.LogicalNCN, shastaNetworks map[string]*csi.IPV4Network, installNetwork string, installSubnet string, installNCN string) (map[string]interface{}, error) {
 	// Create the map to return
 	global := make(map[string]interface{})
 	// Cheat and pull in the string as json
@@ -238,7 +239,7 @@ func MakeBasecampGlobals(v *viper.Viper, logicalNcns []LogicalNCN, shastaNetwork
 }
 
 // MakeBaseCampfromNCNs uses ncns and networks to create the basecamp config
-func MakeBaseCampfromNCNs(v *viper.Viper, ncns []LogicalNCN, shastaNetworks map[string]*IPV4Network) (map[string]CloudInit, error) {
+func MakeBaseCampfromNCNs(v *viper.Viper, ncns []csi.LogicalNCN, shastaNetworks map[string]*csi.IPV4Network) (map[string]CloudInit, error) {
 	basecampConfig := make(map[string]CloudInit)
 	uaiMacvlanSubnet, err := shastaNetworks["NMN"].LookUpSubnet("uai_macvlan")
 	if err != nil {
@@ -251,14 +252,14 @@ func MakeBaseCampfromNCNs(v *viper.Viper, ncns []LogicalNCN, shastaNetworks map[
 		mac0Interface["mask"] = uaiMacvlanSubnet.CIDR.String()
 		mac0Interface["gateway"] = uaiMacvlanSubnet.Gateway
 
-		tempAvailabilityZone, err := CabinetForXname(ncn.Xname)
+		tempAvailabilityZone, err := csi.CabinetForXname(ncn.Xname)
 		if err != nil {
 			log.Printf("Couldn't generate cabinet name for %v: %v \n", ncn.Xname, err)
 		}
 		tempMetadata := MetaData{
 			Hostname:         ncn.Hostname,
 			Xname:            ncn.Xname,
-			InstanceID:       GenerateInstanceID(),
+			InstanceID:       ncn.InstanceID,
 			Region:           v.GetString("system-name"),
 			AvailabilityZone: tempAvailabilityZone,
 			ShastaRole:       "ncn-" + strings.ToLower(ncn.Subrole),
