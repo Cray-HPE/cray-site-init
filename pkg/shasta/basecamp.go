@@ -76,6 +76,7 @@ type BaseCampGlobals struct {
 var k8sRunCMD = []string{
 	"/srv/cray/scripts/metal/set-host-records.sh",
 	"/srv/cray/scripts/metal/set-dhcp-to-static.sh",
+	"/srv/cray/scripts/metal/set-dns-config.sh",
 	"/srv/cray/scripts/metal/set-ntp-config.sh",
 	"/srv/cray/scripts/metal/set-bmc-bbs.sh",
 	"/srv/cray/scripts/metal/install-bootloader.sh",
@@ -88,6 +89,7 @@ var k8sRunCMD = []string{
 var cephRunCMD = []string{
 	"/srv/cray/scripts/metal/set-host-records.sh",
 	"/srv/cray/scripts/metal/set-dhcp-to-static.sh",
+	"/srv/cray/scripts/metal/set-dns-config.sh",
 	"/srv/cray/scripts/metal/set-ntp-config.sh",
 	"/srv/cray/scripts/metal/set-bmc-bbs.sh",
 	"/srv/cray/scripts/metal/install-bootloader.sh",
@@ -100,6 +102,7 @@ var cephRunCMD = []string{
 var cephWorkerRunCMD = []string{
 	"/srv/cray/scripts/metal/set-host-records.sh",
 	"/srv/cray/scripts/metal/set-dhcp-to-static.sh",
+	"/srv/cray/scripts/metal/set-dns-config.sh",
 	"/srv/cray/scripts/metal/set-ntp-config.sh",
 	"/srv/cray/scripts/metal/set-bmc-bbs.sh",
 	"/srv/cray/scripts/metal/install-bootloader.sh",
@@ -112,6 +115,7 @@ var basecampGlobalString = `{
 	"ceph-cephfs-image": "dtr.dev.cray.com/cray/cray-cephfs-provisioner:0.1.0-nautilus-1.3",
 	"ceph-rbd-image": "dtr.dev.cray.com/cray/cray-rbd-provisioner:0.1.0-nautilus-1.3",
 	"chart-repo": "http://helmrepo.dev.cray.com:8080",
+	"dns-server": "~FIXME~ e.g. 10.252.1.1",
 	"docker-image-registry": "dtr.dev.cray.com",
 	"domain": "nmn hmn",
 	"first-master-hostname": "~FIXME~ e.g. ncn-m002",
