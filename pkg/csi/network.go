@@ -79,7 +79,14 @@ func (iNet *IPV4Network) GenSubnets(cabinetDetails []CabinetGroupDetail, mask ne
 					VlanID:  tmpVlanID,
 				}
 				// Bump the DHCP Start IP past the gateway
-				tempSubnet.DHCPStart = ipam.Add(tempSubnet.CIDR.IP, len(tempSubnet.IPReservations)+2)
+				// At least ten IPs are needed, but more if required
+				staticLimit := ipam.Add(tempSubnet.CIDR.IP, 10)
+				dynamicLimit := ipam.Add(tempSubnet.CIDR.IP, len(tempSubnet.IPReservations)+2)
+				if ipam.IPLessThan(dynamicLimit, staticLimit) {
+					tempSubnet.DHCPStart = staticLimit
+				} else {
+					tempSubnet.DHCPStart = dynamicLimit
+				}
 				tempSubnet.DHCPEnd = ipam.Add(ipam.Broadcast(tempSubnet.CIDR), -1)
 				myIPv4Subnets = append(myIPv4Subnets, &tempSubnet)
 			}
