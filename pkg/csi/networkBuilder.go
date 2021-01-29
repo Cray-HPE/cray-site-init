@@ -223,12 +223,14 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 		}
 		if strings.HasSuffix(conf.Template.Name, "MTN") {
 			tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, "mountain")
+			tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, "hill")
 		}
 		// Otherwise do both
 	}
 	if conf.SubdivideByCabinet && !conf.GroupNetworksByCabinetType {
 		tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, "river")
 		tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, "mountain")
+		tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, "hill")
 	}
 
 	// Apply the Supernet Hack
