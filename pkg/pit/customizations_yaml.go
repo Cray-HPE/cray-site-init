@@ -2,7 +2,7 @@
 Copyright 2020 Hewlett Packard Enterprise Development LP
 */
 
-package cpt
+package pit
 
 import (
 	"fmt"

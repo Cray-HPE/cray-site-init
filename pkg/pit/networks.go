@@ -2,7 +2,7 @@
 Copyright 2020 Hewlett Packard Enterprise Development LP
 */
 
-package cpt
+package pit
 
 import (
 	"fmt"
@@ -24,7 +24,7 @@ func WriteNetworkFiles(basepath string, networks map[string]*csi.IPV4Network) {
 	}
 }
 
-// WriteCPTNetworkConfig writes the Network Configuration details for the installation node  (CPT)
+// WriteCPTNetworkConfig writes the Network Configuration details for the installation node  (PIT)
 func WriteCPTNetworkConfig(path string, v *viper.Viper, ncn csi.LogicalNCN, shastaNetworks map[string]*csi.IPV4Network) error {
 	type Route struct {
 		CIDR    net.IP
@@ -110,7 +110,7 @@ ONBOOT='yes'
 STARTMODE='auto'
 `)
 
-// VlanRouteTemplate allows us to add static routes to the vlan(s) on the CPT node
+// VlanRouteTemplate allows us to add static routes to the vlan(s) on the PIT node
 var VlanRouteTemplate = []byte(`
 {{- range . -}}
 {{.CIDR}} {{.Gateway}} {{.Mask}} -
