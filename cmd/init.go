@@ -85,9 +85,16 @@ var initCmd = &cobra.Command{
 		// Read and validate our three input files
 		hmnRows, logicalNcns, switches, applicationNodeConfig, cabinetDetailList := collectInput(v)
 
+		var riverCabinetCount, mountainCabinetCount int
 		for _, cab := range cabinetDetailList {
 
 			log.Printf("\t%v: %d\n", cab.Kind, len(cab.CabinetIDs()))
+			switch cab.Kind {
+			case "river":
+				riverCabinetCount = len(cab.CabinetIDs())
+			case "mountain":
+				mountainCabinetCount = len(cab.CabinetIDs())
+			}
 		}
 
 		// Prepare the network layout configs for generating the networks
@@ -99,42 +106,48 @@ var initCmd = &cobra.Command{
 		internalNetConfigs["MTL"] = csi.GenDefaultMTLConfig()
 
 		if internalNetConfigs["HMN"].GroupNetworksByCabinetType {
-			tmpHmnMtn := csi.GenDefaultHMNConfig()
-			tmpHmnMtn.Template.Name = "HMN_MTN"
-			tmpHmnMtn.Template.FullName = "Mountain Hardware Management Network"
-			tmpHmnMtn.SubdivideByCabinet = true
-			tmpHmnMtn.IncludeBootstrapDHCP = false
-			tmpHmnMtn.IncludeNetworkingHardwareSubnet = false
-			internalNetConfigs["HMN_MTN"] = tmpHmnMtn
-
-			tmpHmnRvr := csi.GenDefaultHMNConfig()
-			tmpHmnRvr.Template.Name = "HMN_RVR"
-			tmpHmnRvr.Template.FullName = "River Hardware Management Network"
-			tmpHmnRvr.SubdivideByCabinet = true
-			tmpHmnRvr.IncludeBootstrapDHCP = false
-			tmpHmnRvr.IncludeNetworkingHardwareSubnet = false
-			internalNetConfigs["HMN_RVR"] = tmpHmnRvr
+			if mountainCabinetCount > 0 {
+				tmpHmnMtn := csi.GenDefaultHMNConfig()
+				tmpHmnMtn.Template.Name = "HMN_MTN"
+				tmpHmnMtn.Template.FullName = "Mountain Hardware Management Network"
+				tmpHmnMtn.SubdivideByCabinet = true
+				tmpHmnMtn.IncludeBootstrapDHCP = false
+				tmpHmnMtn.IncludeNetworkingHardwareSubnet = false
+				internalNetConfigs["HMN_MTN"] = tmpHmnMtn
+			}
+			if riverCabinetCount > 0 {
+				tmpHmnRvr := csi.GenDefaultHMNConfig()
+				tmpHmnRvr.Template.Name = "HMN_RVR"
+				tmpHmnRvr.Template.FullName = "River Hardware Management Network"
+				tmpHmnRvr.SubdivideByCabinet = true
+				tmpHmnRvr.IncludeBootstrapDHCP = false
+				tmpHmnRvr.IncludeNetworkingHardwareSubnet = false
+				internalNetConfigs["HMN_RVR"] = tmpHmnRvr
+			}
 
 		}
 
 		if internalNetConfigs["NMN"].GroupNetworksByCabinetType {
-			tmpNmnMtn := csi.GenDefaultNMNConfig()
-			tmpNmnMtn.Template.Name = "NMN_MTN"
-			tmpNmnMtn.Template.FullName = "Mountain Node Management Network"
-			tmpNmnMtn.SubdivideByCabinet = true
-			tmpNmnMtn.IncludeBootstrapDHCP = false
-			tmpNmnMtn.IncludeNetworkingHardwareSubnet = false
-			tmpNmnMtn.IncludeUAISubnet = false
-			internalNetConfigs["NMN_MTN"] = tmpNmnMtn
-
-			tmpNmnRvr := csi.GenDefaultNMNConfig()
-			tmpNmnRvr.Template.Name = "NMN_RVR"
-			tmpNmnRvr.Template.FullName = "River Node Management Network"
-			tmpNmnRvr.SubdivideByCabinet = true
-			tmpNmnRvr.IncludeBootstrapDHCP = false
-			tmpNmnRvr.IncludeNetworkingHardwareSubnet = false
-			tmpNmnRvr.IncludeUAISubnet = false
-			internalNetConfigs["NMN_RVR"] = tmpNmnRvr
+			if mountainCabinetCount > 0 {
+				tmpNmnMtn := csi.GenDefaultNMNConfig()
+				tmpNmnMtn.Template.Name = "NMN_MTN"
+				tmpNmnMtn.Template.FullName = "Mountain Node Management Network"
+				tmpNmnMtn.SubdivideByCabinet = true
+				tmpNmnMtn.IncludeBootstrapDHCP = false
+				tmpNmnMtn.IncludeNetworkingHardwareSubnet = false
+				tmpNmnMtn.IncludeUAISubnet = false
+				internalNetConfigs["NMN_MTN"] = tmpNmnMtn
+			}
+			if riverCabinetCount > 0 {
+				tmpNmnRvr := csi.GenDefaultNMNConfig()
+				tmpNmnRvr.Template.Name = "NMN_RVR"
+				tmpNmnRvr.Template.FullName = "River Node Management Network"
+				tmpNmnRvr.SubdivideByCabinet = true
+				tmpNmnRvr.IncludeBootstrapDHCP = false
+				tmpNmnRvr.IncludeNetworkingHardwareSubnet = false
+				tmpNmnRvr.IncludeUAISubnet = false
+				internalNetConfigs["NMN_RVR"] = tmpNmnRvr
+			}
 
 		}
 
@@ -472,10 +485,6 @@ func prepareAndGenerateSLS(cd []csi.CabinetGroupDetail, shastaNetworks map[strin
 
 	// Convert shastaNetwork information to SLS Style Networking
 	_, slsNetworks := prepareNetworkSLS(shastaNetworks)
-
-	for _, tmpCabinet := range slsCabinetMap["river"] {
-		log.Printf("River SLS Cabinet: %s", tmpCabinet.Xname)
-	}
 
 	inputState := csi.SLSGeneratorInputState{
 		ApplicationNodeConfig: applicationNodeConfig,

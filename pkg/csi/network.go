@@ -52,14 +52,14 @@ type IPReservation struct {
 
 // GenSubnets subdivides a network into a set of subnets
 func (iNet *IPV4Network) GenSubnets(cabinetDetails []CabinetGroupDetail, mask net.IPMask, cabinetType string) error {
-	log.Printf("Generating Subnets for %s\ncabinetType: %v,\n", iNet.Name, cabinetType)
+	// log.Printf("Generating Subnets for %s\ncabinetType: %v,\n", iNet.Name, cabinetType)
 	_, myNet, _ := net.ParseCIDR(iNet.CIDR)
 	mySubnets := iNet.AllocatedSubnets()
 	myIPv4Subnets := iNet.Subnets
 
 	for _, cabinetDetail := range cabinetDetails {
 		if cabinetType == cabinetDetail.Kind {
-			log.Println("Dealing with CabinetDetail: ", cabinetDetail)
+			// log.Println("Dealing with CabinetDetail: ", cabinetDetail)
 
 			for j, i := range cabinetDetail.CabinetDetails {
 				newSubnet, err := ipam.Free(*myNet, mask, mySubnets)
@@ -160,7 +160,7 @@ func (iNet *IPV4Network) LookUpSubnet(name string) (*IPV4Subnet, error) {
 		return found[0], nil
 	}
 	if len(found) > 1 {
-		log.Printf("Found %v subnets named %v in the %v network instead of just one \n", len(found), name, iNet.Name)
+		// log.Printf("Found %v subnets named %v in the %v network instead of just one \n", len(found), name, iNet.Name)
 		return found[0], fmt.Errorf("found %v subnets instead of just one", len(found))
 	}
 	return &IPV4Subnet{}, fmt.Errorf("subnet not found \"%v\"", name)
