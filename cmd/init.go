@@ -21,7 +21,6 @@ import (
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
 	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
 	"stash.us.cray.com/MTL/csi/pkg/csi"
-	"stash.us.cray.com/MTL/csi/pkg/ipam"
 	"stash.us.cray.com/MTL/csi/pkg/pit"
 	"stash.us.cray.com/MTL/csi/pkg/version"
 )
@@ -85,7 +84,7 @@ var initCmd = &cobra.Command{
 		// Read and validate our three input files
 		hmnRows, logicalNcns, switches, applicationNodeConfig, cabinetDetailList := collectInput(v)
 
-		var riverCabinetCount, mountainCabinetCount int
+		var riverCabinetCount, mountainCabinetCount, hillCabinetCount int
 		for _, cab := range cabinetDetailList {
 
 			log.Printf("\t%v: %d\n", cab.Kind, len(cab.CabinetIDs()))
@@ -94,6 +93,8 @@ var initCmd = &cobra.Command{
 				riverCabinetCount = len(cab.CabinetIDs())
 			case "mountain":
 				mountainCabinetCount = len(cab.CabinetIDs())
+			case "hill":
+				hillCabinetCount = len(cab.CabinetIDs())
 			}
 		}
 
@@ -106,7 +107,7 @@ var initCmd = &cobra.Command{
 		internalNetConfigs["MTL"] = csi.GenDefaultMTLConfig()
 
 		if internalNetConfigs["HMN"].GroupNetworksByCabinetType {
-			if mountainCabinetCount > 0 {
+			if mountainCabinetCount > 0 || hillCabinetCount > 0 {
 				tmpHmnMtn := csi.GenDefaultHMNConfig()
 				tmpHmnMtn.Template.Name = "HMN_MTN"
 				tmpHmnMtn.Template.FullName = "Mountain Hardware Management Network"
@@ -130,7 +131,7 @@ var initCmd = &cobra.Command{
 		}
 
 		if internalNetConfigs["NMN"].GroupNetworksByCabinetType {
-			if mountainCabinetCount > 0 {
+			if mountainCabinetCount > 0 || hillCabinetCount > 0 {
 				tmpNmnMtn := csi.GenDefaultNMNConfig()
 				tmpNmnMtn.Template.Name = "NMN_MTN"
 				tmpNmnMtn.Template.FullName = "Mountain Node Management Network"
@@ -244,13 +245,11 @@ var initCmd = &cobra.Command{
 		fmt.Printf("\tUpstream DNS: %v\n", v.GetString("ipv4-resolvers"))
 		fmt.Printf("\tMetalLB Peers: %v\n", v.GetString("bgp-peers"))
 		fmt.Println("Networking")
-		for netName, tempNet := range shastaNetworks {
+		if v.GetBool("supernet") {
+			fmt.Printf("\tSupernet enabled!  Using the supernet gateway for some management subnets \n")
+		}
+		for _, tempNet := range shastaNetworks {
 			fmt.Printf("\t* %v %v with %d subnets \n", tempNet.FullName, tempNet.CIDR, len(tempNet.Subnets))
-			if v.GetBool("supernet") {
-				_, superNet, _ := net.ParseCIDR(shastaNetworks[netName].CIDR)
-				maskSize, _ := superNet.Mask.Size()
-				fmt.Printf("\t\tSupernet enabled - Using /%v as netmask and %v as Gateway\n", maskSize, ipam.Add(superNet.IP, 1))
-			}
 		}
 		fmt.Printf("System Information\n")
 		fmt.Printf("\tNCNs: %v\n", len(ncns))
