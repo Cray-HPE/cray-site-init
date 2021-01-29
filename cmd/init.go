@@ -20,9 +20,9 @@ import (
 	shcd_parser "stash.us.cray.com/HMS/hms-shcd-parser/pkg/shcd-parser"
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
 	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
-	"stash.us.cray.com/MTL/csi/pkg/cpt"
 	"stash.us.cray.com/MTL/csi/pkg/csi"
 	"stash.us.cray.com/MTL/csi/pkg/ipam"
+	"stash.us.cray.com/MTL/csi/pkg/pit"
 	"stash.us.cray.com/MTL/csi/pkg/version"
 )
 
@@ -208,7 +208,7 @@ var initCmd = &cobra.Command{
 		for _, ncn := range logicalNcns {
 			ncns = append(ncns, *ncn)
 		}
-		globals, err := cpt.MakeBasecampGlobals(v, ncns, shastaNetworks, "NMN", "bootstrap_dhcp", v.GetString("install-ncn"))
+		globals, err := pit.MakeBasecampGlobals(v, ncns, shastaNetworks, "NMN", "bootstrap_dhcp", v.GetString("install-ncn"))
 		if err != nil {
 			log.Fatalln("unable to generate basecamp globals: ", err)
 		}
@@ -380,9 +380,8 @@ func setupDirectories(systemName string, v *viper.Viper) (string, error) {
 	dirs := []string{
 		filepath.Join(basepath, "networks"),
 		filepath.Join(basepath, "manufacturing"),
-		filepath.Join(basepath, "credentials"),
 		filepath.Join(basepath, "dnsmasq.d"),
-		filepath.Join(basepath, "cpt-files"),
+		filepath.Join(basepath, "pit-files"),
 		filepath.Join(basepath, "basecamp"),
 	}
 	// Add the Manifest directory if needed
@@ -528,24 +527,24 @@ func writeOutput(v *viper.Viper, shastaNetworks map[string]*csi.IPV4Network, sls
 	if err != nil {
 		log.Fatalln("Failed to encode SLS state:", err)
 	}
-	cpt.WriteNetworkFiles(basepath, shastaNetworks)
+	pit.WriteNetworkFiles(basepath, shastaNetworks)
 	v.SetConfigType("yaml")
 	v.Set("VersionInfo", version.Get())
 	v.WriteConfigAs(filepath.Join(basepath, "system_config.yaml"))
 
-	csiFiles.WriteYAMLConfig(filepath.Join(basepath, "customizations.yaml"), cpt.GenCustomizationsYaml(logicalNCNs, shastaNetworks))
+	csiFiles.WriteYAMLConfig(filepath.Join(basepath, "customizations.yaml"), pit.GenCustomizationsYaml(logicalNCNs, shastaNetworks))
 
 	for _, ncn := range logicalNCNs {
-		// log.Println("Checking to see if we need CPT files for ", ncn.Hostname)
+		// log.Println("Checking to see if we need PIT files for ", ncn.Hostname)
 		if strings.HasPrefix(ncn.Hostname, v.GetString("install-ncn")) {
-			log.Println("Generating Installer Node (CPT) interface configurations for:", ncn.Hostname)
-			cpt.WriteCPTNetworkConfig(filepath.Join(basepath, "cpt-files"), v, ncn, shastaNetworks)
+			log.Println("Generating Installer Node (PIT) interface configurations for:", ncn.Hostname)
+			pit.WriteCPTNetworkConfig(filepath.Join(basepath, "pit-files"), v, ncn, shastaNetworks)
 		}
 	}
-	cpt.WriteDNSMasqConfig(basepath, v, logicalNCNs, shastaNetworks)
-	cpt.WriteConmanConfig(filepath.Join(basepath, "conman.conf"), logicalNCNs)
-	cpt.WriteMetalLBConfigMap(basepath, v, shastaNetworks, switches)
-	cpt.WriteBasecampData(filepath.Join(basepath, "basecamp/data.json"), logicalNCNs, shastaNetworks, globals)
+	pit.WriteDNSMasqConfig(basepath, v, logicalNCNs, shastaNetworks)
+	pit.WriteConmanConfig(filepath.Join(basepath, "conman.conf"), logicalNCNs)
+	pit.WriteMetalLBConfigMap(basepath, v, shastaNetworks, switches)
+	pit.WriteBasecampData(filepath.Join(basepath, "basecamp/data.json"), logicalNCNs, shastaNetworks, globals)
 
 	if v.GetString("manifest-release") != "" {
 		initiailzeManifestDir(csi.DefaultManifestURL, "release/shasta-1.4", filepath.Join(basepath, "loftsman-manifests"))
