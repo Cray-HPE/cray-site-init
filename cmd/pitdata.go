@@ -5,10 +5,11 @@ Copyright 2020 Hewlett Packard Enterprise Development LP
 */
 
 import (
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"os"
 	"path/filepath"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // pitdataCmd represents the pitdata command
@@ -24,30 +25,30 @@ var pitdataCmd = &cobra.Command{
 	// Arg is the path to the csi generated files
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		if viper.GetBool("basecamp") == true {
+		if viper.GetBool("basecamp") {
 			// Copies data.json to the configs folder
 			copyAllFiles(filepath.Join(args[0], "basecamp/"), filepath.Join(args[1]))
 		}
 
-		if viper.GetBool("kernel") == true {
+		if viper.GetBool("kernel") {
 			CopyArtifactsToPart(args[0], args[1], "*.kernel")
 		}
 
-		if viper.GetBool("initrd") == true {
+		if viper.GetBool("initrd") {
 			CopyArtifactsToPart(args[0], args[1], "initrd.*.xz")
 		}
 
-		if viper.GetBool("kubernetes") == true {
+		if viper.GetBool("kubernetes") {
 			// Find only kubernetes images matching this naming structure
 			CopyArtifactsToPart(args[0], args[1], "kubernetes-*.squashfs")
 		}
 
-		if viper.GetBool("ceph") == true {
+		if viper.GetBool("ceph") {
 			// Find only ceph images matching this naming structure
 			CopyArtifactsToPart(args[0], args[1], "storage-ceph-*.squashfs")
 		}
 
-		if viper.GetBool("prep") == true {
+		if viper.GetBool("prep") {
 			os.MkdirAll(filepath.Join(args[1], "prep"), 0755)
 			// Copies only files and puts them in the prep dir
 			// This is useful for backing up the three config files needed by csi

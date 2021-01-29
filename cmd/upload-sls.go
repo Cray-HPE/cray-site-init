@@ -73,8 +73,6 @@ func uploadFileWithoutACL(myS3Client *hms_s3.S3Client, filePath, s3KeyName strin
 	if err != nil {
 		log.Fatal("Unable to update SLS file to S3:", err)
 	}
-
-	return
 }
 
 func deleteFile(myS3Client *hms_s3.S3Client, s3KeyName string) {

@@ -63,7 +63,7 @@ func GetArtifact(dirpath string, url string) (err error) {
 		}
 
 	} else {
-		return fmt.Errorf("Missing or malformed URL: %v", url)
+		return fmt.Errorf("missing or malformed URL: %v", url)
 	}
 
 	return nil

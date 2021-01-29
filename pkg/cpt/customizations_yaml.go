@@ -6,13 +6,11 @@ package cpt
 
 import (
 	"fmt"
-	"log"
 	"net"
 	"strings"
 
 	valid "github.com/asaskevich/govalidator"
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v2"
 	"stash.us.cray.com/MTL/csi/pkg/csi"
 )
 
@@ -77,15 +75,6 @@ func (c *CustomizationsYaml) ValidationErrors() error {
 func (c *CustomizationsYaml) IsValid() bool {
 	result, _ := valid.ValidateStruct(c)
 	return result
-}
-
-func processYaml(input string) map[string]interface{} {
-	output := make(map[string]interface{})
-	err := yaml.Unmarshal([]byte(input), &output)
-	if err != nil {
-		log.Fatal("couldn't unmarshal our struct")
-	}
-	return output
 }
 
 // GenCustomizationsYaml generates our configurations.yaml nested struct
@@ -187,9 +176,6 @@ func GenCustomizationsYaml(ncns []csi.LogicalNCN, shastaNetworks map[string]*csi
 func init() {
 	valid.TagMap["cidr"] = valid.Validator(func(str string) bool {
 		_, _, err := net.ParseCIDR(str)
-		if err != nil {
-			return false
-		}
-		return true
+		return err == nil
 	})
 }
