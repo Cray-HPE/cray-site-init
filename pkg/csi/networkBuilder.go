@@ -54,7 +54,7 @@ func BuildCSMNetworks(internalNetConfigs map[string]NetworkLayoutConfiguration, 
 	var networkMap = make(map[string]*IPV4Network)
 
 	for name, layout := range internalNetConfigs {
-		log.Println("Building Network for ", name)
+		// log.Println("Building Network for ", name)
 		myLayout := layout
 
 		// Update with computed fields
@@ -113,7 +113,7 @@ func BuildCSMNetworks(internalNetConfigs map[string]NetworkLayoutConfiguration, 
 }
 
 func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, error) {
-	log.Printf("Creating a network for %v with NetworkLayoutConfig %+v", conf.Template.Name, conf)
+	// log.Printf("Creating a network for %v with NetworkLayoutConfig %+v", conf.Template.Name, conf)
 	// I hope this viper is temporary
 	v := viper.GetViper()
 	// start with the defaults
@@ -212,7 +212,7 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 				reservation.AddReservationAlias(alias)
 			}
 		}
-		log.Println("Added the MacVlan Subnet at ", uaisubnet.CIDR.String())
+		// log.Println("Added the MacVlan Subnet at ", uaisubnet.CIDR.String())
 	}
 	// Build out the per-cabinet subnets
 	// If the networks are intended to be grouped, only do the listed cabinet type
