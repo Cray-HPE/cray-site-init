@@ -86,6 +86,7 @@ tools:
 	go get -u golang.org/x/lint/golint
 	go get -u github.com/t-yuki/gocover-cobertura
 	go get -u github.com/jstemmer/go-junit-report
+	go env -w GOPRIVATE=*.us.cray.com
 
 vet: version
 	go vet -v ./...
