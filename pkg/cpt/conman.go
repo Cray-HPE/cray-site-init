@@ -4,6 +4,14 @@ Copyright 2020 Hewlett Packard Enterprise Development LP
 
 package cpt
 
+import (
+	"text/template"
+
+	"github.com/spf13/viper"
+	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
+	"stash.us.cray.com/MTL/csi/pkg/csi"
+)
+
 // ConmanConfigTemplate manages the Conman Configuration
 var ConmanConfigTemplate = []byte(` 
 SERVER keepalive=ON
@@ -20,3 +28,30 @@ GLOBAL logopts="sanitize,timestamp"
 console name="{{.Hostname}}-mgmt"     dev="ipmi:{{.IP}}" ipmiopts="U:{{.User}},P:{{.Pass}},W:solpayloadsize"
 {{- end}}
 `)
+
+// WriteConmanConfig provides conman configuration for the installer
+func WriteConmanConfig(path string, ncns []csi.LogicalNCN) {
+	type conmanLine struct {
+		Hostname string
+		User     string
+		IP       string
+		Pass     string
+	}
+	v := viper.GetViper()
+	ncnBMCUser := v.GetString("bootstrap-ncn-bmc-user")
+	ncnBMCPass := v.GetString("bootstrap-ncn-bmc-pass")
+
+	var conmanNCNs []conmanLine
+
+	for _, k := range ncns {
+		conmanNCNs = append(conmanNCNs, conmanLine{
+			Hostname: k.Hostname,
+			User:     ncnBMCUser,
+			Pass:     ncnBMCPass,
+			IP:       k.BmcIP,
+		})
+	}
+
+	tpl6, _ := template.New("conmanconfig").Parse(string(ConmanConfigTemplate))
+	csiFiles.WriteTemplate(path, tpl6, conmanNCNs)
+}

@@ -82,7 +82,7 @@ func collectInput(v *viper.Viper) ([]shcd_parser.HMNRow, []*csi.LogicalNCN, []*c
 	}
 
 	cabDefinitions := make(map[string]cabinetDefinition)
-	for _, cabType := range []string{"river", "mountain", "hill"} {
+	for _, cabType := range csi.ValidCabinetTypes {
 		cabDefinitions[cabType] = cabinetDefinition{
 			count:      v.GetInt(fmt.Sprintf("%s-cabinets", cabType)),
 			startingID: v.GetInt(fmt.Sprintf("starting-%s-cabinet", cabType))}
@@ -160,7 +160,7 @@ func validateNCNInput(ncns []*csi.LogicalNCN) error {
 }
 
 func buildCabinetDetails(cabinetDefinitions map[string]cabinetDefinition, cabDetailFile csi.CabinetDetailFile) []csi.CabinetGroupDetail {
-	for _, cabType := range []string{"river", "mountain", "hill"} {
+	for _, cabType := range csi.ValidCabinetTypes {
 		pos, err := positionInCabinetList(cabType, cabDetailFile.Cabinets)
 		if err != nil {
 			var tmpCabinet csi.CabinetGroupDetail

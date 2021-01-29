@@ -100,12 +100,16 @@ var initCmd = &cobra.Command{
 
 		if internalNetConfigs["HMN"].GroupNetworksByCabinetType {
 			tmpHmnMtn := csi.GenDefaultHMNConfig()
+			tmpHmnMtn.Template.Name = "HMN_MTN"
+			tmpHmnMtn.Template.FullName = "Mountain Hardware Management Network"
 			tmpHmnMtn.SubdivideByCabinet = true
 			tmpHmnMtn.IncludeBootstrapDHCP = false
 			tmpHmnMtn.IncludeNetworkingHardwareSubnet = false
 			internalNetConfigs["HMN_MTN"] = tmpHmnMtn
 
 			tmpHmnRvr := csi.GenDefaultHMNConfig()
+			tmpHmnRvr.Template.Name = "HMN_RVR"
+			tmpHmnRvr.Template.FullName = "River Hardware Management Network"
 			tmpHmnRvr.SubdivideByCabinet = true
 			tmpHmnRvr.IncludeBootstrapDHCP = false
 			tmpHmnRvr.IncludeNetworkingHardwareSubnet = false
@@ -115,6 +119,8 @@ var initCmd = &cobra.Command{
 
 		if internalNetConfigs["NMN"].GroupNetworksByCabinetType {
 			tmpNmnMtn := csi.GenDefaultNMNConfig()
+			tmpNmnMtn.Template.Name = "NMN_MTN"
+			tmpNmnMtn.Template.FullName = "Mountain Node Management Network"
 			tmpNmnMtn.SubdivideByCabinet = true
 			tmpNmnMtn.IncludeBootstrapDHCP = false
 			tmpNmnMtn.IncludeNetworkingHardwareSubnet = false
@@ -122,6 +128,8 @@ var initCmd = &cobra.Command{
 			internalNetConfigs["NMN_MTN"] = tmpNmnMtn
 
 			tmpNmnRvr := csi.GenDefaultNMNConfig()
+			tmpNmnRvr.Template.Name = "NMN_RVR"
+			tmpNmnRvr.Template.FullName = "River Node Management Network"
 			tmpNmnRvr.SubdivideByCabinet = true
 			tmpNmnRvr.IncludeBootstrapDHCP = false
 			tmpNmnRvr.IncludeNetworkingHardwareSubnet = false
@@ -168,17 +176,18 @@ var initCmd = &cobra.Command{
 		}
 
 		// Cycle through the main networks and update the reservations, masks and dhcp ranges as necessary
-		for _, netName := range [4]string{"NMN", "HMN", "CAN", "MTL"} {
+		for _, netName := range csi.ValidNetNames {
 			// Grab the supernet details for use in HACK substitution
 			tempSubnet, err := shastaNetworks[netName].LookUpSubnet("bootstrap_dhcp")
 			if err != nil {
-				log.Panic(err)
+				log.Printf("Not processing %v for bootstrap_dhcp because %v \n", netName, err)
+			} else {
+				// Loop the reservations and update the NCN reservations with hostnames
+				// we likely didn't have when we registered the resevation
+				updateReservations(tempSubnet, logicalNcns)
+				tempSubnet.UpdateDHCPRange(v.GetBool("supernet"))
 			}
-			// Loop the reservations and update the NCN reservations with hostnames
-			// we likely didn't have when we registered the resevation
-			updateReservations(tempSubnet, logicalNcns)
 
-			tempSubnet.UpdateDHCPRange(v.GetBool("supernet"))
 			// We expect a bootstrap_dhcp in every net, but uai_macvlan is only in
 			// the NMN range for today
 			if netName == "NMN" {
@@ -220,7 +229,7 @@ var initCmd = &cobra.Command{
 		fmt.Println("Networking")
 		for netName, tempNet := range shastaNetworks {
 			fmt.Printf("\t* %v %v with %d subnets \n", tempNet.FullName, tempNet.CIDR, len(tempNet.Subnets))
-			if v.GetBool("supernet") && stringInSlice(netName, []string{"NMN", "HMN", "MTL", "CAN"}) {
+			if v.GetBool("supernet") {
 				_, superNet, _ := net.ParseCIDR(shastaNetworks[netName].CIDR)
 				maskSize, _ := superNet.Mask.Size()
 				fmt.Printf("\t\tSupernet enabled - Using /%v as netmask and %v as Gateway\n", maskSize, ipam.Add(superNet.IP, 1))
@@ -521,7 +530,7 @@ func writeOutput(v *viper.Viper, shastaNetworks map[string]*csi.IPV4Network, sls
 	if err != nil {
 		log.Fatalln("Failed to encode SLS state:", err)
 	}
-	WriteNetworkFiles(basepath, shastaNetworks)
+	cpt.WriteNetworkFiles(basepath, shastaNetworks)
 	v.SetConfigType("yaml")
 	v.Set("VersionInfo", version.Get())
 	v.WriteConfigAs(filepath.Join(basepath, "system_config.yaml"))
@@ -532,13 +541,13 @@ func writeOutput(v *viper.Viper, shastaNetworks map[string]*csi.IPV4Network, sls
 		// log.Println("Checking to see if we need CPT files for ", ncn.Hostname)
 		if strings.HasPrefix(ncn.Hostname, v.GetString("install-ncn")) {
 			log.Println("Generating Installer Node (CPT) interface configurations for:", ncn.Hostname)
-			WriteCPTNetworkConfig(filepath.Join(basepath, "cpt-files"), v, ncn, shastaNetworks)
+			cpt.WriteCPTNetworkConfig(filepath.Join(basepath, "cpt-files"), v, ncn, shastaNetworks)
 		}
 	}
-	WriteDNSMasqConfig(basepath, v, logicalNCNs, shastaNetworks)
-	WriteConmanConfig(filepath.Join(basepath, "conman.conf"), logicalNCNs)
-	WriteMetalLBConfigMap(basepath, v, shastaNetworks, switches)
-	WriteBasecampData(filepath.Join(basepath, "basecamp/data.json"), logicalNCNs, shastaNetworks, globals)
+	cpt.WriteDNSMasqConfig(basepath, v, logicalNCNs, shastaNetworks)
+	cpt.WriteConmanConfig(filepath.Join(basepath, "conman.conf"), logicalNCNs)
+	cpt.WriteMetalLBConfigMap(basepath, v, shastaNetworks, switches)
+	cpt.WriteBasecampData(filepath.Join(basepath, "basecamp/data.json"), logicalNCNs, shastaNetworks, globals)
 
 	if v.GetString("manifest-release") != "" {
 		initiailzeManifestDir(csi.DefaultManifestURL, "release/shasta-1.4", filepath.Join(basepath, "loftsman-manifests"))
@@ -601,21 +610,24 @@ func validateFlags() []string {
 
 // AllocateIps distributes IP reservations for each of the NCNs within the networks
 func AllocateIps(ncns []*csi.LogicalNCN, networks map[string]*csi.IPV4Network) {
-	lookup := func(name string, subnetName string, networks map[string]*csi.IPV4Network) *csi.IPV4Subnet {
+	lookup := func(name string, subnetName string, networks map[string]*csi.IPV4Network) (*csi.IPV4Subnet, error) {
 		tempNetwork := networks[name]
 		subnet, err := tempNetwork.LookUpSubnet(subnetName)
 		if err != nil {
-			log.Printf("couldn't find a %v subnet in the %v network \n", subnetName, name)
+			// log.Printf("couldn't find a %v subnet in the %v network \n", subnetName, name)
+			return subnet, fmt.Errorf("couldn't find a %v subnet in the %v network", subnetName, name)
 		}
 		// log.Printf("found a %v subnet in the %v network", subnetName, name)
-		return subnet
+		return subnet, nil
 	}
 
 	// Build a map of networks based on their names
-	netNames := []string{"CAN", "MTL", "NMN", "HMN"}
 	subnets := make(map[string]*csi.IPV4Subnet)
-	for _, name := range netNames {
-		subnets[name] = lookup(name, "bootstrap_dhcp", networks)
+	for _, name := range csi.ValidNetNames {
+		bootstrapNet, err := lookup(name, "bootstrap_dhcp", networks)
+		if err == nil {
+			subnets[name] = bootstrapNet
+		}
 	}
 
 	// Loop through the NCNs and then run through the networks to add reservations and assign ip addresses
@@ -643,14 +655,4 @@ func AllocateIps(ncns []*csi.LogicalNCN, networks map[string]*csi.IPV4Network) {
 
 		}
 	}
-}
-
-// helper function to maintain a unique list of strings.  Not optimized for large lists.
-func appendIfMissing(slice []string, item string) []string {
-	for _, ele := range slice {
-		if ele == item {
-			return slice
-		}
-	}
-	return append(slice, item)
 }

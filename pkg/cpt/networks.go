@@ -2,7 +2,7 @@
 Copyright 2020 Hewlett Packard Enterprise Development LP
 */
 
-package cmd
+package cpt
 
 import (
 	"fmt"
@@ -80,7 +80,7 @@ func WriteCPTNetworkConfig(path string, v *viper.Viper, ncn csi.LogicalNCN, shas
 	csiFiles.WriteTemplate(filepath.Join(path, "config"), template.Must(template.New("netcofig").Parse(string(sysconfigNetworkConfigTemplate))), lan0sysconfig)
 	csiFiles.WriteTemplate(filepath.Join(path, "ifroute-lan0"), template.Must(template.New("vlan").Parse(string(VlanRouteTemplate))), []interface{}{lan0RouteStruct})
 	for _, network := range ncn.Networks {
-		if stringInSlice(network.NetworkName, []string{"HMN", "NMN", "MTL", "CAN"}) {
+		if stringInSlice(network.NetworkName, csi.ValidNetNames) {
 			if network.Vlan != 0 {
 				csiFiles.WriteTemplate(filepath.Join(path, fmt.Sprintf("ifcfg-vlan%03d", network.Vlan)), template.Must(template.New("vlan").Parse(string(VlanConfigTemplate))), network)
 			}
@@ -193,12 +193,3 @@ NETCONFIG_NIS_STATIC_DOMAIN=""
 NETCONFIG_NIS_STATIC_SERVERS=""
 WIRELESS_REGULATORY_DOMAIN=''
 `)
-
-func stringInSlice(a string, list []string) bool {
-	for _, b := range list {
-		if b == a {
-			return true
-		}
-	}
-	return false
-}

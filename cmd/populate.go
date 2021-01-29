@@ -6,13 +6,14 @@ Copyright 2020 Hewlett Packard Enterprise Development LP
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"syscall"
+
+	"github.com/spf13/cobra"
 )
 
 // populateCmd moves csi files and node images onto the usb device
@@ -170,10 +171,10 @@ func Copy(srcFile, dstFile string) error {
 	defer out.Close()
 
 	in, err := os.Open(srcFile)
-	defer in.Close()
 	if err != nil {
 		return err
 	}
+	defer in.Close()
 
 	_, err = io.Copy(out, in)
 	if err != nil {
