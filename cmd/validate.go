@@ -1,15 +1,16 @@
 package cmd
 
 /*
-Copyright 2020 Hewlett Packard Enterprise Development LP
+Copyright 2021 Hewlett Packard Enterprise Development LP
 */
 import (
 	"fmt"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"log"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var lastFailure error
