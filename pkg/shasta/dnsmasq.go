@@ -44,8 +44,10 @@ domain=mtl,{{.CIDR.IP}},{{.DHCPEnd}},local
 dhcp-option=interface:bond0,option:domain-search,mtl
 interface=bond0
 interface-name=pit.mtl,bond0
-dhcp-option=interface:bond0,option:dns-server,{{.DNSServer}}
+# This needs to point to the liveCD IP for provisioning in bare-metal environments.
+dhcp-option=interface:bond0,option:dns-server,{{.Gateway}}
 dhcp-option=interface:bond0,option:ntp-server,{{.Gateway}}
+# This must point at the router for the network; the L3/IP for the VLAN.
 dhcp-option=interface:bond0,option:router,{{.SupernetRouter}}
 dhcp-range=interface:bond0,{{.DHCPStart}},{{.DHCPEnd}},10m
 `)
