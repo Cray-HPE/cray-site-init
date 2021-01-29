@@ -376,6 +376,17 @@ func NetIPInSlice(a net.IP, list []net.IP) int {
 	return 0
 }
 
+// IPLessThan compare two ip addresses
+// by section left-most is most significant
+func IPLessThan(a, b net.IP) bool {
+	for i := range a { // go left to right and compare each one
+		if a[i] != b[i] {
+			return a[i] < b[i]
+		}
+	}
+	return false // they are equal
+}
+
 // Quick const map for mapping the number of hosts to the netmask shorthand
 // I'm bad at math.
 var netmasks = map[int]string{
