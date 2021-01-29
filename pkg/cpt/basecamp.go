@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/spf13/viper"
+	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
 	"stash.us.cray.com/MTL/csi/pkg/csi"
 )
 
@@ -288,6 +289,25 @@ func MakeBaseCampfromNCNs(v *viper.Viper, ncns []csi.LogicalNCN, shastaNetworks 
 	}
 
 	return basecampConfig, nil
+}
+
+// WriteBasecampData writes basecamp data.json for the installer
+func WriteBasecampData(path string, ncns []csi.LogicalNCN, shastaNetworks map[string]*csi.IPV4Network, globals interface{}) {
+	v := viper.GetViper()
+	basecampConfig, err := MakeBaseCampfromNCNs(v, ncns, shastaNetworks)
+	if err != nil {
+		log.Printf("Error extracting NCNs: %v", err)
+	}
+	// To write this the way we want to consume it, we need to convert it to a map of strings and interfaces
+	data := make(map[string]interface{})
+	for k, v := range basecampConfig {
+		data[k] = v
+	}
+	globalMetadata := make(map[string]interface{})
+	globalMetadata["meta-data"] = globals.(map[string]interface{})
+	data["Global"] = globalMetadata
+
+	csiFiles.WriteJSONConfig(path, data)
 }
 
 func stringInSlice(a string, list []string) bool {
