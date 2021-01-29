@@ -14,7 +14,7 @@ metadata:
   name: config
 data:
   config: |
-    peers:{{range .SpineSwitches}}
+    peers:{{range .PeerSwitches}}
     - peer-address: {{ . }}
       peer-asn: {{ $.ASN }}
       my-asn: {{ $.ASN }}
@@ -30,6 +30,8 @@ data:
 // MetalLBConfigMap holds information needed by the MetalLBConfigMapTemplate
 type MetalLBConfigMap struct {
 	ASN           string
+	AggSwitches   []string
+	PeerSwitches  []string
 	SpineSwitches []string
 	Networks      map[string]string
 }
