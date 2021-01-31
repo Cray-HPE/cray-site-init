@@ -122,6 +122,7 @@ build: fmt
 	-X stash.us.cray.com/MTL/csi/pkg/version.fsVersion=${.FS_VERSION} \
 	-X stash.us.cray.com/MTL/csi/pkg/version.buildDate=${.BUILDTIME} \
 	-X stash.us.cray.com/MTL/csi/pkg/version.sha1ver=${.GIT_COMMIT_AND_BRANCH}"
+	bin/csi version
 
 doc:
 	godoc -http=:8080 -index
