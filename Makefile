@@ -5,17 +5,23 @@ GO_FILES?=$$(find . -name '*.go' |grep -v vendor)
 TAG?=latest
 
 .GIT_COMMIT=$(shell git rev-parse HEAD)
+.GIT_BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
+.GIT_COMMIT_AND_BRANCH=$(.GIT_COMMIT)-$(subst /,-,$(.GIT_BRANCH))
 .GIT_VERSION=$(shell git describe --tags 2>/dev/null || echo "$(.GIT_COMMIT)")
 .FS_VERSION=$(shell cat .version)
-.GIT_UNTRACKEDCHANGES := $(shell git status --porcelain --untracked-files=no)
 .BUILDTIME=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 CHANGELOG_VERSION_ORIG=$(grep -m1 \## CHANGELOG.MD | sed -e "s/\].*\$//" |sed -e "s/^.*\[//")
 CHANGELOG_VERSION=$(shell grep -m1 \ \[[0-9]*.[0-9]*.[0-9]*\] CHANGELOG.MD | sed -e "s/\].*$$//" |sed -e "s/^.*\[//")
 
-ifneq ($(.GIT_UNTRACKEDCHANGES),)
-	.GIT_COMMIT := $(.GIT_COMMIT)-dirty
+# if we're an automated build, use .GIT_COMMIT_AND_BRANCH as-is, else add -dirty
+ifneq "$(origin BUILD_NUMBER)" "environment"
+# not a CJE pipeline build
+	ifneq "$(origin GITHUB_WORKSPACE)" "environment"
+	# not a github build
+	# assume non-pipeline build
+	.GIT_COMMIT_AND_BRANCH := $(.GIT_COMMIT_AND_BRANCH)-dirty
+	endif
 endif
-
 
 .PHONY: \
 	help \
@@ -115,7 +121,8 @@ build: fmt
 	-X stash.us.cray.com/MTL/csi/pkg/version.gitVersion=${.GIT_VERSION} \
 	-X stash.us.cray.com/MTL/csi/pkg/version.fsVersion=${.FS_VERSION} \
 	-X stash.us.cray.com/MTL/csi/pkg/version.buildDate=${.BUILDTIME} \
-	-X stash.us.cray.com/MTL/csi/pkg/version.sha1ver=${.GIT_COMMIT}"
+	-X stash.us.cray.com/MTL/csi/pkg/version.sha1ver=${.GIT_COMMIT_AND_BRANCH}"
+	bin/csi version
 
 doc:
 	godoc -http=:8080 -index
