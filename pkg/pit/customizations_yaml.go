@@ -23,10 +23,12 @@ type CustomizationsWLM struct {
 		PbsComm   net.IP `yaml:"pbs_comm" valid:"ipv4,required" desc:"The PBS Comm IP address on the nmn, accessible from all UAIs,UANs, and Compute Nodes"`
 	}
 	MacVlanSetup struct {
-		NMNSubnetCIDR      string `yaml:"nmn_subnet" valid:"cidr,required"`
-		NMNSupernetCIDR    string `yaml:"nmn_supernet" valid:"cidr,required"`
-		NMNSupernetGateway net.IP `yaml:"nmn_supernet_gateway" valid:"ipv4,required"`
-		NMNVlanInterface   string `yaml:"nmn_vlan" valid:"_,required"`
+		NMNSubnetCIDR       string `yaml:"nmn_subnet" valid:"cidr,required"`
+		NMNSupernetCIDR     string `yaml:"nmn_supernet" valid:"cidr,required"`
+		NMNSupernetGateway  net.IP `yaml:"nmn_supernet_gateway" valid:"ipv4,required"`
+		NMNVlanInterface    string `yaml:"nmn_vlan" valid:"_,required"`
+		NMNMacVlanDHCPStart net.IP `yaml:"nmn_dhcp_start" valid:"ipv4,required"`
+		NMNMacVlanDHCPEnd   net.IP `yaml:"nmn_dhcp_end" valid:"ipv4,required"`
 	}
 }
 
@@ -159,15 +161,19 @@ func GenCustomizationsYaml(ncns []csi.LogicalNCN, shastaNetworks map[string]*csi
 			PbsComm:   uaiNet.LookupReservation("pbs_comm_service").IPAddress,
 		},
 		MacVlanSetup: struct {
-			NMNSubnetCIDR      string "yaml:\"nmn_subnet\" valid:\"cidr,required\""
-			NMNSupernetCIDR    string "yaml:\"nmn_supernet\" valid:\"cidr,required\""
-			NMNSupernetGateway net.IP "yaml:\"nmn_supernet_gateway\" valid:\"ipv4,required\""
-			NMNVlanInterface   string "yaml:\"nmn_vlan\" valid:\"_,required\""
+			NMNSubnetCIDR       string "yaml:\"nmn_subnet\" valid:\"cidr,required\""
+			NMNSupernetCIDR     string "yaml:\"nmn_supernet\" valid:\"cidr,required\""
+			NMNSupernetGateway  net.IP "yaml:\"nmn_supernet_gateway\" valid:\"ipv4,required\""
+			NMNVlanInterface    string "yaml:\"nmn_vlan\" valid:\"_,required\""
+			NMNMacVlanDHCPStart net.IP "yaml:\"nmn_dhcp_start\" valid:\"ipv4,required\""
+			NMNMacVlanDHCPEnd   net.IP "yaml:\"nmn_dhcp_end\" valid:\"ipv4,required\""
 		}{
-			NMNSubnetCIDR:      uaiNetCIDR.String(),
-			NMNSupernetGateway: uaiNet.Gateway,
-			NMNSupernetCIDR:    shastaNetworks["NMN"].CIDR,
-			NMNVlanInterface:   fmt.Sprintf("vlan%03d", uaiNet.VlanID),
+			NMNSubnetCIDR:       uaiNetCIDR.String(),
+			NMNSupernetGateway:  uaiNet.Gateway,
+			NMNSupernetCIDR:     shastaNetworks["NMN"].CIDR,
+			NMNVlanInterface:    fmt.Sprintf("vlan%03d", uaiNet.VlanID),
+			NMNMacVlanDHCPStart: uaiNet.DHCPStart,
+			NMNMacVlanDHCPEnd:   uaiNet.DHCPEnd,
 		},
 	}
 	return output

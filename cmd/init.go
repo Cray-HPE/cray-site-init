@@ -214,6 +214,7 @@ var initCmd = &cobra.Command{
 					log.Panic(err)
 				}
 				updateReservations(tempSubnet, logicalNcns)
+				tempSubnet.UpdateDHCPRange(false)
 			}
 
 		}
