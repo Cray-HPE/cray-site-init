@@ -25,7 +25,7 @@ metadata:
   name: config
 data:
   config: |
-    peers:{{range .SpineSwitches}}
+    peers:{{range .PeerSwitches}}
     - peer-address: {{ . }}
       peer-asn: {{ $.ASN }}
       my-asn: {{ $.ASN }}
@@ -41,6 +41,8 @@ data:
 // MetalLBConfigMap holds information needed by the MetalLBConfigMapTemplate
 type MetalLBConfigMap struct {
 	ASN           string
+	AggSwitches   []string
+	PeerSwitches  []string
 	SpineSwitches []string
 	Networks      map[string]string
 }
@@ -66,10 +68,13 @@ func WriteMetalLBConfigMap(path string, v *viper.Viper, networks map[string]*csi
 	configStruct.Networks = make(map[string]string)
 	configStruct.ASN = v.GetString("bgp-asn")
 
-	var spineSwitchXnames []string
+	var spineSwitchXnames, aggSwitchXnames []string
 	for _, mgmtswitch := range switches {
 		if mgmtswitch.SwitchType == "Spine" {
 			spineSwitchXnames = append(spineSwitchXnames, mgmtswitch.Xname)
+		}
+		if mgmtswitch.SwitchType == "Aggregation" {
+			aggSwitchXnames = append(aggSwitchXnames, mgmtswitch.Xname)
 		}
 	}
 
@@ -81,6 +86,11 @@ func WriteMetalLBConfigMap(path string, v *viper.Viper, networks map[string]*csi
 					for _, switchXname := range spineSwitchXnames {
 						if reservation.Comment == switchXname {
 							configStruct.SpineSwitches = append(configStruct.SpineSwitches, reservation.IPAddress.String())
+						}
+					}
+					for _, switchXname := range aggSwitchXnames {
+						if reservation.Comment == switchXname {
+							configStruct.AggSwitches = append(configStruct.AggSwitches, reservation.IPAddress.String())
 						}
 					}
 				}
@@ -95,5 +105,30 @@ func WriteMetalLBConfigMap(path string, v *viper.Viper, networks map[string]*csi
 			configStruct.Networks["customer-access"] = v.GetString("can-dynamic-pool")
 		}
 	}
+
+	configStruct.PeerSwitches = getMetalLBPeerSwitches(v.GetString("bgp-peers"), configStruct)
 	csiFiles.WriteTemplate(filepath.Join(path, "metallb.yaml"), tpl, configStruct)
+}
+
+// getMetalLBPeerSwitches returns a list of switch IPs that should be used as metallb peers
+func getMetalLBPeerSwitches(bgpPeers string, configStruct MetalLBConfigMap) []string {
+
+	switchTypeMap := map[string][]string{
+		"spine":       configStruct.SpineSwitches,
+		"aggregation": configStruct.AggSwitches,
+	}
+
+	if peerSwitches, ok := switchTypeMap[bgpPeers]; ok {
+		if len(peerSwitches) == 0 {
+			log.Fatalf("bgp-peers: %s specified but none defined in switch_metadata.csv\n", bgpPeers)
+		}
+		// Max 2 peer switches for metallb for now
+		for _, switchIP := range peerSwitches[0:2] {
+			configStruct.PeerSwitches = append(configStruct.PeerSwitches, switchIP)
+		}
+	} else {
+		log.Fatalf("bgp-peers: unrecognized option: %s\n", bgpPeers)
+	}
+
+	return configStruct.PeerSwitches
 }

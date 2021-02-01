@@ -243,6 +243,7 @@ var initCmd = &cobra.Command{
 		fmt.Printf("Customer Access: %v GW: %v\n", v.GetString("can-cidr"), v.GetString("can-gateway"))
 		fmt.Printf("\tUpstream NTP: %v\n", v.GetString("ntp-pool"))
 		fmt.Printf("\tUpstream DNS: %v\n", v.GetString("ipv4-resolvers"))
+		fmt.Printf("\tMetalLB Peers: %v\n", v.GetString("bgp-peers"))
 		fmt.Println("Networking")
 		if v.GetBool("supernet") {
 			fmt.Printf("\tSupernet enabled!  Using the supernet gateway for some management subnets \n")
@@ -324,6 +325,7 @@ func init() {
 
 	// Use these flags to prepare the basecamp metadata json
 	initCmd.Flags().String("bgp-asn", "65533", "The autonomous system number for BGP conversations")
+	initCmd.Flags().String("bgp-peers", "spine", "Which set of switches to use as metallb peers, spine (default) or aggregation")
 	initCmd.Flags().Int("management-net-ips", 0, "Additional number of ip addresses to reserve in each vlan for network equipment")
 	initCmd.Flags().Bool("k8s-api-auditing-enabled", false, "Enable the kubernetes auditing API")
 	initCmd.Flags().Bool("ncn-mgmt-node-auditing-enabled", false, "Enable management node auditing")
