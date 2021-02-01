@@ -78,16 +78,7 @@ func (iNet *IPV4Network) GenSubnets(cabinetDetails []CabinetGroupDetail, mask ne
 					Gateway: ipam.Add(newSubnet.IP, 1),
 					VlanID:  tmpVlanID,
 				}
-				// Bump the DHCP Start IP past the gateway
-				// At least ten IPs are needed, but more if required
-				staticLimit := ipam.Add(tempSubnet.CIDR.IP, 10)
-				dynamicLimit := ipam.Add(tempSubnet.CIDR.IP, len(tempSubnet.IPReservations)+2)
-				if ipam.IPLessThan(dynamicLimit, staticLimit) {
-					tempSubnet.DHCPStart = staticLimit
-				} else {
-					tempSubnet.DHCPStart = dynamicLimit
-				}
-				tempSubnet.DHCPEnd = ipam.Add(ipam.Broadcast(tempSubnet.CIDR), -1)
+				tempSubnet.UpdateDHCPRange(false)
 				myIPv4Subnets = append(myIPv4Subnets, &tempSubnet)
 			}
 		}
@@ -255,26 +246,26 @@ func (iSubnet *IPV4Subnet) UsableHostAddresses() int {
 // UpdateDHCPRange resets the DHCPStart to exclude all IPReservations
 func (iSubnet *IPV4Subnet) UpdateDHCPRange(applySupernetHack bool) {
 
-	// log.Printf("Before adjusting the DHCP entries, CIDR is %v and Broadcast is %v\n ", iSubnet.CIDR, ipam.Broadcast(iSubnet.CIDR))
 	myReservedIPs := iSubnet.ReservedIPs()
 	if len(myReservedIPs) > iSubnet.UsableHostAddresses() {
 		log.Fatalf("Could not create %s subnet in %s.  There are %d reservations and only %d usable ip addresses in the subnet %v.", iSubnet.FullName, iSubnet.NetName, len(myReservedIPs), iSubnet.UsableHostAddresses(), iSubnet.CIDR.String())
 	}
-	// log.Printf("Floor is %v and Broadcast is %v. There are %v reservations with room for %d ips", iSubnet.CIDR.IP, ipam.Broadcast(iSubnet.CIDR), len(myReservedIPs), iSubnet.UsableHostAddresses())
-	ip := ipam.Add(iSubnet.CIDR.IP, len(myReservedIPs)+2)
-	iSubnet.DHCPStart = ip
-	// log.Printf("Inside UpdateDHCPRange and ip = %v which is at %v in list\n", ip, netIPInSlice(ip, myReservedIPs))
-	for ipam.NetIPInSlice(ip, myReservedIPs) > 0 {
-		iSubnet.DHCPStart = ipam.Add(ip, 2)
-		//log.Printf("Dealing with DHCPStart as %v \n", iSubnet.DHCPStart)
-		ip = ipam.Add(ip, 1)
+
+	// Bump the DHCP Start IP past the gateway
+	// At least ten IPs are needed, but more if required
+	staticLimit := ipam.Add(iSubnet.CIDR.IP, 10)
+	dynamicLimit := ipam.Add(iSubnet.CIDR.IP, len(iSubnet.IPReservations)+2)
+	if ipam.IPLessThan(dynamicLimit, staticLimit) {
+		iSubnet.DHCPStart = staticLimit
+	} else {
+		iSubnet.DHCPStart = dynamicLimit
 	}
+
 	if applySupernetHack {
 		iSubnet.DHCPEnd = ipam.Add(iSubnet.DHCPStart, 200) // In this strange world, we can't rely on the broadcast number to be accurate
 	} else {
 		iSubnet.DHCPEnd = ipam.Add(ipam.Broadcast(iSubnet.CIDR), -1)
 	}
-	// log.Printf("After adjusting the DHCP entries, we have %v and %v\n ", iSubnet.DHCPStart, iSubnet.DHCPEnd)
 }
 
 // AddReservationWithPin adds a new IPv4 reservation to the subnet with the last octet pinned
