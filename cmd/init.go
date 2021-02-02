@@ -430,7 +430,7 @@ func mergeNCNs(logicalNcns []*csi.LogicalNCN, slsNCNs []csi.LogicalNCN) error {
 				ncn.Aliases = slsNCN.Aliases
 				ncn.BmcPort = slsNCN.BmcPort
 				// log.Println("Updated to be :", ncn)
-				ncn.InstanceID = csi.GenerateInstanceID()
+				// ncn.InstanceID = csi.GenerateInstanceID()
 
 				found = true
 				break
@@ -650,6 +650,7 @@ func AllocateIps(ncns []*csi.LogicalNCN, networks map[string]*csi.IPV4Network) {
 
 	// Loop through the NCNs and then run through the networks to add reservations and assign ip addresses
 	for _, ncn := range ncns {
+		ncn.InstanceID = csi.GenerateInstanceID()
 		for netName, subnet := range subnets {
 			// reserve the bmc ip
 			if netName == "HMN" {
