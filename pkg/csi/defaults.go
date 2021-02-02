@@ -1,8 +1,8 @@
 /*
-Copyright 2020 Hewlett Packard Enterprise Development LP
+Copyright 2021 Hewlett Packard Enterprise Development LP
 */
 
-package shasta
+package csi
 
 import (
 	"net"
@@ -30,13 +30,21 @@ Handy Netmask Cheet Sheet
 
 const (
 	// DefaultHMNString is the Default HMN String (vlan004)
-	DefaultHMNString = "10.254.0.0/16"
+	DefaultHMNString = "10.254.0.0/17"
 	// DefaultHMNVlan is the default HMN Bootstrap Vlan
 	DefaultHMNVlan = 4
+	// DefaultHMNMTNString is the default HMN Network for Mountain Cabinets with Grouped Configuration
+	DefaultHMNMTNString = "10.100.0.0/17"
+	// DefaultHMNRVRString is the default HMN Network for River Cabinets with Grouped Configuration
+	DefaultHMNRVRString = "10.107.0.0/17"
 	// DefaultNMNString is the Default NMN String (vlan002)
-	DefaultNMNString = "10.252.0.0/16"
+	DefaultNMNString = "10.252.0.0/17"
 	// DefaultNMNVlan is the default NMN Bootstrap Vlan
 	DefaultNMNVlan = 2
+	// DefaultNMNMTNString is the default NMN Network for Mountain Cabinets with Grouped Configuration
+	DefaultNMNMTNString = "10.104.0.0/17"
+	// DefaultNMNRVRString is the default NMN Network for River Cabinets with Grouped Configuration
+	DefaultNMNRVRString = "10.106.0.0/17"
 	// DefaultNMNLBString is the default LoadBalancer CIDR for the NMN
 	DefaultNMNLBString = "10.92.100.0/24"
 	// DefaultHMNLBString is the default LoadBalancer CIDR for the HMN
@@ -56,6 +64,12 @@ const (
 	// DefaultMTLString is the Default MTL String (bond0 interface)
 	DefaultMTLString = "10.1.1.0/16"
 )
+
+// ValidNetNames is the list of strings that enumerate valid main network names
+var ValidNetNames = []string{"HMN", "NMN", "CAN", "MTL", "HMN_RVR", "HMN_MTN", "NMN_RVR", "NMN_MTN"}
+
+// ValidCabinetTypes is the list of strings that enumerate valid cabinet types
+var ValidCabinetTypes = []string{"mountain", "river", "hill"}
 
 // InstallerDefaults holds all of our defaults
 var InstallerDefaults = SystemConfig{
@@ -108,26 +122,30 @@ var DefaultLoadBalancerHMN = IPV4Network{
 	Comment:  "",
 }
 
-// DefaultHMN is the default structure for templating initial HMN configuration
-var DefaultHMN = IPV4Network{
-	FullName:  "Hardware Management Network",
-	CIDR:      DefaultHMNString,
-	Name:      "HMN",
-	VlanRange: []int16{100, 356},
-	MTU:       9000,
-	NetType:   "ethernet",
-	Comment:   "",
+// GenDefaultHMN returns the default structure for templating initial HMN configuration
+func GenDefaultHMN() IPV4Network {
+	return IPV4Network{
+		FullName:  "Hardware Management Network",
+		CIDR:      DefaultHMNString,
+		Name:      "HMN",
+		VlanRange: []int16{100, 356},
+		MTU:       9000,
+		NetType:   "ethernet",
+		Comment:   "",
+	}
 }
 
-// DefaultNMN is the default structure for templating initial NMN configuration
-var DefaultNMN = IPV4Network{
-	FullName:  "Node Management Network",
-	CIDR:      DefaultNMNString,
-	Name:      "NMN",
-	VlanRange: []int16{357, 612},
-	MTU:       9000,
-	NetType:   "ethernet",
-	Comment:   "",
+// GenDefaultNMN returns the default structure for templating initial NMN configuration
+func GenDefaultNMN() IPV4Network {
+	return IPV4Network{
+		FullName:  "Node Management Network",
+		CIDR:      DefaultNMNString,
+		Name:      "NMN",
+		VlanRange: []int16{357, 612},
+		MTU:       9000,
+		NetType:   "ethernet",
+		Comment:   "",
+	}
 }
 
 // DefaultHSN is the default structure for templating initial HSN configuration
@@ -163,76 +181,78 @@ var DefaultMTL = IPV4Network{
 	Comment:   "This network is only valid for the NCNs",
 }
 
-// DefaultHMNConfig is the set of defaults for mapping the HMN
-var DefaultHMNConfig = NetworkLayoutConfiguration{
-	Template:                        DefaultHMN,
-	SubdivideByCabinet:              true,
-	IncludeBootstrapDHCP:            true,
-	IncludeNetworkingHardwareSubnet: true,
-	IncludeUAISubnet:                false,
-	CabinetCIDR:                     DefaultCabinetMask,
-	NetworkingHardwareNetmask:       DefaultNetworkingHardwareMask,
-	DesiredBootstrapDHCPMask:        net.CIDRMask(24, 32),
+// GenDefaultHMNConfig is the set of defaults for mapping the HMN
+func GenDefaultHMNConfig() NetworkLayoutConfiguration {
+
+	return NetworkLayoutConfiguration{
+		Template:                        GenDefaultHMN(),
+		SubdivideByCabinet:              false,
+		GroupNetworksByCabinetType:      true,
+		IncludeBootstrapDHCP:            true,
+		IncludeNetworkingHardwareSubnet: true,
+		SuperNetHack:                    true,
+		IncludeUAISubnet:                false,
+		CabinetCIDR:                     DefaultCabinetMask,
+		NetworkingHardwareNetmask:       DefaultNetworkingHardwareMask,
+		DesiredBootstrapDHCPMask:        net.CIDRMask(24, 32),
+	}
 }
 
-// DefaultNMNConfig is the set of defaults for mapping the NMN
-var DefaultNMNConfig = NetworkLayoutConfiguration{
-	Template:                        DefaultNMN,
-	SubdivideByCabinet:              true,
-	IncludeBootstrapDHCP:            true,
-	IncludeNetworkingHardwareSubnet: true,
-	IncludeUAISubnet:                true,
-	CabinetCIDR:                     DefaultCabinetMask,
-	NetworkingHardwareNetmask:       DefaultNetworkingHardwareMask,
-	DesiredBootstrapDHCPMask:        net.CIDRMask(24, 32),
+// GenDefaultNMNConfig returns the set of defaults for mapping the NMN
+func GenDefaultNMNConfig() NetworkLayoutConfiguration {
+	return NetworkLayoutConfiguration{
+		Template:                        GenDefaultNMN(),
+		SubdivideByCabinet:              false,
+		GroupNetworksByCabinetType:      true,
+		IncludeBootstrapDHCP:            true,
+		IncludeNetworkingHardwareSubnet: true,
+		SuperNetHack:                    true,
+		IncludeUAISubnet:                true,
+		CabinetCIDR:                     DefaultCabinetMask,
+		NetworkingHardwareNetmask:       DefaultNetworkingHardwareMask,
+		DesiredBootstrapDHCPMask:        net.CIDRMask(24, 32),
+	}
 }
 
-// DefaultHSNConfig is the set of defaults for mapping the HSN
-var DefaultHSNConfig = NetworkLayoutConfiguration{
-	Template:                        DefaultHSN,
-	SubdivideByCabinet:              false,
-	IncludeBootstrapDHCP:            false,
-	IncludeNetworkingHardwareSubnet: false,
-	IncludeUAISubnet:                false,
+// GenDefaultHSNConfig returns the set of defaults for mapping the HSN
+func GenDefaultHSNConfig() NetworkLayoutConfiguration {
+
+	return NetworkLayoutConfiguration{
+		Template:                        DefaultHSN,
+		SubdivideByCabinet:              false,
+		IncludeBootstrapDHCP:            false,
+		IncludeNetworkingHardwareSubnet: false,
+		IncludeUAISubnet:                false,
+	}
 }
 
-// DefaultCANConfig is the set of defaults for mapping the CAN
-var DefaultCANConfig = NetworkLayoutConfiguration{
-	Template:                        DefaultCAN,
-	SubdivideByCabinet:              false,
-	IncludeBootstrapDHCP:            true,
-	IncludeNetworkingHardwareSubnet: false,
-	IncludeUAISubnet:                false,
-	DesiredBootstrapDHCPMask:        net.CIDRMask(24, 32),
+// GenDefaultCANConfig returns the set of defaults for mapping the CAN
+func GenDefaultCANConfig() NetworkLayoutConfiguration {
+
+	return NetworkLayoutConfiguration{
+		Template:                        DefaultCAN,
+		SubdivideByCabinet:              false,
+		SuperNetHack:                    false,
+		IncludeBootstrapDHCP:            true,
+		IncludeNetworkingHardwareSubnet: false,
+		IncludeUAISubnet:                false,
+		DesiredBootstrapDHCPMask:        net.CIDRMask(24, 32),
+	}
 }
 
-// DefaultMTLConfig is the set of defaults for mapping the MTL
-var DefaultMTLConfig = NetworkLayoutConfiguration{
-	Template:                        DefaultMTL,
-	SubdivideByCabinet:              false,
-	IncludeBootstrapDHCP:            true,
-	IncludeNetworkingHardwareSubnet: true,
-	IncludeUAISubnet:                false,
-	NetworkingHardwareNetmask:       DefaultNetworkingHardwareMask,
-	DesiredBootstrapDHCPMask:        net.CIDRMask(24, 32),
-}
+// GenDefaultMTLConfig returns the set of defaults for mapping the MTL
+func GenDefaultMTLConfig() NetworkLayoutConfiguration {
 
-// DefaultRootPW is the default root password
-var DefaultRootPW = PasswordCredential{
-	Username: "root",
-	Password: "changem3",
-}
-
-// DefaultBMCPW is the default root password
-var DefaultBMCPW = PasswordCredential{
-	Username: "root",
-	Password: "changem3",
-}
-
-// DefaultNetPW is the default root password
-var DefaultNetPW = PasswordCredential{
-	Username: "root",
-	Password: "changem3",
+	return NetworkLayoutConfiguration{
+		Template:                        DefaultMTL,
+		SubdivideByCabinet:              false,
+		SuperNetHack:                    true,
+		IncludeBootstrapDHCP:            true,
+		IncludeNetworkingHardwareSubnet: true,
+		IncludeUAISubnet:                false,
+		NetworkingHardwareNetmask:       DefaultNetworkingHardwareMask,
+		DesiredBootstrapDHCPMask:        net.CIDRMask(24, 32),
+	}
 }
 
 // DefaultManifestURL is the git URL for downloading the loftsman manifests for packaging

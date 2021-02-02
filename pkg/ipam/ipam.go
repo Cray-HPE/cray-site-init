@@ -1,5 +1,5 @@
 /*
-Copyright 2020 Hewlett Packard Enterprise Development LP
+Copyright 2021 Hewlett Packard Enterprise Development LP
 */
 
 // Package ipam provides IP address management functionality.
@@ -374,6 +374,17 @@ func NetIPInSlice(a net.IP, list []net.IP) int {
 		}
 	}
 	return 0
+}
+
+// IPLessThan compare two ip addresses
+// by section left-most is most significant
+func IPLessThan(a, b net.IP) bool {
+	for i := range a { // go left to right and compare each one
+		if a[i] != b[i] {
+			return a[i] < b[i]
+		}
+	}
+	return false // they are equal
 }
 
 // Quick const map for mapping the number of hosts to the netmask shorthand

@@ -1,8 +1,8 @@
 /*
-Copyright 2020 Hewlett Packard Enterprise Development LP
+Copyright 2021 Hewlett Packard Enterprise Development LP
 */
 
-package shasta
+package csi
 
 import (
 	"fmt"
@@ -10,69 +10,9 @@ import (
 	"net"
 	"strings"
 
-	base "stash.us.cray.com/HMS/hms-base"
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
 	"stash.us.cray.com/MTL/csi/pkg/ipam"
 )
-
-// ManagementSwitchBrand known list of Management switch brands
-type ManagementSwitchBrand string
-
-func (msb ManagementSwitchBrand) String() string {
-	return string(msb)
-}
-
-// ManagementSwitchBrandAruba for Aruba Management switches
-const ManagementSwitchBrandAruba ManagementSwitchBrand = "Aruba"
-
-// ManagementSwitchBrandDell for Dell Management switches
-const ManagementSwitchBrandDell ManagementSwitchBrand = "Dell"
-
-// ManagementSwitchBrandMellanox for Mellanox Management switches
-const ManagementSwitchBrandMellanox ManagementSwitchBrand = "Mellanox"
-
-// ManagementSwitchType the type of management switch CDU/Leaf/Spine/Aggregation
-type ManagementSwitchType string
-
-// ManagementSwitchTypeCDU is the type for CDU Management switches
-const ManagementSwitchTypeCDU ManagementSwitchType = "CDU"
-
-// ManagementSwitchTypeLeaf is the type for Leaf Management switches
-const ManagementSwitchTypeLeaf ManagementSwitchType = "Leaf"
-
-// ManagementSwitchTypeSpine is the type for Spine Management switches
-const ManagementSwitchTypeSpine ManagementSwitchType = "Spine"
-
-// ManagementSwitchTypeAggregation is the type for Aggregation Management switches
-const ManagementSwitchTypeAggregation ManagementSwitchType = "Aggregation"
-
-func (mst ManagementSwitchType) String() string {
-	return string(mst)
-}
-
-// IsManagementSwitchTypeValid validates the given ManagementSwitchType
-func IsManagementSwitchTypeValid(mst ManagementSwitchType) bool {
-	switch mst {
-	case ManagementSwitchTypeAggregation:
-		fallthrough
-	case ManagementSwitchTypeCDU:
-		fallthrough
-	case ManagementSwitchTypeLeaf:
-		fallthrough
-	case ManagementSwitchTypeSpine:
-		return true
-	}
-
-	return false
-}
-
-// IPReservation is a type for managing IP Reservations
-type IPReservation struct {
-	IPAddress net.IP   `yaml:"ip_address"`
-	Name      string   `yaml:"name"`
-	Comment   string   `yaml:"comment"`
-	Aliases   []string `yaml:"aliases"`
-}
 
 // IPV4Network is a type for managing IPv4 Networks
 type IPV4Network struct {
@@ -102,100 +42,45 @@ type IPV4Subnet struct {
 	DHCPEnd        net.IP          `yaml:"iprange-end"`
 }
 
-// ManagementSwitch is a type for managing Management switches
-type ManagementSwitch struct {
-	Xname               string                `json:"xname" mapstructure:"xname" csv:"Switch Xname"` // Required for SLS
-	Name                string                `json:"name" mapstructure:"name" csv:"-"`              // Required for SLS to update DNS
-	Brand               ManagementSwitchBrand `json:"brand" mapstructure:"brand" csv:"Brand"`
-	Model               string                `json:"model" mapstructure:"model" csv:"Model"`
-	Os                  string                `json:"operating-system" mapstructure:"operating-system" csv:"-"`
-	Firmware            string                `json:"firmware" mapstructure:"firmware" csv:"-"`
-	SwitchType          ManagementSwitchType  `json:"type" mapstructure:"type" csv:"Type"` //"CDU/Leaf/Spine/Aggregation"
-	ManagementInterface net.IP                `json:"ip" mapstructure:"ip" csv:"-"`        // SNMP/REST interface IP (not a distinct BMC)  // Required for SLS
-}
-
-// Validate ManagementSwitch contents
-func (mySwitch *ManagementSwitch) Validate() error {
-	// Validate the data that was read in switch_metadata.csv. We are inforcing 3 constaints:
-	// 1. Validate the xname is valid
-	// 2. The specified switch type is valid
-	// 3. The HMS type for the xname matches the type of switch being used
-
-	xname := mySwitch.Xname
-	// Verify xname is valid
-	if !base.IsHMSCompIDValid(xname) {
-		return fmt.Errorf("invalid xname for Switch: %s", xname)
-	}
-
-	// Verify that the specify management switch type is one of the known values
-	if !IsManagementSwitchTypeValid(mySwitch.SwitchType) {
-		return fmt.Errorf("invalid management switch type: %s %s", xname, mySwitch.SwitchType)
-	}
-
-	// Now we need to verify that the correct switch xname format was used for the different
-	// types of management switches.
-	hmsType := base.GetHMSType(xname)
-	switch mySwitch.SwitchType {
-	case ManagementSwitchTypeLeaf:
-		if hmsType != base.MgmtSwitch {
-			return fmt.Errorf("invalid xname used for Leaf switch: %s,  should use xXcCwW format", xname)
-		}
-	case ManagementSwitchTypeSpine:
-		fallthrough
-	case ManagementSwitchTypeAggregation:
-		if hmsType != base.MgmtHLSwitch {
-			return fmt.Errorf("invalid xname used for Spine/Aggregation switch: %s, should use xXcChHsS format", xname)
-		}
-	case ManagementSwitchTypeCDU:
-		if hmsType != base.CDUMgmtSwitch {
-			return fmt.Errorf("invalid xname used for CDU switch: %s, should use dDwW format", xname)
-		}
-	default:
-		return fmt.Errorf("invalid switch type for xname: %s", xname)
-	}
-
-	return nil
-}
-
-// Normalize the values of a Management switch
-func (mySwitch *ManagementSwitch) Normalize() error {
-	// Right now we only need to the normalize the xname for the switch. IE strip any leading 0s
-	mySwitch.Xname = base.NormalizeHMSCompID(mySwitch.Xname)
-
-	return nil
+// IPReservation is a type for managing IP Reservations
+type IPReservation struct {
+	IPAddress net.IP   `yaml:"ip_address"`
+	Name      string   `yaml:"name"`
+	Comment   string   `yaml:"comment"`
+	Aliases   []string `yaml:"aliases"`
 }
 
 // GenSubnets subdivides a network into a set of subnets
-func (iNet *IPV4Network) GenSubnets(cabinetDetails []CabinetDetail, mask net.IPMask) error {
-
+func (iNet *IPV4Network) GenSubnets(cabinetDetails []CabinetGroupDetail, mask net.IPMask, cabinetType string) error {
+	// log.Printf("Generating Subnets for %s\ncabinetType: %v,\n", iNet.Name, cabinetType)
 	_, myNet, _ := net.ParseCIDR(iNet.CIDR)
 	mySubnets := iNet.AllocatedSubnets()
 	myIPv4Subnets := iNet.Subnets
 
 	for _, cabinetDetail := range cabinetDetails {
+		if cabinetType == cabinetDetail.Kind {
+			// log.Println("Dealing with CabinetDetail: ", cabinetDetail)
 
-		for j, i := range cabinetDetail.CabinetIDs {
-			newSubnet, err := ipam.Free(*myNet, mask, mySubnets)
-			mySubnets = append(mySubnets, newSubnet)
-			if err != nil {
-				log.Printf("Gensubnets couldn't add subnet because %v \n", err)
-				return err
+			for j, i := range cabinetDetail.CabinetDetails {
+				newSubnet, err := ipam.Free(*myNet, mask, mySubnets)
+				mySubnets = append(mySubnets, newSubnet)
+				if err != nil {
+					log.Printf("Gensubnets couldn't add subnet because %v \n", err)
+					return err
+				}
+				var tmpVlanID = i.VlanID
+				if tmpVlanID == 0 {
+					tmpVlanID = int16(j) + iNet.VlanRange[0]
+				}
+				tempSubnet := IPV4Subnet{
+					CIDR:    newSubnet,
+					Name:    fmt.Sprintf("cabinet_%d", i.ID),
+					Gateway: ipam.Add(newSubnet.IP, 1),
+					VlanID:  tmpVlanID,
+				}
+				tempSubnet.UpdateDHCPRange(false)
+				myIPv4Subnets = append(myIPv4Subnets, &tempSubnet)
 			}
-			tempSubnet := IPV4Subnet{
-				CIDR:    newSubnet,
-				Name:    fmt.Sprintf("cabinet_%d", i),
-				Gateway: ipam.Add(newSubnet.IP, 1),
-				// Reserving the first vlan in the range for a non-cabinet aligned vlan if needed in the future.
-				VlanID: iNet.VlanRange[1] + int16(j),
-			}
-			if tempSubnet.VlanID > 4095 {
-				log.Fatalf("Something very strange has happened...\n\n\nGenSubnets tried to build the %v network and give %v cabinet %v a vlanid above 4095 (%v)", iNet.Name, cabinetDetail.Kind, i, tempSubnet.VlanID)
-
-			}
-			// Bump the DHCP Start IP past the gateway
-			tempSubnet.DHCPStart = ipam.Add(tempSubnet.CIDR.IP, len(tempSubnet.IPReservations)+2)
-			tempSubnet.DHCPEnd = ipam.Add(ipam.Broadcast(tempSubnet.CIDR), -1)
-			myIPv4Subnets = append(myIPv4Subnets, &tempSubnet)
 		}
 	}
 	iNet.Subnets = myIPv4Subnets
@@ -262,7 +147,7 @@ func (iNet *IPV4Network) AddBiggestSubnet(mask net.IPMask, name string, vlanID i
 func (iNet *IPV4Network) LookUpSubnet(name string) (*IPV4Subnet, error) {
 	var found []*IPV4Subnet
 	if len(iNet.Subnets) == 0 {
-		return &IPV4Subnet{}, fmt.Errorf("subnet not found %v", name)
+		return &IPV4Subnet{}, fmt.Errorf("subnet not found \"%v\"", name)
 	}
 	for _, v := range iNet.Subnets {
 		if v.Name == name {
@@ -273,16 +158,16 @@ func (iNet *IPV4Network) LookUpSubnet(name string) (*IPV4Subnet, error) {
 		return found[0], nil
 	}
 	if len(found) > 1 {
-		log.Printf("Found %v subnets named %v in the %v network instead of just one \n", len(found), name, iNet.Name)
+		// log.Printf("Found %v subnets named %v in the %v network instead of just one \n", len(found), name, iNet.Name)
 		return found[0], fmt.Errorf("found %v subnets instead of just one", len(found))
 	}
-	return &IPV4Subnet{}, fmt.Errorf("subnet not found %v", name)
+	return &IPV4Subnet{}, fmt.Errorf("subnet not found \"%v\"", name)
 }
 
 // SubnetbyName Return a copy of the subnet by name or a blank subnet if it doesn't exists
 func (iNet IPV4Network) SubnetbyName(name string) IPV4Subnet {
 	for _, v := range iNet.Subnets {
-		if strings.ToLower(v.Name) == strings.ToLower(name) {
+		if strings.EqualFold(v.Name, name) {
 			return *v
 		}
 	}
@@ -361,26 +246,26 @@ func (iSubnet *IPV4Subnet) UsableHostAddresses() int {
 // UpdateDHCPRange resets the DHCPStart to exclude all IPReservations
 func (iSubnet *IPV4Subnet) UpdateDHCPRange(applySupernetHack bool) {
 
-	// log.Printf("Before adjusting the DHCP entries, CIDR is %v and Broadcast is %v\n ", iSubnet.CIDR, ipam.Broadcast(iSubnet.CIDR))
 	myReservedIPs := iSubnet.ReservedIPs()
 	if len(myReservedIPs) > iSubnet.UsableHostAddresses() {
 		log.Fatalf("Could not create %s subnet in %s.  There are %d reservations and only %d usable ip addresses in the subnet %v.", iSubnet.FullName, iSubnet.NetName, len(myReservedIPs), iSubnet.UsableHostAddresses(), iSubnet.CIDR.String())
 	}
-	// log.Printf("Floor is %v and Broadcast is %v. There are %v reservations with room for %d ips", iSubnet.CIDR.IP, ipam.Broadcast(iSubnet.CIDR), len(myReservedIPs), iSubnet.UsableHostAddresses())
-	ip := ipam.Add(iSubnet.CIDR.IP, len(myReservedIPs)+2)
-	iSubnet.DHCPStart = ip
-	// log.Printf("Inside UpdateDHCPRange and ip = %v which is at %v in list\n", ip, netIPInSlice(ip, myReservedIPs))
-	for ipam.NetIPInSlice(ip, myReservedIPs) > 0 {
-		iSubnet.DHCPStart = ipam.Add(ip, 2)
-		//log.Printf("Dealing with DHCPStart as %v \n", iSubnet.DHCPStart)
-		ip = ipam.Add(ip, 1)
+
+	// Bump the DHCP Start IP past the gateway
+	// At least ten IPs are needed, but more if required
+	staticLimit := ipam.Add(iSubnet.CIDR.IP, 10)
+	dynamicLimit := ipam.Add(iSubnet.CIDR.IP, len(iSubnet.IPReservations)+2)
+	if ipam.IPLessThan(dynamicLimit, staticLimit) {
+		iSubnet.DHCPStart = staticLimit
+	} else {
+		iSubnet.DHCPStart = dynamicLimit
 	}
+
 	if applySupernetHack {
 		iSubnet.DHCPEnd = ipam.Add(iSubnet.DHCPStart, 200) // In this strange world, we can't rely on the broadcast number to be accurate
 	} else {
 		iSubnet.DHCPEnd = ipam.Add(ipam.Broadcast(iSubnet.CIDR), -1)
 	}
-	// log.Printf("After adjusting the DHCP entries, we have %v and %v\n ", iSubnet.DHCPStart, iSubnet.DHCPEnd)
 }
 
 // AddReservationWithPin adds a new IPv4 reservation to the subnet with the last octet pinned
@@ -444,46 +329,4 @@ func (iSubnet *IPV4Subnet) AddReservation(name, comment string) *IPReservation {
 		return &iSubnet.IPReservations[len(iSubnet.IPReservations)-1]
 	}
 
-}
-
-// NetworkLayoutConfiguration is the internal configuration structure for shasta networks
-type NetworkLayoutConfiguration struct {
-	Template                        IPV4Network
-	ReservationHostnames            []string
-	IncludeBootstrapDHCP            bool
-	DesiredBootstrapDHCPMask        net.IPMask
-	IncludeNetworkingHardwareSubnet bool
-	AdditionalNetworkingSpace       int
-	NetworkingHardwareNetmask       net.IPMask
-	BaseVlan                        int16
-	SubdivideByCabinet              bool
-	IncludeUAISubnet                bool
-	CabinetDetails                  []CabinetDetail
-	CabinetCIDR                     net.IPMask
-	ManagementSwitches              []*ManagementSwitch
-}
-
-// IsValid provides feedback about any problems with the configuration
-func (nlc *NetworkLayoutConfiguration) IsValid() (bool, error) {
-	if nlc.IncludeNetworkingHardwareSubnet {
-		if len(nlc.ManagementSwitches) < 1 {
-			return false, fmt.Errorf("can't build networking hardware subnets without ManagementSwitches")
-		}
-	}
-	if nlc.SubdivideByCabinet {
-		if len(nlc.CabinetDetails) < 1 {
-			return false, fmt.Errorf("can't build per cabinet subnets without a list of cabinet details")
-		}
-	}
-	return true, nil
-}
-
-// GenLayoutConfiguration creates a configuration from a default template and booleans
-func GenLayoutConfiguration(template IPV4Network, IncludeBootstrapDHCP bool, IncludeNetworkingHardware bool, SubdivideByCabinet bool) NetworkLayoutConfiguration {
-	return NetworkLayoutConfiguration{
-		Template:                        template,
-		IncludeBootstrapDHCP:            IncludeBootstrapDHCP,
-		IncludeNetworkingHardwareSubnet: IncludeBootstrapDHCP,
-		SubdivideByCabinet:              SubdivideByCabinet,
-	}
 }

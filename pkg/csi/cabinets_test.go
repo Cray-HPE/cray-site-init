@@ -1,8 +1,8 @@
 /*
-Copyright 2020 Hewlett Packard Enterprise Development LP
+Copyright 2021 Hewlett Packard Enterprise Development LP
 */
 
-package shasta
+package csi
 
 import (
 	"fmt"
@@ -61,7 +61,7 @@ func genRandomCabinetDetailStruct() CabinetDetailFile {
 	for i := 1; i < 5; i++ {
 		startingCabinet := rand.Intn(200)
 		numCabinets := rand.Intn(20)
-		tmpCab := CabinetDetail{
+		tmpCab := CabinetGroupDetail{
 			Kind:            fmt.Sprintf("kind_%v", i),
 			Cabinets:        numCabinets,
 			StartingCabinet: startingCabinet,

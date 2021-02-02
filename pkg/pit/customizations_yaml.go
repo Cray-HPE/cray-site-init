@@ -1,18 +1,17 @@
 /*
-Copyright 2020 Hewlett Packard Enterprise Development LP
+Copyright 2021 Hewlett Packard Enterprise Development LP
 */
 
-package shasta
+package pit
 
 import (
 	"fmt"
-	"log"
 	"net"
 	"strings"
 
 	valid "github.com/asaskevich/govalidator"
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v2"
+	"stash.us.cray.com/MTL/csi/pkg/csi"
 )
 
 // CustomizationsWLM is the struct for holding all WLM related values for customizations.yaml
@@ -24,10 +23,12 @@ type CustomizationsWLM struct {
 		PbsComm   net.IP `yaml:"pbs_comm" valid:"ipv4,required" desc:"The PBS Comm IP address on the nmn, accessible from all UAIs,UANs, and Compute Nodes"`
 	}
 	MacVlanSetup struct {
-		NMNSubnetCIDR      string `yaml:"nmn_subnet" valid:"cidr,required"`
-		NMNSupernetCIDR    string `yaml:"nmn_supernet" valid:"cidr,required"`
-		NMNSupernetGateway net.IP `yaml:"nmn_supernet_gateway" valid:"ipv4,required"`
-		NMNVlanInterface   string `yaml:"nmn_vlan" valid:"_,required"`
+		NMNSubnetCIDR       string `yaml:"nmn_subnet" valid:"cidr,required"`
+		NMNSupernetCIDR     string `yaml:"nmn_supernet" valid:"cidr,required"`
+		NMNSupernetGateway  net.IP `yaml:"nmn_supernet_gateway" valid:"ipv4,required"`
+		NMNVlanInterface    string `yaml:"nmn_vlan" valid:"_,required"`
+		NMNMacVlanDHCPStart net.IP `yaml:"nmn_dhcp_start" valid:"ipv4,required"`
+		NMNMacVlanDHCPEnd   net.IP `yaml:"nmn_dhcp_end" valid:"ipv4,required"`
 	}
 }
 
@@ -78,17 +79,8 @@ func (c *CustomizationsYaml) IsValid() bool {
 	return result
 }
 
-func processYaml(input string) map[string]interface{} {
-	output := make(map[string]interface{})
-	err := yaml.Unmarshal([]byte(input), &output)
-	if err != nil {
-		log.Fatal("couldn't unmarshal our struct")
-	}
-	return output
-}
-
 // GenCustomizationsYaml generates our configurations.yaml nested struct
-func GenCustomizationsYaml(ncns []LogicalNCN, shastaNetworks map[string]*IPV4Network) CustomizationsYaml {
+func GenCustomizationsYaml(ncns []csi.LogicalNCN, shastaNetworks map[string]*csi.IPV4Network) CustomizationsYaml {
 	v := viper.GetViper()
 	systemName := v.GetString("system-name")
 	siteDomain := v.GetString("site-domain")
@@ -169,15 +161,19 @@ func GenCustomizationsYaml(ncns []LogicalNCN, shastaNetworks map[string]*IPV4Net
 			PbsComm:   uaiNet.LookupReservation("pbs_comm_service").IPAddress,
 		},
 		MacVlanSetup: struct {
-			NMNSubnetCIDR      string "yaml:\"nmn_subnet\" valid:\"cidr,required\""
-			NMNSupernetCIDR    string "yaml:\"nmn_supernet\" valid:\"cidr,required\""
-			NMNSupernetGateway net.IP "yaml:\"nmn_supernet_gateway\" valid:\"ipv4,required\""
-			NMNVlanInterface   string "yaml:\"nmn_vlan\" valid:\"_,required\""
+			NMNSubnetCIDR       string "yaml:\"nmn_subnet\" valid:\"cidr,required\""
+			NMNSupernetCIDR     string "yaml:\"nmn_supernet\" valid:\"cidr,required\""
+			NMNSupernetGateway  net.IP "yaml:\"nmn_supernet_gateway\" valid:\"ipv4,required\""
+			NMNVlanInterface    string "yaml:\"nmn_vlan\" valid:\"_,required\""
+			NMNMacVlanDHCPStart net.IP "yaml:\"nmn_dhcp_start\" valid:\"ipv4,required\""
+			NMNMacVlanDHCPEnd   net.IP "yaml:\"nmn_dhcp_end\" valid:\"ipv4,required\""
 		}{
-			NMNSubnetCIDR:      uaiNetCIDR.String(),
-			NMNSupernetGateway: uaiNet.Gateway,
-			NMNSupernetCIDR:    shastaNetworks["NMN"].CIDR,
-			NMNVlanInterface:   fmt.Sprintf("vlan%03d", uaiNet.VlanID),
+			NMNSubnetCIDR:       uaiNetCIDR.String(),
+			NMNSupernetGateway:  uaiNet.Gateway,
+			NMNSupernetCIDR:     shastaNetworks["NMN"].CIDR,
+			NMNVlanInterface:    fmt.Sprintf("vlan%03d", uaiNet.VlanID),
+			NMNMacVlanDHCPStart: uaiNet.DHCPStart,
+			NMNMacVlanDHCPEnd:   uaiNet.DHCPEnd,
 		},
 	}
 	return output
@@ -186,9 +182,6 @@ func GenCustomizationsYaml(ncns []LogicalNCN, shastaNetworks map[string]*IPV4Net
 func init() {
 	valid.TagMap["cidr"] = valid.Validator(func(str string) bool {
 		_, _, err := net.ParseCIDR(str)
-		if err != nil {
-			return false
-		}
-		return true
+		return err == nil
 	})
 }

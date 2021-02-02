@@ -1,5 +1,5 @@
 /*
-Copyright 2020 Hewlett Packard Enterprise Development LP
+Copyright 2021 Hewlett Packard Enterprise Development LP
 */
 
 package cmd
@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	"stash.us.cray.com/MTL/csi/pkg/shasta"
+	"stash.us.cray.com/MTL/csi/pkg/csi"
 )
 
 type InitCmdTestSuite struct {
@@ -17,22 +17,22 @@ type InitCmdTestSuite struct {
 }
 
 func (suite *InitCmdTestSuite) TestValidateSwitchInput_HappyPath() {
-	switches := []*shasta.ManagementSwitch{
+	switches := []*csi.ManagementSwitch{
 		{
-			Xname: "x3000c0w14", SwitchType: shasta.ManagementSwitchTypeLeaf,
-			Brand: shasta.ManagementSwitchBrandAruba,
+			Xname: "x3000c0w14", SwitchType: csi.ManagementSwitchTypeLeaf,
+			Brand: csi.ManagementSwitchBrandAruba,
 		}, {
 			Xname:      "x3000c0h13s1",
-			SwitchType: shasta.ManagementSwitchTypeSpine,
-			Brand:      shasta.ManagementSwitchBrandAruba,
+			SwitchType: csi.ManagementSwitchTypeSpine,
+			Brand:      csi.ManagementSwitchBrandAruba,
 		}, {
 			Xname:      "x3000c0h12s1",
-			SwitchType: shasta.ManagementSwitchTypeAggregation,
-			Brand:      shasta.ManagementSwitchBrandAruba,
+			SwitchType: csi.ManagementSwitchTypeAggregation,
+			Brand:      csi.ManagementSwitchBrandAruba,
 		}, {
 			Xname:      "d10w10",
-			SwitchType: shasta.ManagementSwitchTypeCDU,
-			Brand:      shasta.ManagementSwitchBrandDell,
+			SwitchType: csi.ManagementSwitchTypeCDU,
+			Brand:      csi.ManagementSwitchBrandDell,
 		},
 	}
 
@@ -41,14 +41,14 @@ func (suite *InitCmdTestSuite) TestValidateSwitchInput_HappyPath() {
 }
 
 func (suite *InitCmdTestSuite) TestValidateSwitchInput_InvalidXname() {
-	switches := []*shasta.ManagementSwitch{
+	switches := []*csi.ManagementSwitch{
 		{ // Valid Xname
-			Xname: "x3000c0w14", SwitchType: shasta.ManagementSwitchTypeLeaf,
-			Brand: shasta.ManagementSwitchBrandAruba,
+			Xname: "x3000c0w14", SwitchType: csi.ManagementSwitchTypeLeaf,
+			Brand: csi.ManagementSwitchBrandAruba,
 		}, { // Invalid Xname
 			Xname:      "x3000c0w15L",
-			SwitchType: shasta.ManagementSwitchTypeSpine,
-			Brand:      shasta.ManagementSwitchBrandAruba,
+			SwitchType: csi.ManagementSwitchTypeSpine,
+			Brand:      csi.ManagementSwitchBrandAruba,
 		},
 	}
 
@@ -64,66 +64,66 @@ func (suite *InitCmdTestSuite) TestValidateSwitchInput_WrongXNameTypes() {
 	// had validation issues.
 
 	tests := []struct {
-		mySwitch      shasta.ManagementSwitch
+		mySwitch      csi.ManagementSwitch
 		expectedError error
 	}{{
 		// Spine using MgmtSwitch, should be using MgmtHLSwitch
-		mySwitch: shasta.ManagementSwitch{
-			Xname: "x10c0w14", SwitchType: shasta.ManagementSwitchTypeSpine,
-			Brand: shasta.ManagementSwitchBrandAruba,
+		mySwitch: csi.ManagementSwitch{
+			Xname: "x10c0w14", SwitchType: csi.ManagementSwitchTypeSpine,
+			Brand: csi.ManagementSwitchBrandAruba,
 		},
 		expectedError: errors.New("switch_metadata.csv contains invalid switch data"),
 	}, {
 		// Spine using CDUMgmtSwitch, should be using MgmtHLSwitch
-		mySwitch: shasta.ManagementSwitch{
+		mySwitch: csi.ManagementSwitch{
 			Xname:      "d10w14",
-			SwitchType: shasta.ManagementSwitchTypeSpine,
-			Brand:      shasta.ManagementSwitchBrandAruba,
+			SwitchType: csi.ManagementSwitchTypeSpine,
+			Brand:      csi.ManagementSwitchBrandAruba,
 		},
 		expectedError: errors.New("switch_metadata.csv contains invalid switch data"),
 	}, {
 		// Aggergation using MgmtSwitch, should be using MgmtHLSwitch
-		mySwitch: shasta.ManagementSwitch{
+		mySwitch: csi.ManagementSwitch{
 			Xname:      "x20c0w14",
-			SwitchType: shasta.ManagementSwitchTypeAggregation,
-			Brand:      shasta.ManagementSwitchBrandAruba,
+			SwitchType: csi.ManagementSwitchTypeAggregation,
+			Brand:      csi.ManagementSwitchBrandAruba,
 		},
 		expectedError: errors.New("switch_metadata.csv contains invalid switch data"),
 	}, {
 		// Aggergation using CDUMgmtSwitch, should be using MgmtHLSwitch
-		mySwitch: shasta.ManagementSwitch{
+		mySwitch: csi.ManagementSwitch{
 			Xname:      "d20w14",
-			SwitchType: shasta.ManagementSwitchTypeAggregation,
-			Brand:      shasta.ManagementSwitchBrandAruba,
+			SwitchType: csi.ManagementSwitchTypeAggregation,
+			Brand:      csi.ManagementSwitchBrandAruba,
 		},
 		expectedError: errors.New("switch_metadata.csv contains invalid switch data"),
 	}, {
 		// CDU using MgmtHLSwitch, should be using CDUMgmtSwitch
-		mySwitch: shasta.ManagementSwitch{
+		mySwitch: csi.ManagementSwitch{
 			Xname:      "x30c0w14",
-			SwitchType: shasta.ManagementSwitchTypeCDU,
-			Brand:      shasta.ManagementSwitchBrandAruba,
+			SwitchType: csi.ManagementSwitchTypeCDU,
+			Brand:      csi.ManagementSwitchBrandAruba,
 		},
 		expectedError: errors.New("switch_metadata.csv contains invalid switch data"),
 	}, {
 		// CDU using MgmtSwitch, should be using CDUMgmtSwitch
-		mySwitch: shasta.ManagementSwitch{
+		mySwitch: csi.ManagementSwitch{
 			Xname:      "x30c0h14s1",
-			SwitchType: shasta.ManagementSwitchTypeCDU,
-			Brand:      shasta.ManagementSwitchBrandAruba,
+			SwitchType: csi.ManagementSwitchTypeCDU,
+			Brand:      csi.ManagementSwitchBrandAruba,
 		},
 		expectedError: errors.New("switch_metadata.csv contains invalid switch data"),
 	}}
 
 	for _, test := range tests {
-		switches := []*shasta.ManagementSwitch{&test.mySwitch}
+		switches := []*csi.ManagementSwitch{&test.mySwitch}
 		err := validateSwitchInput(switches)
 		suite.Equal(test.expectedError, err)
 	}
 }
 
 func (suite *InitCmdTestSuite) TestValidateNCNInput_HappyPath() {
-	ncns := []*shasta.LogicalNCN{
+	ncns := []*csi.LogicalNCN{
 		{Xname: "x3000c0s1b0n0", Role: "Management", Subrole: "Master"},
 		{Xname: "x3000c0s2b0n0", Role: "Management", Subrole: "Worker"},
 		{Xname: "x3000c0s3b0n0", Role: "Management", Subrole: "Storage"},
@@ -134,7 +134,7 @@ func (suite *InitCmdTestSuite) TestValidateNCNInput_HappyPath() {
 }
 
 func (suite *InitCmdTestSuite) TestValidateNCNInput_InvalidXName() {
-	ncns := []*shasta.LogicalNCN{
+	ncns := []*csi.LogicalNCN{
 		{Xname: "x3000c0s1b0n0", Role: "Management", Subrole: "Master"},
 		{Xname: "foo", Role: "Management", Subrole: "Worker"},
 		{Xname: "x3000c0s3b0n0", Role: "Management", Subrole: "Storage"},
@@ -145,7 +145,7 @@ func (suite *InitCmdTestSuite) TestValidateNCNInput_InvalidXName() {
 }
 
 func (suite *InitCmdTestSuite) TestValidateNCNInput_WrongXNameType() {
-	ncns := []*shasta.LogicalNCN{
+	ncns := []*csi.LogicalNCN{
 		{Xname: "x3000c0s1b0n0", Role: "Management", Subrole: "Master"},
 		{Xname: "x3000c0s2b0n0", Role: "Management", Subrole: "Worker"},
 		{Xname: "x3000c0s3b0", Role: "Management", Subrole: "Storage"},
@@ -156,26 +156,26 @@ func (suite *InitCmdTestSuite) TestValidateNCNInput_WrongXNameType() {
 }
 
 func (suite *InitCmdTestSuite) TestValidateNCNInput_ZeroNCNs() {
-	ncns := []*shasta.LogicalNCN{}
+	ncns := []*csi.LogicalNCN{}
 
 	err := validateNCNInput(ncns)
 	suite.Equal(errors.New("unable to extract NCNs from ncn metadata csv"), err)
 }
 
 func (suite *InitCmdTestSuite) TestMergeNCNs_HappyPath() {
-	ncns := []*shasta.LogicalNCN{
+	ncns := []*csi.LogicalNCN{
 		{Xname: "x3000c0s1b0n0", Role: "Management", Subrole: "Master"},
 		{Xname: "x3000c0s4b0n0", Role: "Management", Subrole: "Worker"},
 		{Xname: "x3000c0s7b0n0", Role: "Management", Subrole: "Storage"},
 	}
 
-	slsNCNs := []shasta.LogicalNCN{
+	slsNCNs := []csi.LogicalNCN{
 		{Xname: "x3000c0s1b0n0", Hostname: "ncn-m001", Aliases: []string{"ncn-m001"}, BmcPort: "x3000c0w14:1/1/31"},
 		{Xname: "x3000c0s4b0n0", Hostname: "ncn-w001", Aliases: []string{"ncn-w001"}, BmcPort: "x3000c0w14:1/1/32"},
 		{Xname: "x3000c0s7b0n0", Hostname: "ncn-s001", Aliases: []string{"ncn-s001"}, BmcPort: "x3000c0w14:1/1/33"},
 	}
 
-	expectedMergeList := []*shasta.LogicalNCN{
+	expectedMergeList := []*csi.LogicalNCN{
 		{
 			Xname: "x3000c0s1b0n0", Role: "Management", Subrole: "Master",
 			Hostname: "ncn-m001", Aliases: []string{"ncn-m001"}, BmcPort: "x3000c0w14:1/1/31",
@@ -195,13 +195,13 @@ func (suite *InitCmdTestSuite) TestMergeNCNs_HappyPath() {
 }
 
 func (suite *InitCmdTestSuite) TestMergeNCNs_MissingXnameInSLS() {
-	ncns := []*shasta.LogicalNCN{
+	ncns := []*csi.LogicalNCN{
 		{Xname: "x3000c0s1b0n0", Role: "Management", Subrole: "Master"},
 		{Xname: "x3000c0s4b0n0", Role: "Management", Subrole: "Worker"},
 		{Xname: "x3000c0s7b0n0", Role: "Management", Subrole: "Storage"},
 	}
 
-	slsNCNs := []shasta.LogicalNCN{
+	slsNCNs := []csi.LogicalNCN{
 		{Xname: "x3000c0s1b0n0", Hostname: "ncn-m001", Aliases: []string{"ncn-m001"}, BmcPort: "x3000c0w14:1/1/31"},
 		{Xname: "x3000c0s4b0n0", Hostname: "ncn-w001", Aliases: []string{"ncn-w001"}, BmcPort: "x3000c0w14:1/1/32"},
 	}

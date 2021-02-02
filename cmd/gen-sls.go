@@ -1,5 +1,5 @@
 /*
-Copyright 2020 Hewlett Packard Enterprise Development LP
+Copyright 2021 Hewlett Packard Enterprise Development LP
 */
 
 package cmd
@@ -13,7 +13,7 @@ import (
 
 	base "stash.us.cray.com/HMS/hms-base"
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
-	"stash.us.cray.com/MTL/csi/pkg/shasta"
+	"stash.us.cray.com/MTL/csi/pkg/csi"
 )
 
 // initCmd represents the init command
@@ -38,12 +38,12 @@ func init() {
 
 }
 
-func genCabinetMap(cd []shasta.CabinetDetail, shastaNetworks map[string]*shasta.IPV4Network) map[string]map[string]sls_common.GenericHardware {
-	// Use information from CabinetDetails and shastaNetworks to generate
+func genCabinetMap(cd []csi.CabinetGroupDetail, shastaNetworks map[string]*csi.IPV4Network) map[string]map[string]sls_common.GenericHardware {
+	// Use information from CabinetGroupDetails and shastaNetworks to generate
 	// Cabinet information for SLS
 	cabinets := make(map[string][]int) // key => kind, value => list of cabinet_ids
 	for _, cab := range cd {
-		cabinets[strings.ToLower(cab.Kind)] = cab.CabinetIDs
+		cabinets[strings.ToLower(cab.Kind)] = cab.CabinetIDs()
 	}
 
 	// Iterate through the cabinets of each kind and build structures that work for SLS Generation
@@ -53,12 +53,16 @@ func genCabinetMap(cd []shasta.CabinetDetail, shastaNetworks map[string]*shasta.
 		for _, id := range cabIds {
 			// Find the NMN and HMN networks for each cabinet
 			networks := make(map[string]sls_common.CabinetNetworks)
-			for _, netName := range []string{"NMN", "HMN"} {
-				subnet := shastaNetworks[netName].SubnetbyName(fmt.Sprintf("cabinet_%d", id))
-				networks[netName] = sls_common.CabinetNetworks{
-					CIDR:    subnet.CIDR.String(),
-					Gateway: subnet.Gateway.String(),
-					VLan:    int(subnet.VlanID),
+			for _, netName := range []string{"NMN", "HMN", "NMN_MTN", "HMN_MTN", "NMN_RVR", "HMN_RVR"} {
+				if shastaNetworks[netName] != nil {
+					subnet := shastaNetworks[netName].SubnetbyName(fmt.Sprintf("cabinet_%d", id))
+					if subnet.CIDR.String() != "<nil>" {
+						networks[strings.TrimSuffix(strings.TrimSuffix(netName, "_MTN"), "_RVR")] = sls_common.CabinetNetworks{
+							CIDR:    subnet.CIDR.String(),
+							Gateway: subnet.Gateway.String(),
+							VLan:    int(subnet.VlanID),
+						}
+					}
 				}
 			}
 			// Build out the sls cabinet structure
@@ -93,9 +97,9 @@ func genCabinetMap(cd []shasta.CabinetDetail, shastaNetworks map[string]*shasta.
 	return slsCabinetMap
 }
 
-func convertManagementSwitchToSLS(s *shasta.ManagementSwitch) (sls_common.GenericHardware, error) {
+func convertManagementSwitchToSLS(s *csi.ManagementSwitch) (sls_common.GenericHardware, error) {
 	switch s.SwitchType {
-	case shasta.ManagementSwitchTypeLeaf:
+	case csi.ManagementSwitchTypeLeaf:
 		return sls_common.GenericHardware{
 			Parent:     base.GetHMSCompParent(s.Xname),
 			Xname:      s.Xname,
@@ -115,9 +119,9 @@ func convertManagementSwitchToSLS(s *shasta.ManagementSwitch) (sls_common.Generi
 				Aliases: []string{s.Name},
 			},
 		}, nil
-	case shasta.ManagementSwitchTypeAggregation:
+	case csi.ManagementSwitchTypeAggregation:
 		fallthrough
-	case shasta.ManagementSwitchTypeSpine:
+	case csi.ManagementSwitchTypeSpine:
 		return sls_common.GenericHardware{
 			Parent:     base.GetHMSCompParent(s.Xname),
 			Xname:      s.Xname,
@@ -132,7 +136,7 @@ func convertManagementSwitchToSLS(s *shasta.ManagementSwitch) (sls_common.Generi
 			},
 		}, nil
 
-	case shasta.ManagementSwitchTypeCDU:
+	case csi.ManagementSwitchTypeCDU:
 		return sls_common.GenericHardware{
 			Parent:     base.GetHMSCompParent(s.Xname),
 			Xname:      s.Xname,
@@ -150,38 +154,38 @@ func convertManagementSwitchToSLS(s *shasta.ManagementSwitch) (sls_common.Generi
 	return sls_common.GenericHardware{}, fmt.Errorf("unknown management switch type: %s", s.SwitchType)
 }
 
-func extractSwitchesfromReservations(subnet *shasta.IPV4Subnet) ([]shasta.ManagementSwitch, error) {
-	var switches []shasta.ManagementSwitch
+func extractSwitchesfromReservations(subnet *csi.IPV4Subnet) ([]csi.ManagementSwitch, error) {
+	var switches []csi.ManagementSwitch
 	for _, reservation := range subnet.IPReservations {
 		if strings.HasPrefix(reservation.Name, "sw-spine") {
-			switches = append(switches, shasta.ManagementSwitch{
+			switches = append(switches, csi.ManagementSwitch{
 				Xname:               reservation.Comment,
 				Name:                reservation.Name,
-				SwitchType:          shasta.ManagementSwitchTypeSpine,
+				SwitchType:          csi.ManagementSwitchTypeSpine,
 				ManagementInterface: reservation.IPAddress,
 			})
 		}
 		if strings.HasPrefix(reservation.Name, "sw-agg") {
-			switches = append(switches, shasta.ManagementSwitch{
+			switches = append(switches, csi.ManagementSwitch{
 				Xname:               reservation.Comment,
 				Name:                reservation.Name,
-				SwitchType:          shasta.ManagementSwitchTypeAggregation,
+				SwitchType:          csi.ManagementSwitchTypeAggregation,
 				ManagementInterface: reservation.IPAddress,
 			})
 		}
 		if strings.HasPrefix(reservation.Name, "sw-leaf") {
-			switches = append(switches, shasta.ManagementSwitch{
+			switches = append(switches, csi.ManagementSwitch{
 				Xname:               reservation.Comment,
 				Name:                reservation.Name,
-				SwitchType:          shasta.ManagementSwitchTypeLeaf,
+				SwitchType:          csi.ManagementSwitchTypeLeaf,
 				ManagementInterface: reservation.IPAddress,
 			})
 		}
 		if strings.HasPrefix(reservation.Name, "sw-cdu") {
-			switches = append(switches, shasta.ManagementSwitch{
+			switches = append(switches, csi.ManagementSwitch{
 				Xname:               reservation.Comment,
 				Name:                reservation.Name,
-				SwitchType:          shasta.ManagementSwitchTypeCDU,
+				SwitchType:          csi.ManagementSwitchTypeCDU,
 				ManagementInterface: reservation.IPAddress,
 			})
 		}
@@ -190,7 +194,7 @@ func extractSwitchesfromReservations(subnet *shasta.IPV4Subnet) ([]shasta.Manage
 	return switches, nil
 }
 
-func convertIPV4NetworksToSLS(networks *[]shasta.IPV4Network) map[string]sls_common.Network {
+func convertIPV4NetworksToSLS(networks *[]csi.IPV4Network) map[string]sls_common.Network {
 	slsNetworks := make(map[string]sls_common.Network, len(*networks))
 
 	for _, network := range *networks {
@@ -202,7 +206,7 @@ func convertIPV4NetworksToSLS(networks *[]shasta.IPV4Network) map[string]sls_com
 	return slsNetworks
 }
 
-func convertIPV4NetworkToSLS(n *shasta.IPV4Network) sls_common.Network {
+func convertIPV4NetworkToSLS(n *csi.IPV4Network) sls_common.Network {
 	subnets := make([]sls_common.IPV4Subnet, len(n.Subnets))
 	for i, subnet := range n.Subnets {
 		subnets[i] = convertIPV4SubnetToSLS(subnet)
@@ -223,7 +227,7 @@ func convertIPV4NetworkToSLS(n *shasta.IPV4Network) sls_common.Network {
 	}
 }
 
-func convertIPV4SubnetToSLS(s *shasta.IPV4Subnet) sls_common.IPV4Subnet {
+func convertIPV4SubnetToSLS(s *csi.IPV4Subnet) sls_common.IPV4Subnet {
 	ipReservations := make([]sls_common.IPReservation, len(s.IPReservations))
 	for i, ipReservation := range s.IPReservations {
 		ipReservations[i] = convertIPReservationToSLS(&ipReservation)
@@ -242,7 +246,7 @@ func convertIPV4SubnetToSLS(s *shasta.IPV4Subnet) sls_common.IPV4Subnet {
 	}
 }
 
-func convertIPReservationToSLS(s *shasta.IPReservation) sls_common.IPReservation {
+func convertIPReservationToSLS(s *csi.IPReservation) sls_common.IPReservation {
 	return sls_common.IPReservation{
 		IPAddress: s.IPAddress,
 		Name:      s.Name,

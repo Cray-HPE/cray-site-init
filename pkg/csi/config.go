@@ -1,12 +1,10 @@
 /*
-Copyright 2020 Hewlett Packard Enterprise Development LP
+Copyright 2021 Hewlett Packard Enterprise Development LP
 */
 
-package shasta
+package csi
 
 import (
-	"crypto/rand"
-	"fmt"
 	"net"
 )
 
@@ -65,84 +63,4 @@ type InstallConfig struct {
 	CephRBDImage        string `desc:"The container image for the ceph rbd provisioner" valid:"url"`
 	ChartRepo           string `desc:"Upstream chart repo for use during the install" valid:"url"`
 	DockerImageRegistry string `desc:"Upstream docker registry for use during the install" valid:"url"`
-}
-
-// CabinetDetail stores information that can only come from Manufacturing
-type CabinetDetail struct {
-	Kind            string        `mapstructure:"cabinet-type" yaml:"type"`
-	Cabinets        int           `mapstructure:"cabinets" yaml:"total_number"`
-	StartingCabinet int           `mapstructure:"starting-cabinet" yaml:"starting_id"`
-	CabinetIDs      []int         `mapstructure:"cabinet-ids" yaml:"ids"`
-	Subnets         []*IPV4Subnet `mapstructure:"subnets" yaml:"-"`
-}
-
-// PopulateIds fills out the cabinet ids by doing simple math
-func (cd *CabinetDetail) PopulateIds() {
-	if len(cd.CabinetIDs) != cd.Cabinets {
-		for cabID := cd.StartingCabinet; cabID < cd.StartingCabinet+cd.Cabinets; cabID++ {
-			cd.CabinetIDs = append(cd.CabinetIDs, cabID)
-		}
-	}
-}
-
-// Length returns the expected number of cabinets from the total_number passed in or the length of the cabinet_ids array
-func (cd *CabinetDetail) Length() int {
-	if len(cd.CabinetIDs) == 0 {
-		return cd.Cabinets
-	}
-	return len(cd.CabinetIDs)
-}
-
-// CabinetTypes returns a list of cabinet types from the file
-func (cdf *CabinetDetailFile) CabinetTypes() []string {
-	var out []string
-	for _, cd := range cdf.Cabinets {
-		out = append(out, cd.Kind)
-	}
-	return out
-}
-
-// CabinetDetailFile is a struct that matches the syntax of the configuration file for non-sequential cabinet ids
-type CabinetDetailFile struct {
-	Cabinets []CabinetDetail `yaml:"cabinets"`
-}
-
-// SiteServices stores identity information for system services
-type SiteServices struct {
-	IPV4Resolvers   []net.IPAddr
-	LDAPConn        LDAPConnection
-	NtpPoolHostname string
-	NtpHosts        []net.IPAddr
-}
-
-// ADGroup maps names and origins
-type ADGroup struct {
-	Name   string
-	Origin string
-}
-
-// LDAPConnection stores details related to LDAP Server Provisioning
-type LDAPConnection struct {
-	Servers                  []string
-	ADGroups                 []ADGroup
-	BindDn                   string
-	BindPassword             string
-	Domain                   string
-	SearchBase               string
-	AttributeMappersToRemove []string
-}
-
-// GenerateInstanceID creates an instance-id fit for use in the instance metadata
-func GenerateInstanceID() string {
-	b := make([]byte, 4)
-	rand.Read(b)
-	return fmt.Sprintf("i-%X", b)
-}
-
-// GetHostname returns an explicit hostname if possible, otherwise the Xname, otherwise an empty string
-func (node LogicalNCN) GetHostname() string {
-	if node.Hostname == "" {
-		return node.Xname
-	}
-	return node.Hostname
 }

@@ -1,15 +1,17 @@
-// Copyright 2020 Hewlett Packard Enterprise Development LP
+// Copyright 2021 Hewlett Packard Enterprise Development LP
 
-package shasta
+package csi
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	base "stash.us.cray.com/HMS/hms-base"
 	shcd_parser "stash.us.cray.com/HMS/hms-shcd-parser/pkg/shcd-parser"
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
@@ -482,12 +484,8 @@ func (g *SLSStateGenerator) isApplicationNode(sourceLowerCase string) (isApplica
 
 	// Merge default Application node prefixes with the user provided prefixes.
 	prefixes := []string{}
-	for _, prefix := range defaultApplicationNodePrefixes {
-		prefixes = append(prefixes, prefix)
-	}
-	for _, prefix := range applicationNodeConfig.Prefixes {
-		prefixes = append(prefixes, prefix)
-	}
+	prefixes = append(prefixes, defaultApplicationNodePrefixes...)
+	prefixes = append(prefixes, applicationNodeConfig.Prefixes...)
 
 	// Merge default Application node subroles with the user provided subroles. User provided subroles can override the default subroles
 	subRoles := map[string]string{}
@@ -688,7 +686,7 @@ func (g *SLSStateGenerator) getNodeHardwareFromRow(row shcd_parser.HMNRow) (hard
 	if isAParent {
 		// If it is, then the type is actually comptype_chassis_bmc.
 		hardware = sls_common.GenericHardware{
-			Parent:     fmt.Sprintf("%s", row.SourceRack),
+			Parent:     row.SourceRack,
 			Xname:      fmt.Sprintf("%sc0s%db999", row.SourceRack, uInteger),
 			Type:       "comptype_chassis_bmc",
 			Class:      "River",
@@ -883,4 +881,22 @@ func (g *SLSStateGenerator) buildNetworksSection() (allNetworks map[string]sls_c
 	// For right now, we leave them be.
 
 	return
+}
+
+// GenerateSLSState generates new SLSState object from an input state and hmn-connections file.
+func GenerateSLSState(inputState SLSGeneratorInputState, hmnRows []shcd_parser.HMNRow) sls_common.SLSState {
+	atomicLevel := zap.NewAtomicLevel()
+	encoderCfg := zap.NewProductionEncoderConfig()
+	logger := zap.New(zapcore.NewCore(
+		zapcore.NewJSONEncoder(encoderCfg),
+		zapcore.Lock(os.Stdout),
+		atomicLevel,
+	))
+
+	atomicLevel.SetLevel(zap.InfoLevel)
+
+	logger.Info("Beginning SLS configuration generation.")
+
+	g := NewSLSStateGenerator(logger, inputState, hmnRows)
+	return g.GenerateSLSState()
 }
