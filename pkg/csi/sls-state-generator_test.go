@@ -739,7 +739,7 @@ func (suite *ConfigGeneratorTestSuite) TestLoginNode() {
 		    "TypeString": "Node",
 		    "ExtraProperties": {
 		      "Role": "Application",
-			  "SubRole": "Login"
+			  "SubRole": "UAN"
 		    }
 		  },
 	*/
@@ -758,7 +758,7 @@ func (suite *ConfigGeneratorTestSuite) TestLoginNode() {
 	// TODO: CASMHMS-3598
 	//suite.Equal(hardwareExtraProperties.NID, 4) // No NIDs on UANs yet.
 	suite.Equal(hardwareExtraProperties.Role, "Application")
-	suite.Equal(hardwareExtraProperties.SubRole, "Login")
+	suite.Equal(hardwareExtraProperties.SubRole, "UAN")
 	suite.Empty(hardwareExtraProperties.Aliases) // This login node was intentionally not given a Alias
 }
 
