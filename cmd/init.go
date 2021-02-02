@@ -430,6 +430,7 @@ func mergeNCNs(logicalNcns []*csi.LogicalNCN, slsNCNs []csi.LogicalNCN) error {
 				ncn.Aliases = slsNCN.Aliases
 				ncn.BmcPort = slsNCN.BmcPort
 				// log.Println("Updated to be :", ncn)
+				ncn.InstanceID = csi.GenerateInstanceID()
 
 				found = true
 				break
