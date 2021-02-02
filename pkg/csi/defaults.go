@@ -232,7 +232,7 @@ func GenDefaultCANConfig() NetworkLayoutConfiguration {
 	return NetworkLayoutConfiguration{
 		Template:                        DefaultCAN,
 		SubdivideByCabinet:              false,
-		SuperNetHack:                    true,
+		SuperNetHack:                    false,
 		IncludeBootstrapDHCP:            true,
 		IncludeNetworkingHardwareSubnet: false,
 		IncludeUAISubnet:                false,
