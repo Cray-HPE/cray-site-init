@@ -1,5 +1,5 @@
 /*
-Copyright 2020 Hewlett Packard Enterprise Development LP
+Copyright 2021 Hewlett Packard Enterprise Development LP
 */
 
 package cmd
@@ -19,10 +19,9 @@ import (
 
 	shcd_parser "stash.us.cray.com/HMS/hms-shcd-parser/pkg/shcd-parser"
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
-	"stash.us.cray.com/MTL/csi/internal/files"
 	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
-	"stash.us.cray.com/MTL/csi/pkg/ipam"
-	"stash.us.cray.com/MTL/csi/pkg/shasta"
+	"stash.us.cray.com/MTL/csi/pkg/csi"
+	"stash.us.cray.com/MTL/csi/pkg/pit"
 	"stash.us.cray.com/MTL/csi/pkg/version"
 )
 
@@ -83,37 +82,111 @@ var initCmd = &cobra.Command{
 		}
 
 		// Read and validate our three input files
-		hmnRows, logicalNcns, switches, applicationNodeConfig := collectInput(v)
+		hmnRows, logicalNcns, switches, applicationNodeConfig, cabinetDetailList := collectInput(v)
 
-		cabinetDetailList := buildCabinetDetails(v)
-
+		var riverCabinetCount, mountainCabinetCount, hillCabinetCount int
 		for _, cab := range cabinetDetailList {
 
-			log.Printf("\t%v: %d\n", cab.Kind, len(cab.CabinetIDs))
+			log.Printf("\t%v: %d\n", cab.Kind, len(cab.CabinetIDs()))
+			switch cab.Kind {
+			case "river":
+				riverCabinetCount = len(cab.CabinetIDs())
+			case "mountain":
+				mountainCabinetCount = len(cab.CabinetIDs())
+			case "hill":
+				hillCabinetCount = len(cab.CabinetIDs())
+			}
+		}
+
+		// Prepare the network layout configs for generating the networks
+		var internalNetConfigs = make(map[string]csi.NetworkLayoutConfiguration)
+		internalNetConfigs["HMN"] = csi.GenDefaultHMNConfig()
+		internalNetConfigs["CAN"] = csi.GenDefaultCANConfig()
+		internalNetConfigs["NMN"] = csi.GenDefaultNMNConfig()
+		internalNetConfigs["HSN"] = csi.GenDefaultHSNConfig()
+		internalNetConfigs["MTL"] = csi.GenDefaultMTLConfig()
+
+		if internalNetConfigs["HMN"].GroupNetworksByCabinetType {
+			if mountainCabinetCount > 0 || hillCabinetCount > 0 {
+				tmpHmnMtn := csi.GenDefaultHMNConfig()
+				tmpHmnMtn.Template.Name = "HMN_MTN"
+				tmpHmnMtn.Template.FullName = "Mountain Hardware Management Network"
+				tmpHmnMtn.Template.VlanRange = []int16{1000, 1256}
+				tmpHmnMtn.SubdivideByCabinet = true
+				tmpHmnMtn.IncludeBootstrapDHCP = false
+				tmpHmnMtn.SuperNetHack = false
+				tmpHmnMtn.IncludeNetworkingHardwareSubnet = false
+				internalNetConfigs["HMN_MTN"] = tmpHmnMtn
+			}
+			if riverCabinetCount > 0 {
+				tmpHmnRvr := csi.GenDefaultHMNConfig()
+				tmpHmnRvr.Template.Name = "HMN_RVR"
+				tmpHmnRvr.Template.FullName = "River Hardware Management Network"
+				tmpHmnRvr.Template.VlanRange = []int16{1513, 1769}
+				tmpHmnRvr.SubdivideByCabinet = true
+				tmpHmnRvr.IncludeBootstrapDHCP = false
+				tmpHmnRvr.SuperNetHack = false
+				tmpHmnRvr.IncludeNetworkingHardwareSubnet = false
+				internalNetConfigs["HMN_RVR"] = tmpHmnRvr
+			}
+
+		}
+
+		if internalNetConfigs["NMN"].GroupNetworksByCabinetType {
+			if mountainCabinetCount > 0 || hillCabinetCount > 0 {
+				tmpNmnMtn := csi.GenDefaultNMNConfig()
+				tmpNmnMtn.Template.Name = "NMN_MTN"
+				tmpNmnMtn.Template.FullName = "Mountain Node Management Network"
+				tmpNmnMtn.Template.VlanRange = []int16{1257, 1512}
+				tmpNmnMtn.SubdivideByCabinet = true
+				tmpNmnMtn.IncludeBootstrapDHCP = false
+				tmpNmnMtn.SuperNetHack = false
+				tmpNmnMtn.IncludeNetworkingHardwareSubnet = false
+				tmpNmnMtn.IncludeUAISubnet = false
+				internalNetConfigs["NMN_MTN"] = tmpNmnMtn
+			}
+			if riverCabinetCount > 0 {
+				tmpNmnRvr := csi.GenDefaultNMNConfig()
+				tmpNmnRvr.Template.Name = "NMN_RVR"
+				tmpNmnRvr.Template.FullName = "River Node Management Network"
+				tmpNmnRvr.Template.VlanRange = []int16{1770, 2025}
+				tmpNmnRvr.SubdivideByCabinet = true
+				tmpNmnRvr.IncludeBootstrapDHCP = false
+				tmpNmnRvr.SuperNetHack = false
+				tmpNmnRvr.IncludeNetworkingHardwareSubnet = false
+				tmpNmnRvr.IncludeUAISubnet = false
+				internalNetConfigs["NMN_RVR"] = tmpNmnRvr
+			}
+
+		}
+
+		for name, layout := range internalNetConfigs {
+			myLayout := layout
+
+			// Update with flags
+			normalizedName := strings.ReplaceAll(strings.ToLower(name), "_", "-")
+
+			myLayout.BaseVlan = int16(v.GetInt(fmt.Sprintf("%v-bootstrap-vlan", normalizedName)))
+
+			myLayout.Template.CIDR = v.GetString(fmt.Sprintf("%v-cidr", normalizedName))
+
+			myLayout.AdditionalNetworkingSpace = v.GetInt("management-net-ips")
+			internalNetConfigs[name] = myLayout
 		}
 
 		// Build a set of networks we can use
-		shastaNetworks, err := BuildLiveCDNetworks(v, cabinetDetailList, switches)
+		shastaNetworks, err := csi.BuildCSMNetworks(internalNetConfigs, cabinetDetailList, switches)
 		if err != nil {
 			log.Panic(err)
 		}
 
-		if v.GetBool("supernet") {
-			// Once we have validated our networks, go through and replace the gateway and netmask on the
-			// uai, dhcp, and network hardware subnets to better support the 1.3 network switch configuration
-			// *** This is a HACK ***
-			for _, netName := range []string{"NMN", "HMN", "MTL", "CAN"} {
-				ApplySupernetHack(shastaNetworks[netName])
-			}
-		}
-
 		// Use our new networks and our list of logicalNCNs to distribute ips
-		shasta.AllocateIps(logicalNcns, shastaNetworks) // This function has no return because it is working with lists of pointers.
+		AllocateIps(logicalNcns, shastaNetworks) // This function has no return because it is working with lists of pointers.
 
 		// Now we can finally generate the slsState
 		slsState := prepareAndGenerateSLS(cabinetDetailList, shastaNetworks, hmnRows, switches, applicationNodeConfig, v.GetInt("starting-mountain-nid"))
 		// SLS can tell us which NCNs match with which Xnames, we need to update the IP Reservations
-		slsNcns, err := shasta.ExtractSLSNCNs(&slsState)
+		slsNcns, err := csi.ExtractSLSNCNs(&slsState)
 		if err != nil {
 			log.Panic(err) // This should never happen.  I can't really imagine how it would.
 		}
@@ -125,47 +198,51 @@ var initCmd = &cobra.Command{
 		}
 
 		// Cycle through the main networks and update the reservations, masks and dhcp ranges as necessary
-		for _, netName := range [4]string{"NMN", "HMN", "CAN", "MTL"} {
-			// Grab the supernet details for use in HACK substitution
-			tempSubnet, err := shastaNetworks[netName].LookUpSubnet("bootstrap_dhcp")
-			if err != nil {
-				log.Panic(err)
-			}
-			// Loop the reservations and update the NCN reservations with hostnames
-			// we likely didn't have when we registered the resevation
-			updateReservations(tempSubnet, logicalNcns)
-
-			tempSubnet.UpdateDHCPRange(v.GetBool("supernet"))
-			// We expect a bootstrap_dhcp in every net, but uai_macvlan is only in
-			// the NMN range for today
-			if netName == "NMN" {
-				tempSubnet, err = shastaNetworks[netName].LookUpSubnet("uai_macvlan")
+		for _, netName := range csi.ValidNetNames {
+			if shastaNetworks[netName] != nil {
+				// Grab the supernet details for use in HACK substitution
+				tempSubnet, err := shastaNetworks[netName].LookUpSubnet("bootstrap_dhcp")
 				if err != nil {
-					log.Panic(err)
+					log.Printf("Not processing %v for bootstrap_dhcp because %v \n", netName, err)
+				} else {
+					// Loop the reservations and update the NCN reservations with hostnames
+					// we likely didn't have when we registered the resevation
+					updateReservations(tempSubnet, logicalNcns)
+					tempSubnet.UpdateDHCPRange(v.GetBool("supernet"))
 				}
-				updateReservations(tempSubnet, logicalNcns)
-			}
 
+				// We expect a bootstrap_dhcp in every net, but uai_macvlan is only in
+				// the NMN range for today
+				if netName == "NMN" {
+					tempSubnet, err = shastaNetworks[netName].LookUpSubnet("uai_macvlan")
+					if err != nil {
+						log.Panic(err)
+					}
+					updateReservations(tempSubnet, logicalNcns)
+					tempSubnet.UpdateDHCPRange(false)
+				}
+
+			}
 		}
 
 		// Update the SLSState with the updated network information
 		_, slsState.Networks = prepareNetworkSLS(shastaNetworks)
 
 		// Switch from a list of pointers to a list of things before we write it out
-		var ncns []shasta.LogicalNCN
+		var ncns []csi.LogicalNCN
 		for _, ncn := range logicalNcns {
 			ncns = append(ncns, *ncn)
 		}
-		globals, err := shasta.MakeBasecampGlobals(v, ncns, shastaNetworks, "NMN", "bootstrap_dhcp", v.GetString("install-ncn"))
+		globals, err := pit.MakeBasecampGlobals(v, ncns, shastaNetworks, "NMN", "bootstrap_dhcp", v.GetString("install-ncn"))
 		if err != nil {
 			log.Fatalln("unable to generate basecamp globals: ", err)
 		}
 		writeOutput(v, shastaNetworks, slsState, ncns, switches, globals)
 
 		// Gather SLS information for summary
-		slsMountainCabinets := shasta.GetSLSCabinets(slsState, sls_common.ClassMountain)
-		slsHillCabinets := shasta.GetSLSCabinets(slsState, sls_common.ClassHill)
-		slsRiverCabinets := shasta.GetSLSCabinets(slsState, sls_common.ClassRiver)
+		slsMountainCabinets := csi.GetSLSCabinets(slsState, sls_common.ClassMountain)
+		slsHillCabinets := csi.GetSLSCabinets(slsState, sls_common.ClassHill)
+		slsRiverCabinets := csi.GetSLSCabinets(slsState, sls_common.ClassRiver)
 
 		// Print Summary
 		fmt.Printf("\n\n===== %v Installation Summary =====\n\n", v.GetString("system-name"))
@@ -175,13 +252,11 @@ var initCmd = &cobra.Command{
 		fmt.Printf("\tUpstream DNS: %v\n", v.GetString("ipv4-resolvers"))
 		fmt.Printf("\tMetalLB Peers: %v\n", v.GetString("bgp-peers"))
 		fmt.Println("Networking")
-		for netName, tempNet := range shastaNetworks {
+		if v.GetBool("supernet") {
+			fmt.Printf("\tSupernet enabled!  Using the supernet gateway for some management subnets \n")
+		}
+		for _, tempNet := range shastaNetworks {
 			fmt.Printf("\t* %v %v with %d subnets \n", tempNet.FullName, tempNet.CIDR, len(tempNet.Subnets))
-			if v.GetBool("supernet") && stringInSlice(netName, []string{"NMN", "HMN", "MTL", "CAN"}) {
-				_, superNet, _ := net.ParseCIDR(shastaNetworks[netName].CIDR)
-				maskSize, _ := superNet.Mask.Size()
-				fmt.Printf("\t\tSupernet enabled - Using /%v as netmask and %v as Gateway\n", maskSize, ipam.Add(superNet.IP, 1))
-			}
 		}
 		fmt.Printf("System Information\n")
 		fmt.Printf("\tNCNs: %v\n", len(ncns))
@@ -220,21 +295,27 @@ func init() {
 	initCmd.Flags().String("site-nic", "em1", "Network Interface on install-ncn that will be connected to the site network")
 
 	// Default IPv4 Networks
-	initCmd.Flags().String("nmn-cidr", shasta.DefaultNMNString, "Overall IPv4 CIDR for all Node Management subnets")
-	initCmd.Flags().String("hmn-cidr", shasta.DefaultHMNString, "Overall IPv4 CIDR for all Hardware Management subnets")
-	initCmd.Flags().String("can-cidr", shasta.DefaultCANString, "Overall IPv4 CIDR for all Customer Access subnets")
-	initCmd.Flags().String("can-static-pool", shasta.DefaultCANStaticString, "Overall IPv4 CIDR for static Customer Access addresses")
-	initCmd.Flags().String("can-dynamic-pool", shasta.DefaultCANPoolString, "Overall IPv4 CIDR for dynamic Customer Access addresses")
+	initCmd.Flags().String("nmn-cidr", csi.DefaultNMNString, "Overall IPv4 CIDR for all Node Management subnets")
+	initCmd.Flags().String("nmn-mtn-cidr", csi.DefaultNMNMTNString, "IPv4 CIDR for grouped Mountain Node Management subnets")
+	initCmd.Flags().String("nmn-rvr-cidr", csi.DefaultNMNRVRString, "IPv4 CIDR for grouped River Node Management subnets")
 
-	initCmd.Flags().String("mtl-cidr", shasta.DefaultMTLString, "Overall IPv4 CIDR for all Provisioning subnets")
-	initCmd.Flags().String("hsn-cidr", shasta.DefaultHSNString, "Overall IPv4 CIDR for all HSN subnets")
+	initCmd.Flags().String("hmn-cidr", csi.DefaultHMNString, "Overall IPv4 CIDR for all Hardware Management subnets")
+	initCmd.Flags().String("hmn-mtn-cidr", csi.DefaultHMNMTNString, "IPv4 CIDR for grouped Mountain Hardware Management subnets")
+	initCmd.Flags().String("hmn-rvr-cidr", csi.DefaultHMNRVRString, "IPv4 CIDR for grouped River Hardware Management subnets")
+
+	initCmd.Flags().String("can-cidr", csi.DefaultCANString, "Overall IPv4 CIDR for all Customer Access subnets")
+	initCmd.Flags().String("can-static-pool", csi.DefaultCANStaticString, "Overall IPv4 CIDR for static Customer Access addresses")
+	initCmd.Flags().String("can-dynamic-pool", csi.DefaultCANPoolString, "Overall IPv4 CIDR for dynamic Customer Access addresses")
+
+	initCmd.Flags().String("mtl-cidr", csi.DefaultMTLString, "Overall IPv4 CIDR for all Provisioning subnets")
+	initCmd.Flags().String("hsn-cidr", csi.DefaultHSNString, "Overall IPv4 CIDR for all HSN subnets")
 
 	initCmd.Flags().Bool("supernet", true, "Use the supernet mask and gateway for NCNs and Switches")
 
 	// Bootstrap VLANS
-	initCmd.Flags().Int("nmn-bootstrap-vlan", shasta.DefaultNMNVlan, "Bootstrap VLAN for the NMN")
-	initCmd.Flags().Int("hmn-bootstrap-vlan", shasta.DefaultHMNVlan, "Bootstrap VLAN for the HMN")
-	initCmd.Flags().Int("can-bootstrap-vlan", shasta.DefaultCANVlan, "Bootstrap VLAN for the CAN")
+	initCmd.Flags().Int("nmn-bootstrap-vlan", csi.DefaultNMNVlan, "Bootstrap VLAN for the NMN")
+	initCmd.Flags().Int("hmn-bootstrap-vlan", csi.DefaultHMNVlan, "Bootstrap VLAN for the HMN")
+	initCmd.Flags().Int("can-bootstrap-vlan", csi.DefaultCANVlan, "Bootstrap VLAN for the CAN")
 
 	// Hardware Details
 	initCmd.Flags().Int("mountain-cabinets", 4, "Number of Mountain Cabinets") // 4 mountain cabinets per CDU
@@ -324,9 +405,8 @@ func setupDirectories(systemName string, v *viper.Viper) (string, error) {
 	dirs := []string{
 		filepath.Join(basepath, "networks"),
 		filepath.Join(basepath, "manufacturing"),
-		filepath.Join(basepath, "credentials"),
 		filepath.Join(basepath, "dnsmasq.d"),
-		filepath.Join(basepath, "cpt-files"),
+		filepath.Join(basepath, "pit-files"),
 		filepath.Join(basepath, "basecamp"),
 	}
 	// Add the Manifest directory if needed
@@ -343,129 +423,7 @@ func setupDirectories(systemName string, v *viper.Viper) (string, error) {
 	return basepath, nil
 }
 
-func collectInput(v *viper.Viper) ([]shcd_parser.HMNRow, []*shasta.LogicalNCN, []*shasta.ManagementSwitch, shasta.SLSGeneratorApplicationNodeConfig) {
-	// The installation requires a set of information in order to proceed
-	// First, we need some kind of representation of the physical hardware
-	// That is generally represented through the hmn_connections.json file
-	// which is literally a cabling map with metadata about the NCNs and
-	// River Compute node BMCs, Columbia Rosetta Switches, and PDUs.
-	//
-	// From the hmn_connections file, we can create a set of HMNRow objects
-	// to use for populating SLS.
-	hmnRows, err := loadHMNConnectionsFile(v.GetString("hmn-connections"))
-	if err != nil {
-		log.Fatalf("unable to load hmn connections, %v \n", err)
-	}
-
-	// SLS also needs to know about our networking configuration.  In order to do that,
-	// we need to load the switches
-	switches, err := csiFiles.ReadSwitchCSV(v.GetString("switch-metadata"))
-	if err != nil {
-		log.Fatalln("Couldn't extract switches", err)
-	}
-
-	// Normalize the management switch data, before validation
-	for _, mySwitch := range switches {
-		mySwitch.Normalize()
-	}
-
-	if err := validateSwitchInput(switches); err != nil {
-		log.Println("Unable to get reasonable Switches from your csv")
-		log.Println("Does your header match the preferred style? Switch Xname,Type,Brand")
-		log.Fatal("CSV Parsing failed.  Can't continue.")
-	}
-
-	// This is techincally sufficient to generate an SLSState object, but to do so now
-	// would not include extended information about the NCNs and Network Switches.
-	//
-	// The first step in building the NCN map is to read the NCN Metadata file
-	ncns, err := csiFiles.ReadNodeCSV(v.GetString("ncn-metadata"))
-	if err != nil {
-		log.Fatalln("Couldn't extract ncns", err)
-	}
-
-	// Normalize the ncn data, before validation
-	for _, ncn := range ncns {
-		ncn.Normalize()
-	}
-
-	if err := validateNCNInput(ncns); err != nil {
-		log.Println("Unable to get reasonable NCNs from your csv")
-		log.Println("Does your header match the preferred style? Xname,Role,Subrole,BMC MAC,Bootstrap MAC,Bond0 MAC0,Bond0 MAC1")
-		log.Fatal("CSV Parsing failed.  Can't continue.")
-	}
-
-	// Application Node configration for SLS Config Generator
-	// This is an optional input file
-	var applicationNodeConfig shasta.SLSGeneratorApplicationNodeConfig
-	if v.IsSet("application-node-config-yaml") {
-		applicationNodeConfigPath := v.GetString("application-node-config-yaml")
-
-		log.Printf("Using application node config: %s\n", applicationNodeConfigPath)
-		err := files.ReadYAMLConfig(applicationNodeConfigPath, &applicationNodeConfig)
-		if err != nil {
-			log.Fatalf("Unable to parse application-node-config file: %s\nError: %v", applicationNodeConfigPath, err)
-		}
-	}
-
-	// Normalize application node config
-	if err := applicationNodeConfig.Normalize(); err != nil {
-		log.Fatalf("Failed to normalize application node config. Error: %s", err)
-	}
-
-	// Validate Application node config
-	if err := applicationNodeConfig.Validate(); err != nil {
-		log.Fatalf("Failed to validate application node config. Error: %s", err)
-	}
-
-	return hmnRows, ncns, switches, applicationNodeConfig
-}
-
-func validateSwitchInput(switches []*shasta.ManagementSwitch) error {
-	// Validate that there is an non-zero number of NCNs extracted from ncn_metadata.csv
-	if len(switches) == 0 {
-		return fmt.Errorf("unable to extract Switches from switch metadata csv")
-	}
-
-	// Validate each Switch
-	var mustFail = false
-	for _, mySwitch := range switches {
-		if err := mySwitch.Validate(); err != nil {
-			mustFail = true
-			log.Println("Switch from csv is invalid:", err)
-		}
-	}
-
-	if mustFail {
-		return fmt.Errorf("switch_metadata.csv contains invalid switch data")
-	}
-
-	return nil
-}
-
-func validateNCNInput(ncns []*shasta.LogicalNCN) error {
-	// Validate that there is an non-zero number of NCNs extracted from ncn_metadata.csv
-	if len(ncns) == 0 {
-		return fmt.Errorf("unable to extract NCNs from ncn metadata csv")
-	}
-
-	// Validate each NCN
-	var mustFail = false
-	for _, ncn := range ncns {
-		if err := ncn.Validate(); err != nil {
-			mustFail = true
-			log.Println("NCN from csv is invalid", ncn, err)
-		}
-	}
-
-	if mustFail {
-		return fmt.Errorf("ncn_metadata.csv contains invalid NCN data")
-	}
-
-	return nil
-}
-
-func mergeNCNs(logicalNcns []*shasta.LogicalNCN, slsNCNs []shasta.LogicalNCN) error {
+func mergeNCNs(logicalNcns []*csi.LogicalNCN, slsNCNs []csi.LogicalNCN) error {
 	// Merge the SLS NCN list with the NCN list from ncn-metadata
 	for _, ncn := range logicalNcns {
 		found := false
@@ -476,6 +434,7 @@ func mergeNCNs(logicalNcns []*shasta.LogicalNCN, slsNCNs []shasta.LogicalNCN) er
 				ncn.Aliases = slsNCN.Aliases
 				ncn.BmcPort = slsNCN.BmcPort
 				// log.Println("Updated to be :", ncn)
+				// ncn.InstanceID = csi.GenerateInstanceID()
 
 				found = true
 				break
@@ -491,9 +450,9 @@ func mergeNCNs(logicalNcns []*shasta.LogicalNCN, slsNCNs []shasta.LogicalNCN) er
 	return nil
 }
 
-func prepareNetworkSLS(shastaNetworks map[string]*shasta.IPV4Network) ([]shasta.IPV4Network, map[string]sls_common.Network) {
+func prepareNetworkSLS(shastaNetworks map[string]*csi.IPV4Network) ([]csi.IPV4Network, map[string]sls_common.Network) {
 	// Fix up the network names & create the SLS friendly version of the shasta networks
-	var networks []shasta.IPV4Network
+	var networks []csi.IPV4Network
 	for name, network := range shastaNetworks {
 		if network.Name == "" {
 			network.Name = name
@@ -503,17 +462,7 @@ func prepareNetworkSLS(shastaNetworks map[string]*shasta.IPV4Network) ([]shasta.
 	return networks, convertIPV4NetworksToSLS(&networks)
 }
 
-// helper function to maintain a unique list of strings.  Not optimized for large lists.
-func appendIfMissing(slice []string, item string) []string {
-	for _, ele := range slice {
-		if ele == item {
-			return slice
-		}
-	}
-	return append(slice, item)
-}
-
-func prepareAndGenerateSLS(cd []shasta.CabinetDetail, shastaNetworks map[string]*shasta.IPV4Network, hmnRows []shcd_parser.HMNRow, inputSwitches []*shasta.ManagementSwitch, applicationNodeConfig shasta.SLSGeneratorApplicationNodeConfig, startingNid int) sls_common.SLSState {
+func prepareAndGenerateSLS(cd []csi.CabinetGroupDetail, shastaNetworks map[string]*csi.IPV4Network, hmnRows []shcd_parser.HMNRow, inputSwitches []*csi.ManagementSwitch, applicationNodeConfig csi.SLSGeneratorApplicationNodeConfig, startingNid int) sls_common.SLSState {
 	// Management Switch Information is included in the IP Reservations for each subnet
 	switchNet, err := shastaNetworks["HMN"].LookUpSubnet("network_hardware")
 	if err != nil {
@@ -548,11 +497,7 @@ func prepareAndGenerateSLS(cd []shasta.CabinetDetail, shastaNetworks map[string]
 	// Convert shastaNetwork information to SLS Style Networking
 	_, slsNetworks := prepareNetworkSLS(shastaNetworks)
 
-	for _, tmpCabinet := range slsCabinetMap["river"] {
-		log.Printf("River SLS Cabinet: %s", tmpCabinet.Xname)
-	}
-
-	inputState := shasta.SLSGeneratorInputState{
+	inputState := csi.SLSGeneratorInputState{
 		ApplicationNodeConfig: applicationNodeConfig,
 		ManagementSwitches:    slsSwitches,
 		RiverCabinets:         slsCabinetMap["river"],
@@ -562,11 +507,11 @@ func prepareAndGenerateSLS(cd []shasta.CabinetDetail, shastaNetworks map[string]
 		Networks:              slsNetworks,
 	}
 
-	slsState := shasta.GenerateSLSState(inputState, hmnRows)
+	slsState := csi.GenerateSLSState(inputState, hmnRows)
 	return slsState
 }
 
-func updateReservations(tempSubnet *shasta.IPV4Subnet, logicalNcns []*shasta.LogicalNCN) {
+func updateReservations(tempSubnet *csi.IPV4Subnet, logicalNcns []*csi.LogicalNCN) {
 	// Loop the reservations and update the NCN reservations with hostnames
 	// we likely didn't have when we registered the resevation
 	for index, reservation := range tempSubnet.IPReservations {
@@ -598,36 +543,33 @@ func updateReservations(tempSubnet *shasta.IPV4Subnet, logicalNcns []*shasta.Log
 	}
 }
 
-func writeOutput(v *viper.Viper, shastaNetworks map[string]*shasta.IPV4Network, slsState sls_common.SLSState, logicalNCNs []shasta.LogicalNCN, switches []*shasta.ManagementSwitch, globals interface{}) {
+func writeOutput(v *viper.Viper, shastaNetworks map[string]*csi.IPV4Network, slsState sls_common.SLSState, logicalNCNs []csi.LogicalNCN, switches []*csi.ManagementSwitch, globals interface{}) {
 	basepath, _ := setupDirectories(v.GetString("system-name"), v)
 	err := csiFiles.WriteJSONConfig(filepath.Join(basepath, "sls_input_file.json"), &slsState)
 	if err != nil {
 		log.Fatalln("Failed to encode SLS state:", err)
 	}
-	WriteNetworkFiles(basepath, shastaNetworks)
+	pit.WriteNetworkFiles(basepath, shastaNetworks)
 	v.SetConfigType("yaml")
 	v.Set("VersionInfo", version.Get())
 	v.WriteConfigAs(filepath.Join(basepath, "system_config.yaml"))
 
-	csiFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/root_password.json"), shasta.DefaultRootPW)
-	csiFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/bmc_password.json"), shasta.DefaultBMCPW)
-	csiFiles.WriteJSONConfig(filepath.Join(basepath, "credentials/mgmt_switch_password.json"), shasta.DefaultNetPW)
-	csiFiles.WriteYAMLConfig(filepath.Join(basepath, "customizations.yaml"), shasta.GenCustomizationsYaml(logicalNCNs, shastaNetworks))
+	csiFiles.WriteYAMLConfig(filepath.Join(basepath, "customizations.yaml"), pit.GenCustomizationsYaml(logicalNCNs, shastaNetworks))
 
 	for _, ncn := range logicalNCNs {
-		// log.Println("Checking to see if we need CPT files for ", ncn.Hostname)
+		// log.Println("Checking to see if we need PIT files for ", ncn.Hostname)
 		if strings.HasPrefix(ncn.Hostname, v.GetString("install-ncn")) {
-			log.Println("Generating Installer Node (CPT) interface configurations for:", ncn.Hostname)
-			WriteCPTNetworkConfig(filepath.Join(basepath, "cpt-files"), v, ncn, shastaNetworks)
+			log.Println("Generating Installer Node (PIT) interface configurations for:", ncn.Hostname)
+			pit.WriteCPTNetworkConfig(filepath.Join(basepath, "pit-files"), v, ncn, shastaNetworks)
 		}
 	}
-	WriteDNSMasqConfig(basepath, v, logicalNCNs, shastaNetworks)
-	WriteConmanConfig(filepath.Join(basepath, "conman.conf"), logicalNCNs)
-	WriteMetalLBConfigMap(basepath, v, shastaNetworks, switches)
-	WriteBasecampData(filepath.Join(basepath, "basecamp/data.json"), logicalNCNs, shastaNetworks, globals)
+	pit.WriteDNSMasqConfig(basepath, v, logicalNCNs, shastaNetworks)
+	pit.WriteConmanConfig(filepath.Join(basepath, "conman.conf"), logicalNCNs)
+	pit.WriteMetalLBConfigMap(basepath, v, shastaNetworks, switches)
+	pit.WriteBasecampData(filepath.Join(basepath, "basecamp/data.json"), logicalNCNs, shastaNetworks, globals)
 
 	if v.GetString("manifest-release") != "" {
-		initiailzeManifestDir(shasta.DefaultManifestURL, "release/shasta-1.4", filepath.Join(basepath, "loftsman-manifests"))
+		initiailzeManifestDir(csi.DefaultManifestURL, "release/shasta-1.4", filepath.Join(basepath, "loftsman-manifests"))
 	}
 }
 
@@ -683,4 +625,57 @@ func validateFlags() []string {
 		}
 	}
 	return errors
+}
+
+// AllocateIps distributes IP reservations for each of the NCNs within the networks
+func AllocateIps(ncns []*csi.LogicalNCN, networks map[string]*csi.IPV4Network) {
+	log.Printf("I'm here in AllocateIps with %d ncns to work with and %d networks", len(ncns), len(networks))
+	lookup := func(name string, subnetName string, networks map[string]*csi.IPV4Network) (*csi.IPV4Subnet, error) {
+		tempNetwork := networks[name]
+		subnet, err := tempNetwork.LookUpSubnet(subnetName)
+		if err != nil {
+			// log.Printf("couldn't find a %v subnet in the %v network \n", subnetName, name)
+			return subnet, fmt.Errorf("couldn't find a %v subnet in the %v network", subnetName, name)
+		}
+		// log.Printf("found a %v subnet in the %v network", subnetName, name)
+		return subnet, nil
+	}
+
+	// Build a map of networks based on their names
+	subnets := make(map[string]*csi.IPV4Subnet)
+	for name := range networks {
+		log.Printf("Dealing %v of the allocatedNetNames \n", name)
+		bootstrapNet, err := lookup(name, "bootstrap_dhcp", networks)
+		if err == nil {
+			subnets[name] = bootstrapNet
+			log.Printf("Adding the %v net bootstrapNet \n", name)
+		}
+	}
+
+	// Loop through the NCNs and then run through the networks to add reservations and assign ip addresses
+	for _, ncn := range ncns {
+		ncn.InstanceID = csi.GenerateInstanceID()
+		for netName, subnet := range subnets {
+			// reserve the bmc ip
+			if netName == "HMN" {
+				// The bmc xname is the ncn xname without the final two characters
+				// NCN Xname = x3000c0s9b0n0  BMC Xname = x3000c0s9b0
+				ncn.BmcIP = subnet.AddReservation(fmt.Sprintf("%v", strings.TrimSuffix(ncn.Xname, "n0")), fmt.Sprintf("%v-mgmt", ncn.Xname)).IPAddress.String()
+			}
+			// Hostname is not available a the point AllocateIPs should be called.
+			reservation := subnet.AddReservation(ncn.Xname, ncn.Xname)
+			log.Printf("Adding %v %v reservation for %v(%v) at %v \n", netName, subnet.Name, ncn.Xname, ncn.Xname, reservation.IPAddress.String())
+			prefixLen := strings.Split(subnet.CIDR.String(), "/")[1]
+			tempNetwork := csi.NCNNetwork{
+				NetworkName: netName,
+				IPAddress:   reservation.IPAddress.String(),
+				Vlan:        int(subnet.VlanID),
+				FullName:    subnet.FullName,
+				CIDR:        strings.Join([]string{reservation.IPAddress.String(), prefixLen}, "/"),
+				Mask:        prefixLen,
+			}
+			ncn.Networks = append(ncn.Networks, tempNetwork)
+
+		}
+	}
 }

@@ -1,14 +1,15 @@
 package cmd
 
 /*
-Copyright 2020 Hewlett Packard Enterprise Development LP
+Copyright 2021 Hewlett Packard Enterprise Development LP
 */
 
 import (
-	"github.com/spf13/cobra"
-	"os"
 	"fmt"
+	"os"
 	"path/filepath"
+
+	"github.com/spf13/cobra"
 )
 
 // cowCmd represents the pitcow command
@@ -29,8 +30,8 @@ var cowCmd = &cobra.Command{
 		// populate them with files, and then they will be there when they boot.
 		// this is how networking on boot is achieved as well as having dnsmasq configs already in place
 
-		// cpt-files are all interface config files, so they go to /etc/sysconfig/network
-		copyAllFiles(filepath.Join(args[1], "cpt-files/"), filepath.Join(args[0], "rw/etc/sysconfig/network/"))
+		// pit-files are all interface config files, so they go to /etc/sysconfig/network
+		copyAllFiles(filepath.Join(args[1], "pit-files/"), filepath.Join(args[0], "rw/etc/sysconfig/network/"))
 		// dnsmasq.d are all dnsmasq configs, so they can go in /etc/dnsmasq.d
 		copyAllFiles(filepath.Join(args[1], "dnsmasq.d/"), filepath.Join(args[0], "rw/etc/dnsmasq.d/"))
 

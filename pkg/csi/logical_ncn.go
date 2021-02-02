@@ -1,15 +1,18 @@
 /*
-Copyright 2020 Hewlett Packard Enterprise Development LP
+Copyright 2021 Hewlett Packard Enterprise Development LP
 */
 
-package shasta
+package csi
 
 import (
+	"crypto/rand"
 	"fmt"
+	"io"
 	"log"
 	"net"
-	"strings"
+	"os"
 
+	"github.com/gocarina/gocsv"
 	base "stash.us.cray.com/HMS/hms-base"
 )
 
@@ -64,6 +67,14 @@ func (lncn *LogicalNCN) Validate() error {
 	return nil
 }
 
+// GetHostname returns an explicit hostname if possible, otherwise the Xname, otherwise an empty string
+func (lncn LogicalNCN) GetHostname() string {
+	if lncn.Hostname == "" {
+		return lncn.Xname
+	}
+	return lncn.Hostname
+}
+
 // Normalize the values of a LogicalNCN
 func (lncn *LogicalNCN) Normalize() error {
 	// Right now we only need to the normalize the xname for the switch. IE strip any leading 0s
@@ -82,7 +93,14 @@ func (lncn *LogicalNCN) GetIP(netName string) net.IP {
 	return net.IP{}
 }
 
-// NCNNetwork holds information about networks
+// GenerateInstanceID creates an instance-id fit for use in the instance metadata
+func GenerateInstanceID() string {
+	b := make([]byte, 4)
+	rand.Read(b)
+	return fmt.Sprintf("i-%X", b)
+}
+
+// NCNNetwork holds information about networks in the NCN context
 type NCNNetwork struct {
 	NetworkName   string `json:"network-name"`
 	FullName      string `json:"full-name"`
@@ -104,48 +122,48 @@ type NCNInterface struct {
 	Usage         string `json:"usage" csv:"-"`
 }
 
-// AllocateIps distributes IP reservations for each of the NCNs within the networks
-func AllocateIps(ncns []*LogicalNCN, networks map[string]*IPV4Network) {
-	lookup := func(name string, subnetName string, networks map[string]*IPV4Network) *IPV4Subnet {
-		tempNetwork := networks[name]
-		subnet, err := tempNetwork.LookUpSubnet(subnetName)
+// ReadNodeCSV parses a CSV file into a list of NCN_bootstrap nodes for use by the installer
+func ReadNodeCSV(filename string) ([]*LogicalNCN, error) {
+	nodes := []*LogicalNCN{}
+	newNodes := []*NewBootstrapNCNMetadata{}
+
+	ncnMetadataFile, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, os.ModePerm)
+	if err != nil {
+		return nodes, err
+	}
+	defer ncnMetadataFile.Close()
+	// In 1.4, we have a new format for this file.  Try that first and then fall back to the older style if necessary
+	newErr := gocsv.UnmarshalFile(ncnMetadataFile, &newNodes)
+	if newErr == nil {
+		for _, node := range newNodes {
+			// log.Println("Appending ", node)
+			nodes = append(nodes, &LogicalNCN{
+				Xname:     node.Xname,
+				Role:      node.Role,
+				Subrole:   node.Subrole,
+				BmcMac:    node.BmcMac,
+				NmnMac:    node.BootstrapMac,
+				Bond0Mac0: node.Bond0Mac0,
+				Bond0Mac1: node.Bond0Mac1,
+			})
+		}
+		return nodes, nil
+	}
+
+	// Be Kind Rewind https://www.imdb.com/title/tt0799934/
+	ncnMetadataFile.Seek(0, io.SeekStart)
+	err = gocsv.UnmarshalFile(ncnMetadataFile, &nodes)
+	if err == nil { // Load nodes from file
+		return nodes, nil
+	}
+
+	if newErr != nil {
 		if err != nil {
-			log.Printf("couldn't find a %v subnet in the %v network \n", subnetName, name)
+			log.Println("Unable to parse ncn_metadata with new style because ", newErr)
+			log.Fatal("Unable to parse ncn_metadata with old format because ", err)
 		}
-		// log.Printf("found a %v subnet in the %v network", subnetName, name)
-		return subnet
+		log.Fatal("Unable to parse ncn_metadata with new style because ", newErr)
 	}
 
-	// Build a map of networks based on their names
-	netNames := []string{"CAN", "MTL", "NMN", "HMN"}
-	subnets := make(map[string]*IPV4Subnet)
-	for _, name := range netNames {
-		subnets[name] = lookup(name, "bootstrap_dhcp", networks)
-	}
-
-	// Loop through the NCNs and then run through the networks to add reservations and assign ip addresses
-	for _, ncn := range ncns {
-		for netName, subnet := range subnets {
-			// reserve the bmc ip
-			if netName == "HMN" {
-				// The bmc xname is the ncn xname without the final two characters
-				// NCN Xname = x3000c0s9b0n0  BMC Xname = x3000c0s9b0
-				ncn.BmcIP = subnet.AddReservation(fmt.Sprintf("%v", strings.TrimSuffix(ncn.Xname, "n0")), fmt.Sprintf("%v-mgmt", ncn.Xname)).IPAddress.String()
-			}
-			// Hostname is not available a the point AllocateIPs should be called.
-			reservation := subnet.AddReservation(ncn.Xname, ncn.Xname)
-			// log.Printf("Adding %v %v reservation for %v(%v) at %v \n", netName, subnet.Name, ncn.Xname, ncn.Xname, reservation.IPAddress.String())
-			prefixLen := strings.Split(subnet.CIDR.String(), "/")[1]
-			tempNetwork := NCNNetwork{
-				NetworkName: netName,
-				IPAddress:   reservation.IPAddress.String(),
-				Vlan:        int(subnet.VlanID),
-				FullName:    subnet.FullName,
-				CIDR:        strings.Join([]string{reservation.IPAddress.String(), prefixLen}, "/"),
-				Mask:        prefixLen,
-			}
-			ncn.Networks = append(ncn.Networks, tempNetwork)
-
-		}
-	}
+	return nodes, err
 }

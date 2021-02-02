@@ -1,8 +1,8 @@
 /*
-Copyright 2020 Hewlett Packard Enterprise Development LP
+Copyright 2021 Hewlett Packard Enterprise Development LP
 */
 
-package shasta
+package csi
 
 /*
 This package bridges the gap between the SLS view of the CRAY System and one that is useful
@@ -28,10 +28,7 @@ import (
 	"time"
 
 	"github.com/mitchellh/mapstructure"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 
-	shcd_parser "stash.us.cray.com/HMS/hms-shcd-parser/pkg/shcd-parser"
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
 )
 
@@ -167,24 +164,6 @@ func ExtractSLSSwitches(sls *sls_common.SLSState) ([]ManagementSwitch, error) {
 		}
 	}
 	return switches, nil
-}
-
-// GenerateSLSState generates new SLSState object from an input state and hmn-connections file.
-func GenerateSLSState(inputState SLSGeneratorInputState, hmnRows []shcd_parser.HMNRow) sls_common.SLSState {
-	atomicLevel := zap.NewAtomicLevel()
-	encoderCfg := zap.NewProductionEncoderConfig()
-	logger := zap.New(zapcore.NewCore(
-		zapcore.NewJSONEncoder(encoderCfg),
-		zapcore.Lock(os.Stdout),
-		atomicLevel,
-	))
-
-	atomicLevel.SetLevel(zap.InfoLevel)
-
-	logger.Info("Beginning SLS configuration generation.")
-
-	g := NewSLSStateGenerator(logger, inputState, hmnRows)
-	return g.GenerateSLSState()
 }
 
 // CabinetForXname extracts the cabinet identifier from an xname

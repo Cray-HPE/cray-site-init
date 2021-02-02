@@ -1,5 +1,5 @@
 /*
-Copyright 2020 Hewlett Packard Enterprise Development LP
+Copyright 2021 Hewlett Packard Enterprise Development LP
 */
 
 package cmd
@@ -11,7 +11,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
-	"stash.us.cray.com/MTL/csi/pkg/shasta"
+	"stash.us.cray.com/MTL/csi/pkg/csi"
 )
 
 type GenSLSTestSuite struct {
@@ -20,16 +20,16 @@ type GenSLSTestSuite struct {
 
 func (suite *GenSLSTestSuite) TestConvertManagementSwitchToSLS_HappyPath() {
 	tests := []struct {
-		csiSwitch   shasta.ManagementSwitch
+		csiSwitch   csi.ManagementSwitch
 		expectedSLS sls_common.GenericHardware
 	}{{
 		// Leaf Switch
-		csiSwitch: shasta.ManagementSwitch{
+		csiSwitch: csi.ManagementSwitch{
 			Xname:               "x3000c0w14",
 			Name:                "sw-leaf-001",
 			ManagementInterface: net.ParseIP("10.254.0.2"),
-			SwitchType:          shasta.ManagementSwitchTypeLeaf,
-			Brand:               shasta.ManagementSwitchBrandAruba,
+			SwitchType:          csi.ManagementSwitchTypeLeaf,
+			Brand:               csi.ManagementSwitchBrandAruba,
 			Model:               "6300M",
 		},
 		expectedSLS: sls_common.GenericHardware{
@@ -52,12 +52,12 @@ func (suite *GenSLSTestSuite) TestConvertManagementSwitchToSLS_HappyPath() {
 		},
 	}, {
 		// Spine Switch
-		csiSwitch: shasta.ManagementSwitch{
+		csiSwitch: csi.ManagementSwitch{
 			Xname:               "x3000c0h13s1",
 			Name:                "sw-spine-001",
 			ManagementInterface: net.ParseIP("10.254.0.2"),
-			SwitchType:          shasta.ManagementSwitchTypeSpine,
-			Brand:               shasta.ManagementSwitchBrandAruba,
+			SwitchType:          csi.ManagementSwitchTypeSpine,
+			Brand:               csi.ManagementSwitchBrandAruba,
 			Model:               "8325",
 		},
 		expectedSLS: sls_common.GenericHardware{
@@ -75,12 +75,12 @@ func (suite *GenSLSTestSuite) TestConvertManagementSwitchToSLS_HappyPath() {
 		},
 	}, {
 		// Aggergation Switch
-		csiSwitch: shasta.ManagementSwitch{
+		csiSwitch: csi.ManagementSwitch{
 			Xname:               "x3000c0h13s1",
 			Name:                "sw-agg-001",
 			ManagementInterface: net.ParseIP("10.254.0.2"),
-			SwitchType:          shasta.ManagementSwitchTypeAggregation,
-			Brand:               shasta.ManagementSwitchBrandAruba,
+			SwitchType:          csi.ManagementSwitchTypeAggregation,
+			Brand:               csi.ManagementSwitchBrandAruba,
 			Model:               "8325",
 		},
 		expectedSLS: sls_common.GenericHardware{
@@ -98,12 +98,12 @@ func (suite *GenSLSTestSuite) TestConvertManagementSwitchToSLS_HappyPath() {
 		},
 	}, {
 		// CDU Mgmt Switch
-		csiSwitch: shasta.ManagementSwitch{
+		csiSwitch: csi.ManagementSwitch{
 			Xname:               "d10w10",
 			Name:                "sw-cdu-001",
 			ManagementInterface: net.ParseIP("10.254.0.2"),
-			SwitchType:          shasta.ManagementSwitchTypeCDU,
-			Brand:               shasta.ManagementSwitchBrandDell,
+			SwitchType:          csi.ManagementSwitchTypeCDU,
+			Brand:               csi.ManagementSwitchBrandDell,
 			Model:               "8325",
 		},
 		expectedSLS: sls_common.GenericHardware{
@@ -129,26 +129,26 @@ func (suite *GenSLSTestSuite) TestConvertManagementSwitchToSLS_HappyPath() {
 
 func (suite *GenSLSTestSuite) TestConvertManagementSwitchToSLS_InvalidSwitchType() {
 	tests := []struct {
-		csiSwitch     shasta.ManagementSwitch
+		csiSwitch     csi.ManagementSwitch
 		expectedError error
 	}{{
 		// Missing Switch Type
-		csiSwitch: shasta.ManagementSwitch{
+		csiSwitch: csi.ManagementSwitch{
 			Xname:               "x3000c0w14",
 			Name:                "sw-leaf-001",
 			ManagementInterface: net.ParseIP("10.254.0.2"),
-			Brand:               shasta.ManagementSwitchBrandAruba,
+			Brand:               csi.ManagementSwitchBrandAruba,
 			Model:               "6300M",
 		},
 		expectedError: errors.New("unknown management switch type: "),
 	}, {
 		// Invalid switch type
-		csiSwitch: shasta.ManagementSwitch{
+		csiSwitch: csi.ManagementSwitch{
 			Xname:               "x3000c0w14",
 			Name:                "sw-leaf-001",
 			ManagementInterface: net.ParseIP("10.254.0.2"),
-			SwitchType:          shasta.ManagementSwitchType("foobar"),
-			Brand:               shasta.ManagementSwitchBrandAruba,
+			SwitchType:          csi.ManagementSwitchType("foobar"),
+			Brand:               csi.ManagementSwitchBrandAruba,
 			Model:               "6300M",
 		},
 		expectedError: errors.New("unknown management switch type: foobar"),
@@ -161,8 +161,8 @@ func (suite *GenSLSTestSuite) TestConvertManagementSwitchToSLS_InvalidSwitchType
 }
 
 func (suite *GenSLSTestSuite) TestExtractSwitchesfromReservations() {
-	subnet := &shasta.IPV4Subnet{
-		IPReservations: []shasta.IPReservation{{
+	subnet := &csi.IPV4Subnet{
+		IPReservations: []csi.IPReservation{{
 			Comment:   "x3000c0w14",
 			Name:      "sw-leaf-001",
 			IPAddress: net.ParseIP("10.254.0.2"),
@@ -181,7 +181,7 @@ func (suite *GenSLSTestSuite) TestExtractSwitchesfromReservations() {
 		}},
 	}
 
-	expectedOutput := []shasta.ManagementSwitch{{
+	expectedOutput := []csi.ManagementSwitch{{
 		Xname:               "x3000c0w14",
 		Name:                "sw-leaf-001",
 		SwitchType:          "Leaf",

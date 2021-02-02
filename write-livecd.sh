@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # vim: et sw=4 ts=4 autoindent
 #
-# Copyright 2020 Hewlett Packard Enterprise Development LP
+# Copyright 2021 Hewlett Packard Enterprise Development LP
 #
 # Create a bootable pre-install-toolkit LiveCD USB drive.
 #
