@@ -2,20 +2,8 @@ module stash.us.cray.com/MTL/csi
 
 replace k8s.io/client-go => k8s.io/client-go v0.19.4 // pinning this version for now.  Something is indirectly asking for an obsolete version
 
-// Pin HSM Library versions
-replace stash.us.cray.com/HMS/hms-base => stash.us.cray.com/HMS/hms-base v1.9.0
-
-replace stash.us.cray.com/HMS/hms-compcredentials => stash.us.cray.com/HMS/hms-compcredentials v1.8.0
-
-replace stash.us.cray.com/HMS/hms-s3 => stash.us.cray.com/HMS/hms-s3 v1.6.1
-
-replace stash.us.cray.com/HMS/hms-securestorage => stash.us.cray.com/HMS/hms-securestorage v1.8.1
-
-replace stash.us.cray.com/HMS/hms-shcd-parser => stash.us.cray.com/HMS/hms-shcd-parser v1.1.2
-
 require (
 	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef
-	github.com/davecgh/go-spew v1.1.1
 	github.com/evanphx/json-patch v4.9.0+incompatible
 	github.com/gocarina/gocsv v0.0.0-20200925213129-04be9ee2e1a2
 	github.com/imdario/mergo v0.3.11 // indirect
@@ -34,11 +22,12 @@ require (
 	k8s.io/apimachinery v0.19.4
 	k8s.io/client-go v0.19.4
 	k8s.io/utils v0.0.0-20201110183641-67b214c5f920 // indirect
-	stash.us.cray.com/HMS/hms-base v1.9.0
-	stash.us.cray.com/HMS/hms-bss v1.7.0
-	stash.us.cray.com/HMS/hms-s3 v1.6.1
-	stash.us.cray.com/HMS/hms-shcd-parser v1.1.2
-	stash.us.cray.com/HMS/hms-sls v1.5.7
+	stash.us.cray.com/HMS/hms-base v1.12.0
+	stash.us.cray.com/HMS/hms-bss v1.7.2
+	stash.us.cray.com/HMS/hms-s3 v1.8.0
+	stash.us.cray.com/HMS/hms-shcd-parser v1.4.0
+	stash.us.cray.com/HMS/hms-sls v1.8.0
+	stash.us.cray.com/HMS/hms-smd v1.28.0
 )
 
 go 1.14
