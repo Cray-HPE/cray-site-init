@@ -625,6 +625,7 @@ func validateFlags() []string {
 
 // AllocateIps distributes IP reservations for each of the NCNs within the networks
 func AllocateIps(ncns []*csi.LogicalNCN, networks map[string]*csi.IPV4Network) {
+	log.Printf("I'm here in AllocateIps with %d ncns to work with and %d networks", len(ncns), len(networks))
 	lookup := func(name string, subnetName string, networks map[string]*csi.IPV4Network) (*csi.IPV4Subnet, error) {
 		tempNetwork := networks[name]
 		subnet, err := tempNetwork.LookUpSubnet(subnetName)
@@ -638,15 +639,12 @@ func AllocateIps(ncns []*csi.LogicalNCN, networks map[string]*csi.IPV4Network) {
 
 	// Build a map of networks based on their names
 	subnets := make(map[string]*csi.IPV4Subnet)
-	allocatedNetNames := make(map[int]string)
-	keys := make([]int, 0, len(allocatedNetNames))
-	for k := range allocatedNetNames {
-		keys = append(keys, k)
-	}
-	for _, name := range allocatedNetNames {
+	for name := range networks {
+		log.Printf("Dealing %v of the allocatedNetNames \n", name)
 		bootstrapNet, err := lookup(name, "bootstrap_dhcp", networks)
 		if err == nil {
 			subnets[name] = bootstrapNet
+			log.Printf("Adding the %v net bootstrapNet \n", name)
 		}
 	}
 
@@ -661,7 +659,7 @@ func AllocateIps(ncns []*csi.LogicalNCN, networks map[string]*csi.IPV4Network) {
 			}
 			// Hostname is not available a the point AllocateIPs should be called.
 			reservation := subnet.AddReservation(ncn.Xname, ncn.Xname)
-			// log.Printf("Adding %v %v reservation for %v(%v) at %v \n", netName, subnet.Name, ncn.Xname, ncn.Xname, reservation.IPAddress.String())
+			log.Printf("Adding %v %v reservation for %v(%v) at %v \n", netName, subnet.Name, ncn.Xname, ncn.Xname, reservation.IPAddress.String())
 			prefixLen := strings.Split(subnet.CIDR.String(), "/")[1]
 			tempNetwork := csi.NCNNetwork{
 				NetworkName: netName,
