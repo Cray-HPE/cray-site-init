@@ -195,28 +195,30 @@ var initCmd = &cobra.Command{
 
 		// Cycle through the main networks and update the reservations, masks and dhcp ranges as necessary
 		for _, netName := range csi.ValidNetNames {
-			// Grab the supernet details for use in HACK substitution
-			tempSubnet, err := shastaNetworks[netName].LookUpSubnet("bootstrap_dhcp")
-			if err != nil {
-				log.Printf("Not processing %v for bootstrap_dhcp because %v \n", netName, err)
-			} else {
-				// Loop the reservations and update the NCN reservations with hostnames
-				// we likely didn't have when we registered the resevation
-				updateReservations(tempSubnet, logicalNcns)
-				tempSubnet.UpdateDHCPRange(v.GetBool("supernet"))
-			}
-
-			// We expect a bootstrap_dhcp in every net, but uai_macvlan is only in
-			// the NMN range for today
-			if netName == "NMN" {
-				tempSubnet, err = shastaNetworks[netName].LookUpSubnet("uai_macvlan")
+			if shastaNetworks[netName] != nil {
+				// Grab the supernet details for use in HACK substitution
+				tempSubnet, err := shastaNetworks[netName].LookUpSubnet("bootstrap_dhcp")
 				if err != nil {
-					log.Panic(err)
+					log.Printf("Not processing %v for bootstrap_dhcp because %v \n", netName, err)
+				} else {
+					// Loop the reservations and update the NCN reservations with hostnames
+					// we likely didn't have when we registered the resevation
+					updateReservations(tempSubnet, logicalNcns)
+					tempSubnet.UpdateDHCPRange(v.GetBool("supernet"))
 				}
-				updateReservations(tempSubnet, logicalNcns)
-				tempSubnet.UpdateDHCPRange(false)
-			}
 
+				// We expect a bootstrap_dhcp in every net, but uai_macvlan is only in
+				// the NMN range for today
+				if netName == "NMN" {
+					tempSubnet, err = shastaNetworks[netName].LookUpSubnet("uai_macvlan")
+					if err != nil {
+						log.Panic(err)
+					}
+					updateReservations(tempSubnet, logicalNcns)
+					tempSubnet.UpdateDHCPRange(false)
+				}
+
+			}
 		}
 
 		// Update the SLSState with the updated network information
@@ -635,7 +637,12 @@ func AllocateIps(ncns []*csi.LogicalNCN, networks map[string]*csi.IPV4Network) {
 
 	// Build a map of networks based on their names
 	subnets := make(map[string]*csi.IPV4Subnet)
-	for _, name := range csi.ValidNetNames {
+	allocatedNetNames := make(map[int]string)
+	keys := make([]int, 0, len(allocatedNetNames))
+	for k := range allocatedNetNames {
+		keys = append(keys, k)
+	}
+	for _, name := range allocatedNetNames {
 		bootstrapNet, err := lookup(name, "bootstrap_dhcp", networks)
 		if err == nil {
 			subnets[name] = bootstrapNet
