@@ -131,7 +131,7 @@ func getKernelCommandlineArgs(ncn sls_common.GenericHardware, cmdline string) st
 
 	cmdlineParts := strings.Fields(cmdline)
 
-	for i, _ := range cmdlineParts {
+	for i := range cmdlineParts {
 		part := cmdlineParts[i]
 
 		if strings.HasPrefix(part, "metal.server") {
@@ -393,7 +393,7 @@ func buildPITArgs(base string) string {
 	// Now just do a little find and replace.
 	cmdlineParts := strings.Fields(base)
 
-	for i, _ := range cmdlineParts {
+	for i := range cmdlineParts {
 		part := cmdlineParts[i]
 
 		// Looking at this might make your brain hurt a little and this can almost certainly be done better but the
