@@ -53,12 +53,16 @@ func genCabinetMap(cd []csi.CabinetGroupDetail, shastaNetworks map[string]*csi.I
 		for _, id := range cabIds {
 			// Find the NMN and HMN networks for each cabinet
 			networks := make(map[string]sls_common.CabinetNetworks)
-			for _, netName := range []string{"NMN", "HMN"} {
-				subnet := shastaNetworks[netName].SubnetbyName(fmt.Sprintf("cabinet_%d", id))
-				networks[netName] = sls_common.CabinetNetworks{
-					CIDR:    subnet.CIDR.String(),
-					Gateway: subnet.Gateway.String(),
-					VLan:    int(subnet.VlanID),
+			for _, netName := range []string{"NMN", "HMN", "NMN_MTN", "HMN_MTN", "NMN_RVR", "HMN_RVR"} {
+				if shastaNetworks[netName] != nil {
+					subnet := shastaNetworks[netName].SubnetbyName(fmt.Sprintf("cabinet_%d", id))
+					if subnet.CIDR.String() != "<nil>" {
+						networks[strings.TrimSuffix(strings.TrimSuffix(netName, "_MTN"), "_RVR")] = sls_common.CabinetNetworks{
+							CIDR:    subnet.CIDR.String(),
+							Gateway: subnet.Gateway.String(),
+							VLan:    int(subnet.VlanID),
+						}
+					}
 				}
 			}
 			// Build out the sls cabinet structure
