@@ -52,7 +52,7 @@ const (
 	// DefaultMacVlanString is the default Macvlan cidr (shares vlan with NMN)
 	DefaultMacVlanString = "10.252.124.0/23"
 	// DefaultHSNString is the Default HSN String
-	DefaultHSNString = "10.250.0.0/16"
+	DefaultHSNString = "10.253.0.0/16"
 	// DefaultCANString is the Default CAN String (vlan007)
 	DefaultCANString = "10.102.11.0/24"
 	// DefaultCANPoolString is the default pool for CAN addresses
