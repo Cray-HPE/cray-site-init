@@ -57,7 +57,7 @@ var (
 	httpClient     *http.Client
 	managementNCNs []sls_common.GenericHardware
 
-	vlansToGather = []string{"vlan002", "vlan004", "vlan007"}
+	vlansToGather = []string{"vlan002"}
 )
 
 var handoffBSSMetadataCmd = &cobra.Command{
@@ -565,7 +565,17 @@ func uploadEntryToBSS(bssEntry bssTypes.BootParams) {
 		log.Panicln(err)
 	}
 
-	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(jsonBytes))
+	method := http.MethodPut
+	for _, host := range bssEntry.Hosts {
+		// If it's the Global host then do a PATCH operation to preserve the existing config (which is the CA certs,
+		// spire config, etc.).
+		if host == "Global" {
+			method = http.MethodPatch
+			break
+		}
+	}
+
+	req, err := http.NewRequest(method, url, bytes.NewBuffer(jsonBytes))
 	if err != nil {
 		log.Panicf("Failed to create new request: %s", err)
 	}
