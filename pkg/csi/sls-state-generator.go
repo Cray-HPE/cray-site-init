@@ -31,8 +31,8 @@ var (
 	// Default Application Node Subroles, these can be overridden via ApplicationNodeConfig
 	defaultApplicationNodeSubroles = map[string]string{
 		"uan": "UAN",
+		"ln":  "UAN", // Nodes with the ln prefix are also UAN nodes
 		"gn":  "Gateway",
-		"ln":  "Login",
 	}
 
 	// Regular expressions to get around humans.
