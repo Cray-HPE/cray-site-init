@@ -23,6 +23,15 @@ import (
 
 const s3ACL = "public-read"
 
+// We need these to be constant so that later when we do the BSS handoff we know the right value.
+const k8sKernelName = "k8s-kernel"
+const k8sInitrdName = "k8s-initrd.img.xz"
+const cephKernelName = "ceph-kernel"
+const cephInitrdName = "ceph-initrd.img.xz"
+
+const k8sSquashFSName = "k8s-filesystem.squashfs"
+const cephSquashFSName = "ceph-filesystem.squashfs"
+
 var (
 	s3Client *hms_s3.S3Client
 
@@ -31,12 +40,13 @@ var (
 	s3SecretName string
 	s3BucketName string
 
-	kernelPath   string
-	kernelName   string
-	initrdPath   string
-	initrdName   string
-	squashFSPath string
-	squashFSName string
+	k8sKernelPath   string
+	k8sInitrdPath   string
+	k8sSquashFSPath string
+
+	cephKernelPath   string
+	cephInitrdPath   string
+	cephSquashFSPath string
 )
 
 // handoffCmd represents the handoff command
@@ -66,19 +76,21 @@ func init() {
 	handoffNCNImagesCmd.Flags().StringVar(&s3BucketName, "s3-bucket", "ncn-images",
 		"Bucket to create and upload NCN images to")
 
-	handoffNCNImagesCmd.Flags().StringVar(&kernelPath, "kernel-path", "/var/www/kernel",
-		"Path to the kernel image to upload")
-	handoffNCNImagesCmd.Flags().StringVar(&kernelName, "kernel-name", "kernel",
-		"Name to set for kernel in S3")
-	handoffNCNImagesCmd.Flags().StringVar(&initrdPath, "initrd-path", "/var/www/initrd.img.xz",
-		"Path to the initrd image to upload")
-	handoffNCNImagesCmd.Flags().StringVar(&initrdName, "initrd-name", "initrd",
-		"Name to set for initrd in S3")
-	handoffNCNImagesCmd.Flags().StringVar(&squashFSPath, "squashfs-path", "",
-		"Path to the squashfs image to upload")
-	_ = handoffNCNImagesCmd.MarkFlagRequired("squashfs-path")
-	handoffNCNImagesCmd.Flags().StringVar(&squashFSName, "squashfs-name", "filesystem.squashfs",
-		"Name to set for squashfs in S3")
+	handoffNCNImagesCmd.Flags().StringVar(&k8sKernelPath, "k8s-kernel-path", "",
+		"Path to the kernel image to upload for K8s NCNs")
+	handoffNCNImagesCmd.Flags().StringVar(&k8sInitrdPath, "k8s-initrd-path", "",
+		"Path to the initrd image to upload for K8s NCNs")
+	handoffNCNImagesCmd.Flags().StringVar(&k8sSquashFSPath, "k8s-squashfs-path", "",
+		"Path to the squashfs image to upload for K8s NCNs")
+	_ = handoffNCNImagesCmd.MarkFlagRequired("k8s-squashfs-path")
+
+	handoffNCNImagesCmd.Flags().StringVar(&cephKernelPath, "ceph-kernel-path", "",
+		"Path to the kernel image to upload for CEPH NCNs")
+	handoffNCNImagesCmd.Flags().StringVar(&cephInitrdPath, "ceph-initrd-path", "",
+		"Path to the initrd image to upload for CEPH NCNs")
+	handoffNCNImagesCmd.Flags().StringVar(&cephSquashFSPath, "ceph-squashfs-path", "",
+		"Path to the squashfs image to upload for CEPH NCNs")
+	_ = handoffNCNImagesCmd.MarkFlagRequired("ceph-squashfs-path")
 }
 
 func uploadFile(filePath string, s3KeyName string) {
@@ -142,12 +154,17 @@ func uploadNCNImagesS3() {
 	fmt.Printf("Sucessfully created %s bucket.\n", s3BucketName)
 
 	// Upload the files.
-	uploadFile(kernelPath, kernelName)
-	fmt.Println("Successfully uploaded kernel.")
+	uploadFile(k8sKernelPath, k8sKernelName)
+	fmt.Println("Successfully uploaded K8s kernel.")
+	uploadFile(k8sInitrdPath, k8sInitrdName)
+	fmt.Println("Successfully uploaded K8s initrd.")
+	uploadFile(k8sSquashFSPath, k8sSquashFSName)
+	fmt.Println("Successfully uploaded K8s squash FS.")
 
-	uploadFile(initrdPath, initrdName)
-	fmt.Println("Successfully uploaded initrd.")
-
-	uploadFile(squashFSPath, squashFSName)
-	fmt.Println("Successfully uploaded squash FS.")
+	uploadFile(cephKernelPath, cephKernelName)
+	fmt.Println("Successfully uploaded CEPH kernel.")
+	uploadFile(cephInitrdPath, cephInitrdName)
+	fmt.Println("Successfully uploaded CEPH initrd.")
+	uploadFile(cephSquashFSPath, cephSquashFSName)
+	fmt.Println("Successfully uploaded CEPH squash FS.")
 }
