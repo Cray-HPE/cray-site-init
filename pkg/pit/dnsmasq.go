@@ -41,7 +41,8 @@ dhcp-option=interace:{{.VlanID | printf "vlan%03d"}},option:domain-search,hmn
 interface={{.VlanID | printf "vlan%03d"}}
 cname=packages.hmn,pit.hmn
 cname=registry.hmn,pit.hmn
-dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:dns-server,{{.DNSServer}}
+# This needs to point to the liveCD IP for provisioning in bare-metal environments.
+dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:dns-server,{{.Gateway}}
 dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:ntp-server,{{.Gateway}}
 dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:router,{{.SupernetRouter}}
 dhcp-range=interface:{{.VlanID | printf "vlan%03d"}},{{.DHCPStart}},{{.DHCPEnd}},10m
@@ -75,7 +76,8 @@ dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:domain-search,nmn
 interface={{.VlanID | printf "vlan%03d"}}
 cname=packages.nmn,pit.nmn
 cname=registry.nmn,pit.nmn
-dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:dns-server,{{.DNSServer}}
+# This needs to point to the liveCD IP for provisioning in bare-metal environments.
+dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:dns-server,{{.Gateway}}
 dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:ntp-server,{{.Gateway}}
 dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:router,{{.SupernetRouter}}
 dhcp-range=interface:{{.VlanID | printf "vlan%03d"}},{{.DHCPStart}},{{.DHCPEnd}},10m
