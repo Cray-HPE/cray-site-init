@@ -137,10 +137,7 @@ func getKernelCommandlineArgs(ncn sls_common.GenericHardware, cmdline string) st
 		if strings.HasPrefix(part, "metal.server") {
 			cmdlineParts[i] = fmt.Sprintf("metal.server=http://rgw-vip.nmn/ncn-images")
 		} else if strings.HasPrefix(part, "ds=nocloud-net") {
-			// The advertise address is fed into BSS as part of its deployment and automatically added to the cmdline
-			// with the correct value, so just remove it here.
-			cmdlineParts[1] = ""
-			//cmdlineParts[i] = fmt.Sprintf("ds=nocloud-net;s=http://10.92.100.81:8888/")
+			cmdlineParts[i] = fmt.Sprintf("ds=nocloud-net;s=http://10.92.100.81:8888/")
 		} else if strings.HasPrefix(part, "rd.live.squashimg") {
 			var squashFSName string
 
