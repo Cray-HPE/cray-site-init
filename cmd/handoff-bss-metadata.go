@@ -57,7 +57,7 @@ var (
 	httpClient     *http.Client
 	managementNCNs []sls_common.GenericHardware
 
-	vlansToGather = []string{"vlan002", "vlan004", "vlan007"}
+	vlansToGather = []string{"vlan002"}
 )
 
 var handoffBSSMetadataCmd = &cobra.Command{
@@ -137,10 +137,7 @@ func getKernelCommandlineArgs(ncn sls_common.GenericHardware, cmdline string) st
 		if strings.HasPrefix(part, "metal.server") {
 			cmdlineParts[i] = fmt.Sprintf("metal.server=http://rgw-vip.nmn/ncn-images")
 		} else if strings.HasPrefix(part, "ds=nocloud-net") {
-			// The advertise address is fed into BSS as part of its deployment and automatically added to the cmdline
-			// with the correct value, so just remove it here.
-			cmdlineParts[1] = ""
-			//cmdlineParts[i] = fmt.Sprintf("ds=nocloud-net;s=http://10.92.100.81:8888/")
+			cmdlineParts[i] = fmt.Sprintf("ds=nocloud-net;s=http://10.92.100.81:8888/")
 		} else if strings.HasPrefix(part, "rd.live.squashimg") {
 			var squashFSName string
 
@@ -565,7 +562,17 @@ func uploadEntryToBSS(bssEntry bssTypes.BootParams) {
 		log.Panicln(err)
 	}
 
-	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(jsonBytes))
+	method := http.MethodPut
+	for _, host := range bssEntry.Hosts {
+		// If it's the Global host then do a PATCH operation to preserve the existing config (which is the CA certs,
+		// spire config, etc.).
+		if host == "Global" {
+			method = http.MethodPatch
+			break
+		}
+	}
+
+	req, err := http.NewRequest(method, url, bytes.NewBuffer(jsonBytes))
 	if err != nil {
 		log.Panicf("Failed to create new request: %s", err)
 	}
