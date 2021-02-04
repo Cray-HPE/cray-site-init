@@ -321,7 +321,7 @@ func getBSSEntryForNCN(ncn sls_common.GenericHardware) (bssEntry bssTypes.BootPa
 		if hostname == "ncn-m001" {
 			vlanOutputString = getPITVLanString(vlan)
 		} else {
-			vlanOutputString = runSSHCommandWithClient(sshClient, vlanGatherCommand + vlan)
+			vlanOutputString = runSSHCommandWithClient(sshClient, vlanGatherCommand+vlan)
 		}
 		populateHSMEthernetInterface(ncn.Xname, vlanOutputString, vlan)
 	}
@@ -448,7 +448,7 @@ func getPITMACs() []string {
 }
 
 func getPITVLanString(vlan string) string {
-	out, err := exec.Command("bash", "-c", vlanGatherCommand + vlan).Output()
+	out, err := exec.Command("bash", "-c", vlanGatherCommand+vlan).Output()
 	if err != nil {
 		log.Panic(err)
 	}
