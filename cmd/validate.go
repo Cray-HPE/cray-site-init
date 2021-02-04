@@ -14,7 +14,7 @@ import (
 )
 
 var lastFailure error
-var livecdPreflight, ncnPreflight, validateCeph, validateK8s bool
+var livecdPreflight, ncnPreflight, validateCeph, validateK8s, validateNetwork, validateServices bool
 
 // validateCmd represents the validate command
 var validateCmd = &cobra.Command{
@@ -22,6 +22,24 @@ var validateCmd = &cobra.Command{
 	Short: "Runs unit tests",
 	Long:  `Runs unit tests and validates a working livecd and NCN deployment.`,
 	Run: func(cmd *cobra.Command, args []string) {
+
+		// TODO: Replace with GOSS tests
+		if validateNetwork {
+			runCommand("ip a show lan0")
+			runCommand("ip a show bond0")
+			runCommand("ip a show vlan002")
+			runCommand("ip a show vlan004")
+			runCommand("ip a show vlan007")
+		}
+
+		// TODO: Replace with GOSS tests
+		if validateServices {
+			runCommand("systemctl status dnsmasq")
+			runCommand("systemctl status nexus")
+			runCommand("systemctl status conman")
+			runCommand("systemctl status basecamp")
+			runCommand("podman container ls -a")
+		}
 
 		if livecdPreflight {
 			runCommand(filepath.Join("/opt/cray/tests/install/livecd/automated/", "livecd-preflight-checks"))
@@ -55,6 +73,8 @@ func init() {
 	pitCmd.AddCommand(validateCmd)
 	viper.SetEnvPrefix("pit")
 	viper.AutomaticEnv()
+	validateCmd.Flags().BoolVarP(&validateNetwork, "network", "N", false, "Run network tests")
+	validateCmd.Flags().BoolVarP(&validateServices, "services", "S", false, "Run services tests")
 	validateCmd.Flags().BoolVarP(&livecdPreflight, "livecd-preflight", "l", false, "Run LiveCD pre-flight tests")
 	validateCmd.Flags().BoolVarP(&ncnPreflight, "ncn-preflight", "n", false, "Run NCN pre-flight tests")
 	validateCmd.Flags().BoolVarP(&validateCeph, "ceph", "c", false, "Validate that Ceph is working")
