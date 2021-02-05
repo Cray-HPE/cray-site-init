@@ -79,7 +79,7 @@ func init() {
 	viper.AutomaticEnv()
 	validateCmd.Flags().BoolVarP(&validateNetwork, "network", "N", false, "Run network tests")
 	validateCmd.Flags().BoolVarP(&validateServices, "services", "S", false, "Run services tests")
-	validateCmd.Flags().BoolVarP(&livecdProvisioning, "livecd-provisioning", "l", false, "Run LiveCD provisioning tests")
+	validateCmd.Flags().BoolVarP(&livecdProvisioning, "livecd-provisioning", "p", false, "Run LiveCD provisioning tests")
 	validateCmd.Flags().BoolVarP(&livecdPreflight, "livecd-preflight", "l", false, "Run LiveCD pre-flight tests")
 	validateCmd.Flags().BoolVarP(&ncnPreflight, "ncn-preflight", "n", false, "Run NCN pre-flight tests")
 	validateCmd.Flags().BoolVarP(&validateCeph, "ceph", "c", false, "Validate that Ceph is working")
