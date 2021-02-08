@@ -223,6 +223,17 @@ var initCmd = &cobra.Command{
 			}
 		}
 
+		// Pull UANs from the completed slsState to assign CAN addresses
+		slsUans, err := csi.ExtractUANs(&slsState)
+		if err != nil {
+			log.Panic(err) // This should never happen.  I can't really imagine how it would.
+		}
+
+		canSubnet, _ := shastaNetworks["CAN"].LookUpSubnet("bootstrap_dhcp")
+		for _, uan := range slsUans {
+			canSubnet.AddReservation(uan.Hostname, uan.Xname)
+		}
+
 		// Update the SLSState with the updated network information
 		_, slsState.Networks = prepareNetworkSLS(shastaNetworks)
 
