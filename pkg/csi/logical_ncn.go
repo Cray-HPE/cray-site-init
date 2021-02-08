@@ -27,6 +27,10 @@ type LogicalNCN struct {
 	BmcPort          string         `yaml:"bmc-port" json:"bmc-port" csv:"BMC Switch Port"`
 	NmnMac           string         `yaml:"nmn-mac" json:"nmn-mac" csv:"NMN MAC"`
 	NmnPort          string         `yaml:"nmn-port" json:"nmn-port" csv:"NMN Switch Port"`
+	NmnIP            string         `yaml:"nmn-ip" json:"nmn-ip" csv:"-"`
+	HmnIP            string         `yaml:"hmn-ip" json:"hmn-ip" csv:"-"`
+	MtlIP            string         `yaml:"mtl-ip" json:"mtl-ip" csv:"-"`
+	CanIP            string         `yaml:"can-ip" json:"can-ip" csv:"-"`
 	Xname            string         `yaml:"xname" json:"xname" csv:"NCN xname"`
 	Hostname         string         `yaml:"hostname" json:"hostname" csv:"-"`
 	InstanceID       string         `yaml:"instance-id" json:"instance-id" csv:"-"` // should be unique for the life of the image
@@ -40,6 +44,20 @@ type LogicalNCN struct {
 	Bond0Mac0        string         `yaml:"bond0-mac0" json:"bond0-mac0" csv:"-"`
 	Bond0Mac1        string         `yaml:"bond0-mac1" json:"bond0-mac1" csv:"-"`
 	Cabinet          string         `yaml:"cabinet" json:"cabinet" csv:"-"` // Use to establish availability zone
+}
+
+// NewBootstrapNCNMetadata is a type that matches the updated ncn_metadata.csv file as
+// Xname,Role,Subrole,BMC MAC,Bootstrap MAC,Bond0 MAC0,Bond0 Mac1
+// It is probable that on many machines bootstrap mac will be the same as one of the bond macs
+// Do not be alarmed.
+type NewBootstrapNCNMetadata struct {
+	Xname        string `json:"xname" csv:"Xname"`
+	Role         string `json:"role" csv:"Role"`
+	Subrole      string `json:"subrole" csv:"Subrole"`
+	BmcMac       string `json:"bmc-mac" csv:"BMC MAC"`
+	BootstrapMac string `json:"bootstrap-mac" csv:"Bootstrap MAC"`
+	Bond0Mac0    string `json:"bond0-mac0" csv:"Bond0 MAC0"`
+	Bond0Mac1    string `json:"bond0-mac1" csv:"Bond0 MAC1"`
 }
 
 // Validate is a validator that checks for a minimum set of info
