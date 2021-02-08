@@ -89,17 +89,17 @@ var StaticConfigTemplate = []byte(`
 # Static Configurations
 {{range .NCNS}}
 # DHCP Entries for {{.Hostname}}
-dhcp-host=id:{{.Xname}},set:{{.Hostname}},{{.NMNMac}},{{.NMNIP}},{{.Hostname}},20m # NMN
-dhcp-host=id:{{.Xname}},set:{{.Hostname}},{{.NMNMac}},{{.MTLIP}},{{.Hostname}},20m # MTL
-dhcp-host=id:{{.Xname}},set:{{.Hostname}},{{.NMNMac}},{{.HMNIP}},{{.Hostname}},20m # HMN
-dhcp-host=id:{{.Xname}},set:{{.Hostname}},{{.NMNMac}},{{.CANIP}},{{.Hostname}},20m # CAN
-dhcp-host={{.BMCMac}},{{.BMCIP}},{{.Hostname}}-mgmt,20m #HMN
+dhcp-host=id:{{.Xname}},set:{{.Hostname}},{{.NmnMac}},{{.MtlIP}},{{.Hostname}},20m # MTL
+dhcp-host=id:{{.Xname}},set:{{.Hostname}},{{.Bond0Mac0}},{{.Bond0Mac1}},{{.NmnIP}},{{.Hostname}},20m # Bond0 Mac0/Mac1
+dhcp-host=id:{{.Xname}},set:{{.Hostname}},{{.NmnMac}},{{.HmnIP}},{{.Hostname}},20m # HMN
+dhcp-host=id:{{.Xname}},set:{{.Hostname}},{{.NmnMac}},{{.CanIP}},{{.Hostname}},20m # CAN
+dhcp-host={{.BmcMac}},{{.BmcIP}},{{.Hostname}}-mgmt,20m #HMN
 # Host Record Entries for {{.Hostname}}
-host-record={{.Hostname}},{{.Hostname}}.can,{{.CANIP}}
-host-record={{.Hostname}},{{.Hostname}}.hmn,{{.HMNIP}}
-host-record={{.Hostname}},{{.Hostname}}.nmn,{{.NMNIP}}
-host-record={{.Hostname}},{{.Hostname}}.mtl,{{.MTLIP}}
-host-record={{.Xname}},{{.Hostname}}.nmn,{{.NMNIP}}
+host-record={{.Hostname}},{{.Hostname}}.can,{{.CanIP}}
+host-record={{.Hostname}},{{.Hostname}}.hmn,{{.HmnIP}}
+host-record={{.Hostname}},{{.Hostname}}.nmn,{{.NmnIP}}
+host-record={{.Hostname}},{{.Hostname}}.mtl,{{.MtlIP}}
+host-record={{.Xname}},{{.Hostname}}.nmn,{{.NmnIP}}
 # Override root-path with {{.Hostname}}'s xname
 dhcp-option-force=tag:{{.Hostname}},17,{{.Xname}}
 {{end}}
@@ -119,55 +119,27 @@ type DNSMasqBootstrapNetwork struct {
 
 // WriteDNSMasqConfig writes the dnsmasq configuration files necssary for installation
 func WriteDNSMasqConfig(path string, v *viper.Viper, bootstrap []csi.LogicalNCN, networks map[string]*csi.IPV4Network) {
-	// DNSMasqNCN is the struct to manage NCNs within DNSMasq
-	type DNSMasqNCN struct {
-		Xname    string `form:"xname"`
-		Hostname string `form:"hostname"`
-		NMNMac   string `form:"nmn-mac"`
-		NMNIP    string `form:"nmn-ip"`
-		MTLMac   string `form:"mtl-mac"`
-		MTLIP    string `form:"mtl-ip"`
-		BMCMac   string `form:"bmc-mac"`
-		BMCIP    string `form:"bmc-ip"`
-		CANIP    string `form:"can-ip"`
-		HMNIP    string `form:"can-ip"`
-	}
-	var ncns []DNSMasqNCN
 	var mainMtlIP string
-	for _, tmpNcn := range bootstrap {
-		var canIP, nmnIP, hmnIP, mtlIP string
+	for i, tmpNcn := range bootstrap {
 		for _, tmpNet := range tmpNcn.Networks {
 			if tmpNet.NetworkName == "NMN" {
-				nmnIP = tmpNet.IPAddress
+				tmpNcn.NmnIP = tmpNet.IPAddress
 			}
 			if tmpNet.NetworkName == "CAN" {
-				canIP = tmpNet.IPAddress
+				tmpNcn.CanIP = tmpNet.IPAddress
 			}
 			if tmpNet.NetworkName == "MTL" {
 				if v.GetString("install-ncn") == tmpNcn.Hostname {
 					mainMtlIP = tmpNet.IPAddress
 				}
-				mtlIP = tmpNet.IPAddress
+				tmpNcn.MtlIP = tmpNet.IPAddress
 
 			}
 			if tmpNet.NetworkName == "HMN" {
-				hmnIP = tmpNet.IPAddress
+				tmpNcn.HmnIP = tmpNet.IPAddress
 			}
 		}
-		// log.Println("Ready to build NCN list with:", v)
-		ncn := DNSMasqNCN{
-			Xname:    tmpNcn.Xname,
-			Hostname: tmpNcn.Hostname,
-			NMNMac:   tmpNcn.NmnMac,
-			NMNIP:    nmnIP,
-			// MTLMac:   ,
-			MTLIP:  mtlIP,
-			BMCMac: tmpNcn.BmcMac,
-			BMCIP:  tmpNcn.BmcIP,
-			CANIP:  canIP,
-			HMNIP:  hmnIP,
-		}
-		ncns = append(ncns, ncn)
+		bootstrap[i] = tmpNcn
 	}
 
 	tpl1, _ := template.New("statics").Parse(string(StaticConfigTemplate))
@@ -194,19 +166,19 @@ func WriteDNSMasqConfig(path string, v *viper.Viper, bootstrap []csi.LogicalNCN,
 	apigwIP = apigw.IPAddress.String()
 
 	data := struct {
-		NCNS         []DNSMasqNCN
+		NCNS         []csi.LogicalNCN
 		KUBEVIP      string
 		RGWVIP       string
 		APIGWALIASES string
 		APIGWIP      string
 	}{
-		ncns,
+		bootstrap,
 		kubevip,
 		rgwvip,
 		apigwAliases,
 		apigwIP,
 	}
-	// log.Println("Ready to write data with NCNs:", ncns)
+
 	csiFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/statics.conf"), tpl1, data)
 
 	// Save the install NCN Metal ip for use as dns/gateways during install

@@ -202,9 +202,7 @@ var initCmd = &cobra.Command{
 			if shastaNetworks[netName] != nil {
 				// Grab the supernet details for use in HACK substitution
 				tempSubnet, err := shastaNetworks[netName].LookUpSubnet("bootstrap_dhcp")
-				if err != nil {
-					log.Printf("Not processing %v for bootstrap_dhcp because %v \n", netName, err)
-				} else {
+				if err == nil {
 					// Loop the reservations and update the NCN reservations with hostnames
 					// we likely didn't have when we registered the resevation
 					updateReservations(tempSubnet, logicalNcns)
@@ -629,7 +627,7 @@ func validateFlags() []string {
 
 // AllocateIps distributes IP reservations for each of the NCNs within the networks
 func AllocateIps(ncns []*csi.LogicalNCN, networks map[string]*csi.IPV4Network) {
-	log.Printf("I'm here in AllocateIps with %d ncns to work with and %d networks", len(ncns), len(networks))
+	//log.Printf("I'm here in AllocateIps with %d ncns to work with and %d networks", len(ncns), len(networks))
 	lookup := func(name string, subnetName string, networks map[string]*csi.IPV4Network) (*csi.IPV4Subnet, error) {
 		tempNetwork := networks[name]
 		subnet, err := tempNetwork.LookUpSubnet(subnetName)
@@ -644,11 +642,9 @@ func AllocateIps(ncns []*csi.LogicalNCN, networks map[string]*csi.IPV4Network) {
 	// Build a map of networks based on their names
 	subnets := make(map[string]*csi.IPV4Subnet)
 	for name := range networks {
-		log.Printf("Dealing %v of the allocatedNetNames \n", name)
 		bootstrapNet, err := lookup(name, "bootstrap_dhcp", networks)
 		if err == nil {
 			subnets[name] = bootstrapNet
-			log.Printf("Adding the %v net bootstrapNet \n", name)
 		}
 	}
 
@@ -664,7 +660,7 @@ func AllocateIps(ncns []*csi.LogicalNCN, networks map[string]*csi.IPV4Network) {
 			}
 			// Hostname is not available a the point AllocateIPs should be called.
 			reservation := subnet.AddReservation(ncn.Xname, ncn.Xname)
-			log.Printf("Adding %v %v reservation for %v(%v) at %v \n", netName, subnet.Name, ncn.Xname, ncn.Xname, reservation.IPAddress.String())
+			//log.Printf("Adding %v %v reservation for %v(%v) at %v \n", netName, subnet.Name, ncn.Xname, ncn.Xname, reservation.IPAddress.String())
 			prefixLen := strings.Split(subnet.CIDR.String(), "/")[1]
 			tempNetwork := csi.NCNNetwork{
 				NetworkName: netName,
