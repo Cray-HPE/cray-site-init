@@ -286,9 +286,23 @@ func MakeBaseCampfromNCNs(v *viper.Viper, ncns []csi.LogicalNCN, shastaNetworks 
 		userDataMap["hostname"] = ncn.Hostname
 		userDataMap["local_hostname"] = ncn.Hostname
 		userDataMap["mac0"] = mac0Interface
-		basecampConfig[ncn.NmnMac] = CloudInit{
-			MetaData: tempMetadata,
-			UserData: userDataMap,
+		if ncn.Bond0Mac0 == "" && ncn.Bond0Mac1 == "" {
+			basecampConfig[ncn.NmnMac] = CloudInit{
+				MetaData: tempMetadata,
+				UserData: userDataMap,
+			}
+		}
+		if ncn.Bond0Mac0 != "" {
+			basecampConfig[ncn.Bond0Mac0] = CloudInit{
+				MetaData: tempMetadata,
+				UserData: userDataMap,
+			}
+		}
+		if ncn.Bond0Mac1 != "" {
+			basecampConfig[ncn.Bond0Mac1] = CloudInit{
+				MetaData: tempMetadata,
+				UserData: userDataMap,
+			}
 		}
 	}
 
@@ -302,6 +316,7 @@ func WriteBasecampData(path string, ncns []csi.LogicalNCN, shastaNetworks map[st
 	if err != nil {
 		log.Printf("Error extracting NCNs: %v", err)
 	}
+	log.Printf("Ready to write %d NCNs \n", len(ncns))
 	// To write this the way we want to consume it, we need to convert it to a map of strings and interfaces
 	data := make(map[string]interface{})
 	for k, v := range basecampConfig {
@@ -311,7 +326,11 @@ func WriteBasecampData(path string, ncns []csi.LogicalNCN, shastaNetworks map[st
 	globalMetadata["meta-data"] = globals.(map[string]interface{})
 	data["Global"] = globalMetadata
 
-	csiFiles.WriteJSONConfig(path, data)
+	err = csiFiles.WriteJSONConfig(path, data)
+	if err != nil {
+		log.Printf("Error writing data.json: %v", err)
+	}
+
 }
 
 func stringInSlice(a string, list []string) bool {
