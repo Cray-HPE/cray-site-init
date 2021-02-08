@@ -312,7 +312,6 @@ func WriteBasecampData(path string, ncns []csi.LogicalNCN, shastaNetworks map[st
 	if err != nil {
 		log.Printf("Error extracting NCNs: %v", err)
 	}
-	log.Printf("Ready to write %d NCNs \n", len(ncns))
 	// To write this the way we want to consume it, we need to convert it to a map of strings and interfaces
 	data := make(map[string]interface{})
 	for k, v := range basecampConfig {

@@ -6,7 +6,6 @@ package pit
 
 import (
 	"fmt"
-	"log"
 	"net"
 	"path/filepath"
 	"strings"
@@ -91,8 +90,7 @@ var StaticConfigTemplate = []byte(`
 {{range .NCNS}}
 # DHCP Entries for {{.Hostname}}
 dhcp-host=id:{{.Xname}},set:{{.Hostname}},{{.NmnMac}},{{.MtlIP}},{{.Hostname}},20m # MTL
-dhcp-host=id:{{.Xname}},set:{{.Hostname}},{{.Bond0Mac0}},{{.NmnIP}},{{.Hostname}},20m # Bond0 Mac0
-dhcp-host=id:{{.Xname}},set:{{.Hostname}},{{.Bond0Mac1}},{{.NmnIP}},{{.Hostname}},20m # Bond0 Mac1
+dhcp-host=id:{{.Xname}},set:{{.Hostname}},{{.Bond0Mac0}},{{.Bond0Mac1}},{{.NmnIP}},{{.Hostname}},20m # Bond0 Mac0/Mac1
 dhcp-host=id:{{.Xname}},set:{{.Hostname}},{{.NmnMac}},{{.HmnIP}},{{.Hostname}},20m # HMN
 dhcp-host=id:{{.Xname}},set:{{.Hostname}},{{.NmnMac}},{{.CanIP}},{{.Hostname}},20m # CAN
 dhcp-host={{.BmcMac}},{{.BmcIP}},{{.Hostname}}-mgmt,20m #HMN
@@ -180,10 +178,7 @@ func WriteDNSMasqConfig(path string, v *viper.Viper, bootstrap []csi.LogicalNCN,
 		apigwAliases,
 		apigwIP,
 	}
-	log.Printf("Ready to write data with NCNs:\n")
-	for _, ncn := range bootstrap {
-		log.Printf(" %+v \n", ncn)
-	}
+
 	csiFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/statics.conf"), tpl1, data)
 
 	// Save the install NCN Metal ip for use as dns/gateways during install
