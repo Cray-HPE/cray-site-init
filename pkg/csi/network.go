@@ -96,6 +96,17 @@ func (iNet IPV4Network) AllocatedSubnets() []net.IPNet {
 	return myNets
 }
 
+// AllocatedVlans returns a list of all allocated vlan ids
+func (iNet IPV4Network) AllocatedVlans() []int16 {
+	var myVlans []int16
+	for _, v := range iNet.Subnets {
+		if v.VlanID > 0 {
+			myVlans = append(myVlans, v.VlanID)
+		}
+	}
+	return myVlans
+}
+
 // AddSubnetbyCIDR allocates a new subnet
 func (iNet *IPV4Network) AddSubnetbyCIDR(desiredNet net.IPNet, name string, vlanID int16) (*IPV4Subnet, error) {
 	_, myNet, _ := net.ParseCIDR(iNet.CIDR)

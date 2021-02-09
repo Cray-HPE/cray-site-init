@@ -35,8 +35,18 @@ func (cgd *CabinetGroupDetail) CabinetIDs() []int {
 // PopulateIds fills out the cabinet ids by doing simple math
 func (cgd *CabinetGroupDetail) PopulateIds() {
 	if len(cgd.CabinetDetails) < cgd.Cabinets {
-		for cabID := cgd.StartingCabinet; cabID < cgd.StartingCabinet+cgd.Cabinets; cabID++ {
-			cgd.CabinetDetails = append(cgd.CabinetDetails, CabinetDetail{ID: cabID})
+		for cabIndex := 0; cabIndex < cgd.Cabinets; cabIndex++ {
+			var tmpCabinet CabinetDetail
+			if cabIndex < len(cgd.CabinetDetails) {
+				tmpCabinet = cgd.CabinetDetails[cabIndex]
+			} else {
+				tmpCabinet = CabinetDetail{}
+				cgd.CabinetDetails = append(cgd.CabinetDetails, tmpCabinet)
+			}
+			if tmpCabinet.ID == 0 {
+				tmpCabinet.ID = cgd.StartingCabinet + cabIndex
+			}
+			cgd.CabinetDetails[cabIndex] = tmpCabinet
 		}
 	}
 }
