@@ -231,7 +231,11 @@ func MakeBasecampGlobals(v *viper.Viper, logicalNcns []csi.LogicalNCN, shastaNet
 	// dns-server should be the internal interface ip for the node running the installer
 	global["dns-server"] = reservations[installNCN].IPAddress.String()
 	// ntp_local_nets should be a list of NMN and HMN CIDRS
-	global["ntp_local_nets"] = strings.Join([]string{shastaNetworks["NMN"].CIDR, shastaNetworks["HMN"].CIDR}, " ")
+	var nmnNets []string
+	for _, netNetwork := range shastaNetworks {
+		nmnNets = append(nmnNets, netNetwork.CIDR)
+	}
+	global["ntp_local_nets"] = strings.Join(nmnNets, " ")
 	// first-master-hostname is used to ??? TODO:
 	global["first-master-hostname"] = "ncn-m002"
 	// "k8s-virtual-ip" is the nmn alias for k8s

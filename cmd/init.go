@@ -317,7 +317,7 @@ func init() {
 
 	// Hardware Details
 	initCmd.Flags().Int("mountain-cabinets", 4, "Number of Mountain Cabinets") // 4 mountain cabinets per CDU
-	initCmd.Flags().Int("starting-mountain-cabinet", 5000, "Starting ID number for Mountain Cabinets")
+	initCmd.Flags().Int("starting-mountain-cabinet", 1000, "Starting ID number for Mountain Cabinets")
 
 	initCmd.Flags().Int("river-cabinets", 1, "Number of River Cabinets")
 	initCmd.Flags().Int("starting-river-cabinet", 3000, "Starting ID number for River Cabinets")
