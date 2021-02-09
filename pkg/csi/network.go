@@ -68,7 +68,13 @@ func (iNet *IPV4Network) GenSubnets(cabinetDetails []CabinetGroupDetail, mask ne
 					log.Printf("Gensubnets couldn't add subnet because %v \n", err)
 					return err
 				}
-				var tmpVlanID = i.VlanID
+				var tmpVlanID int16
+				if strings.HasPrefix(iNet.Name, "NMN") {
+					tmpVlanID = i.NMNVlanID
+				}
+				if strings.HasPrefix(iNet.Name, "HMN") {
+					tmpVlanID = i.HMNVlanID
+				}
 				if tmpVlanID == 0 {
 					tmpVlanID = int16(j) + iNet.VlanRange[0]
 				}
