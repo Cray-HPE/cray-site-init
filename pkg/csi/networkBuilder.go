@@ -172,7 +172,7 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 		}
 		// populate it with base information
 		hardwareSubnet.FullName = fmt.Sprintf("%v Management Network Infrastructure", tempNet.Name)
-		hardwareSubnet.ReserveNetMgmtIPs(spineSwitches, leafSwitches, aggSwitches, cduSwitches, conf.AdditionalNetworkingSpace)
+		hardwareSubnet.ReserveNetMgmtIPs(spineSwitches, aggSwitches, leafSwitches, cduSwitches, conf.AdditionalNetworkingSpace)
 	}
 
 	// Set up the Boostrap DHCP subnet(s)
