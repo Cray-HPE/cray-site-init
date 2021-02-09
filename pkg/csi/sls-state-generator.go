@@ -775,7 +775,7 @@ func (g *SLSStateGenerator) getConnectionForNode(node sls_common.GenericHardware
 		vendorName = fmt.Sprintf("1/1/%s", destinationJackString)
 	case ManagementSwitchBrandMellanox.String():
 		// This should only occur when the HMN connections says that a BMC is connected to the
-		// spine/aggergation switch. Which should not happen.
+		// spine/aggregation switch. Which should not happen.
 		g.logger.Fatal("Currently do no support MgmtSwitchConnector for Mellanox switches",
 			zap.Any("switchBrand", switchBrand),
 			zap.String("switchName", switchName),
