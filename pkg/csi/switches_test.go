@@ -71,7 +71,7 @@ func (suite *NetworkingTestSuite) TestValidateSwitch_WrongXnameTypes() {
 		},
 		expectedError: errors.New("invalid xname used for Spine/Aggregation switch: d10w14, should use xXcChHsS format"),
 	}, {
-		// Aggergation using MgmtSwitch, should be using MgmtHLSwitch
+		// Aggregation using MgmtSwitch, should be using MgmtHLSwitch
 		mySwitch: ManagementSwitch{
 			Xname:      "x20c0w14",
 			SwitchType: ManagementSwitchTypeAggregation,
@@ -79,7 +79,7 @@ func (suite *NetworkingTestSuite) TestValidateSwitch_WrongXnameTypes() {
 		},
 		expectedError: errors.New("invalid xname used for Spine/Aggregation switch: x20c0w14, should use xXcChHsS format"),
 	}, {
-		// Aggergation using CDUMgmtSwitch, should be using MgmtHLSwitch
+		// Aggregation using CDUMgmtSwitch, should be using MgmtHLSwitch
 		mySwitch: ManagementSwitch{
 			Xname:      "d20w14",
 			SwitchType: ManagementSwitchTypeAggregation,
