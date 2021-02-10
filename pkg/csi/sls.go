@@ -110,7 +110,7 @@ func ExtractUANs(sls *sls_common.SLSState) ([]LogicalUAN, error) {
 					Xname:    key,
 					Role:     extra.Role,
 					Subrole:  extra.SubRole,
-					Hostname: fmt.Sprintf("ncn-uan-%03d", uanIndex),
+					Hostname: fmt.Sprintf("uan%02d-can", uanIndex),
 					Aliases:  extra.Aliases,
 				})
 				uanIndex++
