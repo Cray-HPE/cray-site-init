@@ -592,6 +592,7 @@ func validateFlags() []string {
 		"can-gateway",
 		"site-ip",
 		"site-gw",
+		"can-external-dns",
 		"site-dns",
 		"site-nic",
 		"bootstrap-ncn-bmc-user",
