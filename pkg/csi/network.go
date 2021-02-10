@@ -68,7 +68,13 @@ func (iNet *IPV4Network) GenSubnets(cabinetDetails []CabinetGroupDetail, mask ne
 					log.Printf("Gensubnets couldn't add subnet because %v \n", err)
 					return err
 				}
-				var tmpVlanID = i.VlanID
+				var tmpVlanID int16
+				if strings.HasPrefix(iNet.Name, "NMN") {
+					tmpVlanID = i.NMNVlanID
+				}
+				if strings.HasPrefix(iNet.Name, "HMN") {
+					tmpVlanID = i.HMNVlanID
+				}
 				if tmpVlanID == 0 {
 					tmpVlanID = int16(j) + iNet.VlanRange[0]
 				}
@@ -94,6 +100,17 @@ func (iNet IPV4Network) AllocatedSubnets() []net.IPNet {
 		myNets = append(myNets, v.CIDR)
 	}
 	return myNets
+}
+
+// AllocatedVlans returns a list of all allocated vlan ids
+func (iNet IPV4Network) AllocatedVlans() []int16 {
+	var myVlans []int16
+	for _, v := range iNet.Subnets {
+		if v.VlanID > 0 {
+			myVlans = append(myVlans, v.VlanID)
+		}
+	}
+	return myVlans
 }
 
 // AddSubnetbyCIDR allocates a new subnet

@@ -18,9 +18,11 @@ type CabinetGroupDetail struct {
 
 // CabinetDetail stores information about individual cabinets
 type CabinetDetail struct {
-	ID     int    `mapstructure:"id" yaml:"id" valid:"numeric"`
-	Subnet string `mapstructure:"subnet" yaml:"subnet" valid:"-"`
-	VlanID int16  `mapstructure:"vlan" yaml:"vlan" valid:"numeric"`
+	ID        int    `mapstructure:"id" yaml:"id" valid:"numeric"`
+	NMNSubnet string `mapstructure:"nmn-subnet" yaml:"nmn-subnet" valid:"-"`
+	NMNVlanID int16  `mapstructure:"nmn-vlan" yaml:"nmn-vlan" valid:"numeric"`
+	HMNSubnet string `mapstructure:"hmn-subnet" yaml:"hmn-subnet" valid:"-"`
+	HMNVlanID int16  `mapstructure:"hmn-vlan" yaml:"hmn-vlan" valid:"numeric"`
 }
 
 // CabinetIDs returns the list of all cabinet ids
@@ -35,8 +37,18 @@ func (cgd *CabinetGroupDetail) CabinetIDs() []int {
 // PopulateIds fills out the cabinet ids by doing simple math
 func (cgd *CabinetGroupDetail) PopulateIds() {
 	if len(cgd.CabinetDetails) < cgd.Cabinets {
-		for cabID := cgd.StartingCabinet; cabID < cgd.StartingCabinet+cgd.Cabinets; cabID++ {
-			cgd.CabinetDetails = append(cgd.CabinetDetails, CabinetDetail{ID: cabID})
+		for cabIndex := 0; cabIndex < cgd.Cabinets; cabIndex++ {
+			var tmpCabinet CabinetDetail
+			if cabIndex < len(cgd.CabinetDetails) {
+				tmpCabinet = cgd.CabinetDetails[cabIndex]
+			} else {
+				tmpCabinet = CabinetDetail{}
+				cgd.CabinetDetails = append(cgd.CabinetDetails, tmpCabinet)
+			}
+			if tmpCabinet.ID == 0 {
+				tmpCabinet.ID = cgd.StartingCabinet + cabIndex
+			}
+			cgd.CabinetDetails[cabIndex] = tmpCabinet
 		}
 	}
 }

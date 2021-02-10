@@ -29,6 +29,10 @@ type CustomizationsWLM struct {
 		NMNVlanInterface    string `yaml:"nmn_vlan" valid:"_,required"`
 		NMNMacVlanDHCPStart net.IP `yaml:"nmn_dhcp_start" valid:"ipv4,required"`
 		NMNMacVlanDHCPEnd   net.IP `yaml:"nmn_dhcp_end" valid:"ipv4,required"`
+		Routes              []struct {
+			Destination string `yaml:"dst" valid:"cidr,required"`
+			Gateway     string `yaml:"gw" valid:"cidr,required"`
+		}
 	}
 }
 
@@ -167,6 +171,10 @@ func GenCustomizationsYaml(ncns []csi.LogicalNCN, shastaNetworks map[string]*csi
 			NMNVlanInterface    string "yaml:\"nmn_vlan\" valid:\"_,required\""
 			NMNMacVlanDHCPStart net.IP "yaml:\"nmn_dhcp_start\" valid:\"ipv4,required\""
 			NMNMacVlanDHCPEnd   net.IP "yaml:\"nmn_dhcp_end\" valid:\"ipv4,required\""
+			Routes              []struct {
+				Destination string "yaml:\"dst\" valid:\"cidr,required\""
+				Gateway     string "yaml:\"gw\" valid:\"cidr,required\""
+			}
 		}{
 			NMNSubnetCIDR:       uaiNetCIDR.String(),
 			NMNSupernetGateway:  uaiNet.Gateway,
@@ -175,6 +183,17 @@ func GenCustomizationsYaml(ncns []csi.LogicalNCN, shastaNetworks map[string]*csi
 			NMNMacVlanDHCPStart: uaiNet.DHCPStart,
 			NMNMacVlanDHCPEnd:   uaiNet.DHCPEnd,
 		},
+	}
+	for netName, network := range shastaNetworks {
+		if strings.HasPrefix(netName, "NMN") {
+			output.WLM.MacVlanSetup.Routes = append(output.WLM.MacVlanSetup.Routes, struct {
+				Destination string "yaml:\"dst\" valid:\"cidr,required\""
+				Gateway     string "yaml:\"gw\" valid:\"cidr,required\""
+			}{
+				Destination: network.CIDR,
+				Gateway:     uaiNet.Gateway.String(),
+			})
+		}
 	}
 	return output
 }
