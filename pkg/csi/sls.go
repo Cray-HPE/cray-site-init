@@ -94,6 +94,32 @@ func ExtractSLSNetworks(sls *sls_common.SLSState) ([]IPV4Network, error) {
 	return ourNetworks, nil
 }
 
+// ExtractUANs pulls the information needed to assign CAN addresses to the UAN xnames
+func ExtractUANs(sls *sls_common.SLSState) ([]LogicalUAN, error) {
+	var uans []LogicalUAN
+	uanIndex := int(1)
+	for key, node := range sls.Hardware {
+		if node.Type == sls_common.Node {
+			var extra sls_common.ComptypeNode
+			err := mapstructure.Decode(node.ExtraPropertiesRaw, &extra)
+			if err != nil {
+				return uans, err
+			}
+			if extra.Role == "Application" && extra.SubRole == "UAN" {
+				uans = append(uans, LogicalUAN{
+					Xname:    key,
+					Role:     extra.Role,
+					Subrole:  extra.SubRole,
+					Hostname: fmt.Sprintf("uan%02d-can", uanIndex),
+					Aliases:  extra.Aliases,
+				})
+				uanIndex++
+			}
+		}
+	}
+	return uans, nil
+}
+
 // ExtractSLSNCNs pulls the port information for the BMCs of all Management Nodes
 func ExtractSLSNCNs(sls *sls_common.SLSState) ([]LogicalNCN, error) {
 	var ncns []LogicalNCN
@@ -120,7 +146,6 @@ func ExtractSLSNCNs(sls *sls_common.SLSState) ([]LogicalNCN, error) {
 					BmcPort:  mgmtSwitch + ":" + port,
 				})
 			}
-
 		}
 	}
 	return ncns, nil

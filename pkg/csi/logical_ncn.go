@@ -60,6 +60,16 @@ type NewBootstrapNCNMetadata struct {
 	Bond0Mac1    string `json:"bond0-mac1" csv:"Bond0 MAC1"`
 }
 
+// LogicalUAN is like LogicalNCN, but for UANs
+type LogicalUAN struct {
+	Xname    string   `yaml:"xname" json:"xname" csv:"NCN xname"`
+	Hostname string   `yaml:"hostname" json:"hostname" csv:"-"`
+	Role     string   `yaml:"role" json:"role" csv:"NCN Role"`
+	Subrole  string   `yaml:"subrole" json:"subrole" csv:"NCN Subrole"`
+	CanIP    net.IP   `yaml:"bmc-ip" json:"bmc-ip" csv:"-"`
+	Aliases  []string `yaml:"aliases" json:"aliases" csv:"-"`
+}
+
 // Validate is a validator that checks for a minimum set of info
 func (lncn *LogicalNCN) Validate() error {
 	xname := lncn.Xname
