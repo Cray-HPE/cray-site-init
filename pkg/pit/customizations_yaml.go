@@ -149,7 +149,7 @@ func GenCustomizationsYaml(ncns []csi.LogicalNCN, shastaNetworks map[string]*csi
 			ExternalAuth:   strings.ToLower(fmt.Sprintf("auth.%s.%s", systemName, siteDomain)),
 			ExternalAPI:    strings.ToLower(fmt.Sprintf("api.%s.%s", systemName, siteDomain)),
 			InternalS3:     "rgw-vip.nmn",
-			InternalAPI:    "api-gw-service.nmn",
+			InternalAPI:    "api-gw-service-nmn.local",
 		},
 	}
 	output.Networking = customizationsNetworks
