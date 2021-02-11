@@ -135,6 +135,10 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 				log.Fatalf("IP Addressing Failure\nCouldn't add MetalLB Static pool of %v to net %v: %v", v.GetString("can-static-pool"), tempNet.CIDR, err)
 			}
 			static.FullName = "CAN Static Pool MetalLB"
+			_, err = static.AddReservationWithIP("external-dns", v.GetString("can-external-dns"), "site to system lookups")
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 		_, canDynamicPool, err := net.ParseCIDR(v.GetString("can-dynamic-pool"))
 		if err != nil {

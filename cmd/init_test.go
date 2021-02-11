@@ -82,7 +82,7 @@ func (suite *InitCmdTestSuite) TestValidateSwitchInput_WrongXNameTypes() {
 		},
 		expectedError: errors.New("switch_metadata.csv contains invalid switch data"),
 	}, {
-		// Aggergation using MgmtSwitch, should be using MgmtHLSwitch
+		// Aggregation using MgmtSwitch, should be using MgmtHLSwitch
 		mySwitch: csi.ManagementSwitch{
 			Xname:      "x20c0w14",
 			SwitchType: csi.ManagementSwitchTypeAggregation,
@@ -90,7 +90,7 @@ func (suite *InitCmdTestSuite) TestValidateSwitchInput_WrongXNameTypes() {
 		},
 		expectedError: errors.New("switch_metadata.csv contains invalid switch data"),
 	}, {
-		// Aggergation using CDUMgmtSwitch, should be using MgmtHLSwitch
+		// Aggregation using CDUMgmtSwitch, should be using MgmtHLSwitch
 		mySwitch: csi.ManagementSwitch{
 			Xname:      "d20w14",
 			SwitchType: csi.ManagementSwitchTypeAggregation,

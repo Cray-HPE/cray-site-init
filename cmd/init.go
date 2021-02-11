@@ -223,6 +223,17 @@ var initCmd = &cobra.Command{
 			}
 		}
 
+		// Pull UANs from the completed slsState to assign CAN addresses
+		slsUans, err := csi.ExtractUANs(&slsState)
+		if err != nil {
+			log.Panic(err) // This should never happen.  I can't really imagine how it would.
+		}
+
+		canSubnet, _ := shastaNetworks["CAN"].LookUpSubnet("bootstrap_dhcp")
+		for _, uan := range slsUans {
+			canSubnet.AddReservation(uan.Hostname, uan.Xname)
+		}
+
 		// Update the SLSState with the updated network information
 		_, slsState.Networks = prepareNetworkSLS(shastaNetworks)
 
@@ -304,6 +315,7 @@ func init() {
 	initCmd.Flags().String("can-cidr", csi.DefaultCANString, "Overall IPv4 CIDR for all Customer Access subnets")
 	initCmd.Flags().String("can-static-pool", csi.DefaultCANStaticString, "Overall IPv4 CIDR for static Customer Access addresses")
 	initCmd.Flags().String("can-dynamic-pool", csi.DefaultCANPoolString, "Overall IPv4 CIDR for dynamic Customer Access addresses")
+	initCmd.Flags().String("can-external-dns", "", "IP Address in the can-static-pool for the external dns service \"site-to-system lookups\"")
 
 	initCmd.Flags().String("mtl-cidr", csi.DefaultMTLString, "Overall IPv4 CIDR for all Provisioning subnets")
 	initCmd.Flags().String("hsn-cidr", csi.DefaultHSNString, "Overall IPv4 CIDR for all HSN subnets")
@@ -580,6 +592,7 @@ func validateFlags() []string {
 		"can-gateway",
 		"site-ip",
 		"site-gw",
+		"can-external-dns",
 		"site-dns",
 		"site-nic",
 		"bootstrap-ncn-bmc-user",

@@ -10,6 +10,7 @@ import (
 	"net"
 	"strings"
 
+	"github.com/pkg/errors"
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
 	"stash.us.cray.com/MTL/csi/pkg/ipam"
 )
@@ -345,5 +346,17 @@ func (iSubnet *IPV4Subnet) AddReservation(name, comment string) *IPReservation {
 		})
 		return &iSubnet.IPReservations[len(iSubnet.IPReservations)-1]
 	}
+}
 
+// AddReservationWithIP adds a reservation with a specific ip address
+func (iSubnet *IPV4Subnet) AddReservationWithIP(name, addr, comment string) (*IPReservation, error) {
+	if iSubnet.CIDR.Contains(net.ParseIP(addr)) {
+		iSubnet.IPReservations = append(iSubnet.IPReservations, IPReservation{
+			IPAddress: net.ParseIP(addr),
+			Name:      name,
+			Comment:   comment,
+		})
+		return &iSubnet.IPReservations[len(iSubnet.IPReservations)-1], nil
+	}
+	return &iSubnet.IPReservations[len(iSubnet.IPReservations)-1], errors.Errorf("Cannot add %v to %v.%v subnet.  Out of range in %v", addr, iSubnet.NetName, iSubnet.Name, iSubnet.CIDR.String())
 }

@@ -104,6 +104,7 @@ func GenCustomizationsYaml(ncns []csi.LogicalNCN, shastaNetworks map[string]*csi
 	nmnLBs, _ := shastaNetworks["NMNLB"].LookUpSubnet("nmn_metallb_address_pool")
 	hmnLBs, _ := shastaNetworks["HMNLB"].LookUpSubnet("hmn_metallb_address_pool")
 	uaiNet, _ := shastaNetworks["NMN"].LookUpSubnet("uai_macvlan")
+	canStaticNet, _ := shastaNetworks["CAN"].LookUpSubnet("can_metallb_static_pool")
 	// Normalize the CIDR before using it
 	_, uaiNetCIDR, _ := net.ParseCIDR(uaiNet.CIDR.String())
 	var customizationsNetworks = CustomizationsNetworking{
@@ -124,7 +125,7 @@ func GenCustomizationsYaml(ncns []csi.LogicalNCN, shastaNetworks map[string]*csi
 			NcnMasters         []net.IP "yaml:\"nmn_ncn_masters\" valid:\"required\""
 			NcnStorage         []net.IP "yaml:\"nmn_ncn_storage\" valid:\"required\""
 		}{
-			SiteToSystem:       []byte{},
+			SiteToSystem:       canStaticNet.LookupReservation("external-dns").IPAddress,
 			SystemToSite:       net.ParseIP(strings.Split(v.GetString("site-dns"), ",")[0]),
 			NmnTftp:            nmnLBs.LookupReservation("cray-tftp").IPAddress,
 			HmnTftp:            hmnLBs.LookupReservation("cray-tftp").IPAddress,
