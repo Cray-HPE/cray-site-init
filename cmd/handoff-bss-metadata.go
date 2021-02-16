@@ -74,6 +74,8 @@ func init() {
 	handoffBSSMetadataCmd.Flags().StringVar(&dataFile, "data-file",
 		"", "data.json file with cloud-init configuration for each node and global")
 	_ = handoffBSSMetadataCmd.MarkFlagRequired("data-file")
+
+	setupCommon()
 }
 
 func getKernelCommandlineArgs(ncn sls_common.GenericHardware, cmdline string) string {

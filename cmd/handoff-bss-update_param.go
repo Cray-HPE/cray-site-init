@@ -37,6 +37,8 @@ func init() {
 	handoffBSSUpdateParamCmd.Flags().StringArrayVar(&paramsToDelete, "delete", []string{},
 		"For each kernel parameter you wish to remove provide just the key and it will be removed " +
 		"regardless of value")
+
+	setupCommon()
 }
 
 func updateNCNKernelParams() {

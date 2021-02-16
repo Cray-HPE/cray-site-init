@@ -35,9 +35,11 @@ var handoffCmd = &cobra.Command{
 }
 
 func init() {
-	var err error
-
 	rootCmd.AddCommand(handoffCmd)
+}
+
+func setupCommon() {
+	var err error
 
 	// These are steps that every handoff function have in common.
 	token = os.Getenv("TOKEN")
