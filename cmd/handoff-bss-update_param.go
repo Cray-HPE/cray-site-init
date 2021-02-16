@@ -23,6 +23,8 @@ var handoffBSSUpdateParamCmd = &cobra.Command{
 	Short: "runs migration steps to update kernel parameters for NCNs",
 	Long:  "Allows for the updating of kernel parameters in BSS for all the NCNs",
 	Run: func(cmd *cobra.Command, args []string) {
+		setupCommon()
+
 		log.Println("Updating NCN kernel parameters...")
 		updateNCNKernelParams()
 		log.Println("Done updating NCN kernel parameters.")
@@ -35,10 +37,8 @@ func init() {
 	handoffBSSUpdateParamCmd.Flags().StringArrayVar(&paramsToUpdate, "set", []string{},
 		"For each kernel parameter you wish to update or add list it in the format of key=value")
 	handoffBSSUpdateParamCmd.Flags().StringArrayVar(&paramsToDelete, "delete", []string{},
-		"For each kernel parameter you wish to remove provide just the key and it will be removed " +
-		"regardless of value")
-
-	setupCommon()
+		"For each kernel parameter you wish to remove provide just the key and it will be removed "+
+			"regardless of value")
 }
 
 func updateNCNKernelParams() {

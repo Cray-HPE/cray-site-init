@@ -58,6 +58,8 @@ var handoffBSSMetadataCmd = &cobra.Command{
 	Short: "runs migration steps to build BSS entries for all NCNs",
 	Long:  "Using PIT configuration builds kernel command line arguments and cloud-init metadata for each NCN",
 	Run: func(cmd *cobra.Command, args []string) {
+		setupCommon()
+
 		log.Println("Building BSS metadata for NCNs...")
 		populateNCNMetadata()
 		log.Println("Done building BSS metadata for NCNs.")
@@ -74,8 +76,6 @@ func init() {
 	handoffBSSMetadataCmd.Flags().StringVar(&dataFile, "data-file",
 		"", "data.json file with cloud-init configuration for each node and global")
 	_ = handoffBSSMetadataCmd.MarkFlagRequired("data-file")
-
-	setupCommon()
 }
 
 func getKernelCommandlineArgs(ncn sls_common.GenericHardware, cmdline string) string {
