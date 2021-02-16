@@ -358,5 +358,11 @@ func (iSubnet *IPV4Subnet) AddReservationWithIP(name, addr, comment string) (*IP
 		})
 		return &iSubnet.IPReservations[len(iSubnet.IPReservations)-1], nil
 	}
-	return &iSubnet.IPReservations[len(iSubnet.IPReservations)-1], errors.Errorf("Cannot add %v to %v.%v subnet.  Out of range in %v", addr, iSubnet.NetName, iSubnet.Name, iSubnet.CIDR.String())
+	retError := errors.Errorf("Cannot add \"%v\" to %v subnet as %v.  %v is not part of %v.", name, iSubnet.Name, addr, addr, iSubnet.CIDR.String())
+
+	if len(iSubnet.IPReservations) == 0 {
+		return nil, retError
+	}
+
+	return &iSubnet.IPReservations[len(iSubnet.IPReservations)-1], retError
 }
