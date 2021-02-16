@@ -6,7 +6,6 @@ package cmd
 
 import (
 	"bytes"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"github.com/mitchellh/mapstructure"
@@ -17,20 +16,16 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"os"
 	"os/exec"
 	base "stash.us.cray.com/HMS/hms-base"
 	"stash.us.cray.com/HMS/hms-bss/pkg/bssTypes"
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
 	"stash.us.cray.com/HMS/hms-smd/pkg/sm"
-	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
 	"strconv"
 	"strings"
 	"syscall"
 )
 
-const gatewayHostname = "api-gw-service-nmn.local"
-const s3Prefix = "s3://ncn-images/"
 const hwAddrPrefix = "Permanent HW addr: "
 const macGatherCommand = "for interface in /sys/class/net/*; do echo -n " +
 	"\"$interface,\" && cat \"$interface/address\"; done"
@@ -50,12 +45,10 @@ type ipJSONStruct struct {
 type ipJSONStructArray []ipJSONStruct
 
 var (
-	dataFile       string
-	cloudInitData  map[string]bssTypes.CloudInit
-	sshConfig      *ssh.ClientConfig
-	token          string
-	httpClient     *http.Client
-	managementNCNs []sls_common.GenericHardware
+	dataFile      string
+	cloudInitData map[string]bssTypes.CloudInit
+	sshConfig     *ssh.ClientConfig
+	token         string
 
 	vlansToGather = []string{"vlan002"}
 )
@@ -65,23 +58,6 @@ var handoffBSSMetadataCmd = &cobra.Command{
 	Short: "runs migration steps to build BSS entries for all NCNs",
 	Long:  "Using PIT configuration builds kernel command line arguments and cloud-init metadata for each NCN",
 	Run: func(cmd *cobra.Command, args []string) {
-		token = os.Getenv("TOKEN")
-		if token == "" {
-			log.Panicln("Environment variable TOKEN can NOT be blank!")
-		}
-
-		transport := http.DefaultTransport.(*http.Transport).Clone()
-		transport.TLSClientConfig = &tls.Config{
-			InsecureSkipVerify: true,
-		}
-		httpClient = &http.Client{Transport: transport}
-
-		// Parse the data.json file.
-		err := csiFiles.ReadJSONConfig(dataFile, &cloudInitData)
-		if err != nil {
-			log.Fatalln("Couldn't parse data file: ", err)
-		}
-
 		log.Println("Building BSS metadata for NCNs...")
 		populateNCNMetadata()
 		log.Println("Done building BSS metadata for NCNs.")
@@ -98,31 +74,6 @@ func init() {
 	handoffBSSMetadataCmd.Flags().StringVar(&dataFile, "data-file",
 		"", "data.json file with cloud-init configuration for each node and global")
 	_ = handoffBSSMetadataCmd.MarkFlagRequired("data-file")
-}
-
-func getManagementNCNsFromSLS() (managementNCNs []sls_common.GenericHardware, err error) {
-	url := fmt.Sprintf("https://%s/apis/sls/v1/search/hardware?extra_properties.Role=Management",
-		gatewayHostname)
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		err = fmt.Errorf("failed to create new request: %w", err)
-		return
-	}
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
-
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		err = fmt.Errorf("failed to do request: %w", err)
-		return
-	}
-
-	body, _ := ioutil.ReadAll(resp.Body)
-	err = json.Unmarshal(body, &managementNCNs)
-	if err != nil {
-		err = fmt.Errorf("failed to unmarshal body: %w", err)
-	}
-
-	return
 }
 
 func getKernelCommandlineArgs(ncn sls_common.GenericHardware, cmdline string) string {
@@ -461,11 +412,6 @@ func populateNCNMetadata() {
 
 	bssEntries := make(map[string]bssTypes.BootParams)
 
-	managementNCNs, err = getManagementNCNsFromSLS()
-	if err != nil {
-		log.Panicln(err)
-	}
-
 	fmt.Print("Enter root password for NCNs: ")
 	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
 	fmt.Println()
@@ -497,7 +443,7 @@ func populateNCNMetadata() {
 		bssEntry := getBSSEntryForNCN(ncn)
 		bssEntries[hostname] = bssEntry
 
-		uploadEntryToBSS(bssEntry)
+		uploadEntryToBSS(bssEntry, http.MethodPut)
 
 		// In the event that for whatever reason HSM inventory doesn't work the component won't get created and then
 		// BSS won't be able to find the node.
@@ -535,7 +481,7 @@ func populateNCNMetadata() {
 	pitEntry.Params = pitArgs
 	pitEntry.Macs = pitMACs
 
-	uploadEntryToBSS(pitEntry)
+	uploadEntryToBSS(pitEntry, http.MethodPut)
 
 	uploadHSMComponents(hsmComponents)
 }
@@ -551,47 +497,7 @@ func populateGlobalMetadata() {
 		},
 	}
 
-	uploadEntryToBSS(bssEntry)
-}
-
-func uploadEntryToBSS(bssEntry bssTypes.BootParams) {
-	url := fmt.Sprintf("https://%s/apis/bss/boot/v1/bootparameters", gatewayHostname)
-
-	jsonBytes, err := json.Marshal(bssEntry)
-	if err != nil {
-		log.Panicln(err)
-	}
-
-	method := http.MethodPut
-	for _, host := range bssEntry.Hosts {
-		// If it's the Global host then do a PATCH operation to preserve the existing config (which is the CA certs,
-		// spire config, etc.).
-		if host == "Global" {
-			method = http.MethodPatch
-			break
-		}
-	}
-
-	req, err := http.NewRequest(method, url, bytes.NewBuffer(jsonBytes))
-	if err != nil {
-		log.Panicf("Failed to create new request: %s", err)
-	}
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		log.Panicf("Failed to put BSS entry: %s", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		bodyBytes, _ := ioutil.ReadAll(resp.Body)
-		log.Panicf("Failed to put BSS entry: %s", string(bodyBytes))
-	}
-
-	jsonPrettyBytes, _ := json.MarshalIndent(bssEntry, "", "\t")
-
-	log.Printf("Sucessfuly put BSS entry for %s:\n%s", bssEntry.Hosts[0], string(jsonPrettyBytes))
+	uploadEntryToBSS(bssEntry, http.MethodPatch)
 }
 
 func uploadCompEthInterfaceToHSM(compInterface sm.CompEthInterface, url string,
