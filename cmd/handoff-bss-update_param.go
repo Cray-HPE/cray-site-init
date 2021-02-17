@@ -42,8 +42,8 @@ func init() {
 }
 
 func updateNCNKernelParams() {
-	if len(paramsToUpdate) == 0 {
-		log.Fatalln("No parameters given to set!")
+	if len(paramsToUpdate) == 0 && len(paramsToDelete) == 0 {
+		log.Fatalln("No parameters given to set or delete!")
 	}
 
 	type paramTuple struct {
