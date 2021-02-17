@@ -18,12 +18,12 @@ computes:
 - cabinets:
   - x5000
   hmn:
-    cidr: 10.104.0.1/22
-    gateway: 10.104.3.254
-    vlan: 3001
-  nmn:
     cidr: 10.100.0.1/22
     gateway: 10.100.3.254
+    vlan: 3001
+  nmn:
+    cidr: 10.104.0.1/22
+    gateway: 10.104.3.254
     vlan: 2001
 ncn:
 - cabinets:
