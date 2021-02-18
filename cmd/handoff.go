@@ -18,7 +18,7 @@ import (
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
 )
 
-const gatewayHostname = "10.103.8.129"
+const gatewayHostname = "api-gw-service-nmn.local"
 const s3Prefix = "s3://ncn-images/"
 
 var (
@@ -103,17 +103,17 @@ func uploadEntryToBSS(bssEntry bssTypes.BootParams, method string) {
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		log.Panicf("Failed to put BSS entry: %s", err)
+		log.Panicf("Failed to %s BSS entry: %s", method, err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		bodyBytes, _ := ioutil.ReadAll(resp.Body)
-		log.Panicf("Failed to put BSS entry: %s", string(bodyBytes))
+		log.Panicf("Failed to %s BSS entry: %s", method, string(bodyBytes))
 	}
 
 	jsonPrettyBytes, _ := json.MarshalIndent(bssEntry, "", "\t")
 
-	log.Printf("Sucessfuly put BSS entry for %s:\n%s", bssEntry.Hosts[0], string(jsonPrettyBytes))
+	log.Printf("Sucessfuly %s BSS entry for %s:\n%s", method, bssEntry.Hosts[0], string(jsonPrettyBytes))
 }
 
 func getBSSBootparametersForXname(xname string) bssTypes.BootParams {

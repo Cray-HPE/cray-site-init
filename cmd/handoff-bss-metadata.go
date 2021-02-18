@@ -21,6 +21,7 @@ import (
 	"stash.us.cray.com/HMS/hms-bss/pkg/bssTypes"
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
 	"stash.us.cray.com/HMS/hms-smd/pkg/sm"
+	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
 	"strconv"
 	"strings"
 	"syscall"
@@ -59,6 +60,12 @@ var handoffBSSMetadataCmd = &cobra.Command{
 	Long:  "Using PIT configuration builds kernel command line arguments and cloud-init metadata for each NCN",
 	Run: func(cmd *cobra.Command, args []string) {
 		setupCommon()
+
+		// Parse the data.json file.
+		err := csiFiles.ReadJSONConfig(dataFile, &cloudInitData)
+		if err != nil {
+			log.Fatalln("Couldn't parse data file: ", err)
+		}
 
 		log.Println("Building BSS metadata for NCNs...")
 		populateNCNMetadata()
