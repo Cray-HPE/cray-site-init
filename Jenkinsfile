@@ -1,7 +1,8 @@
 @Library("dst-shared@release/shasta-1.4") _
 rpmBuild(
     githubPushRepo: "Cray-HPE/cray-site-init",
-    githubPushBranches : "(release/.*|main)",
+    githubPushBranches: "release/.*|main",
+    master_branch: "main",
     specfile : "cray-site-init.spec",
     product : "csm",
     target_node : "ncn",
