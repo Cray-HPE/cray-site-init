@@ -2,7 +2,7 @@
 rpmBuild(
     githubPushRepo: "Cray-HPE/cray-site-init",
     githubPushBranches: "release/.*|main",
-    master_branch: "main",
+    masterBranch: "main",
     specfile : "cray-site-init.spec",
     product : "csm",
     target_node : "ncn",
