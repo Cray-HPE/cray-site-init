@@ -89,10 +89,10 @@ var StaticConfigTemplate = []byte(`
 # Static Configurations
 {{range .NCNS}}
 # DHCP Entries for {{.Hostname}}
-dhcp-host=id:{{.Xname}},set:{{.Hostname}},{{.NmnMac}},{{.MtlIP}},{{.Hostname}},20m # MTL
+dhcp-host=id:{{.Xname}},set:{{.Hostname}},{{.Bond0Mac0}},{{.Bond0Mac1}},{{.MtlIP}},{{.Hostname}},20m # MTL
 dhcp-host=id:{{.Xname}},set:{{.Hostname}},{{.Bond0Mac0}},{{.Bond0Mac1}},{{.NmnIP}},{{.Hostname}},20m # Bond0 Mac0/Mac1
-dhcp-host=id:{{.Xname}},set:{{.Hostname}},{{.NmnMac}},{{.HmnIP}},{{.Hostname}},20m # HMN
-dhcp-host=id:{{.Xname}},set:{{.Hostname}},{{.NmnMac}},{{.CanIP}},{{.Hostname}},20m # CAN
+dhcp-host=id:{{.Xname}},set:{{.Hostname}},{{.Bond0Mac0}},{{.Bond0Mac1}},{{.HmnIP}},{{.Hostname}},20m # HMN
+dhcp-host=id:{{.Xname}},set:{{.Hostname}},{{.Bond0Mac0}},{{.Bond0Mac1}},{{.CanIP}},{{.Hostname}},20m # CAN
 dhcp-host={{.BmcMac}},{{.BmcIP}},{{.Hostname}}-mgmt,20m #HMN
 # Host Record Entries for {{.Hostname}}
 host-record={{.Hostname}},{{.Hostname}}.can,{{.CanIP}}
