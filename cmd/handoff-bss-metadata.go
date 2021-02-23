@@ -199,8 +199,7 @@ func getCloudInitMetadataForNCN(ncn sls_common.GenericHardware) (userData bssTyp
 }
 
 func getMACsFromString(macAddrStrings string) (ncnMacs []string) {
-	// In the macAddrString above is a block of a bunch of MACs so now we need to filter out only the ones we care
-	// about.
+	// macAddrStrings is a block of MACs so now we need to filter out only the ones we care about.
 	macAddrsSplit := strings.Split(macAddrStrings, "\n")
 	for _, macAddrLine := range macAddrsSplit {
 		// We have a range of entries that look like this:
@@ -236,29 +235,6 @@ func getMACsFromString(macAddrStrings string) (ncnMacs []string) {
 	return
 }
 
-func populateHSMEthernetInterface(xname string, ipString string, vlan string) {
-	// The input here will be a JSON blob in text form. So we will need to unmarshal and pick out the pieces we need.
-	var ipStructArray ipJSONStructArray
-
-	err := json.Unmarshal([]byte(ipString), &ipStructArray)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	vlanInterface := ipStructArray[0]
-
-	var ip string
-	for _, addr := range vlanInterface.AddrInfo {
-		if addr.Family == "inet" {
-			ip = addr.Local
-			break
-		}
-	}
-	mac := vlanInterface.Address
-
-	generateAndSendInterfaceForNCN(xname, ip, mac, vlan)
-}
-
 func getBSSEntryForNCN(ncn sls_common.GenericHardware) (bssEntry bssTypes.BootParams) {
 	hostname := getNCNHostname(ncn)
 
@@ -283,6 +259,7 @@ func getBSSEntryForNCN(ncn sls_common.GenericHardware) (bssEntry bssTypes.BootPa
 		} else {
 			vlanOutputString = runSSHCommandWithClient(sshClient, vlanGatherCommand+vlan)
 		}
+
 		populateHSMEthernetInterface(ncn.Xname, vlanOutputString, vlan)
 	}
 
@@ -485,14 +462,44 @@ func populateNCNMetadata() {
 	// Last thing for m001 is to add all the other MACs that might not be discoverable via Redfish.
 	pitMACs := getPITMACs()
 
-	// Finally update the structure whith these values and send the whole package off to BSS.
+	// Finally update the structure with these values and send the whole package off to BSS.
 	pitEntry := bssEntries["ncn-m001"]
 	pitEntry.Params = pitArgs
 	pitEntry.Macs = pitMACs
+	bssEntries["ncn-m001"] = pitEntry
 
 	uploadEntryToBSS(pitEntry, http.MethodPut)
 
+	// Create a component in HSM for each NCN. This should happen _eventually_ with discovery, but we might need
+	// it sooner than that.
 	uploadHSMComponents(hsmComponents)
+
+	// To support PXE booting from any MAC from any node make sure that an EthernetInterfaces entry exists for them all.
+	for _, entry := range bssEntries {
+		for _, macAddr := range entry.Macs {
+			compEthInterface := getCompEthInterfaceForMAC(macAddr)
+			xname := entry.Hosts[0]
+
+			if compEthInterface == nil {
+				// MAC isn't in EthernetInterfaces, add it.
+				generateAndSendInterfaceForNCN(xname, "", macAddr, "CSI Handoff MAC")
+			} else {
+				// So the MAC exists, the only other thing we care about is the ComponentID being correct.
+				compEthInterface.CompID = xname
+
+				// Be sure to normalize all the MACs.
+				macWithoutPunctuation := strings.ReplaceAll(macAddr, ":", "")
+
+				url := fmt.Sprintf("https://%s/apis/smd/hsm/v1/Inventory/EthernetInterfaces/%s",
+					gatewayHostname, macWithoutPunctuation)
+				response := uploadCompEthInterfaceToHSM(*compEthInterface, url, "PATCH")
+
+				if response.StatusCode != http.StatusOK {
+					log.Panicf("Unexpected status code (%d): %s.", response.StatusCode, response.Status)
+				}
+			}
+		}
+	}
 }
 
 func populateGlobalMetadata() {
@@ -507,6 +514,42 @@ func populateGlobalMetadata() {
 	}
 
 	uploadEntryToBSS(bssEntry, http.MethodPatch)
+}
+
+func getCompEthInterfaceForMAC(macAddr string) *sm.CompEthInterface {
+	// Be sure to normalize all the MACs.
+	macWithoutPunctuation := strings.ReplaceAll(macAddr, ":", "")
+
+	url := fmt.Sprintf("https://%s/apis/smd/hsm/v1/Inventory/EthernetInterfaces/%s",
+		gatewayHostname, macWithoutPunctuation)
+
+	request, requestErr := http.NewRequest(http.MethodGet, url, nil)
+	if requestErr != nil {
+		log.Panicf("Failed to construct request: %s", requestErr)
+	}
+	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+
+	response, doErr := httpClient.Do(request)
+	if doErr != nil {
+		log.Panicf("Failed to execute POST request: %s", doErr)
+	}
+
+	if response.StatusCode == http.StatusNotFound {
+		return nil
+	}
+
+	responseBytes, readErr := ioutil.ReadAll(response.Body)
+	if readErr != nil {
+		log.Panicf("Failed to read response body: %s", readErr)
+	}
+
+	var compInterface sm.CompEthInterface
+	unmarshalErr := json.Unmarshal(responseBytes, &compInterface)
+	if unmarshalErr != nil {
+		log.Panicf("Failed to unmarshal response bytes: %s", unmarshalErr)
+	}
+
+	return &compInterface
 }
 
 func uploadCompEthInterfaceToHSM(compInterface sm.CompEthInterface, url string,
@@ -529,10 +572,14 @@ func uploadCompEthInterfaceToHSM(compInterface sm.CompEthInterface, url string,
 		log.Panicf("Failed to execute POST request: %s", doErr)
 	}
 
+	jsonPrettyBytes, _ := json.MarshalIndent(compInterface, "", "\t")
+	log.Printf("Sucessfuly %s EthernetInterfaces entry for %s:\n%s",
+		method, compInterface.CompID, string(jsonPrettyBytes))
+
 	return
 }
 
-func generateAndSendInterfaceForNCN(xname string, ip string, macAddr string, vlan string) {
+func generateAndSendInterfaceForNCN(xname string, ip string, macAddr string, description string) {
 	url := fmt.Sprintf("https://%s/apis/smd/hsm/v1/Inventory/EthernetInterfaces", gatewayHostname)
 
 	// Be sure to normalize all the MACs.
@@ -540,7 +587,7 @@ func generateAndSendInterfaceForNCN(xname string, ip string, macAddr string, vla
 
 	componentEndpointInterfaces := sm.CompEthInterface{
 		ID:      macWithoutPunctuation,
-		Desc:    fmt.Sprintf("Bond0 - %s", vlan),
+		Desc:    description,
 		MACAddr: macWithoutPunctuation,
 		IPAddr:  ip,
 		CompID:  xname,
@@ -557,15 +604,36 @@ func generateAndSendInterfaceForNCN(xname string, ip string, macAddr string, vla
 		response := uploadCompEthInterfaceToHSM(componentEndpointInterfaces, patchURL, "PATCH")
 
 		if response.StatusCode != http.StatusOK {
-			log.Panicf("unexpected status code (%d): %s.", response.StatusCode, response.Status)
+			log.Panicf("Unexpected status code (%d): %s.", response.StatusCode, response.Status)
 		}
 	} else if response.StatusCode != http.StatusCreated {
-		log.Panicf("unexpected status code (%d): %s", response.StatusCode, response.Status)
+		log.Panicf("Unexpected status code (%d): %s", response.StatusCode, response.Status)
+	}
+}
+
+func populateHSMEthernetInterface(xname string, ipString string, vlan string) {
+	// The input here will be a JSON blob in text form. So we will need to unmarshal and pick out the pieces we need.
+	var ipStructArray ipJSONStructArray
+
+	err := json.Unmarshal([]byte(ipString), &ipStructArray)
+	if err != nil {
+		log.Panic(err)
 	}
 
-	jsonPrettyBytes, _ := json.MarshalIndent(componentEndpointInterfaces, "", "\t")
+	vlanInterface := ipStructArray[0]
 
-	log.Printf("Sucessfuly put EthernetInterfaces entry for %s:\n%s", xname, string(jsonPrettyBytes))
+	var ip string
+	for _, addr := range vlanInterface.AddrInfo {
+		if addr.Family == "inet" {
+			ip = addr.Local
+			break
+		}
+	}
+	mac := vlanInterface.Address
+
+	description := fmt.Sprintf("Bond0 - %s", vlan)
+
+	generateAndSendInterfaceForNCN(xname, ip, mac, description)
 }
 
 func uploadHSMComponents(array base.ComponentArray) {
