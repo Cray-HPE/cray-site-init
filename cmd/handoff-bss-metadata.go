@@ -30,6 +30,7 @@ import (
 const hwAddrPrefix = "Permanent HW addr: "
 const macGatherCommand = "for interface in /sys/class/net/*; do echo -n " +
 	"\"$interface,\" && cat \"$interface/address\"; done"
+const bondMACGatherCommand = "grep \"Permanent HW addr: \" /proc/net/bonding/bond0"
 const vlanGatherCommand = "ip -j addr show "
 
 // This structure definition here exists to allow the parsing of the JSON structure that comes from the `ip` command.
@@ -245,7 +246,12 @@ func getBSSEntryForNCN(ncn sls_common.GenericHardware) (bssEntry bssTypes.BootPa
 	sshClient := getSSHClientForHostname(hostname)
 
 	cmdline := runSSHCommandWithClient(sshClient, "cat /proc/cmdline")
+
 	macAddrStrings := runSSHCommandWithClient(sshClient, macGatherCommand)
+	macs := getMACsFromString(macAddrStrings)
+
+	bondMACStrings := runSSHCommandWithClient(sshClient, bondMACGatherCommand)
+	macs = append(macs, getBondMACsFromString(bondMACStrings)...)
 
 	// This is not even related to BSS but it makes the most sense to do here...we need to make sure HSM has correct
 	// EthernetInterface entries for all the NCNs and since they don't DHCP Kea won't do it for us. So take advantage
@@ -286,7 +292,7 @@ func getBSSEntryForNCN(ncn sls_common.GenericHardware) (bssEntry bssTypes.BootPa
 	// TODO: Put in MAC address from bond.
 	bssEntry = bssTypes.BootParams{
 		Hosts:  []string{ncn.Xname},
-		Macs:   getMACsFromString(macAddrStrings),
+		Macs:   macs,
 		Params: getKernelCommandlineArgs(ncn, cmdline),
 		Kernel: s3Prefix + kernel,
 		Initrd: s3Prefix + initrd,
@@ -300,29 +306,8 @@ func getBSSEntryForNCN(ncn sls_common.GenericHardware) (bssEntry bssTypes.BootPa
 }
 
 func buildPITArgs(base string) string {
-	// Gather the MACs we need.
-	var macs []string
-
-	data, err := ioutil.ReadFile("/proc/net/bonding/bond0")
-	if err != nil {
-		log.Panicln(err)
-	}
-
-	for _, line := range strings.Split(string(data), "\n") {
-		if strings.HasPrefix(line, hwAddrPrefix) {
-			macs = append(macs, strings.TrimPrefix(line, hwAddrPrefix))
-		}
-	}
-
-	// Hopefully future proofing against if we have 2 bonds.
-	data, err = ioutil.ReadFile("/proc/net/bonding/bond1")
-	if err == nil {
-		for _, line := range strings.Split(string(data), "\n") {
-			if strings.HasPrefix(line, hwAddrPrefix) {
-				macs = append(macs, strings.TrimPrefix(line, hwAddrPrefix))
-			}
-		}
-	}
+	// Get the bond MACs we need.
+	macs := getPITBondMACs()
 
 	// Now just do a little find and replace.
 	cmdlineParts := strings.Fields(base)
@@ -376,12 +361,44 @@ func buildPITArgs(base string) string {
 	return strings.Join(finalParts, " ")
 }
 
-func getPITMACs() []string {
+func getBondMACsFromString(bondMACs string) (macs []string) {
+	for _, line := range strings.Split(bondMACs, "\n") {
+		if strings.HasPrefix(line, hwAddrPrefix) {
+			macs = append(macs, strings.TrimPrefix(line, hwAddrPrefix))
+		}
+	}
+
+	return
+}
+
+func getPITBondMACs() (macs []string) {
+	// We need to additionally add the *permanent* physical MACs for the bond members.
+	data, err := ioutil.ReadFile("/proc/net/bonding/bond0")
+	if err != nil {
+		log.Panicln(err)
+	}
+	macs = getBondMACsFromString(string(data))
+
+	// Hopefully future proofing against if we have 2 bonds.
+	data, err = ioutil.ReadFile("/proc/net/bonding/bond1")
+	if err == nil {
+		macs = append(macs, getBondMACsFromString(string(data))...)
+	}
+
+	return
+}
+
+func getAllPITMACs() (macs []string) {
 	out, err := exec.Command("bash", "-c", macGatherCommand).Output()
 	if err != nil {
 		log.Panic(err)
 	}
-	return getMACsFromString(string(out))
+	macs = getMACsFromString(string(out))
+
+	// Also include the bond MACs.
+	macs = append(macs, getPITBondMACs()...)
+
+	return
 }
 
 func getPITVLanString(vlan string) string {
@@ -460,7 +477,7 @@ func populateNCNMetadata() {
 	pitArgs := buildPITArgs(bssEntries["ncn-m002"].Params)
 
 	// Last thing for m001 is to add all the other MACs that might not be discoverable via Redfish.
-	pitMACs := getPITMACs()
+	pitMACs := getAllPITMACs()
 
 	// Finally update the structure with these values and send the whole package off to BSS.
 	pitEntry := bssEntries["ncn-m001"]
