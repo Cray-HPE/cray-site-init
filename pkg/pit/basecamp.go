@@ -108,6 +108,7 @@ var cephWorkerRunCMD = []string{
 	"/srv/cray/scripts/metal/set-ntp-config.sh",
 	"/srv/cray/scripts/metal/set-bmc-bbs.sh",
 	"/srv/cray/scripts/metal/install-bootloader.sh",
+	"/srv/cray/scripts/common/update_ca_certs.py",
 }
 
 // Make sure any "FIXME" added to this is updated in the MakeBasecampGlobals function below
