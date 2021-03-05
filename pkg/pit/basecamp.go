@@ -76,12 +76,12 @@ type BaseCampGlobals struct {
 // k8sRunCMD has the list of scripts to run on NCN boot for
 // all members of the kubernets cluster
 var k8sRunCMD = []string{
+	"/srv/cray/scripts/metal/install-bootloader.sh",
 	"/srv/cray/scripts/metal/set-host-records.sh",
 	"/srv/cray/scripts/metal/set-dhcp-to-static.sh",
 	"/srv/cray/scripts/metal/set-dns-config.sh",
 	"/srv/cray/scripts/metal/set-ntp-config.sh",
 	"/srv/cray/scripts/metal/set-bmc-bbs.sh",
-	"/srv/cray/scripts/metal/install-bootloader.sh",
 	"/srv/cray/scripts/metal/disable-cloud-init.sh",
 	"/srv/cray/scripts/common/update_ca_certs.py",
 	"/srv/cray/scripts/common/kubernetes-cloudinit.sh",
@@ -90,12 +90,12 @@ var k8sRunCMD = []string{
 // cephRunCMD has the list of scripts to run on NCN boot for
 // the first Ceph member which is responsible for installing the others
 var cephRunCMD = []string{
+	"/srv/cray/scripts/metal/install-bootloader.sh",
 	"/srv/cray/scripts/metal/set-host-records.sh",
 	"/srv/cray/scripts/metal/set-dhcp-to-static.sh",
 	"/srv/cray/scripts/metal/set-dns-config.sh",
 	"/srv/cray/scripts/metal/set-ntp-config.sh",
 	"/srv/cray/scripts/metal/set-bmc-bbs.sh",
-	"/srv/cray/scripts/metal/install-bootloader.sh",
 	"/srv/cray/scripts/metal/disable-cloud-init.sh",
 	"/srv/cray/scripts/common/update_ca_certs.py",
 	"/srv/cray/scripts/common/storage-ceph-cloudinit.sh",
@@ -104,12 +104,12 @@ var cephRunCMD = []string{
 // cephWorkerRunCMD has the list of scripts to run on NCN boot for
 // the Ceph nodes that are not supposed to run the installation.
 var cephWorkerRunCMD = []string{
+	"/srv/cray/scripts/metal/install-bootloader.sh",
 	"/srv/cray/scripts/metal/set-host-records.sh",
 	"/srv/cray/scripts/metal/set-dhcp-to-static.sh",
 	"/srv/cray/scripts/metal/set-dns-config.sh",
 	"/srv/cray/scripts/metal/set-ntp-config.sh",
 	"/srv/cray/scripts/metal/set-bmc-bbs.sh",
-	"/srv/cray/scripts/metal/install-bootloader.sh",
 	"/srv/cray/scripts/metal/disable-cloud-init.sh",
 	"/srv/cray/scripts/common/update_ca_certs.py",
 }
