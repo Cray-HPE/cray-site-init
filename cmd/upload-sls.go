@@ -95,9 +95,9 @@ func uploadSLSInputFile(v *viper.Viper) {
 		log.Fatal("Unable to setup kubernetes client:", err)
 	}
 
-	// Get the S3 credentails from Kubernetes.
+	// Get the S3 credentials from Kubernetes.
 	s3SecretName := v.GetString("s3-secret")
-	log.Println("Retrieving S3 credentails (", s3SecretName, ") for SLS")
+	log.Println("Retrieving S3 credentials (", s3SecretName, ") for SLS")
 	s3Secret, err := clientset.CoreV1().Secrets("services").Get(context.TODO(), s3SecretName, v1.GetOptions{})
 	if err != nil {
 		log.Fatal("Unable to SLS S3 secret from k8s:", err)
