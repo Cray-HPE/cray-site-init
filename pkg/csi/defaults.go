@@ -286,5 +286,4 @@ var PinnedMetalLBReservations = map[string]PinnedReservation{
 	"cray-tftp":                  {60, []string{"tftp-service"}},
 	"unbound":                    {74, []string{"unbound"}},
 	"docker-registry":            {73, []string{"docker_registry_service"}},
-	"slingshot-kafka":            {75, []string{"slingshot_kafka_extern_service"}},
 }
