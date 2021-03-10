@@ -137,6 +137,23 @@ func convertManagementSwitchToSLS(s *csi.ManagementSwitch) (sls_common.GenericHa
 		}, nil
 
 	case csi.ManagementSwitchTypeCDU:
+		if base.GetHMSType(s.Xname) == base.MgmtHLSwitch {
+			// This is a CDU switch in the River cabinet that is adjacent to the Hill cabinet. Use the MgmtHLSwitch type instead
+			return sls_common.GenericHardware{
+				Parent:     base.GetHMSCompParent(s.Xname),
+				Xname:      s.Xname,
+				Type:       sls_common.MgmtHLSwitch,
+				TypeString: base.MgmtHLSwitch,
+				Class:      sls_common.ClassRiver,
+				ExtraPropertiesRaw: sls_common.ComptypeMgmtHLSwitch{
+					IP4Addr: s.ManagementInterface.String(),
+					Brand:   s.Brand.String(),
+					Model:   s.Model,
+					Aliases: []string{s.Name},
+				},
+			}, nil
+		}
+
 		return sls_common.GenericHardware{
 			Parent:     base.GetHMSCompParent(s.Xname),
 			Xname:      s.Xname,
