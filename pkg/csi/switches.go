@@ -117,7 +117,7 @@ func (mySwitch *ManagementSwitch) Validate() error {
 		// CDU switches powered/racked into the adjacent river cabinet.
 
 		if hmsType != base.CDUMgmtSwitch && hmsType != base.MgmtHLSwitch {
-			return fmt.Errorf("invalid xname used for CDU switch: %s, should use dDwW format (if in a adjacent river cabinet to a TBD cabinet use the xXcChHsS format)", xname)
+			return fmt.Errorf("invalid xname used for CDU switch: %s, should use dDwW format (if in an adjacent river cabinet to a TBD cabinet use the xXcChHsS format)", xname)
 		}
 	default:
 		return fmt.Errorf("invalid switch type for xname: %s", xname)
