@@ -19,18 +19,27 @@ type InitCmdTestSuite struct {
 func (suite *InitCmdTestSuite) TestValidateSwitchInput_HappyPath() {
 	switches := []*csi.ManagementSwitch{
 		{
+			// Leaf switch
 			Xname: "x3000c0w14", SwitchType: csi.ManagementSwitchTypeLeaf,
 			Brand: csi.ManagementSwitchBrandAruba,
 		}, {
+			// Spine Switch
 			Xname:      "x3000c0h13s1",
 			SwitchType: csi.ManagementSwitchTypeSpine,
 			Brand:      csi.ManagementSwitchBrandAruba,
 		}, {
+			// Aggregation Switch
 			Xname:      "x3000c0h12s1",
 			SwitchType: csi.ManagementSwitchTypeAggregation,
 			Brand:      csi.ManagementSwitchBrandAruba,
 		}, {
+			// CDU Switch located in a CDU
 			Xname:      "d10w10",
+			SwitchType: csi.ManagementSwitchTypeCDU,
+			Brand:      csi.ManagementSwitchBrandDell,
+		}, {
+			// CDU Switch located the River cabinet adjacent to a Hill cabinet
+			Xname:      "x3000c0h10s1",
 			SwitchType: csi.ManagementSwitchTypeCDU,
 			Brand:      csi.ManagementSwitchBrandDell,
 		},
@@ -101,14 +110,6 @@ func (suite *InitCmdTestSuite) TestValidateSwitchInput_WrongXNameTypes() {
 		// CDU using MgmtHLSwitch, should be using CDUMgmtSwitch
 		mySwitch: csi.ManagementSwitch{
 			Xname:      "x30c0w14",
-			SwitchType: csi.ManagementSwitchTypeCDU,
-			Brand:      csi.ManagementSwitchBrandAruba,
-		},
-		expectedError: errors.New("switch_metadata.csv contains invalid switch data"),
-	}, {
-		// CDU using MgmtSwitch, should be using CDUMgmtSwitch
-		mySwitch: csi.ManagementSwitch{
-			Xname:      "x30c0h14s1",
 			SwitchType: csi.ManagementSwitchTypeCDU,
 			Brand:      csi.ManagementSwitchBrandAruba,
 		},
