@@ -34,7 +34,7 @@ const (
 	// DefaultHMNVlan is the default HMN Bootstrap Vlan
 	DefaultHMNVlan = 4
 	// DefaultHMNMTNString is the default HMN Network for Mountain Cabinets with Grouped Configuration
-	DefaultHMNMTNString = "10.100.0.0/17"
+	DefaultHMNMTNString = "10.104.0.0/17"
 	// DefaultHMNRVRString is the default HMN Network for River Cabinets with Grouped Configuration
 	DefaultHMNRVRString = "10.107.0.0/17"
 	// DefaultNMNString is the Default NMN String (vlan002)
@@ -42,7 +42,7 @@ const (
 	// DefaultNMNVlan is the default NMN Bootstrap Vlan
 	DefaultNMNVlan = 2
 	// DefaultNMNMTNString is the default NMN Network for Mountain Cabinets with Grouped Configuration
-	DefaultNMNMTNString = "10.104.0.0/17"
+	DefaultNMNMTNString = "10.100.0.0/17"
 	// DefaultNMNRVRString is the default NMN Network for River Cabinets with Grouped Configuration
 	DefaultNMNRVRString = "10.106.0.0/17"
 	// DefaultNMNLBString is the default LoadBalancer CIDR for the NMN

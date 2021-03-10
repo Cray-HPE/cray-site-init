@@ -21,7 +21,7 @@ cabinets:
 - type: hill
   cabinets:
     - id: 9000
-      subnet: 10.100.0.1/22
+      subnet: 10.104.0.1/22
       vlan: 2000
 `
 
