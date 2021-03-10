@@ -118,6 +118,29 @@ func (suite *GenSLSTestSuite) TestConvertManagementSwitchToSLS_HappyPath() {
 				Aliases: []string{"sw-cdu-001"},
 			},
 		},
+	}, {
+		// CDU Mgmt Switch in a River cabinet for a adjacent Hill cabinet.
+		csiSwitch: csi.ManagementSwitch{
+			Xname:               "x3000c0h10s1",
+			Name:                "sw-cdu-002",
+			ManagementInterface: net.ParseIP("10.254.0.2"),
+			SwitchType:          csi.ManagementSwitchTypeCDU,
+			Brand:               csi.ManagementSwitchBrandDell,
+			Model:               "8325",
+		},
+		expectedSLS: sls_common.GenericHardware{
+			Parent:     "x3000c0h10",
+			Xname:      "x3000c0h10s1",
+			Type:       "comptype_hl_switch",
+			TypeString: "MgmtHLSwitch",
+			Class:      "River",
+			ExtraPropertiesRaw: sls_common.ComptypeMgmtHLSwitch{
+				IP4Addr: "10.254.0.2",
+				Brand:   "Dell",
+				Model:   "8325",
+				Aliases: []string{"sw-cdu-002"},
+			},
+		},
 	}}
 
 	for _, test := range tests {

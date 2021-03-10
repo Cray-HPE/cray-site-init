@@ -93,15 +93,7 @@ func (suite *NetworkingTestSuite) TestValidateSwitch_WrongXnameTypes() {
 			SwitchType: ManagementSwitchTypeCDU,
 			Brand:      ManagementSwitchBrandAruba,
 		},
-		expectedError: errors.New("invalid xname used for CDU switch: x30c0w14, should use dDwW format"),
-	}, {
-		// CDU using MgmtSwitch, should be using CDUMgmtSwitch
-		mySwitch: ManagementSwitch{
-			Xname:      "x30c0h14s1",
-			SwitchType: ManagementSwitchTypeCDU,
-			Brand:      ManagementSwitchBrandAruba,
-		},
-		expectedError: errors.New("invalid xname used for CDU switch: x30c0h14s1, should use dDwW format"),
+		expectedError: errors.New("invalid xname used for CDU switch: x30c0w14, should use dDwW format (if in an adjacent river cabinet to a TBD cabinet use the xXcChHsS format)"),
 	}}
 
 	for _, test := range tests {
