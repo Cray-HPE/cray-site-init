@@ -109,8 +109,15 @@ func (mySwitch *ManagementSwitch) Validate() error {
 			return fmt.Errorf("invalid xname used for Spine/Aggregation switch: %s, should use xXcChHsS format", xname)
 		}
 	case ManagementSwitchTypeCDU:
-		if hmsType != base.CDUMgmtSwitch {
-			return fmt.Errorf("invalid xname used for CDU switch: %s, should use dDwW format", xname)
+		// CDU Management switches can be under different switch types
+		// dDwW - This is normally used for mountain systems, and Hill systems that have CDU switches getting
+		// power from the Hill cabinet.
+		//
+		// xXcChHsS - This is normally for Aggregation and Spine switches, but some Hill cabinets have the
+		// CDU switches powered/racked into the adjacent river cabinet.
+
+		if hmsType != base.CDUMgmtSwitch && hmsType != base.MgmtHLSwitch {
+			return fmt.Errorf("invalid xname used for CDU switch: %s, should use dDwW format (if in a adjacent river cabinet to a TBD cabinet use the xXcChHsS format)", xname)
 		}
 	default:
 		return fmt.Errorf("invalid switch type for xname: %s", xname)
