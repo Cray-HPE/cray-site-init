@@ -45,9 +45,8 @@ type BaseCampGlobals struct {
 	CephRGWVip           string `json:"rgw-virtual-ip"`
 	CephWipe             bool   `json:"wipe-ceph-osds"`
 
-	// Not sure what consumes these.
-	// Are we sure we want to reference something outside the cluster for either of them?
-	ChartRepo     string `json:"chart-repo"`            // "http://helmrepo.dev.cray.com:8080"
+	// Not sure what consumes this.
+	// Are we sure we want to reference something outside the cluster for this?
 	ImageRegistry string `json:"docker-image-registry"` // dtr.dev.cray.com"
 
 	// Commenting out several that I think we don't need
@@ -120,7 +119,6 @@ var basecampGlobalString = `{
 	"can-if": "vlan007",
 	"ceph-cephfs-image": "dtr.dev.cray.com/cray/cray-cephfs-provisioner:0.1.0-nautilus-1.3",
 	"ceph-rbd-image": "dtr.dev.cray.com/cray/cray-rbd-provisioner:0.1.0-nautilus-1.3",
-	"chart-repo": "http://helmrepo.dev.cray.com:8080",
 	"dns-server": "~FIXME~ e.g. 10.252.1.1",
 	"docker-image-registry": "dtr.dev.cray.com",
 	"domain": "nmn hmn",

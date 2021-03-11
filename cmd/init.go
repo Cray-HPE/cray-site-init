@@ -292,7 +292,6 @@ func init() {
 	initCmd.Flags().String("can-gateway", "", "Gateway for NCNs on the CAN")
 	initCmd.Flags().String("ceph-cephfs-image", "dtr.dev.cray.com/cray/cray-cephfs-provisioner:0.1.0-nautilus-1.3", "The container image for the cephfs provisioner")
 	initCmd.Flags().String("ceph-rbd-image", "dtr.dev.cray.com/cray/cray-rbd-provisioner:0.1.0-nautilus-1.3", "The container image for the ceph rbd provisioner")
-	initCmd.Flags().String("chart-repo", "http://helmrepo.dev.cray.com:8080", "Upstream chart repo for use during the install")
 	initCmd.Flags().String("docker-image-registry", "dtr.dev.cray.com", "Upstream docker registry for use during the install")
 
 	// Site Networking and Preinstall Toolkit Information
