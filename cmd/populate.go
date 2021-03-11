@@ -241,6 +241,9 @@ func WalkMatch(root, pattern string) ([]string, error) {
 // CopyArtifactsToPart copies files needed to the PITDATA partition
 func CopyArtifactsToPart(src string, dest string, regex string) {
 	artifacts, _ := WalkMatch(src, regex)
+	if artifacts == nil {
+		log.Fatalf("Error: unable to find %s in %s\n", regex, src)
+	}
 	for _, k := range artifacts {
 		fname := filepath.Base(k)
 		fmt.Printf("%s> %s", PadRight(fname, "-", 50), dest)
