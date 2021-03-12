@@ -61,7 +61,7 @@ type BaseCampGlobals struct {
 	KubernetesMaxPods             string `json:"kubernetes-max-pods-per-node"`
 	KubernetesPodCIDR             string `json:"kubernetes-pods-cidr"`     // "10.32.0.0/12"
 	KubernetesServicesCIDR        string `json:"kubernetes-services-cidr"` // "10.16.0.0/12"
-	KubernetesWeaveMTU            string `json:"kubernetes-weave-mtu"`     // 1460
+	KubernetesWeaveMTU            string `json:"kubernetes-weave-mtu"`     // 1376
 
 	// NTP Setup Globals
 	NTPPeers    string `json:"ntp-peers"`
@@ -127,7 +127,7 @@ var basecampGlobalString = `{
 	"kubernetes-max-pods-per-node": "200",
 	"kubernetes-pods-cidr": "10.32.0.0/12",
 	"kubernetes-services-cidr": "10.16.0.0/12",
-	"kubernetes-weave-mtu": "1460",
+	"kubernetes-weave-mtu": "1376",
 	"ntp_local_nets": "~FIXME~ e.g. 10.252.0.0/17 10.254.0.0/17",
 	"ntp_peers": "~FIXME~ e.g. ncn-w001 ncn-w002 ncn-w003 ncn-s001 ncn-s002 ncn-s003 ncn-m001 ncn-m002 ncn-m003",
 	"num_storage_nodes": "3",
