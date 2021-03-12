@@ -73,18 +73,14 @@ help:
 print-%:
 	@echo $* = $($*)
 
-clean: clean-artifacts clean-releases
+clean: clean-release
 	go clean -i ./...
 	rm -vf \
 	  $(CURDIR)/coverage.* \
 
-clean-artifacts:
-	rm -Rf artifacts/*
-
-clean-releases:
-	rm -Rf releases/*
-
-clean-all: clean clean-artifacts
+clean-release:
+	rm -Rf release/*
+	rm -Rf bin/*
 
 # Run tests
 test: build
@@ -130,7 +126,7 @@ build: fmt
 	bin/csi version
 
 build_linux_amd64: fmt
-	env GOOS=linux GOARCH=amd64 go build -o bin/csi_linux_amd64-${.FS_VERSION} \
+	env GOOS=linux GOARCH=amd64 go build -o release/csi_linux_amd64-${.FS_VERSION} \
 	-ldflags "\
 	-s -w \
 	-X stash.us.cray.com/MTL/csi/pkg/version.gitVersion=${.GIT_VERSION} \
@@ -139,7 +135,7 @@ build_linux_amd64: fmt
 	-X stash.us.cray.com/MTL/csi/pkg/version.sha1ver=${.GIT_COMMIT_AND_BRANCH}"
 
 build_darwin_amd64: fmt
-	env GOOS=darwin GOARCH=amd64 go build -o bin/csi_darwin_amd64-${.FS_VERSION} \
+	env GOOS=darwin GOARCH=amd64 go build -o release/csi_darwin_amd64-${.FS_VERSION} \
 	-ldflags "\
 	-s -w \
 	-X stash.us.cray.com/MTL/csi/pkg/version.gitVersion=${.GIT_VERSION} \
@@ -147,8 +143,12 @@ build_darwin_amd64: fmt
 	-X stash.us.cray.com/MTL/csi/pkg/version.buildDate=${.BUILDTIME} \
 	-X stash.us.cray.com/MTL/csi/pkg/version.sha1ver=${.GIT_COMMIT_AND_BRANCH}"
 
-release: build_darwin_amd64 build_linux_amd64
-	upx bin/*
+release: build_darwin_amd64 build_linux_amd64 build
+	upx release/*
+	bin/csi makedocs release/doc
+	bin/csi makedocs docs/
+
+
 
 doc:
 	godoc -http=:8080 -index
