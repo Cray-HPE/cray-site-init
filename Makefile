@@ -60,6 +60,10 @@ help:
 	@echo '    tidy               Run go mod tidy.'
 	@echo '    env                Display Go environment.'
 	@echo '    build              Build project for current platform.'
+	@echo '    build_darwin_amd64 Build project for darwin_amd64.'
+	@echo '    build_linux_amd64  Build project for linux_amd64.'
+	@echo '    release            Build for mac and linux'
+
 	@echo '    doc                Start Go documentation server on port 8080.'
 	@echo '    version            Display Go version.'
 	@echo ''
@@ -124,6 +128,27 @@ build: fmt
 	-X stash.us.cray.com/MTL/csi/pkg/version.buildDate=${.BUILDTIME} \
 	-X stash.us.cray.com/MTL/csi/pkg/version.sha1ver=${.GIT_COMMIT_AND_BRANCH}"
 	bin/csi version
+
+build_linux_amd64: fmt
+	env GOOS=linux GOARCH=amd64 go build -o bin/csi_linux_amd64-${.FS_VERSION} \
+	-ldflags "\
+	-s -w \
+	-X stash.us.cray.com/MTL/csi/pkg/version.gitVersion=${.GIT_VERSION} \
+	-X stash.us.cray.com/MTL/csi/pkg/version.fsVersion=${.FS_VERSION} \
+	-X stash.us.cray.com/MTL/csi/pkg/version.buildDate=${.BUILDTIME} \
+	-X stash.us.cray.com/MTL/csi/pkg/version.sha1ver=${.GIT_COMMIT_AND_BRANCH}"
+
+build_darwin_amd64: fmt
+	env GOOS=darwin GOARCH=amd64 go build -o bin/csi_darwin_amd64-${.FS_VERSION} \
+	-ldflags "\
+	-s -w \
+	-X stash.us.cray.com/MTL/csi/pkg/version.gitVersion=${.GIT_VERSION} \
+	-X stash.us.cray.com/MTL/csi/pkg/version.fsVersion=${.FS_VERSION} \
+	-X stash.us.cray.com/MTL/csi/pkg/version.buildDate=${.BUILDTIME} \
+	-X stash.us.cray.com/MTL/csi/pkg/version.sha1ver=${.GIT_COMMIT_AND_BRANCH}"
+
+release: build_darwin_amd64 build_linux_amd64
+	upx bin/*
 
 doc:
 	godoc -http=:8080 -index
