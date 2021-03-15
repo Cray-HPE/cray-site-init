@@ -66,8 +66,7 @@ func (iNet *IPV4Network) GenSubnets(cabinetDetails []CabinetGroupDetail, mask ne
 				newSubnet, err := ipam.Free(*myNet, mask, mySubnets)
 				mySubnets = append(mySubnets, newSubnet)
 				if err != nil {
-					log.Printf("Gensubnets couldn't add subnet because %v \n", err)
-					return err
+					log.Fatalf("Gensubnets couldn't add subnet because %v \n", err)
 				}
 				var tmpVlanID int16
 				if strings.HasPrefix(iNet.Name, "NMN") {
