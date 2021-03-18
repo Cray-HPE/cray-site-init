@@ -354,7 +354,7 @@ func init() {
 	// Dealing with SLS precursors
 	initCmd.Flags().String("hmn-connections", "hmn_connections.json", "HMN Connections JSON Location (For generating an SLS File)")
 	initCmd.Flags().String("ncn-metadata", "ncn_metadata.csv", "CSV for mapping the mac addresses of the NCNs to their xnames")
-	initCmd.Flags().String("switch-metadata", "switch_metadata.csv", "CSV for mapping the mac addresses of the NCNs to their xnames")
+	initCmd.Flags().String("switch-metadata", "switch_metadata.csv", "CSV for mapping the switch xname, brand, type, and model")
 	initCmd.Flags().String("cabinets-yaml", "", "YAML file listing the ids for all cabinets by type")
 	initCmd.Flags().String("application-node-config-yaml", "", "YAML to control Application node identification durring the SLS Input File generation")
 
