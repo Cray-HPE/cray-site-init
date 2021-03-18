@@ -24,13 +24,12 @@ import (
 const s3ACL = "public-read"
 
 // We need these to be constant so that later when we do the BSS handoff we know the right value.
-const k8sKernelName = "k8s-kernel"
-const k8sInitrdName = "k8s-initrd.img.xz"
-const cephKernelName = "ceph-kernel"
-const cephInitrdName = "ceph-initrd.img.xz"
+const k8sPath = "k8s"
+const cephPath = "ceph"
 
-const k8sSquashFSName = "k8s-filesystem.squashfs"
-const cephSquashFSName = "ceph-filesystem.squashfs"
+const kernelName = "kernel"
+const initrdName = "initrd.img.xz"
+const squashFSName = "filesystem.squashfs"
 
 var (
 	s3Client *hms_s3.S3Client
@@ -154,17 +153,17 @@ func uploadNCNImagesS3() {
 	fmt.Printf("Sucessfully created %s bucket.\n", s3BucketName)
 
 	// Upload the files.
-	uploadFile(k8sKernelPath, k8sKernelName)
+	uploadFile(k8sKernelPath, fmt.Sprintf("%s/%s", k8sPath, kernelName))
 	fmt.Println("Successfully uploaded K8s kernel.")
-	uploadFile(k8sInitrdPath, k8sInitrdName)
+	uploadFile(k8sInitrdPath, fmt.Sprintf("%s/%s", k8sPath, initrdName))
 	fmt.Println("Successfully uploaded K8s initrd.")
-	uploadFile(k8sSquashFSPath, k8sSquashFSName)
+	uploadFile(k8sSquashFSPath, fmt.Sprintf("%s/%s", k8sPath, squashFSName))
 	fmt.Println("Successfully uploaded K8s squash FS.")
 
-	uploadFile(cephKernelPath, cephKernelName)
+	uploadFile(cephKernelPath, fmt.Sprintf("%s/%s", cephPath, kernelName))
 	fmt.Println("Successfully uploaded CEPH kernel.")
-	uploadFile(cephInitrdPath, cephInitrdName)
+	uploadFile(cephInitrdPath, fmt.Sprintf("%s/%s", cephPath, initrdName))
 	fmt.Println("Successfully uploaded CEPH initrd.")
-	uploadFile(cephSquashFSPath, cephSquashFSName)
+	uploadFile(cephSquashFSPath, fmt.Sprintf("%s/%s", cephPath, squashFSName))
 	fmt.Println("Successfully uploaded CEPH squash FS.")
 }
