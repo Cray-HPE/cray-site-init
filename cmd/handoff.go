@@ -19,7 +19,7 @@ import (
 )
 
 const gatewayHostname = "api-gw-service-nmn.local"
-const s3Prefix = "s3://ncn-images/"
+const s3Prefix = "s3://ncn-images"
 
 var (
 	managementNCNs []sls_common.GenericHardware

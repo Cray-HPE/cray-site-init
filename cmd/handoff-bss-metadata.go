@@ -16,6 +16,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"os/exec"
 	base "stash.us.cray.com/HMS/hms-base"
 	"stash.us.cray.com/HMS/hms-bss/pkg/bssTypes"
@@ -61,6 +62,12 @@ var handoffBSSMetadataCmd = &cobra.Command{
 	Long:  "Using PIT configuration builds kernel command line arguments and cloud-init metadata for each NCN",
 	Run: func(cmd *cobra.Command, args []string) {
 		setupCommon()
+
+		// Ensure CSM release is set (it should be, it's part of the install documentation to have this set).
+		csmRelease = os.Getenv("CSM_RELEASE")
+		if csmRelease == "" {
+			log.Panicln("Environment variable CSM_RELEASE can NOT be blank!")
+		}
 
 		// Parse the data.json file.
 		err := csiFiles.ReadJSONConfig(dataFile, &cloudInitData)
@@ -290,8 +297,8 @@ func getBSSEntryForNCN(ncn sls_common.GenericHardware) (bssEntry bssTypes.BootPa
 		Hosts:  []string{ncn.Xname},
 		Macs:   macs,
 		Params: getKernelCommandlineArgs(ncn, cmdline),
-		Kernel: fmt.Sprintf("%s%s/%s", s3Prefix, path, kernelName),
-		Initrd: fmt.Sprintf("%s%s/%s", s3Prefix, path, initrdName),
+		Kernel: fmt.Sprintf("%s/%s/%s/%s", s3Prefix, csmRelease, path, kernelName),
+		Initrd: fmt.Sprintf("%s/%s/%s/%s", s3Prefix, csmRelease, path, initrdName),
 		CloudInit: bssTypes.CloudInit{
 			MetaData: metaData,
 			UserData: userData,
