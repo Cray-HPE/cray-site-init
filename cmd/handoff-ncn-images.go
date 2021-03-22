@@ -101,7 +101,7 @@ func init() {
 }
 
 func uploadFile(filePath string, s3KeyName string) {
-	fmt.Printf("Uploading file %s to S3 at %s...\n", filePath, s3KeyName)
+	fmt.Printf("Uploading file %s to S3 at s3://%s/%s...\n", filePath, s3Client.ConnInfo.Bucket, s3KeyName)
 
 	file, err := os.Open(filePath)
 	if err != nil {

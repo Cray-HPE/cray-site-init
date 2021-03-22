@@ -16,14 +16,24 @@ import (
 	"os"
 	"stash.us.cray.com/HMS/hms-bss/pkg/bssTypes"
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
+	"strings"
 )
 
-const gatewayHostname = "api-gw-service-nmn.local"
+const gatewayHostname = "10.102.3.128"
 const s3Prefix = "s3://ncn-images"
+
+type paramTuple struct {
+	key   string
+	value string
+}
 
 var (
 	managementNCNs []sls_common.GenericHardware
 	httpClient     *http.Client
+
+	paramsToUpdate []string
+	paramsToDelete []string
+	limitToXnames  []string
 )
 
 // handoffCmd represents the handoff command
@@ -149,4 +159,54 @@ func getBSSBootparametersForXname(xname string) bssTypes.BootParams {
 	}
 
 	return bssEntries[0]
+}
+
+func setupHandoffCommon() (limitManagementNCNs []sls_common.GenericHardware, setParams []paramTuple) {
+	if len(paramsToUpdate) == 0 && len(paramsToDelete) == 0 {
+		log.Fatalln("No parameters given to set or delete!")
+	}
+
+	// Build up a slice of tuples of all the values we want to set.
+	for _, setParam := range paramsToUpdate {
+		paramSplit := strings.Split(setParam, "=")
+
+		if len(paramSplit) != 2 {
+			log.Panicf("Set paramater had invalid format: %s", setParam)
+		}
+
+		tuple := paramTuple{
+			key:   paramSplit[0],
+			value: paramSplit[1],
+		}
+
+		setParams = append(setParams, tuple)
+	}
+
+	// "Global" is a special NCN just used for cloud-init metadata in a global sense.
+	managementNCNs = append(managementNCNs, sls_common.GenericHardware{
+		Xname: "Global",
+	})
+
+	// Only process the NCNs specified.
+	if len(limitToXnames) == 0 {
+		limitManagementNCNs = managementNCNs
+	} else {
+		for _, xname := range limitToXnames {
+			found := false
+
+			for _, ncn := range managementNCNs {
+				if ncn.Xname == xname {
+					limitManagementNCNs = append(limitManagementNCNs, ncn)
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				log.Fatalf("Limit to xname not found in management NCNs: %s", xname)
+			}
+		}
+	}
+
+	return
 }
