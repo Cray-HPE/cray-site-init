@@ -38,11 +38,11 @@ func init() {
 		"Limit updates to just the xnames specified")
 }
 
-func getFinalJSONObject(setParam paramTuple, bssEntry *bssTypes.BootParams) (string, *map[string]interface{}) {
+func getFinalJSONObject(key string, bssEntry *bssTypes.BootParams) (string, *map[string]interface{}) {
 	// To make this as easy as possible to use all params are specified in the format of
 	// user-data.key1.key2=value where each key is an object. Thus what we need to do is drill down into the
 	// appropriate structure until we find the object we need to set. Note this logic does *not* support arrays.
-	keyParts := strings.Split(setParam.key, ".")
+	keyParts := strings.Split(key, ".")
 
 	var object map[string]interface{}
 	if keyParts[0] == "user-data" {
@@ -70,7 +70,7 @@ func getFinalJSONObject(setParam paramTuple, bssEntry *bssTypes.BootParams) (str
 			// If it doesn't exist, create it.
 			object[nextKey] = make(map[string]interface{})
 			nextObject = object[nextKey].(map[string]interface{})
-			log.Printf("Failed to find next key (%s in %s) in object, creating.", nextKey, setParam.key)
+			log.Printf("Failed to find next key (%s in %s) in object, creating.", nextKey, key)
 		}
 		object = nextObject
 
@@ -88,12 +88,24 @@ func updateNCNCloudInitParams() {
 		// Get the BSS bootparamaters for this NCN.
 		bssEntry := getBSSBootparametersForXname(ncn.Xname)
 
+		// Create/update params.
 		for _, setParam := range setParams {
-			key, object := getFinalJSONObject(setParam, &bssEntry)
+			key, object := getFinalJSONObject(setParam.key, &bssEntry)
 			objectVal := *object
 
 			objectVal[key] = setParam.value
 		}
+
+		// Delete params.
+		for _, deleteParam := range paramsToDelete {
+			key, object := getFinalJSONObject(deleteParam, &bssEntry)
+			objectVal := *object
+
+			delete(objectVal, key)
+		}
+
+		// Now write it back to BSS.
+		//uploadEntryToBSS(bssEntry, http.MethodPatch)
 
 		output, _ := json.MarshalIndent(bssEntry, "", "  ")
 		fmt.Println(string(output))

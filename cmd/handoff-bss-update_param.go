@@ -13,6 +13,11 @@ import (
 	"strings"
 )
 
+var (
+	kernel string
+	initrd string
+)
+
 var handoffBSSUpdateParamCmd = &cobra.Command{
 	Use:   "bss-update-param",
 	Short: "runs migration steps to update kernel parameters for NCNs",
@@ -34,6 +39,10 @@ func init() {
 	handoffBSSUpdateParamCmd.Flags().StringArrayVar(&paramsToDelete, "delete", []string{},
 		"For each kernel parameter you wish to remove provide just the key and it will be removed "+
 			"regardless of value")
+	handoffBSSUpdateParamCmd.Flags().StringVar(&kernel, "kernel", "",
+		"New value to set for the kernel")
+	handoffBSSUpdateParamCmd.Flags().StringVar(&initrd, "initrd", "",
+		"New value to set for the initrd")
 	handoffBSSUpdateParamCmd.Flags().StringArrayVar(&limitToXnames, "limit", []string{},
 		"Limit updates to just the xnames specified")
 }
@@ -106,6 +115,14 @@ func updateNCNKernelParams() {
 		newBSSEntry := bssTypes.BootParams{
 			Hosts:  []string{ncn.Xname},
 			Params: strings.Join(finalParts, " "),
+		}
+
+		// If the kernel and/or initrd are set, update them now.
+		if kernel != "" {
+			newBSSEntry.Kernel = kernel
+		}
+		if initrd != "" {
+			newBSSEntry.Initrd = initrd
 		}
 
 		// Now write it back to BSS.

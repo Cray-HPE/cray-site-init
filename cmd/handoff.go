@@ -19,7 +19,7 @@ import (
 	"strings"
 )
 
-const gatewayHostname = "10.102.3.128"
+const gatewayHostname = "api-gw-service-nmn.local"
 const s3Prefix = "s3://ncn-images"
 
 type paramTuple struct {
