@@ -5,10 +5,9 @@ Copyright 2020 Hewlett Packard Enterprise Development LP
 package cmd
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/spf13/cobra"
 	"log"
+	"net/http"
 	"stash.us.cray.com/HMS/hms-bss/pkg/bssTypes"
 	"strings"
 )
@@ -64,7 +63,7 @@ func getFinalJSONObject(key string, bssEntry *bssTypes.BootParams) (string, *map
 	keyIndex := 1
 	nextKey := keyParts[keyIndex]
 	var nextObject map[string]interface{}
-	for keyIndex + 1 < len(keyParts) {
+	for keyIndex+1 < len(keyParts) {
 		var ok bool
 		if nextObject, ok = object[nextKey].(map[string]interface{}); !ok {
 			// If it doesn't exist, create it.
@@ -105,9 +104,6 @@ func updateNCNCloudInitParams() {
 		}
 
 		// Now write it back to BSS.
-		//uploadEntryToBSS(bssEntry, http.MethodPatch)
-
-		output, _ := json.MarshalIndent(bssEntry, "", "  ")
-		fmt.Println(string(output))
+		uploadEntryToBSS(bssEntry, http.MethodPatch)
 	}
 }
