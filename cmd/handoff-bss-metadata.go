@@ -122,7 +122,7 @@ func getKernelCommandlineArgs(ncn sls_common.GenericHardware, cmdline string) st
 		} else if strings.HasPrefix(part, "xname") {
 			// BSS sets the xname, no need to have it here.
 			cmdlineParts[i] = ""
-		} else if part == "kernel" {
+		} else if strings.HasPrefix(part, "kernel") {
 			// We don't need to specific the kernel pram because BSS will *always* add it.
 			cmdlineParts[i] = ""
 		}
