@@ -157,6 +157,33 @@ var HMNConnections = []shcd_parser.HMNRow{
 		DestinationPort:     "p38",
 	},
 	{
+		// Application Node - LNet Node: x3000c0s30b0n0
+		Source:              "Lnet01",
+		SourceRack:          "x3000",
+		SourceLocation:      "u30",
+		DestinationRack:     "x3000",
+		DestinationLocation: "u22",
+		DestinationPort:     "p38",
+	},
+	{
+		// Application Node - LNet Node: x3000c0s31b0n0
+		Source:              "Lnet02",
+		SourceRack:          "x3000",
+		SourceLocation:      "u31",
+		DestinationRack:     "x3000",
+		DestinationLocation: "u22",
+		DestinationPort:     "p38",
+	},
+	{
+		// Application Node - UAN Node: x3000c0s32b0n0
+		Source:              "uan02",
+		SourceRack:          "x3000",
+		SourceLocation:      "u32",
+		DestinationRack:     "x3000",
+		DestinationLocation: "u22",
+		DestinationPort:     "p38",
+	},
+	{
 		Source:              "sw-hsn001",
 		SourceRack:          "x3000",
 		SourceLocation:      "u22",
@@ -234,14 +261,21 @@ var TestSLSInputState = SLSGeneratorInputState{
 	ApplicationNodeConfig: SLSGeneratorApplicationNodeConfig{
 		Prefixes: []string{
 			"vn",
+			"Lnet",
+			"Login",
 		},
 		PrefixHSMSubroles: map[string]string{
-			"vn": "Visualization",
+			"vn":    "Visualization",
+			"Login": "UAN",
+			"Lnet":  "LNETRouter",
 		},
 		Aliases: map[string][]string{
 			"x3000c0s26b0n0": {"uan-01"},
 			"x3000c0s28b0n0": {"gateway-01"},
 			"x3000c0s29b0n0": {"visualization-01"},
+			"x3000c0s30b0n0": {"lnet-01"},
+			"x3000c0s31b0n0": {"lnet-02"},
+			"x3000c0s32b0n0": {"uan-02"},
 		},
 	},
 
@@ -338,6 +372,13 @@ func (suite *ConfigGeneratorTestSuite) SetupSuite() {
 		zapcore.Lock(os.Stdout),
 		zap.NewAtomicLevelAt(zap.DebugLevel),
 	))
+
+	// Normalize and validate the application node config
+	err := TestSLSInputState.ApplicationNodeConfig.Normalize()
+	suite.NoError(err)
+
+	err = TestSLSInputState.ApplicationNodeConfig.Validate()
+	suite.NoError(err)
 
 	g := NewSLSStateGenerator(logger, TestSLSInputState, HMNConnections)
 
@@ -826,6 +867,105 @@ func (suite *ConfigGeneratorTestSuite) TestVisualizationNode() {
 	suite.Equal(hardwareExtraProperties.Role, "Application")
 	suite.Equal(hardwareExtraProperties.SubRole, "Visualization")
 	suite.Equal(hardwareExtraProperties.Aliases, []string{"visualization-01"})
+}
+
+func (suite *ConfigGeneratorTestSuite) TestNodeLNet01() {
+	/*
+		  "x3000c0s30b0n0": {
+		    "Parent": "x3000c0s30b0",
+		    "Xname": "x3000c0s30b0n0",
+		    "Type": "comptype_node",
+		    "Class": "River",
+		    "TypeString": "Node",
+		    "ExtraProperties": {
+		      "Role": "Application",
+			  "SubRole": "LNETRouter"
+		    }
+		  },
+	*/
+	hardware, ok := suite.allHardware["x3000c0s30b0n0"]
+	suite.True(ok, "Unable to find xname.")
+
+	suite.Equal(hardware.Parent, "x3000c0s30b0")
+	suite.Equal(hardware.Xname, "x3000c0s30b0n0")
+	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_node"))
+	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
+	suite.Equal(hardware.TypeString, base.HMSType("Node"))
+
+	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeNode)
+	suite.True(ok, "ExtraProperties type is not expected type.")
+
+	// TODO: CASMHMS-3598
+	//suite.Equal(hardwareExtraProperties.NID, 4) // No NIDs on UANs yet.
+	suite.Equal(hardwareExtraProperties.Role, "Application")
+	suite.Equal(hardwareExtraProperties.SubRole, "LNETRouter")
+	suite.Equal(hardwareExtraProperties.Aliases, []string{"lnet-01"})
+}
+
+func (suite *ConfigGeneratorTestSuite) TestNodeLNet02() {
+	/*
+		  "x3000c0s31b0n0": {
+		    "Parent": "x3000c0s31b0",
+		    "Xname": "x3000c0s31b0n0",
+		    "Type": "comptype_node",
+		    "Class": "River",
+		    "TypeString": "Node",
+		    "ExtraProperties": {
+		      "Role": "Application",
+			  "SubRole": "LNETRouter"
+		    }
+		  },
+	*/
+	hardware, ok := suite.allHardware["x3000c0s31b0n0"]
+	suite.True(ok, "Unable to find xname.")
+
+	suite.Equal(hardware.Parent, "x3000c0s31b0")
+	suite.Equal(hardware.Xname, "x3000c0s31b0n0")
+	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_node"))
+	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
+	suite.Equal(hardware.TypeString, base.HMSType("Node"))
+
+	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeNode)
+	suite.True(ok, "ExtraProperties type is not expected type.")
+
+	// TODO: CASMHMS-3598
+	//suite.Equal(hardwareExtraProperties.NID, 4) // No NIDs on UANs yet.
+	suite.Equal(hardwareExtraProperties.Role, "Application")
+	suite.Equal(hardwareExtraProperties.SubRole, "LNETRouter")
+	suite.Equal(hardwareExtraProperties.Aliases, []string{"lnet-02"})
+}
+
+func (suite *ConfigGeneratorTestSuite) TestNodeUAN2() {
+	/*
+		  "x3000c0s32b0n0": {
+		    "Parent": "x3000c0s32b0",
+		    "Xname": "x3000c0s32b0n0",
+		    "Type": "comptype_node",
+		    "Class": "River",
+		    "TypeString": "Node",
+		    "ExtraProperties": {
+		      "Role": "Application",
+			  "SubRole": "UAN"
+		    }
+		  },
+	*/
+	hardware, ok := suite.allHardware["x3000c0s32b0n0"]
+	suite.True(ok, "Unable to find xname.")
+
+	suite.Equal(hardware.Parent, "x3000c0s32b0")
+	suite.Equal(hardware.Xname, "x3000c0s32b0n0")
+	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_node"))
+	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
+	suite.Equal(hardware.TypeString, base.HMSType("Node"))
+
+	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeNode)
+	suite.True(ok, "ExtraProperties type is not expected type.")
+
+	// TODO: CASMHMS-3598
+	//suite.Equal(hardwareExtraProperties.NID, 4) // No NIDs on UANs yet.
+	suite.Equal(hardwareExtraProperties.Role, "Application")
+	suite.Equal(hardwareExtraProperties.SubRole, "UAN")
+	suite.Equal(hardwareExtraProperties.Aliases, []string{"uan-02"})
 }
 
 func (suite *ConfigGeneratorTestSuite) TestManagementSwitch() {
