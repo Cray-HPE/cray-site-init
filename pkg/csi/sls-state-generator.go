@@ -484,8 +484,8 @@ func (g *SLSStateGenerator) isApplicationNode(sourceLowerCase string) (isApplica
 
 	// Merge default Application node prefixes with the user provided prefixes.
 	prefixes := []string{}
-	prefixes = append(prefixes, defaultApplicationNodePrefixes...)
 	prefixes = append(prefixes, applicationNodeConfig.Prefixes...)
+	prefixes = append(prefixes, defaultApplicationNodePrefixes...)
 
 	// Merge default Application node subroles with the user provided subroles. User provided subroles can override the default subroles
 	subRoles := map[string]string{}
