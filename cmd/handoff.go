@@ -16,10 +16,10 @@ import (
 	"os"
 	"stash.us.cray.com/HMS/hms-bss/pkg/bssTypes"
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
+	"strconv"
 	"strings"
 )
 
-const gatewayHostname = "api-gw-service-nmn.local"
 const s3Prefix = "s3://ncn-images"
 
 type paramTuple struct {
@@ -34,6 +34,9 @@ var (
 	paramsToUpdate []string
 	paramsToDelete []string
 	limitToXnames  []string
+
+	gatewayHostname string
+	verboseLogging bool
 )
 
 // handoffCmd represents the handoff command
@@ -46,6 +49,14 @@ var handoffCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(handoffCmd)
+
+	gatewayHostname = os.Getenv("GATEWAY_HOSTNAME")
+	if gatewayHostname == "" {
+		gatewayHostname = "api-gw-service-nmn.local"
+	}
+
+	verboseLogging = false
+	verboseLogging, _ = strconv.ParseBool(os.Getenv("VERBOSE"))
 }
 
 func setupCommon() {
@@ -121,9 +132,13 @@ func uploadEntryToBSS(bssEntry bssTypes.BootParams, method string) {
 		log.Panicf("Failed to %s BSS entry: %s", method, string(bodyBytes))
 	}
 
-	jsonPrettyBytes, _ := json.MarshalIndent(bssEntry, "", "\t")
+	jsonPrettyBytes, _ := json.MarshalIndent(bssEntry, "", "  ")
 
-	log.Printf("Sucessfuly %s BSS entry for %s:\n%s", method, bssEntry.Hosts[0], string(jsonPrettyBytes))
+	if verboseLogging {
+		log.Printf("Sucessfuly %s BSS entry for %s:\n%s", method, bssEntry.Hosts[0], string(jsonPrettyBytes))
+	} else {
+		log.Printf("Sucessfuly %s BSS entry for %s", method, bssEntry.Hosts[0])
+	}
 }
 
 func getBSSBootparametersForXname(xname string) bssTypes.BootParams {
