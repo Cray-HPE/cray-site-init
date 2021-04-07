@@ -111,12 +111,11 @@ func updateNCNCloudInitParams() {
 		// Delete params.
 		for _, deleteParam := range paramsToDelete {
 			key, object := getFinalJSONObject(deleteParam, &bssEntry)
-			objectVal := *object
 
-			delete(objectVal, key)
+			delete(*object, key)
 		}
 
 		// Now write it back to BSS.
-		uploadEntryToBSS(bssEntry, http.MethodPatch)
+		uploadEntryToBSS(bssEntry, http.MethodPut)
 	}
 }
