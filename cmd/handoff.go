@@ -35,8 +35,11 @@ var (
 	paramsToDelete []string
 	limitToXnames  []string
 
+	desiredKubernetesVersion string
+	desiredCEPHVersion       string
+
 	gatewayHostname string
-	verboseLogging bool
+	verboseLogging  bool
 )
 
 // handoffCmd represents the handoff command

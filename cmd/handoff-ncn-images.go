@@ -189,6 +189,8 @@ func uploadNCNImagesS3() {
 	uploadFile(cephSquashFSPath, fmt.Sprintf("%s/%s/%s", cephPath, cephVersion, squashFSName))
 	fmt.Println("Successfully uploaded CEPH squash FS.")
 
-	fmt.Printf("\n\nRecord these image versions, you will need them later:\nKubernetes: %s\nCEPH: %s",
-		k8sVersion, cephVersion)
+	fmt.Printf("\n\nImage versions uploaded:\nKubernetes:\t%s\nCEPH:\t\t%s\n", k8sVersion, cephVersion)
+
+	fmt.Printf("\n\nYou should run the following commands so the versions you just uploaded can be used in " +
+		"other steps:\nexport KUBERNETES_VERSION=%s\nexport CEPH_VERSION=%s\n", k8sVersion, cephVersion)
 }

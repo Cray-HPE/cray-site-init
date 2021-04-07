@@ -63,10 +63,14 @@ var handoffBSSMetadataCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		setupCommon()
 
-		// Ensure CSM release is set (it should be, it's part of the install documentation to have this set).
-		csmRelease = os.Getenv("CSM_RELEASE")
-		if csmRelease == "" {
-			log.Panicln("Environment variable CSM_RELEASE can NOT be blank!")
+		desiredKubernetesVersion = os.Getenv("KUBERNETES_VERSION")
+		if desiredKubernetesVersion == "" {
+			log.Fatalf("KUBERNETES_VERSION enviornemnt variable not set!")
+		}
+
+		desiredCEPHVersion = os.Getenv("CEPH_VERSION")
+		if desiredCEPHVersion == "" {
+			log.Fatalf("CEPH_VERSION enviornemnt variable not set!")
 		}
 
 		// Parse the data.json file.
@@ -104,15 +108,18 @@ func getKernelCommandlineArgs(ncn sls_common.GenericHardware, cmdline string) st
 
 		if strings.HasPrefix(part, "metal.server") {
 			var path string
+			var version string
 
 			// Storage NCNs get different assets than masters/workers.
 			if extraProperties.SubRole == "Storage" {
 				path = cephPath
+				version = desiredCEPHVersion
 			} else {
 				path = k8sPath
+				version = desiredKubernetesVersion
 			}
 
-			cmdlineParts[i] = fmt.Sprintf("metal.server=http://rgw-vip.nmn/ncn-images/%s", path)
+			cmdlineParts[i] = fmt.Sprintf("metal.server=http://rgw-vip.nmn/ncn-images/%s/%s", path, version)
 		} else if strings.HasPrefix(part, "ds=nocloud-net") {
 			cmdlineParts[i] = fmt.Sprintf("ds=nocloud-net;s=http://10.92.100.81:8888/")
 		} else if strings.HasPrefix(part, "rd.live.squashimg") {
@@ -287,12 +294,15 @@ func getBSSEntryForNCN(ncn sls_common.GenericHardware) (bssEntry bssTypes.BootPa
 	}
 
 	var path string
+	var version string
 
 	// Storage NCNs get different assets than masters/workers.
 	if extraProperties.SubRole == "Storage" {
 		path = cephPath
+		version = desiredCEPHVersion
 	} else {
 		path = k8sPath
+		version = desiredKubernetesVersion
 	}
 
 	// Now we can build the BSS structure.
@@ -300,8 +310,8 @@ func getBSSEntryForNCN(ncn sls_common.GenericHardware) (bssEntry bssTypes.BootPa
 		Hosts:  []string{ncn.Xname},
 		Macs:   macs,
 		Params: getKernelCommandlineArgs(ncn, cmdline),
-		Kernel: fmt.Sprintf("%s/%s/%s/%s", s3Prefix, csmRelease, path, kernelName),
-		Initrd: fmt.Sprintf("%s/%s/%s/%s", s3Prefix, csmRelease, path, initrdName),
+		Kernel: fmt.Sprintf("%s/%s/%s/%s", s3Prefix, path, version, kernelName),
+		Initrd: fmt.Sprintf("%s/%s/%s/%s", s3Prefix, path, version, initrdName),
 		CloudInit: bssTypes.CloudInit{
 			MetaData: metaData,
 			UserData: userData,
