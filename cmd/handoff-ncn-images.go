@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 
 	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,8 +40,6 @@ var (
 	s3SecretName string
 	s3BucketName string
 
-	csmRelease string
-
 	k8sKernelPath   string
 	k8sInitrdPath   string
 	k8sSquashFSPath string
@@ -57,12 +56,6 @@ var handoffNCNImagesCmd = &cobra.Command{
 	Long: "A series of subcommands that facilitate the migration of assets/configuration/etc from the LiveCD to the " +
 		"production version inside the Kubernetes cluster.",
 	Run: func(cmd *cobra.Command, args []string) {
-		// Ensure CSM release is set (it should be, it's part of the install documentation to have this set).
-		csmRelease = os.Getenv("CSM_RELEASE")
-		if csmRelease == "" {
-			log.Panicln("Environment variable CSM_RELEASE can NOT be blank!")
-		}
-
 		fmt.Println("Uploading NCN images into S3.")
 		uploadNCNImagesS3()
 	},
@@ -162,18 +155,40 @@ func uploadNCNImagesS3() {
 
 	fmt.Printf("Sucessfully created %s bucket.\n", s3BucketName)
 
+	// Need to figure out the versions of these images.
+	versionRegex := regexp.MustCompile(`.*-(.+)\.squashfs`)
+	var k8sVersion string
+	var cephVersion string
+
+	k8sMatches := versionRegex.FindStringSubmatch(k8sSquashFSPath)
+	if k8sMatches != nil {
+		k8sVersion = k8sMatches[1]
+	} else {
+		log.Fatalf("Kubernetes image version invalid: %s", k8sSquashFSPath)
+	}
+
+	cephMatches := versionRegex.FindStringSubmatch(cephSquashFSPath)
+	if cephMatches != nil {
+		cephVersion = cephMatches[1]
+	} else {
+		log.Fatalf("Ceph image version invalid: %s", cephSquashFSPath)
+	}
+
 	// Upload the files.
-	uploadFile(k8sKernelPath, fmt.Sprintf("%s/%s/%s", csmRelease, k8sPath, kernelName))
+	uploadFile(k8sKernelPath, fmt.Sprintf("%s/%s/%s", k8sPath, k8sVersion, kernelName))
 	fmt.Println("Successfully uploaded K8s kernel.")
-	uploadFile(k8sInitrdPath, fmt.Sprintf("%s/%s/%s", csmRelease, k8sPath, initrdName))
+	uploadFile(k8sInitrdPath, fmt.Sprintf("%s/%s/%s", k8sPath, k8sVersion, initrdName))
 	fmt.Println("Successfully uploaded K8s initrd.")
-	uploadFile(k8sSquashFSPath, fmt.Sprintf("%s/%s/%s", csmRelease, k8sPath, squashFSName))
+	uploadFile(k8sSquashFSPath, fmt.Sprintf("%s/%s/%s", k8sPath, k8sVersion, squashFSName))
 	fmt.Println("Successfully uploaded K8s squash FS.")
 
-	uploadFile(cephKernelPath, fmt.Sprintf("%s/%s/%s", csmRelease, cephPath, kernelName))
+	uploadFile(cephKernelPath, fmt.Sprintf("%s/%s/%s", cephPath, cephVersion, kernelName))
 	fmt.Println("Successfully uploaded CEPH kernel.")
-	uploadFile(cephInitrdPath, fmt.Sprintf("%s/%s/%s", csmRelease, cephPath, initrdName))
+	uploadFile(cephInitrdPath, fmt.Sprintf("%s/%s/%s", cephPath, cephVersion, initrdName))
 	fmt.Println("Successfully uploaded CEPH initrd.")
-	uploadFile(cephSquashFSPath, fmt.Sprintf("%s/%s/%s", csmRelease, cephPath, squashFSName))
+	uploadFile(cephSquashFSPath, fmt.Sprintf("%s/%s/%s", cephPath, cephVersion, squashFSName))
 	fmt.Println("Successfully uploaded CEPH squash FS.")
+
+	fmt.Printf("\n\nRecord these image versions, you will need them later:\nKubernetes: %s\nCEPH: %s",
+		k8sVersion, cephVersion)
 }
