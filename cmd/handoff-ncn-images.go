@@ -29,7 +29,7 @@ const k8sPath = "k8s"
 const cephPath = "ceph"
 
 const kernelName = "kernel"
-const initrdName = "initrd"
+const initrdName = "initrd.img.xz"
 const squashFSName = "filesystem.squashfs"
 
 var (
