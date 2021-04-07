@@ -5,6 +5,7 @@ Copyright 2020 Hewlett Packard Enterprise Development LP
 package cmd
 
 import (
+	"encoding/json"
 	"github.com/spf13/cobra"
 	"log"
 	"net/http"
@@ -92,7 +93,19 @@ func updateNCNCloudInitParams() {
 			key, object := getFinalJSONObject(setParam.key, &bssEntry)
 			objectVal := *object
 
-			objectVal[key] = setParam.value
+			var value interface{}
+
+			// Handle arrays of strings.
+			var potentialArray []string
+			arrayErr := json.Unmarshal([]byte(setParam.value), &potentialArray)
+			if arrayErr == nil {
+				// Must be an array.
+				value = potentialArray
+			} else {
+				value = setParam.value
+			}
+
+			objectVal[key] = value
 		}
 
 		// Delete params.
