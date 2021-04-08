@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	paramsToUpdate []string
-	paramsToDelete []string
+	kernel string
+	initrd string
 )
 
 var handoffBSSUpdateParamCmd = &cobra.Command{
@@ -39,36 +39,18 @@ func init() {
 	handoffBSSUpdateParamCmd.Flags().StringArrayVar(&paramsToDelete, "delete", []string{},
 		"For each kernel parameter you wish to remove provide just the key and it will be removed "+
 			"regardless of value")
+	handoffBSSUpdateParamCmd.Flags().StringVar(&kernel, "kernel", "",
+		"New value to set for the kernel")
+	handoffBSSUpdateParamCmd.Flags().StringVar(&initrd, "initrd", "",
+		"New value to set for the initrd")
+	handoffBSSUpdateParamCmd.Flags().StringArrayVar(&limitToXnames, "limit", []string{},
+		"Limit updates to just the xnames specified")
 }
 
 func updateNCNKernelParams() {
-	if len(paramsToUpdate) == 0 && len(paramsToDelete) == 0 {
-		log.Fatalln("No parameters given to set or delete!")
-	}
+	limitManagementNCNs, setParams := setupHandoffCommon()
 
-	type paramTuple struct {
-		key   string
-		value string
-	}
-
-	// Build up a slice of tuples of all the values we want to set.
-	var setParams []paramTuple
-	for _, setParam := range paramsToUpdate {
-		paramSplit := strings.Split(setParam, "=")
-
-		if len(paramSplit) != 2 {
-			log.Panicf("Set paramater had invalid format: %s", setParam)
-		}
-
-		tuple := paramTuple{
-			key:   paramSplit[0],
-			value: paramSplit[1],
-		}
-
-		setParams = append(setParams, tuple)
-	}
-
-	for _, ncn := range managementNCNs {
+	for _, ncn := range limitManagementNCNs {
 		// Get the BSS bootparamaters for this NCN.
 		bssEntry := getBSSBootparametersForXname(ncn.Xname)
 
@@ -133,6 +115,14 @@ func updateNCNKernelParams() {
 		newBSSEntry := bssTypes.BootParams{
 			Hosts:  []string{ncn.Xname},
 			Params: strings.Join(finalParts, " "),
+		}
+
+		// If the kernel and/or initrd are set, update them now.
+		if kernel != "" {
+			newBSSEntry.Kernel = kernel
+		}
+		if initrd != "" {
+			newBSSEntry.Initrd = initrd
 		}
 
 		// Now write it back to BSS.
