@@ -16,6 +16,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"os/exec"
 	base "stash.us.cray.com/HMS/hms-base"
 	"stash.us.cray.com/HMS/hms-bss/pkg/bssTypes"
@@ -62,6 +63,16 @@ var handoffBSSMetadataCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		setupCommon()
 
+		desiredKubernetesVersion = os.Getenv("KUBERNETES_VERSION")
+		if desiredKubernetesVersion == "" {
+			log.Fatalf("KUBERNETES_VERSION enviornemnt variable not set!")
+		}
+
+		desiredCEPHVersion = os.Getenv("CEPH_VERSION")
+		if desiredCEPHVersion == "" {
+			log.Fatalf("CEPH_VERSION enviornemnt variable not set!")
+		}
+
 		// Parse the data.json file.
 		err := csiFiles.ReadJSONConfig(dataFile, &cloudInitData)
 		if err != nil {
@@ -96,24 +107,30 @@ func getKernelCommandlineArgs(ncn sls_common.GenericHardware, cmdline string) st
 		part := cmdlineParts[i]
 
 		if strings.HasPrefix(part, "metal.server") {
-			cmdlineParts[i] = fmt.Sprintf("metal.server=http://rgw-vip.nmn/ncn-images")
+			var path string
+			var version string
+
+			// Storage NCNs get different assets than masters/workers.
+			if extraProperties.SubRole == "Storage" {
+				path = cephPath
+				version = desiredCEPHVersion
+			} else {
+				path = k8sPath
+				version = desiredKubernetesVersion
+			}
+
+			cmdlineParts[i] = fmt.Sprintf("metal.server=http://rgw-vip.nmn/ncn-images/%s/%s", path, version)
 		} else if strings.HasPrefix(part, "ds=nocloud-net") {
 			cmdlineParts[i] = fmt.Sprintf("ds=nocloud-net;s=http://10.92.100.81:8888/")
 		} else if strings.HasPrefix(part, "rd.live.squashimg") {
-			var squashFSName string
-
-			// Storage NCNs get a different image than masters/workers.
-			if extraProperties.SubRole == "Storage" {
-				squashFSName = cephSquashFSName
-			} else {
-				squashFSName = k8sSquashFSName
-			}
-
 			cmdlineParts[i] = fmt.Sprintf("rd.live.squashimg=%s", squashFSName)
 		} else if strings.HasPrefix(part, "hostname") {
 			cmdlineParts[i] = fmt.Sprintf("hostname=%s", getNCNHostname(ncn))
 		} else if strings.HasPrefix(part, "xname") {
 			// BSS sets the xname, no need to have it here.
+			cmdlineParts[i] = ""
+		} else if strings.HasPrefix(part, "kernel") {
+			// We don't need to specific the kernel pram because BSS will *always* add it.
 			cmdlineParts[i] = ""
 		}
 	}
@@ -276,26 +293,25 @@ func getBSSEntryForNCN(ncn sls_common.GenericHardware) (bssEntry bssTypes.BootPa
 		_ = sshClient.Close()
 	}
 
-	// K8s and CEPH nodes have different kernel/initrd's.
-	var kernel string
-	var initrd string
+	var path string
+	var version string
 
+	// Storage NCNs get different assets than masters/workers.
 	if extraProperties.SubRole == "Storage" {
-		kernel = cephKernelName
-		initrd = cephInitrdName
+		path = cephPath
+		version = desiredCEPHVersion
 	} else {
-		kernel = k8sKernelName
-		initrd = k8sInitrdName
+		path = k8sPath
+		version = desiredKubernetesVersion
 	}
 
 	// Now we can build the BSS structure.
-	// TODO: Put in MAC address from bond.
 	bssEntry = bssTypes.BootParams{
 		Hosts:  []string{ncn.Xname},
 		Macs:   macs,
 		Params: getKernelCommandlineArgs(ncn, cmdline),
-		Kernel: s3Prefix + kernel,
-		Initrd: s3Prefix + initrd,
+		Kernel: fmt.Sprintf("%s/%s/%s/%s", s3Prefix, path, version, kernelName),
+		Initrd: fmt.Sprintf("%s/%s/%s/%s", s3Prefix, path, version, initrdName),
 		CloudInit: bssTypes.CloudInit{
 			MetaData: metaData,
 			UserData: userData,

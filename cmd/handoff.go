@@ -16,14 +16,30 @@ import (
 	"os"
 	"stash.us.cray.com/HMS/hms-bss/pkg/bssTypes"
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
+	"strconv"
+	"strings"
 )
 
-const gatewayHostname = "api-gw-service-nmn.local"
-const s3Prefix = "s3://ncn-images/"
+const s3Prefix = "s3://ncn-images"
+
+type paramTuple struct {
+	key   string
+	value string
+}
 
 var (
 	managementNCNs []sls_common.GenericHardware
 	httpClient     *http.Client
+
+	paramsToUpdate []string
+	paramsToDelete []string
+	limitToXnames  []string
+
+	desiredKubernetesVersion string
+	desiredCEPHVersion       string
+
+	gatewayHostname string
+	verboseLogging  bool
 )
 
 // handoffCmd represents the handoff command
@@ -36,6 +52,14 @@ var handoffCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(handoffCmd)
+
+	gatewayHostname = os.Getenv("GATEWAY_HOSTNAME")
+	if gatewayHostname == "" {
+		gatewayHostname = "api-gw-service-nmn.local"
+	}
+
+	verboseLogging = false
+	verboseLogging, _ = strconv.ParseBool(os.Getenv("VERBOSE"))
 }
 
 func setupCommon() {
@@ -111,9 +135,13 @@ func uploadEntryToBSS(bssEntry bssTypes.BootParams, method string) {
 		log.Panicf("Failed to %s BSS entry: %s", method, string(bodyBytes))
 	}
 
-	jsonPrettyBytes, _ := json.MarshalIndent(bssEntry, "", "\t")
+	jsonPrettyBytes, _ := json.MarshalIndent(bssEntry, "", "  ")
 
-	log.Printf("Sucessfuly %s BSS entry for %s:\n%s", method, bssEntry.Hosts[0], string(jsonPrettyBytes))
+	if verboseLogging {
+		log.Printf("Sucessfuly %s BSS entry for %s:\n%s", method, bssEntry.Hosts[0], string(jsonPrettyBytes))
+	} else {
+		log.Printf("Sucessfuly %s BSS entry for %s", method, bssEntry.Hosts[0])
+	}
 }
 
 func getBSSBootparametersForXname(xname string) bssTypes.BootParams {
@@ -149,4 +177,54 @@ func getBSSBootparametersForXname(xname string) bssTypes.BootParams {
 	}
 
 	return bssEntries[0]
+}
+
+func setupHandoffCommon() (limitManagementNCNs []sls_common.GenericHardware, setParams []paramTuple) {
+	if len(paramsToUpdate) == 0 && len(paramsToDelete) == 0 {
+		log.Fatalln("No parameters given to set or delete!")
+	}
+
+	// Build up a slice of tuples of all the values we want to set.
+	for _, setParam := range paramsToUpdate {
+		paramSplit := strings.Split(setParam, "=")
+
+		if len(paramSplit) != 2 {
+			log.Panicf("Set paramater had invalid format: %s", setParam)
+		}
+
+		tuple := paramTuple{
+			key:   paramSplit[0],
+			value: paramSplit[1],
+		}
+
+		setParams = append(setParams, tuple)
+	}
+
+	// "Global" is a special NCN just used for cloud-init metadata in a global sense.
+	managementNCNs = append(managementNCNs, sls_common.GenericHardware{
+		Xname: "Global",
+	})
+
+	// Only process the NCNs specified.
+	if len(limitToXnames) == 0 {
+		limitManagementNCNs = managementNCNs
+	} else {
+		for _, xname := range limitToXnames {
+			found := false
+
+			for _, ncn := range managementNCNs {
+				if ncn.Xname == xname {
+					limitManagementNCNs = append(limitManagementNCNs, ncn)
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				log.Fatalf("Limit to xname not found in management NCNs: %s", xname)
+			}
+		}
+	}
+
+	return
 }
