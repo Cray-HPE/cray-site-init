@@ -67,6 +67,7 @@ type BaseCampGlobals struct {
 	NTPPeers    string `json:"ntp-peers"`
 	NTPAllow    string `json:"ntp_local_nets"`
 	NTPUpstream string `json:"ntp-upstream-server"`
+	NumStorageNodes int `json:num_storage_nodes`
 }
 
 // Basecamp Defaults
@@ -133,7 +134,6 @@ var basecampGlobalString = `{
 	"kubernetes-weave-mtu": "1376",
 	"ntp_local_nets": "~FIXME~ e.g. 10.252.0.0/17 10.254.0.0/17",
 	"ntp_peers": "~FIXME~ e.g. ncn-w001 ncn-w002 ncn-w003 ncn-s001 ncn-s002 ncn-s003 ncn-m001 ncn-m002 ncn-m003",
-	"num_storage_nodes": "3",
 	"rgw-virtual-ip": "~FIXME~ e.g. 10.252.2.100",
 	"upstream_ntp_server": "~FIXME~",
 	"wipe-ceph-osds": "yes",
@@ -248,6 +248,17 @@ func MakeBasecampGlobals(v *viper.Viper, logicalNcns []csi.LogicalNCN, shastaNet
 	global["rgw-virtual-ip"] = reservations["rgw-vip"].IPAddress.String()
 	global["ntp_peers"] = strings.Join(ncns, " ")
 	global["host_records"] = MakeBasecampHostRecords(logicalNcns, shastaNetworks, installNCN)
+
+	// start storage count at zero
+	var s = 0
+	for _, ncn := range logicalNcns {
+		if ncn.Subrole == "Storage" {
+			// if a storage node is detected, increase the count by one
+			s++
+		}
+	}
+
+	global["num_storage_nodes"] = s
 
 	return global, nil
 }
