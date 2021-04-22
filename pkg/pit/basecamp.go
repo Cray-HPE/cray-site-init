@@ -67,7 +67,7 @@ type BaseCampGlobals struct {
 	NTPPeers    string `json:"ntp-peers"`
 	NTPAllow    string `json:"ntp_local_nets"`
 	NTPUpstream string `json:"ntp-upstream-server"`
-	NumStorageNodes int `json:num_storage_nodes`
+	NumStorageNodes int `json:"num_storage_nodes"`
 }
 
 // Basecamp Defaults
