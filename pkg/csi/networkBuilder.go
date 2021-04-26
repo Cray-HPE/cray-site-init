@@ -114,6 +114,7 @@ func BuildCSMNetworks(internalNetConfigs map[string]NetworkLayoutConfiguration, 
 
 func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, error) {
 	// log.Printf("Creating a network for %v with NetworkLayoutConfig %+v", conf.Template.Name, conf)
+	var canCIDR *net.IPNet
 	// I hope this viper is temporary
 	v := viper.GetViper()
 	// start with the defaults
@@ -126,6 +127,8 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 
 	// Do all the special stuff for the CAN
 	if tempNet.Name == "CAN" {
+		_, canCIDR, _ = net.ParseCIDR(v.GetString("can-cidr"))
+		conf.DesiredBootstrapDHCPMask = canCIDR.Mask
 		_, canStaticPool, err := net.ParseCIDR(v.GetString("can-static-pool"))
 		if err != nil {
 			log.Printf("IP Addressing Failure\nInvalid can-static-pool.  Cowardly refusing to create it.")
@@ -189,7 +192,6 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 		subnet.FullName = fmt.Sprintf("%v Bootstrap DHCP Subnet", tempNet.Name)
 		if tempNet.Name == "NMN" || tempNet.Name == "CAN" || tempNet.Name == "HMN" {
 			if tempNet.Name == "CAN" {
-				_, canCIDR, _ := net.ParseCIDR(v.GetString("can-cidr"))
 				subnet.CIDR = *canCIDR
 				subnet.Gateway = net.ParseIP(v.GetString("can-gateway"))
 				subnet.AddReservation("can-switch-1", "")
