@@ -51,7 +51,7 @@ type BaseCampGlobals struct {
 
 	// Commenting out several that I think we don't need
 	// Domain string `json:domain`        // dnsmasq should provide this
-	// DNSServer string `json:dns-server` // dnsmasq should provide this
+	DNSServer string `json:"dns-server"`
 	// CanGateway  string `json:can-gw`   // dnsmasq should provide this
 	CanInterface string `json:"can-if"` // Do we need this?
 
@@ -123,7 +123,6 @@ var basecampGlobalString = `{
 	"can-if": "vlan007",
 	"ceph-cephfs-image": "dtr.dev.cray.com/cray/cray-cephfs-provisioner:0.1.0-nautilus-1.3",
 	"ceph-rbd-image": "dtr.dev.cray.com/cray/cray-rbd-provisioner:0.1.0-nautilus-1.3",
-	"dns-server": "~FIXME~ e.g. 10.252.1.1",
 	"docker-image-registry": "dtr.dev.cray.com",
 	"domain": "nmn hmn",
 	"first-master-hostname": "~FIXME~ e.g. ncn-m002",
@@ -232,9 +231,14 @@ func MakeBasecampGlobals(v *viper.Viper, logicalNcns []csi.LogicalNCN, shastaNet
 			ncns = append(ncns, k)
 		}
 	}
-	// Now update with the ones that are part of the config.
-	// dns-server should be the internal interface ip for the node running the installer
-	global["dns-server"] = reservations[installNCN].IPAddress.String()
+	// get the nmnlb subnet
+	nmnlbSubnet := shastaNetworks["NMNLB"].SubnetbyName("nmn_metallb_address_pool")
+	// get the unbound network from subnets above
+	unbound := nmnlbSubnet.ReservationsByName()
+	// include the pit and unbound in the list of dns servers
+	dnsServers := unbound["unbound"].IPAddress.String() + " " + reservations[installNCN].IPAddress.String()
+	// Add these to the dns-server key
+	global["dns-server"] = dnsServers
 	// ntp_local_nets should be a list of NMN and HMN CIDRS
 	var nmnNets []string
 	for _, netNetwork := range shastaNetworks {
