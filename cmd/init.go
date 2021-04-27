@@ -33,10 +33,10 @@ var initCmd = &cobra.Command{
 	1. The hmn_connections.json which describes the cabling for the BMCs on the NCNs
 	2. The ncn_metadata.csv file documents the MAC addresses of the NCNs to be used in this installation
 	   NCN xname,NCN Role,NCN Subrole,BMC MAC,BMC Switch Port,NMN MAC,NMN Switch Port
-	3. The switch_metadata.csv file which documents the Xname, Brand, Type, and Model of each switch.  Types are CDU, Leaf, Aggregation, and Spine 
+	3. The switch_metadata.csv file which documents the Xname, Brand, Type, and Model of each switch.  Types are CDU, Leaf, Aggregation, and Spine
 	   Switch Xname,Type,Brand,Model
-	
-	** NB ** 
+
+	** NB **
 	For systems that use non-sequential cabinet id numbers, an additional mapping file is necessary and must be indicated
 	with the --cabinets-yaml flag.
 	** NB **
@@ -48,7 +48,7 @@ var initCmd = &cobra.Command{
 	Allows control of the following in the SLS Input File:
 	1. System specific prefix for Applications node
 	2. Specify HSM Subroles for system specifc application nodes
-	3. Specify Application node Aliases  
+	3. Specify Application node Aliases
 	** NB **
 
 	In addition, there are many flags to impact the layout of the system.  The defaults are generally fine except for the networking flags.
@@ -325,6 +325,7 @@ func init() {
 	initCmd.Flags().Int("nmn-bootstrap-vlan", csi.DefaultNMNVlan, "Bootstrap VLAN for the NMN")
 	initCmd.Flags().Int("hmn-bootstrap-vlan", csi.DefaultHMNVlan, "Bootstrap VLAN for the HMN")
 	initCmd.Flags().Int("can-bootstrap-vlan", csi.DefaultCANVlan, "Bootstrap VLAN for the CAN")
+	initCmd.Flags().Int("macvlan-bootstrap-vlan", csi.DefaultMacVlanVlan, "Bootstrap VLAN for MacVlan")
 
 	// Hardware Details
 	initCmd.Flags().Int("mountain-cabinets", 4, "Number of Mountain Cabinets") // 4 mountain cabinets per CDU
