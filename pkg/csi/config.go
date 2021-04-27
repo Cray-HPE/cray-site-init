@@ -24,8 +24,10 @@ type SystemConfig struct {
 	Cabinets        int16    `form:"cabinets" mapstructure:"cabinets"`
 	StartingCabinet int16    `form:"starting-cabinet" mapstructure:"starting-cabinet"`
 	StartingNID     int      `form:"starting-NID" mapstructure:"starting-NID"`
-	NtpPoolHostname string   `form:"ntp-pool" mapstructure:"ntp-pool"`
-	NtpHosts        []string `form:"ntp-hosts" mapstructure:"ntp-hosts"`
+	NtpPools 	      []string `form:"ntp-pools" mapstructure:"ntp-pools"`
+	NtpServers      []string `form:"ntp-servers" mapstructure:"ntp-servers"`
+	NtpPeers        []string `form:"ntp-peers" mapstructure:"ntp-peers"`
+	NtpAllow        []string `form:"ntp-allow" mapstructure:"ntp-allow"`
 	IPV4Resolvers   []string `form:"ipv4-resolvers" mapstructure:"ipv4-resolvers"`
 	V2Registry      string   `form:"v2-registry" mapstructure:"v2-registry"`
 	RpmRegistry     string   `form:"rpm-repository" mapstructure:"rpm-repository"`
