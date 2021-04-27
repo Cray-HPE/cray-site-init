@@ -187,13 +187,15 @@ func GenCustomizationsYaml(ncns []csi.LogicalNCN, shastaNetworks map[string]*csi
 	}
 	for netName, network := range shastaNetworks {
 		if strings.HasPrefix(netName, "NMN") {
-			output.WLM.MacVlanSetup.Routes = append(output.WLM.MacVlanSetup.Routes, struct {
-				Destination string "yaml:\"dst\" valid:\"cidr,required\""
-				Gateway     string "yaml:\"gw\" valid:\"cidr,required\""
-			}{
-				Destination: network.CIDR,
-				Gateway:     uaiNet.Gateway.String(),
-			})
+			if netName != "NMN" {
+				output.WLM.MacVlanSetup.Routes = append(output.WLM.MacVlanSetup.Routes, struct {
+					Destination string "yaml:\"dst\" valid:\"cidr,required\""
+					Gateway     string "yaml:\"gw\" valid:\"cidr,required\""
+				}{
+					Destination: network.CIDR,
+					Gateway:     uaiNet.Gateway.String(),
+				})
+			}
 		}
 	}
 	return output
