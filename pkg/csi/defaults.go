@@ -41,6 +41,10 @@ const (
 	DefaultNMNString = "10.252.0.0/17"
 	// DefaultNMNVlan is the default NMN Bootstrap Vlan
 	DefaultNMNVlan = 2
+	// DefaultMacVlanVlan is the default MacVlan Bootstrap Vlan
+	// FIXME: This isn't a real vlan, but since it shares space with NMN, there is a conflict in the resulting sls config
+	//        This should either become a real vlan, or preferrably, just carve out some reserved space on the NMN for macvlan
+	DefaultMacVlanVlan = 20
 	// DefaultNMNMTNString is the default NMN Network for Mountain Cabinets with Grouped Configuration
 	DefaultNMNMTNString = "10.100.0.0/17"
 	// DefaultNMNRVRString is the default NMN Network for River Cabinets with Grouped Configuration

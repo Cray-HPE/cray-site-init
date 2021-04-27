@@ -21,6 +21,7 @@ import (
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
 	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
 	"stash.us.cray.com/MTL/csi/pkg/csi"
+	"stash.us.cray.com/MTL/csi/pkg/ipam"
 	"stash.us.cray.com/MTL/csi/pkg/pit"
 	"stash.us.cray.com/MTL/csi/pkg/version"
 )
@@ -33,10 +34,10 @@ var initCmd = &cobra.Command{
 	1. The hmn_connections.json which describes the cabling for the BMCs on the NCNs
 	2. The ncn_metadata.csv file documents the MAC addresses of the NCNs to be used in this installation
 	   NCN xname,NCN Role,NCN Subrole,BMC MAC,BMC Switch Port,NMN MAC,NMN Switch Port
-	3. The switch_metadata.csv file which documents the Xname, Brand, Type, and Model of each switch.  Types are CDU, Leaf, Aggregation, and Spine 
+	3. The switch_metadata.csv file which documents the Xname, Brand, Type, and Model of each switch.  Types are CDU, Leaf, Aggregation, and Spine
 	   Switch Xname,Type,Brand,Model
-	
-	** NB ** 
+
+	** NB **
 	For systems that use non-sequential cabinet id numbers, an additional mapping file is necessary and must be indicated
 	with the --cabinets-yaml flag.
 	** NB **
@@ -48,7 +49,7 @@ var initCmd = &cobra.Command{
 	Allows control of the following in the SLS Input File:
 	1. System specific prefix for Applications node
 	2. Specify HSM Subroles for system specifc application nodes
-	3. Specify Application node Aliases  
+	3. Specify Application node Aliases
 	** NB **
 
 	In addition, there are many flags to impact the layout of the system.  The defaults are generally fine except for the networking flags.
@@ -206,7 +207,23 @@ var initCmd = &cobra.Command{
 					// Loop the reservations and update the NCN reservations with hostnames
 					// we likely didn't have when we registered the resevation
 					updateReservations(tempSubnet, logicalNcns)
-					tempSubnet.UpdateDHCPRange(v.GetBool("supernet"))
+					if netName == "CAN" {
+						// Do not use supernet hack for the CAN
+						tempSubnet.UpdateDHCPRange(false)
+						// Do not overlap the can-static or can-dynamic pools
+						_, canStaticPool, _ := net.ParseCIDR(v.GetString("can-static-pool"))
+						// Guidance has changed on whether the CAN gw should be at the start or end of the
+						// range.  Here we account for it being at the end of the range.
+						if tempSubnet.Gateway.String() == ipam.Add(canStaticPool.IP, -1).String() {
+							// The gw *is* at the end, so shorten the range to accommodate
+							tempSubnet.DHCPEnd = ipam.Add(canStaticPool.IP, -2)
+						} else {
+							// The gw is not at the end
+							tempSubnet.DHCPEnd = ipam.Add(canStaticPool.IP, -1)
+						}
+					} else {
+						tempSubnet.UpdateDHCPRange(v.GetBool("supernet"))
+					}
 				}
 
 				// We expect a bootstrap_dhcp in every net, but uai_macvlan is only in
@@ -325,6 +342,7 @@ func init() {
 	initCmd.Flags().Int("nmn-bootstrap-vlan", csi.DefaultNMNVlan, "Bootstrap VLAN for the NMN")
 	initCmd.Flags().Int("hmn-bootstrap-vlan", csi.DefaultHMNVlan, "Bootstrap VLAN for the HMN")
 	initCmd.Flags().Int("can-bootstrap-vlan", csi.DefaultCANVlan, "Bootstrap VLAN for the CAN")
+	initCmd.Flags().Int("macvlan-bootstrap-vlan", csi.DefaultMacVlanVlan, "Bootstrap VLAN for MacVlan")
 
 	// Hardware Details
 	initCmd.Flags().Int("mountain-cabinets", 4, "Number of Mountain Cabinets") // 4 mountain cabinets per CDU
