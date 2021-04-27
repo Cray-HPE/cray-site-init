@@ -21,6 +21,7 @@ import (
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
 	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
 	"stash.us.cray.com/MTL/csi/pkg/csi"
+	"stash.us.cray.com/MTL/csi/pkg/ipam"
 	"stash.us.cray.com/MTL/csi/pkg/pit"
 	"stash.us.cray.com/MTL/csi/pkg/version"
 )
@@ -206,7 +207,23 @@ var initCmd = &cobra.Command{
 					// Loop the reservations and update the NCN reservations with hostnames
 					// we likely didn't have when we registered the resevation
 					updateReservations(tempSubnet, logicalNcns)
-					tempSubnet.UpdateDHCPRange(v.GetBool("supernet"))
+					if netName == "CAN" {
+						// Do not use supernet hack for the CAN
+						tempSubnet.UpdateDHCPRange(false)
+						// Do not overlap the can-static or can-dynamic pools
+						_, canStaticPool, _ := net.ParseCIDR(v.GetString("can-static-pool"))
+						// Guidance has changed on whether the CAN gw should be at the start or end of the
+						// range.  Here we account for it being at the end of the range.
+						if tempSubnet.Gateway.String() == ipam.Add(canStaticPool.IP, -1).String() {
+							// The gw *is* at the end, so shorten the range to accommodate
+							tempSubnet.DHCPEnd = ipam.Add(canStaticPool.IP, -2)
+						} else {
+							// The gw is not at the end
+							tempSubnet.DHCPEnd = ipam.Add(canStaticPool.IP, -1)
+						}
+					} else {
+						tempSubnet.UpdateDHCPRange(v.GetBool("supernet"))
+					}
 				}
 
 				// We expect a bootstrap_dhcp in every net, but uai_macvlan is only in
