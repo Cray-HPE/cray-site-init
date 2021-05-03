@@ -79,7 +79,10 @@ var ValidCabinetTypes = []string{"mountain", "river", "hill"}
 var InstallerDefaults = SystemConfig{
 	SystemName:      "sn-2024",
 	SiteDomain:      "dev.cray.com",
-	NtpPoolHostname: "time.nist.gov",
+	NtpPools:        []string{"time.nist.gov"},
+	NtpServers:      []string{"ncn-m001"},
+	NtpPeers:        []string{"ncn-m001", "ncn-m002", "ncn-m003", "ncn-w001", "ncn-w002", "ncn-w003", "ncn-s001", "ncn-s002", "ncn-s003"},
+	NtpTimezone:     "UTC",
 	RpmRegistry:     "https://packages.nmn/repository/shasta-master",
 	V2Registry:      "https://registry.nmn/",
 	Install: InstallConfig{

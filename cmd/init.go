@@ -274,7 +274,6 @@ var initCmd = &cobra.Command{
 		fmt.Printf("\n\n===== %v Installation Summary =====\n\n", v.GetString("system-name"))
 		fmt.Printf("Installation Node: %v\n", v.GetString("install-ncn"))
 		fmt.Printf("Customer Access: %v GW: %v\n", v.GetString("can-cidr"), v.GetString("can-gateway"))
-		fmt.Printf("\tUpstream NTP: %v\n", v.GetString("ntp-pool"))
 		fmt.Printf("\tUpstream DNS: %v\n", v.GetString("ipv4-resolvers"))
 		fmt.Printf("\tMetalLB Peers: %v\n", v.GetString("bgp-peers"))
 		fmt.Println("Networking")
@@ -303,6 +302,11 @@ func init() {
 	initCmd.Flags().String("site-domain", "dev.cray.com", "Site Domain Name")
 	// initCmd.Flags().String("internal-domain", "unicos.shasta", "Internal Domain Name")
 	initCmd.Flags().String("ntp-pool", "time.nist.gov", "Hostname for Upstream NTP Pool")
+	initCmd.Flags().MarkDeprecated("ntp-pool", "please use --ntp-pools (plural) instead")
+	initCmd.Flags().StringSlice("ntp-pools", []string{""}, "Comma-seperated list of upstream NTP pool(s)")
+	initCmd.Flags().StringSlice("ntp-servers", []string{"ncn-m001"}, "Comma-seperated list of upstream NTP server(s) ncn-m001 should always be in this list")
+	initCmd.Flags().StringSlice("ntp-peers", []string{"ncn-m001", "ncn-m002", "ncn-m003", "ncn-w001", "ncn-w002", "ncn-w003", "ncn-s001", "ncn-s002", "ncn-s003"}, "Comma-seperated list of NCNs that will peer together")
+	initCmd.Flags().String("ntp-timezone", "UTC", "Timezone to be used on the NCNs and across the system")
 	initCmd.Flags().String("ipv4-resolvers", "8.8.8.8, 9.9.9.9", "List of IP Addresses for DNS")
 	initCmd.Flags().String("v2-registry", "https://registry.nmn/", "URL for default v2 registry used for both helm and containers")
 	initCmd.Flags().String("rpm-repository", "https://packages.nmn/repository/shasta-master", "URL for default rpm repository")
@@ -605,7 +609,6 @@ func validateFlags() []string {
 	v := viper.GetViper()
 	var requiredFlags = []string{
 		"system-name",
-		"ntp-pool",
 		"can-gateway",
 		"site-ip",
 		"site-gw",
