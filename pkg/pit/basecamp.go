@@ -34,6 +34,24 @@ type CloudInit struct {
 	UserData map[string]interface{} `yaml:"user-data" json:"user-data"`
 }
 
+// NtpConfig is the options for the cloud-init ntp module.
+// this is mainly the template that gets deployed to the NCNs
+type NtpConfig struct {
+	ConfPath    string `json:"confpath"`
+	Template    string `json:"template"`
+}
+
+// NtpModule enables use of the cloud-init ntp module
+type NtpModule struct {
+	Enabled    bool `json:"enabled"`
+	NtpClient  string `json:"ntp_client"`
+	NTPPeers   []string `json:"peers"`
+	NTPAllow   []string `json:"allow"`
+	NTPServers []string `json:"servers"`
+	NTPPools   []string `json:"pools"`
+	Config     NtpConfig `json:"config"`
+}
+
 // BaseCampGlobals is the set of information needed for an install to reach
 // the handoff point.
 type BaseCampGlobals struct {
@@ -63,10 +81,6 @@ type BaseCampGlobals struct {
 	KubernetesServicesCIDR        string `json:"kubernetes-services-cidr"` // "10.16.0.0/12"
 	KubernetesWeaveMTU            string `json:"kubernetes-weave-mtu"`     // 1376
 
-	// NTP Setup Globals
-	NTPPeers    string `json:"ntp-peers"`
-	NTPAllow    string `json:"ntp_local_nets"`
-	NTPUpstream string `json:"ntp-upstream-server"`
 	NumStorageNodes int `json:"num_storage_nodes"`
 }
 
@@ -81,7 +95,7 @@ var k8sRunCMD = []string{
 	"/srv/cray/scripts/metal/set-dhcp-to-static.sh",
 	"/srv/cray/scripts/metal/set-dns-config.sh",
 	"/srv/cray/scripts/metal/set-ntp-config.sh",
-    "/srv/cray/scripts/metal/enable-lldp.sh",
+  "/srv/cray/scripts/metal/enable-lldp.sh",
 	"/srv/cray/scripts/metal/set-bmc-bbs.sh",
 	"/srv/cray/scripts/metal/set-efi-bbs.sh",
 	"/srv/cray/scripts/metal/disable-cloud-init.sh",
@@ -97,7 +111,7 @@ var cephRunCMD = []string{
 	"/srv/cray/scripts/metal/set-dhcp-to-static.sh",
 	"/srv/cray/scripts/metal/set-dns-config.sh",
 	"/srv/cray/scripts/metal/set-ntp-config.sh",
-    "/srv/cray/scripts/metal/enable-lldp.sh",
+  "/srv/cray/scripts/metal/enable-lldp.sh",
 	"/srv/cray/scripts/metal/set-bmc-bbs.sh",
 	"/srv/cray/scripts/metal/set-efi-bbs.sh",
 	"/srv/cray/scripts/metal/disable-cloud-init.sh",
@@ -113,7 +127,7 @@ var cephWorkerRunCMD = []string{
 	"/srv/cray/scripts/metal/set-dhcp-to-static.sh",
 	"/srv/cray/scripts/metal/set-dns-config.sh",
 	"/srv/cray/scripts/metal/set-ntp-config.sh",
-    "/srv/cray/scripts/metal/enable-lldp.sh",
+  "/srv/cray/scripts/metal/enable-lldp.sh",
 	"/srv/cray/scripts/metal/set-bmc-bbs.sh",
 	"/srv/cray/scripts/metal/set-efi-bbs.sh",
 	"/srv/cray/scripts/metal/disable-cloud-init.sh",
@@ -134,16 +148,13 @@ var basecampGlobalString = `{
 	"kubernetes-pods-cidr": "10.32.0.0/12",
 	"kubernetes-services-cidr": "10.16.0.0/12",
 	"kubernetes-weave-mtu": "1376",
-	"ntp_local_nets": "~FIXME~ e.g. 10.252.0.0/17 10.254.0.0/17",
-	"ntp_peers": "~FIXME~ e.g. ncn-w001 ncn-w002 ncn-w003 ncn-s001 ncn-s002 ncn-s003 ncn-m001 ncn-m002 ncn-m003",
 	"rgw-virtual-ip": "~FIXME~ e.g. 10.252.2.100",
-	"upstream_ntp_server": "~FIXME~",
 	"wipe-ceph-osds": "yes",
 	"system-name": "~FIXME~",
 	"site-domain": "~FIXME~",
 	"internal-domain": "~FIXME~",
 	"k8s-api-auditing-enabled": "~FIXME~",
-    "ncn-mgmt-node-auditing-enabled": "~FIXME~"
+  "ncn-mgmt-node-auditing-enabled": "~FIXME~"
 	}`
 
 // BasecampHostRecord is what we need for passing stuff to /etc/hosts
@@ -196,6 +207,20 @@ func MakeBasecampHostRecords(ncns []csi.LogicalNCN, shastaNetworks map[string]*c
 	return hostrecords
 }
 
+// unique de-dupes an array of string
+func unique(arr []string) []string {
+	occured := map[string]bool{}
+	result:=[]string{}
+
+	for e:= range arr {
+		if occured[arr[e]] != true {
+		occured[arr[e]] = true
+			result = append(result, arr[e])
+		}
+	}
+	return result
+}
+
 // MakeBasecampGlobals uses the defaults above to create a suitable k/v pairing for the
 // Globals in data.json for basecamp
 func MakeBasecampGlobals(v *viper.Viper, logicalNcns []csi.LogicalNCN, shastaNetworks map[string]*csi.IPV4Network, installNetwork string, installSubnet string, installNCN string) (map[string]interface{}, error) {
@@ -211,7 +236,6 @@ func MakeBasecampGlobals(v *viper.Viper, logicalNcns []csi.LogicalNCN, shastaNet
 
 	// First loop through and see if there's a viper flag
 	// We register a few aliases because flags don't necessarily match data.json keys
-	v.RegisterAlias("upstream_ntp_server", "ntp-pool")
 	v.RegisterAlias("can-gw", "can-gateway")
 	for key := range global {
 		if v.IsSet(key) {
@@ -242,18 +266,13 @@ func MakeBasecampGlobals(v *viper.Viper, logicalNcns []csi.LogicalNCN, shastaNet
 	dnsServers := unbound["unbound"].IPAddress.String() + " " + reservations[installNCN].IPAddress.String()
 	// Add these to the dns-server key
 	global["dns-server"] = dnsServers
-	// ntp_local_nets should be a list of NMN and HMN CIDRS
-	var nmnNets []string
-	for _, netNetwork := range shastaNetworks {
-		nmnNets = append(nmnNets, netNetwork.CIDR)
-	}
-	global["ntp_local_nets"] = strings.Join(nmnNets, " ")
+
 	// first-master-hostname is used to ??? TODO:
 	global["first-master-hostname"] = "ncn-m002"
 	// "k8s-virtual-ip" is the nmn alias for k8s
 	global["k8s-virtual-ip"] = reservations["kubeapi-vip"].IPAddress.String()
 	global["rgw-virtual-ip"] = reservations["rgw-vip"].IPAddress.String()
-	global["ntp_peers"] = strings.Join(ncns, " ")
+
 	global["host_records"] = MakeBasecampHostRecords(logicalNcns, shastaNetworks, installNCN)
 
 	// start storage count at zero
@@ -327,6 +346,38 @@ func MakeBaseCampfromNCNs(v *viper.Viper, ncns []csi.LogicalNCN, shastaNetworks 
 				UserData: userDataMap,
 			}
 		}
+
+		// ntp allowed networks should be a list of NMN and HMN CIDRS
+		var nmnNets []string
+		for _, netNetwork := range shastaNetworks {
+			nmnNets = append(nmnNets, netNetwork.CIDR)
+		}
+
+		// for use with the timezone cloud-init module
+		userDataMap["timezone"] = v.GetString("ntp-timezone")
+
+		// merge the deprecated ntp-pool flag to the new list of pools
+		poolPool := append([]string{v.GetString("ntp-pool")}, v.GetStringSlice("ntp-pools")...)
+
+		// remove any duplicates
+		pools := unique(poolPool)
+
+		ntpConfig := NtpConfig{
+			ConfPath: "/etc/chrony.d/cray.conf",
+			Template: "## template: jinja\n# csm-generated config.  Do not modify--changes can be overwritten\n{% for pool in pools | sort -%}\npool {{ pool }} iburst\n{% endfor %}\n{% for server in servers | sort -%}\n{% if local_hostname == 'ncn-m001' and server == 'ncn-m001' %}\n{% endif %}\n{% if local_hostname != 'ncn-m001' and server != 'ncn-m001' %}\n{% else %}\nserver {{ server }} iburst trust\n{% endif %}\n{% endfor %}\n{% for peer in peers | sort -%}\n{% if local_hostname == peer %}\n{% else %}\n{% if loop.index <= 9 %}\n{# Only add 9 peers to prevent too much NTP traffic #}\npeer {{ peer }} minpoll -2 maxpoll 9 iburst trust\n{% endif %}\n{% endif %}\n{% endfor %}\n{% for net in allow | sort -%}\nallow {{ net }}\n{% endfor %}\nlocal stratum 3 orphan\nlog measurements statistics tracking\nlogchange 1.0\nmakestep 0.1 3\n",
+		}
+
+		ntpModule := NtpModule{
+				Enabled: true,
+				NtpClient: "chrony",
+				NTPPeers: v.GetStringSlice("ntp-peers"),
+				NTPAllow: nmnNets,
+				NTPServers: v.GetStringSlice("ntp-servers"),
+				NTPPools: pools,
+				Config: ntpConfig,
+			}
+
+		userDataMap["ntp"] = ntpModule
 	}
 
 	return basecampConfig, nil
