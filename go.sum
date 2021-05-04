@@ -984,7 +984,7 @@ stash.us.cray.com/HMS/hms-securestorage v1.11.0 h1:VEW860tXgGqD0jSB8cAsEdvd5tb1m
 stash.us.cray.com/HMS/hms-securestorage v1.11.0/go.mod h1:/tRNXYwCBvVdbhu6a+i5R3Jftag4x8921qWwA+jo4JA=
 stash.us.cray.com/HMS/hms-shcd-parser v1.4.0 h1:sL6ZW/OgZ4LOpzGWU8DudlqFv62jtCXWCwxlDYN+tBo=
 stash.us.cray.com/HMS/hms-shcd-parser v1.4.0/go.mod h1:99tyTxFM8KPyVU7xjxmn0OLFJjMMsjB1CH5CaVPcbO0=
-stash.us.cray.com/HMS/hms-sls v1.8.0 h1:5JOYHayru624krd0HEhdNetuCST05rqK3viB7SI+VAA=
-stash.us.cray.com/HMS/hms-sls v1.8.0/go.mod h1:O03DDrP15nhx4COD/fOvk1Dz/e3ZXHaUP586EGUpp3Q=
+stash.us.cray.com/HMS/hms-sls v1.8.8 h1:/tjAm1ktsBMB2ivrYuo0hSOWJmsPFGz79/03Zx3PgC4=
+stash.us.cray.com/HMS/hms-sls v1.8.8/go.mod h1:O03DDrP15nhx4COD/fOvk1Dz/e3ZXHaUP586EGUpp3Q=
 stash.us.cray.com/HMS/hms-smd v1.28.0 h1:O+5CfLX5iMzRXE6BJofV7pfocFOigWh6P46KF75355U=
 stash.us.cray.com/HMS/hms-smd v1.28.0/go.mod h1:KGYFO8eclZBvgdVP+6o7ohRpKTSNwW5fRxH8PD7VzWQ=
