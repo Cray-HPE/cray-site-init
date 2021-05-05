@@ -27,7 +27,7 @@ require (
 	stash.us.cray.com/HMS/hms-bss v1.7.2
 	stash.us.cray.com/HMS/hms-s3 v1.8.0
 	stash.us.cray.com/HMS/hms-shcd-parser v1.4.0
-	stash.us.cray.com/HMS/hms-sls v1.8.0
+	stash.us.cray.com/HMS/hms-sls v1.8.8
 	stash.us.cray.com/HMS/hms-smd v1.28.0
 )
 
