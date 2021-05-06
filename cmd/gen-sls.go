@@ -20,7 +20,7 @@ import (
 var genSLSCmd = &cobra.Command{
 	Use:   "gen-sls [options] <path>",
 	Short: "Generates SLS input file",
-	Long: `Generates SLS input file based on a Shasta 1.4 configuration and
+	Long: `Generates SLS input file based on a Shasta configuration and
 	HMN connections file. By default, cabinets are assumed to be one River, the
 	rest Mountain.`,
 	Args: cobra.RangeArgs(0, 1),

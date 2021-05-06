@@ -19,8 +19,8 @@ import (
 // loadCmd represents the load command
 var loadCmd = &cobra.Command{
 	Use:   "load <path>",
-	Short: "load a valid Shasta 1.4 directory of configuration",
-	Long: `Load a set of files that represent a Shasta 1.4 system.
+	Short: "load a valid Shasta directory of configuration",
+	Long: `Load a set of files that represent a Shasta system.
 	Often load is used with init which generates the files.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {

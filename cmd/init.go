@@ -30,7 +30,7 @@ import (
 var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "init generates the directory structure for a new system rooted in a directory matching the system-name argument",
-	Long: `init generates a scaffolding the Shasta 1.4 configuration payload.  It is based on several input files:
+	Long: `init generates a scaffolding the Shasta configuration payload.  It is based on several input files:
 	1. The hmn_connections.json which describes the cabling for the BMCs on the NCNs
 	2. The ncn_metadata.csv file documents the MAC addresses of the NCNs to be used in this installation
 	   NCN xname,NCN Role,NCN Subrole,BMC MAC,BMC Switch Port,NMN MAC,NMN Switch Port
