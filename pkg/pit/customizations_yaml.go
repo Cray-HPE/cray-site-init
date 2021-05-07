@@ -23,13 +23,13 @@ type CustomizationsWLM struct {
 		PbsComm   net.IP `yaml:"pbs_comm" valid:"ipv4,required" desc:"The PBS Comm IP address on the nmn, accessible from all UAIs,UANs, and Compute Nodes"`
 	}
 	MacVlanSetup struct {
-		NMNSubnetCIDR       string `yaml:"nmn_subnet" valid:"cidr,required"`
-		NMNSupernetCIDR     string `yaml:"nmn_supernet" valid:"cidr,required"`
-		NMNSupernetGateway  net.IP `yaml:"nmn_supernet_gateway" valid:"ipv4,required"`
-		NMNVlanInterface    string `yaml:"nmn_vlan" valid:"_,required"`
-		NMNMacVlanDHCPStart net.IP `yaml:"nmn_dhcp_start" valid:"ipv4,required"`
-		NMNMacVlanDHCPEnd   net.IP `yaml:"nmn_dhcp_end" valid:"ipv4,required"`
-		Routes              []struct {
+		NMNSubnetCIDR              string `yaml:"nmn_subnet" valid:"cidr,required"`
+		NMNSupernetCIDR            string `yaml:"nmn_supernet" valid:"cidr,required"`
+		NMNSupernetGateway         net.IP `yaml:"nmn_supernet_gateway" valid:"ipv4,required"`
+		NMNVlanInterface           string `yaml:"nmn_vlan" valid:"_,required"`
+		NMNMacVlanReservationStart net.IP `yaml:"nmn_reservation_start" valid:"ipv4,required"`
+		NMNMacVlanReservationEnd   net.IP `yaml:"nmn_reservation_end" valid:"ipv4,required"`
+		Routes                     []struct {
 			Destination string `yaml:"dst" valid:"cidr,required"`
 			Gateway     string `yaml:"gw" valid:"cidr,required"`
 		}
@@ -166,23 +166,23 @@ func GenCustomizationsYaml(ncns []csi.LogicalNCN, shastaNetworks map[string]*csi
 			PbsComm:   uaiNet.LookupReservation("pbs_comm_service").IPAddress,
 		},
 		MacVlanSetup: struct {
-			NMNSubnetCIDR       string "yaml:\"nmn_subnet\" valid:\"cidr,required\""
-			NMNSupernetCIDR     string "yaml:\"nmn_supernet\" valid:\"cidr,required\""
-			NMNSupernetGateway  net.IP "yaml:\"nmn_supernet_gateway\" valid:\"ipv4,required\""
-			NMNVlanInterface    string "yaml:\"nmn_vlan\" valid:\"_,required\""
-			NMNMacVlanDHCPStart net.IP "yaml:\"nmn_dhcp_start\" valid:\"ipv4,required\""
-			NMNMacVlanDHCPEnd   net.IP "yaml:\"nmn_dhcp_end\" valid:\"ipv4,required\""
-			Routes              []struct {
+			NMNSubnetCIDR              string "yaml:\"nmn_subnet\" valid:\"cidr,required\""
+			NMNSupernetCIDR            string "yaml:\"nmn_supernet\" valid:\"cidr,required\""
+			NMNSupernetGateway         net.IP "yaml:\"nmn_supernet_gateway\" valid:\"ipv4,required\""
+			NMNVlanInterface           string "yaml:\"nmn_vlan\" valid:\"_,required\""
+			NMNMacVlanReservationStart net.IP "yaml:\"nmn_reservation_start\" valid:\"ipv4,required\""
+			NMNMacVlanReservationEnd   net.IP "yaml:\"nmn_reservation_end\" valid:\"ipv4,required\""
+			Routes                     []struct {
 				Destination string "yaml:\"dst\" valid:\"cidr,required\""
 				Gateway     string "yaml:\"gw\" valid:\"cidr,required\""
 			}
 		}{
-			NMNSubnetCIDR:       uaiNetCIDR.String(),
-			NMNSupernetGateway:  uaiNet.Gateway,
-			NMNSupernetCIDR:     shastaNetworks["NMN"].CIDR,
-			NMNVlanInterface:    fmt.Sprintf("vlan%03d", uaiNet.VlanID),
-			NMNMacVlanDHCPStart: uaiNet.DHCPStart,
-			NMNMacVlanDHCPEnd:   uaiNet.DHCPEnd,
+			NMNSubnetCIDR:              uaiNetCIDR.String(),
+			NMNSupernetGateway:         uaiNet.Gateway,
+			NMNSupernetCIDR:            shastaNetworks["NMN"].CIDR,
+			NMNVlanInterface:           fmt.Sprintf("vlan%03d", uaiNet.VlanID),
+			NMNMacVlanReservationStart: uaiNet.ReservationStart,
+			NMNMacVlanReservationEnd:   uaiNet.ReservationEnd,
 		},
 	}
 	for netName, network := range shastaNetworks {

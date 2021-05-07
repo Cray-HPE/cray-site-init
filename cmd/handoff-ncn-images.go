@@ -156,7 +156,7 @@ func uploadNCNImagesS3() {
 	fmt.Printf("Sucessfully created %s bucket.\n", s3BucketName)
 
 	// Need to figure out the versions of these images.
-	versionRegex := regexp.MustCompile(`.*-(.+)\.squashfs`)
+	versionRegex := regexp.MustCompile(`.*-(.+[0-9])\.squashfs`)
 	var k8sVersion string
 	var cephVersion string
 

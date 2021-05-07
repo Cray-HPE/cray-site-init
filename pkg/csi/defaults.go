@@ -42,9 +42,7 @@ const (
 	// DefaultNMNVlan is the default NMN Bootstrap Vlan
 	DefaultNMNVlan = 2
 	// DefaultMacVlanVlan is the default MacVlan Bootstrap Vlan
-	// FIXME: This isn't a real vlan, but since it shares space with NMN, there is a conflict in the resulting sls config
-	//        This should either become a real vlan, or preferrably, just carve out some reserved space on the NMN for macvlan
-	DefaultMacVlanVlan = 20
+	DefaultMacVlanVlan = 2
 	// DefaultNMNMTNString is the default NMN Network for Mountain Cabinets with Grouped Configuration
 	DefaultNMNMTNString = "10.100.0.0/17"
 	// DefaultNMNRVRString is the default NMN Network for River Cabinets with Grouped Configuration
@@ -77,14 +75,14 @@ var ValidCabinetTypes = []string{"mountain", "river", "hill"}
 
 // InstallerDefaults holds all of our defaults
 var InstallerDefaults = SystemConfig{
-	SystemName:      "sn-2024",
-	SiteDomain:      "dev.cray.com",
-	NtpPools:        []string{"time.nist.gov"},
-	NtpServers:      []string{"ncn-m001"},
-	NtpPeers:        []string{"ncn-m001", "ncn-m002", "ncn-m003", "ncn-w001", "ncn-w002", "ncn-w003", "ncn-s001", "ncn-s002", "ncn-s003"},
-	NtpTimezone:     "UTC",
-	RpmRegistry:     "https://packages.nmn/repository/shasta-master",
-	V2Registry:      "https://registry.nmn/",
+	SystemName:  "sn-2024",
+	SiteDomain:  "dev.cray.com",
+	NtpPools:    []string{"time.nist.gov"},
+	NtpServers:  []string{"ncn-m001"},
+	NtpPeers:    []string{"ncn-m001", "ncn-m002", "ncn-m003", "ncn-w001", "ncn-w002", "ncn-w003", "ncn-s001", "ncn-s002", "ncn-s003"},
+	NtpTimezone: "UTC",
+	RpmRegistry: "https://packages.nmn/repository/shasta-master",
+	V2Registry:  "https://registry.nmn/",
 	Install: InstallConfig{
 		NCN:                 "ncn-m001",
 		NCNBondMembers:      "p1p1,p1p2",
