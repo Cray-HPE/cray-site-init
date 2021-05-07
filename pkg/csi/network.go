@@ -29,18 +29,20 @@ type IPV4Network struct {
 
 // IPV4Subnet is a type for managing IPv4 Subnets
 type IPV4Subnet struct {
-	FullName       string          `yaml:"full_name" form:"full_name" mapstructure:"full_name"`
-	CIDR           net.IPNet       `yaml:"cidr"`
-	IPReservations []IPReservation `yaml:"ip_reservations"`
-	Name           string          `yaml:"name" form:"name" mapstructure:"name"`
-	NetName        string          `yaml:"net-name"`
-	VlanID         int16           `yaml:"vlan_id" form:"vlan_id" mapstructure:"vlan_id"`
-	Comment        string          `yaml:"comment"`
-	Gateway        net.IP          `yaml:"gateway"`
-	SupernetRouter net.IP          `yaml:"_"`
-	DNSServer      net.IP          `yaml:"dns_server"`
-	DHCPStart      net.IP          `yaml:"iprange-start"`
-	DHCPEnd        net.IP          `yaml:"iprange-end"`
+	FullName         string          `yaml:"full_name" form:"full_name" mapstructure:"full_name"`
+	CIDR             net.IPNet       `yaml:"cidr"`
+	IPReservations   []IPReservation `yaml:"ip_reservations"`
+	Name             string          `yaml:"name" form:"name" mapstructure:"name"`
+	NetName          string          `yaml:"net-name"`
+	VlanID           int16           `yaml:"vlan_id" form:"vlan_id" mapstructure:"vlan_id"`
+	Comment          string          `yaml:"comment"`
+	Gateway          net.IP          `yaml:"gateway"`
+	SupernetRouter   net.IP          `yaml:"_"`
+	DNSServer        net.IP          `yaml:"dns_server"`
+	DHCPStart        net.IP          `yaml:"iprange-start"`
+	DHCPEnd          net.IP          `yaml:"iprange-end"`
+	ReservationStart net.IP          `yaml:"reservation-start"`
+	ReservationEnd   net.IP          `yaml:"reservation-end"`
 }
 
 // IPReservation is a type for managing IP Reservations
@@ -273,15 +275,31 @@ func (iSubnet *IPV4Subnet) UpdateDHCPRange(applySupernetHack bool) {
 	staticLimit := ipam.Add(iSubnet.CIDR.IP, 10)
 	dynamicLimit := ipam.Add(iSubnet.CIDR.IP, len(iSubnet.IPReservations)+2)
 	if ipam.IPLessThan(dynamicLimit, staticLimit) {
-		iSubnet.DHCPStart = staticLimit
+		if iSubnet.Name == "uai_macvlan" {
+			iSubnet.ReservationStart = staticLimit
+		} else {
+			iSubnet.DHCPStart = staticLimit
+		}
 	} else {
-		iSubnet.DHCPStart = dynamicLimit
+		if iSubnet.Name == "uai_macvlan" {
+			iSubnet.ReservationStart = dynamicLimit
+		} else {
+			iSubnet.DHCPStart = dynamicLimit
+		}
 	}
 
 	if applySupernetHack {
-		iSubnet.DHCPEnd = ipam.Add(iSubnet.DHCPStart, 200) // In this strange world, we can't rely on the broadcast number to be accurate
+		if iSubnet.Name == "uai_macvlan" {
+			iSubnet.ReservationEnd = ipam.Add(iSubnet.DHCPStart, 200)
+		} else {
+			iSubnet.DHCPEnd = ipam.Add(iSubnet.DHCPStart, 200) // In this strange world, we can't rely on the broadcast number to be accurate
+		}
 	} else {
-		iSubnet.DHCPEnd = ipam.Add(ipam.Broadcast(iSubnet.CIDR), -1)
+		if iSubnet.Name == "uai_macvlan" {
+			iSubnet.ReservationEnd = ipam.Add(ipam.Broadcast(iSubnet.CIDR), -1)
+		} else {
+			iSubnet.DHCPEnd = ipam.Add(ipam.Broadcast(iSubnet.CIDR), -1)
+		}
 	}
 }
 

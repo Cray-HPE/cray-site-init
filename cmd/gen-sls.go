@@ -20,8 +20,8 @@ import (
 var genSLSCmd = &cobra.Command{
 	Use:   "gen-sls [options] <path>",
 	Short: "Generates SLS input file",
-	Long: `Generates SLS input file based on a Shasta 1.4 configuration and 
-	HMN connections file. By default, cabinets are assumed to be one River, the 
+	Long: `Generates SLS input file based on a Shasta 1.4 configuration and
+	HMN connections file. By default, cabinets are assumed to be one River, the
 	rest Mountain.`,
 	Args: cobra.RangeArgs(0, 1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -251,15 +251,17 @@ func convertIPV4SubnetToSLS(s *csi.IPV4Subnet) sls_common.IPV4Subnet {
 	}
 
 	return sls_common.IPV4Subnet{
-		Name:           s.Name,
-		FullName:       s.FullName,
-		CIDR:           s.CIDR.String(),
-		VlanID:         s.VlanID,
-		Comment:        s.Comment,
-		Gateway:        s.Gateway,
-		DHCPStart:      s.DHCPStart,
-		DHCPEnd:        s.DHCPEnd,
-		IPReservations: ipReservations,
+		Name:             s.Name,
+		FullName:         s.FullName,
+		CIDR:             s.CIDR.String(),
+		VlanID:           s.VlanID,
+		Comment:          s.Comment,
+		Gateway:          s.Gateway,
+		DHCPStart:        s.DHCPStart,
+		DHCPEnd:          s.DHCPEnd,
+		ReservationStart: s.ReservationStart,
+		ReservationEnd:   s.ReservationEnd,
+		IPReservations:   ipReservations,
 	}
 }
 
