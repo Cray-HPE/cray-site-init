@@ -33,7 +33,7 @@ zypper addrepo --no-gpgcheck --refresh "$repo" metal_x86-64
 
 # Install.
 zypper install cray-site-init
-``` 
+```
 
 ## Managing the Pile o' Files
 
@@ -49,23 +49,23 @@ Print sections of the configuration object or the whole thing
 
 > `csi config init`
 
-Can be run in a directory with appropriate files for a Shasta 1.3 system to create a Shasta 1.4 configuration.
+Can be run in a directory with appropriate files for a Shasta 1.3 system to create a Shasta configuration.
 
-> `csi config initSLS` 
+> `csi config initSLS`
 
-Similar to `config init` except that it can use an SLS to generate the Shasta 1.4 configuration structure
+Similar to `config init` except that it can use an SLS to generate the Shasta configuration structure
 
 > `csi config newSystem`
 
-Generate a brand-new configuration for a new Shasta 1.4+ system
+Generate a brand-new configuration for a new Shasta system
 
-> `csi config verify` 
+> `csi config verify`
 
-Reads a Shasta 1.4 configuration and verify all required fields and whether they're compatible with each other.
+Reads a Shasta configuration and verify all required fields and whether they're compatible with each other.
 
-> `csi config export` 
+> `csi config export`
 
-Read a Shasta 1.4 configuration and output a single yaml configuration file for use by the installer.
+Read a Shasta configuration and output a single yaml configuration file for use by the installer.
 
 ## Pre-Install Toolkit `pit`
 
@@ -84,6 +84,6 @@ Formats and creates a liveCD off an attached USB stick.
 
 Verifies the liveCD after launch.
 
- 
+
 
 [1]: https://golang.org/cmd/go/#hdr-Module_configuration_for_non_public_modules
