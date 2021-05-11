@@ -111,11 +111,12 @@ var cephRunCMD = []string{
 	"/srv/cray/scripts/metal/set-dhcp-to-static.sh",
 	"/srv/cray/scripts/metal/set-dns-config.sh",
 	"/srv/cray/scripts/metal/set-ntp-config.sh",
-  "/srv/cray/scripts/metal/enable-lldp.sh",
+	"/srv/cray/scripts/metal/enable-lldp.sh",
 	"/srv/cray/scripts/metal/set-bmc-bbs.sh",
 	"/srv/cray/scripts/metal/set-efi-bbs.sh",
 	"/srv/cray/scripts/metal/disable-cloud-init.sh",
 	"/srv/cray/scripts/common/update_ca_certs.py",
+	"/srv/cray/scripts/common/pre-load-images.sh",
 	"/srv/cray/scripts/common/storage-ceph-cloudinit.sh",
 }
 
@@ -127,11 +128,12 @@ var cephWorkerRunCMD = []string{
 	"/srv/cray/scripts/metal/set-dhcp-to-static.sh",
 	"/srv/cray/scripts/metal/set-dns-config.sh",
 	"/srv/cray/scripts/metal/set-ntp-config.sh",
-  "/srv/cray/scripts/metal/enable-lldp.sh",
+	"/srv/cray/scripts/metal/enable-lldp.sh",
 	"/srv/cray/scripts/metal/set-bmc-bbs.sh",
 	"/srv/cray/scripts/metal/set-efi-bbs.sh",
 	"/srv/cray/scripts/metal/disable-cloud-init.sh",
 	"/srv/cray/scripts/common/update_ca_certs.py",
+	"/srv/cray/scripts/common/pre-load-images.sh",
 }
 
 // Make sure any "FIXME" added to this is updated in the MakeBasecampGlobals function below
