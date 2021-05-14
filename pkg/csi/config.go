@@ -24,7 +24,7 @@ type SystemConfig struct {
 	Cabinets        int16    `form:"cabinets" mapstructure:"cabinets"`
 	StartingCabinet int16    `form:"starting-cabinet" mapstructure:"starting-cabinet"`
 	StartingNID     int      `form:"starting-NID" mapstructure:"starting-NID"`
-	NtpPools 	      []string `form:"ntp-pools" mapstructure:"ntp-pools"`
+	NtpPools        []string `form:"ntp-pools" mapstructure:"ntp-pools"`
 	NtpServers      []string `form:"ntp-servers" mapstructure:"ntp-servers"`
 	NtpPeers        []string `form:"ntp-peers" mapstructure:"ntp-peers"`
 	NtpAllow        []string `form:"ntp-allow" mapstructure:"ntp-allow"`
