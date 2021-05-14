@@ -86,7 +86,7 @@ type BaseCampGlobals struct {
 
 // Basecamp Defaults
 // We should try to make these customizable by the user at some point
-
+// FIXME: MTL-1294 replace these with real usages of cloud-init when appropriate (some scripts may be necessary).
 // k8sRunCMD has the list of scripts to run on NCN boot for
 // all members of the kubernets cluster
 var k8sRunCMD = []string{
@@ -95,7 +95,7 @@ var k8sRunCMD = []string{
 	"/srv/cray/scripts/metal/set-dhcp-to-static.sh",
 	"/srv/cray/scripts/metal/set-dns-config.sh",
 	"/srv/cray/scripts/metal/set-ntp-config.sh",
-  "/srv/cray/scripts/metal/enable-lldp.sh",
+    "/srv/cray/scripts/metal/enable-lldp.sh",
 	"/srv/cray/scripts/metal/set-bmc-bbs.sh",
 	"/srv/cray/scripts/metal/set-efi-bbs.sh",
 	"/srv/cray/scripts/metal/disable-cloud-init.sh",
@@ -104,6 +104,7 @@ var k8sRunCMD = []string{
 }
 
 // cephRunCMD has the list of scripts to run on NCN boot for
+// FIXME: MTL-1294 replace these with real usages of cloud-init when appropriate (some scripts may be necessary).
 // the first Ceph member which is responsible for installing the others
 var cephRunCMD = []string{
 	"/srv/cray/scripts/metal/install-bootloader.sh",
@@ -121,11 +122,12 @@ var cephRunCMD = []string{
 }
 
 // cephWorkerRunCMD has the list of scripts to run on NCN boot for
+// FIXME: MTL-1294 replace these with real usages of cloud-init when appropriate (some scripts may be necessary).
 // the Ceph nodes that are not supposed to run the installation.
 var cephWorkerRunCMD = []string{
 	"/srv/cray/scripts/metal/install-bootloader.sh",
 	"/srv/cray/scripts/metal/set-host-records.sh",
-	"/srv/cray/scripts/metal/set-dhcp-to-static.sh",
+	"/srv/cray/scripts/metal/set-dhcp-to-static.sh",d
 	"/srv/cray/scripts/metal/set-dns-config.sh",
 	"/srv/cray/scripts/metal/set-ntp-config.sh",
 	"/srv/cray/scripts/metal/enable-lldp.sh",
@@ -143,7 +145,7 @@ var basecampGlobalString = `{
 	"ceph-cephfs-image": "dtr.dev.cray.com/cray/cray-cephfs-provisioner:0.1.0-nautilus-1.3",
 	"ceph-rbd-image": "dtr.dev.cray.com/cray/cray-rbd-provisioner:0.1.0-nautilus-1.3",
 	"docker-image-registry": "dtr.dev.cray.com",
-	"domain": "nmn hmn",
+	"domain": "nmn mtl hmn",
 	"first-master-hostname": "~FIXME~ e.g. ncn-m002",
 	"k8s-virtual-ip": "~FIXME~ e.g. 10.252.120.2",
 	"kubernetes-max-pods-per-node": "200",
@@ -156,7 +158,7 @@ var basecampGlobalString = `{
 	"site-domain": "~FIXME~",
 	"internal-domain": "~FIXME~",
 	"k8s-api-auditing-enabled": "~FIXME~",
-  "ncn-mgmt-node-auditing-enabled": "~FIXME~"
+    "ncn-mgmt-node-auditing-enabled": "~FIXME~"
 	}`
 
 // BasecampHostRecord is what we need for passing stuff to /etc/hosts

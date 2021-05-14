@@ -1,12 +1,13 @@
 # Copyright 2021 Hewlett Packard Enterprise Development LP
 Name: cray-site-init
 License: MIT License
-Summary: Initialize and Upgrade HPE HPCaaS both bare-metal or in the wild
+Summary: HPCaaS configuration and deployment tool for bare-metal or reinstallations
 Version: %(cat .version)
 Release: %(echo ${BUILD_METADATA})
 Source: %{name}-%{version}.tar.bz2
 Vendor: Cray Inc.
 Provides: csi
+
 %ifarch %ix86
     %global GOARCH 386
 %endif
