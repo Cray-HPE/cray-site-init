@@ -127,7 +127,7 @@ var cephRunCMD = []string{
 var cephWorkerRunCMD = []string{
 	"/srv/cray/scripts/metal/install-bootloader.sh",
 	"/srv/cray/scripts/metal/set-host-records.sh",
-	"/srv/cray/scripts/metal/set-dhcp-to-static.sh",d
+	"/srv/cray/scripts/metal/set-dhcp-to-static.sh",
 	"/srv/cray/scripts/metal/set-dns-config.sh",
 	"/srv/cray/scripts/metal/set-ntp-config.sh",
 	"/srv/cray/scripts/metal/enable-lldp.sh",
