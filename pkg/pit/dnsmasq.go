@@ -119,7 +119,6 @@ type DNSMasqBootstrapNetwork struct {
 
 // WriteDNSMasqConfig writes the dnsmasq configuration files necssary for installation
 func WriteDNSMasqConfig(path string, v *viper.Viper, bootstrap []csi.LogicalNCN, networks map[string]*csi.IPV4Network) {
-	var mainMtlIP string
 	for i, tmpNcn := range bootstrap {
 		for _, tmpNet := range tmpNcn.Networks {
 			if tmpNet.NetworkName == "NMN" {
@@ -129,11 +128,7 @@ func WriteDNSMasqConfig(path string, v *viper.Viper, bootstrap []csi.LogicalNCN,
 				tmpNcn.CanIP = tmpNet.IPAddress
 			}
 			if tmpNet.NetworkName == "MTL" {
-				if v.GetString("install-ncn") == tmpNcn.Hostname {
-					mainMtlIP = tmpNet.IPAddress
-				}
 				tmpNcn.MtlIP = tmpNet.IPAddress
-
 			}
 			if tmpNet.NetworkName == "HMN" {
 				tmpNcn.HmnIP = tmpNet.IPAddress
@@ -141,13 +136,6 @@ func WriteDNSMasqConfig(path string, v *viper.Viper, bootstrap []csi.LogicalNCN,
 		}
 		bootstrap[i] = tmpNcn
 	}
-
-	tpl1, _ := template.New("statics").Parse(string(StaticConfigTemplate))
-	tpl2, _ := template.New("canconfig").Parse(string(CANConfigTemplate))
-	tpl3, _ := template.New("hmnconfig").Parse(string(HMNConfigTemplate))
-	tpl4, _ := template.New("nmnconfig").Parse(string(NMNConfigTemplate))
-	tpl5, _ := template.New("mtlconfig").Parse(string(MTLConfigTemplate))
-
 	var kubevip, rgwvip string
 	nmnSubnet, _ := networks["NMN"].LookUpSubnet("bootstrap_dhcp")
 	for _, reservation := range nmnSubnet.IPReservations {
@@ -179,26 +167,19 @@ func WriteDNSMasqConfig(path string, v *viper.Viper, bootstrap []csi.LogicalNCN,
 		apigwIP,
 	}
 
-	csiFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/statics.conf"), tpl1, data)
+	// Shasta Networks:
+	netCAN, _ := template.New("canconfig").Parse(string(CANConfigTemplate))
+	netHMN, _ := template.New("hmnconfig").Parse(string(HMNConfigTemplate))
+	netNMN, _ := template.New("nmnconfig").Parse(string(NMNConfigTemplate))
+	netMTL, _ := template.New("mtlconfig").Parse(string(MTLConfigTemplate))
+	writeConfig("CAN", path, *netCAN, networks)
+	writeConfig("HMN", path, *netHMN, networks)
+	writeConfig("NMN", path, *netNMN, networks)
+	writeConfig("MTL", path, *netMTL, networks)
 
-	// Save the install NCN Metal ip for use as dns/gateways during install
-
-	// get a pointer to the MTL
-	mtlNet := networks["MTL"]
-	// get a pointer to the subnet
-	mtlBootstrapSubnet, _ := mtlNet.LookUpSubnet("bootstrap_dhcp")
-	tmpGateway := mtlBootstrapSubnet.Gateway
-	mtlBootstrapSubnet.Gateway = net.ParseIP(mainMtlIP)
-	mtlBootstrapSubnet.SupernetRouter = genPinnedIP(mtlBootstrapSubnet.CIDR.IP, uint8(1))
-	nmnLBSubnet, _ := networks["NMNLB"].LookUpSubnet("nmn_metallb_address_pool")
-	mtlBootstrapSubnet.DNSServer = nmnLBSubnet.LookupReservation("unbound").IPAddress
-	csiFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/MTL.conf"), tpl5, mtlBootstrapSubnet)
-	mtlBootstrapSubnet.Gateway = tmpGateway
-
-	// Deal with the easy ones
-	writeConfig("CAN", path, *tpl2, networks)
-	writeConfig("HMN", path, *tpl3, networks)
-	writeConfig("NMN", path, *tpl4, networks)
+	// Expected NCNs (and other devices) reserved DHCP leases:
+	netIPAM, _ := template.New("statics").Parse(string(StaticConfigTemplate))
+	csiFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/statics.conf"), netIPAM, data)
 }
 
 func writeConfig(name, path string, tpl template.Template, networks map[string]*csi.IPV4Network) {
