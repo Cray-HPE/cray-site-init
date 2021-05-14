@@ -3,7 +3,7 @@
 set -e
 
 if [[ "$1" != "binary-only" ]]; then
-    GO_VERSION="1.14.9"
+    GO_VERSION="1.16.3"
     INSTALLED_GO_VERSION=$(go version | awk '{print $3}')
 
     if [[ "go${GO_VERSION}" !=  $INSTALLED_GO_VERSION ]]; then

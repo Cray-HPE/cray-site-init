@@ -31,4 +31,4 @@ require (
 	stash.us.cray.com/HMS/hms-smd v1.28.0
 )
 
-go 1.14
+go 1.16

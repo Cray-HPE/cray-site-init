@@ -6,7 +6,7 @@ CSI is a GoLang tool for facilitating the installation of an HPCaaS cluster.
 
 # Usage
 
-CSI can be installed into any local GoLang **`1.14`** environment.
+CSI can be installed into any local GoLang **`1.16`** environment.
 
 
 > Note: You will need to add CRAY to the [GOPRIVATE lib][1] for a clean run: 
