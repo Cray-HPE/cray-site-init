@@ -191,6 +191,6 @@ func uploadNCNImagesS3() {
 
 	fmt.Printf("\n\nImage versions uploaded:\nKubernetes:\t%s\nCEPH:\t\t%s\n", k8sVersion, cephVersion)
 
-	fmt.Printf("\n\nYou should run the following commands so the versions you just uploaded can be used in " +
+	fmt.Printf("\n\nYou should run the following commands so the versions you just uploaded can be used in "+
 		"other steps:\nexport KUBERNETES_VERSION=%s\nexport CEPH_VERSION=%s\n", k8sVersion, cephVersion)
 }
