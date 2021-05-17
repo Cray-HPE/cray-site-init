@@ -141,9 +141,9 @@ func uploadEntryToBSS(bssEntry bssTypes.BootParams, method string) {
 	jsonPrettyBytes, _ := json.MarshalIndent(bssEntry, "", "  ")
 
 	if verboseLogging {
-		log.Printf("Sucessfuly %s BSS entry for %s:\n%s", method, bssEntry.Hosts[0], string(jsonPrettyBytes))
+		log.Printf("Sucessfully %s BSS entry for %s:\n%s", method, bssEntry.Hosts[0], string(jsonPrettyBytes))
 	} else {
-		log.Printf("Sucessfuly %s BSS entry for %s", method, bssEntry.Hosts[0])
+		log.Printf("Sucessfully %s BSS entry for %s", method, bssEntry.Hosts[0])
 	}
 }
 

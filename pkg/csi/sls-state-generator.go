@@ -228,7 +228,7 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 	}
 
 	//
-	// First off lets, build up the river hardware
+	// First off let's build up the river hardware.
 	//
 
 	// We need to run through the HMN connections file and build up the list of parents first.
@@ -243,38 +243,48 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 
 	// River nodes and other devices connected to the HMN
 	for _, row := range g.hmnRows {
-		// Generate the node
-		nodeHardware := g.getRiverHardwareFromRow(row)
-		if nodeHardware.Xname == "" {
-			logger.Debug("Found empty hardware, ignoring...", zap.Any("row", row))
-			continue
-		}
+		// Generate the node and BMC
+		riverNodeHardware := g.getRiverHardwareFromRow(row)
 
-		// Ensure that the cabinet exists
-		if _, ok := g.inputState.RiverCabinets[row.SourceRack]; !ok {
-			logger.Fatal("Parent river cabinet does not exist",
-				zap.Any("row", row),
-				zap.String("parentCabinet", row.SourceRack), // This value is normally used to construct the xname
-				zap.String("xname", nodeHardware.Xname),
-			)
-		}
+		for _, nodeHardware := range riverNodeHardware {
+			if nodeHardware.Xname == "" {
+				logger.Debug("Found empty hardware, ignoring...", zap.Any("row", row))
+				continue
+			}
 
-		nodeHardwareMap[nodeHardware.Xname] = nodeHardware
-
-		// Finally generate the network connection if there is one.
-		if strings.TrimSpace(row.DestinationPort) != "" {
-			nodeConnection := g.getConnectionForNode(nodeHardware, row)
-			connectionHardwareMap[nodeConnection.Xname] = nodeConnection
-
-			// Make sure the switch exists.
-			_, switchExists := switchHardwareMap[nodeConnection.Parent]
-			if !switchExists {
-				destinationUString := strings.TrimPrefix(row.DestinationLocation, "u")
-				switchXname := fmt.Sprintf("%sc0w%s", row.SourceRack, destinationUString)
-
-				logger.Fatal("Failed to find switch in SLS Input State!",
-					zap.String("switchXname", switchXname),
+			// Ensure that the cabinet exists
+			if _, ok := g.inputState.RiverCabinets[row.SourceRack]; !ok {
+				logger.Fatal("Parent river cabinet does not exist",
+					zap.Any("row", row),
+					zap.String("parentCabinet", row.SourceRack), // This value is normally used to construct the xname
+					zap.String("xname", nodeHardware.Xname),
 				)
+			}
+
+			nodeHardwareMap[nodeHardware.Xname] = nodeHardware
+
+			// Finally generate the network connection if there is one.
+			if strings.TrimSpace(row.DestinationPort) != "" {
+				nodeConnection := g.getConnectionForHardware(nodeHardware, row)
+
+				// Make sure we get a connection back.
+				if nodeConnection == nil {
+					logger.Debug("Got empty connection, ignoring...", zap.Any("row", row))
+					continue
+				}
+
+				connectionHardwareMap[nodeConnection.Xname] = *nodeConnection
+
+				// Make sure the switch exists.
+				_, switchExists := switchHardwareMap[nodeConnection.Parent]
+				if !switchExists {
+					destinationUString := strings.TrimPrefix(row.DestinationLocation, "u")
+					switchXname := fmt.Sprintf("%sc0w%s", row.SourceRack, destinationUString)
+
+					logger.Fatal("Failed to find switch in SLS Input State!",
+						zap.String("switchXname", switchXname),
+					)
+				}
 			}
 		}
 	}
@@ -285,7 +295,7 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 	}
 
 	//
-	// Next, build Up Hill Hardware
+	// Next, build Up Hill Hardware.
 	//
 	g.currentMountainNID = g.inputState.MountainStartingNid
 	hillCabinets := g.getSortedCabinetXNames(g.inputState.HillCabinets)
@@ -300,7 +310,7 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 	}
 
 	//
-	// Finally, build up Mountain Hardware
+	// Finally, build up Mountain Hardware.
 	//
 	mountainCabinets := g.getSortedCabinetXNames(g.inputState.MountainCabinets)
 	for _, xname := range mountainCabinets {
@@ -357,7 +367,7 @@ func (g *SLSStateGenerator) getSortedCabinetXNames(cabinets map[string]sls_commo
 //
 // River hardware
 //
-func (g *SLSStateGenerator) getRiverHardwareFromRow(row shcd_parser.HMNRow) (hardware sls_common.GenericHardware) {
+func (g *SLSStateGenerator) getRiverHardwareFromRow(row shcd_parser.HMNRow) (hardware []sls_common.GenericHardware) {
 	sourceLowerCase := strings.ToLower(row.Source)
 
 	// General idea here is to look for exceptions to this being a compute of any kind and handle those.
@@ -387,7 +397,7 @@ func (g *SLSStateGenerator) getRiverHardwareFromRow(row shcd_parser.HMNRow) (har
 	return g.getNodeHardwareFromRow(row)
 }
 
-func (g *SLSStateGenerator) getTORHardwareFromRow(row shcd_parser.HMNRow) (hardware sls_common.GenericHardware) {
+func (g *SLSStateGenerator) getTORHardwareFromRow(row shcd_parser.HMNRow) (hardware []sls_common.GenericHardware) {
 	logger := g.logger
 
 	var uInteger int
@@ -424,22 +434,25 @@ func (g *SLSStateGenerator) getTORHardwareFromRow(row shcd_parser.HMNRow) (hardw
 
 	torXname := fmt.Sprintf("%sc0r%db%d", row.SourceRack, uInteger, bmcNumber)
 
-	hardware = sls_common.GenericHardware{
-		Parent:     row.SourceRack,
-		Xname:      torXname,
-		Type:       "comptype_rtr_bmc",
-		Class:      "River",
-		TypeString: "RouterBMC",
-		ExtraPropertiesRaw: sls_common.ComptypeRtrBmc{
-			Username: fmt.Sprintf("vault://hms-creds/%s", torXname),
-			Password: fmt.Sprintf("vault://hms-creds/%s", torXname),
+	hardware = []sls_common.GenericHardware{
+		{
+			Parent:     row.SourceRack,
+			Xname:      torXname,
+			Type:       "comptype_rtr_bmc",
+			Class:      "River",
+			TypeString: "RouterBMC",
+			ExtraPropertiesRaw: sls_common.ComptypeRtrBmc{
+				Username: fmt.Sprintf("vault://hms-creds/%s", torXname),
+				Password: fmt.Sprintf("vault://hms-creds/%s", torXname),
+			},
 		},
 	}
 
 	return
 }
 
-func (g *SLSStateGenerator) getPDUControllerHardwareFromRow(row shcd_parser.HMNRow, pduNumberString string) (hardware sls_common.GenericHardware) {
+func (g *SLSStateGenerator) getPDUControllerHardwareFromRow(row shcd_parser.HMNRow,
+	pduNumberString string) (hardware []sls_common.GenericHardware) {
 	logger := g.logger
 
 	pduInteger, err := strconv.Atoi(pduNumberString)
@@ -452,24 +465,26 @@ func (g *SLSStateGenerator) getPDUControllerHardwareFromRow(row shcd_parser.HMNR
 	// Which in this case make sense, as a controling PDU is connected to the HMN network
 	pduXname := fmt.Sprintf("%sm%d", row.SourceRack, pduInteger)
 
-	hardware = sls_common.GenericHardware{
-		Parent:     row.SourceRack,
-		Xname:      pduXname,
-		Type:       sls_common.CabinetPDUController,
-		Class:      sls_common.ClassRiver,
-		TypeString: base.CabinetPDUController,
+	hardware = []sls_common.GenericHardware{
+		{
+			Parent:     row.SourceRack,
+			Xname:      pduXname,
+			Type:       sls_common.CabinetPDUController,
+			Class:      sls_common.ClassRiver,
+			TypeString: base.CabinetPDUController,
+		},
 	}
 
 	return
 }
 
-func (g *SLSStateGenerator) getDoorHardwareFromRow(row shcd_parser.HMNRow) (hardware sls_common.GenericHardware) {
+func (g *SLSStateGenerator) getDoorHardwareFromRow(row shcd_parser.HMNRow) (hardware []sls_common.GenericHardware) {
 	g.logger.Warn("Cooling door found, but xname does not yet exist for cooling doors!", zap.Any("row", row))
 
 	return
 }
 
-func (g *SLSStateGenerator) getManagementSwitchHardwareFrom(row shcd_parser.HMNRow) (hardware sls_common.GenericHardware) {
+func (g *SLSStateGenerator) getManagementSwitchHardwareFrom(row shcd_parser.HMNRow) (hardware []sls_common.GenericHardware) {
 	// Not all SHCDs have the management switch connection information in the HMN connections tables,
 	// and we are provided switch information via switch_metadata
 	// The HMN connection information is not required for discovery.
@@ -515,7 +530,7 @@ func (g *SLSStateGenerator) getApplicationNodeAlias(xname string) []string {
 	return g.inputState.ApplicationNodeConfig.Aliases[xname]
 }
 
-func (g *SLSStateGenerator) getNodeHardwareFromRow(row shcd_parser.HMNRow) (hardware sls_common.GenericHardware) {
+func (g *SLSStateGenerator) getNodeHardwareFromRow(row shcd_parser.HMNRow) (hardware []sls_common.GenericHardware) {
 	logger := g.logger
 
 	sourceLowerCase := strings.ToLower(row.Source)
@@ -604,7 +619,8 @@ func (g *SLSStateGenerator) getNodeHardwareFromRow(row shcd_parser.HMNRow) (hard
 	} else if strings.Contains(sourceLowerCase, "cmc") {
 		role = "System"
 	} else {
-		logger.Warn("Found unknown source prefix! If this is expected to be an Application node, please update application_node_config.yaml",
+		logger.Warn("Found unknown source prefix! If this is expected to be an Application node, "+
+			"please update application_node_config.yaml",
 			zap.Any("row", row))
 		return
 	}
@@ -679,19 +695,20 @@ func (g *SLSStateGenerator) getNodeHardwareFromRow(row shcd_parser.HMNRow) (hard
 	}
 
 	// At this point we either have a genuine node or we have a parent of some sort (i.e., a CMC for a Gigabyte node).
-	// We need to distinguish that as it has an impact on the type. We also want to make sure it's actually plugged in.
+	// We need to distinguish that as it has an impact on the type and whether an entry is needed for the node's BMC.
 
 	// Start by seeing if this is a parent to something else.
 	_, isAParent := g.nodeParents[row.Source]
 	if isAParent {
 		// If it is, then the type is actually comptype_chassis_bmc.
-		hardware = sls_common.GenericHardware{
+		parentHardware := sls_common.GenericHardware{
 			Parent:     row.SourceRack,
 			Xname:      fmt.Sprintf("%sc0s%db999", row.SourceRack, uInteger),
 			Type:       "comptype_chassis_bmc",
 			Class:      "River",
 			TypeString: "ChassisBMC",
 		}
+		hardware = append(hardware, parentHardware)
 	} else {
 		nodeXname := fmt.Sprintf("%sc0s%db%dn0", row.SourceRack, uInteger, bmcNumber)
 
@@ -701,21 +718,55 @@ func (g *SLSStateGenerator) getNodeHardwareFromRow(row shcd_parser.HMNRow) (hard
 			thisNodeExtraProperties.Aliases = append(thisNodeExtraProperties.Aliases, aliases...)
 		}
 
-		hardware = sls_common.GenericHardware{
-			Parent:             fmt.Sprintf("%sc0s%db%d", row.SourceRack, uInteger, bmcNumber),
+		bmcXname := fmt.Sprintf("%sc0s%db%d", row.SourceRack, uInteger, bmcNumber)
+
+		nodeHardware := sls_common.GenericHardware{
+			Parent:             bmcXname,
 			Xname:              nodeXname,
 			Type:               "comptype_node",
 			Class:              "River",
 			TypeString:         "Node",
 			ExtraPropertiesRaw: thisNodeExtraProperties,
 		}
+		hardware = append(hardware, nodeHardware)
+
+		// Next up is to compute the aliases for the BMC for this node. Basically, take all the existing ones and add
+		// `-mgmt` to the end of each.
+		var bmcAliases []string
+		for _, nodeAlias := range thisNodeExtraProperties.Aliases {
+			bmcAliases = append(bmcAliases, fmt.Sprintf("%s-mgmt", nodeAlias))
+		}
+
+		// Now build a BMC hardware object.
+		bmcHardware := sls_common.GenericHardware{
+			Parent:     row.SourceRack,
+			Xname:      bmcXname,
+			Type:       "comptype_ncard",
+			Class:      "River",
+			TypeString: "NodeBMC",
+			ExtraPropertiesRaw: sls_common.ComptypeNodeBmc{
+				Aliases: bmcAliases,
+			},
+		}
+		hardware = append(hardware, bmcHardware)
 	}
 
 	return
 }
 
-func (g *SLSStateGenerator) getConnectionForNode(node sls_common.GenericHardware, row shcd_parser.HMNRow) (
-	connection sls_common.GenericHardware) {
+func (g *SLSStateGenerator) getConnectionForHardware(hardware sls_common.GenericHardware, row shcd_parser.HMNRow) (
+	connection *sls_common.GenericHardware) {
+	switch hardware.Type {
+	case
+		sls_common.CabinetPDUController,
+		sls_common.ChassisBMC,
+		sls_common.NodeBMC:
+		// Only BMCs have connections to the HMN.
+	default:
+		return
+
+	}
+
 	destinationUString := strings.TrimPrefix(row.DestinationLocation, "u")
 
 	// Because of "reasons" the port/jack string is either prefixed with a `j` or a `p`. To combat this, use regex.
@@ -726,14 +777,7 @@ func (g *SLSStateGenerator) getConnectionForNode(node sls_common.GenericHardware
 			zap.Any("row", row))
 	}
 	destinationJackString := portSubmatches[1]
-
-	var destinationXname string
-	if strings.HasSuffix(string(node.Type), "bmc") || node.Type == sls_common.CabinetPDUController {
-		// This this type *IS* the BMC or PDU, then don't use the parent, use the xname.
-		destinationXname = node.Xname
-	} else {
-		destinationXname = node.Parent
-	}
+	destinationXname := hardware.Xname
 
 	// Determine Switch and MgmtSwitchConnector xnames
 	switchName := fmt.Sprintf("%sc0w%s", row.DestinationRack, destinationUString)
@@ -789,7 +833,7 @@ func (g *SLSStateGenerator) getConnectionForNode(node sls_common.GenericHardware
 			zap.String("destinationXname", destinationXname))
 	}
 
-	connection = sls_common.GenericHardware{
+	connection = &sls_common.GenericHardware{
 		Parent:     switchName,
 		Xname:      connectorXname,
 		Type:       "comptype_mgmt_switch_connector",
@@ -818,7 +862,8 @@ func (g *SLSStateGenerator) findRowWithSource(sourceParent string) shcd_parser.H
 //
 // Mountain and Hill hardware
 //
-func (g *SLSStateGenerator) getHardwareForMountainCab(cabXname string, cabClass sls_common.CabinetType) (nodes []sls_common.GenericHardware) {
+func (g *SLSStateGenerator) getHardwareForMountainCab(cabXname string,
+	cabClass sls_common.CabinetType) (nodes []sls_common.GenericHardware) {
 	logger := g.logger
 
 	var chassisList []string
@@ -828,9 +873,9 @@ func (g *SLSStateGenerator) getHardwareForMountainCab(cabXname string, cabClass 
 	case sls_common.ClassHill:
 		chassisList = tdsChassisList
 	default:
-		logger.Fatal("Unable to genreate mountain hardware for cabinet class",
+		logger.Fatal("Unable to generate mountain hardware for cabinet class",
 			zap.Any("cabClass", cabClass),
-			zap.String("cabNname", cabXname),
+			zap.String("cabXname", cabXname),
 		)
 	}
 
