@@ -180,7 +180,7 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 		objects.
 
 		The only real trick here is the source parent field. That indicates two things:
-		  1) A grouping of nodes that are phycsially located in the same chassis.
+		  1) A grouping of nodes that are physically located in the same chassis.
 		  2) There is another device that needs to be treated differently (a CMC on a Gigabyte node is the only example
 		     of this at the time of writing.)
 	*/
@@ -191,10 +191,10 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 	connectionHardwareMap := make(map[string]sls_common.GenericHardware)
 	switchHardwareMap := g.inputState.ManagementSwitches
 
-	// Verify that all of the management switches have a corrensponding river cabinet
+	// Verify that all of the management switches have a corresponding river cabinet.
 	for _, mySwitch := range switchHardwareMap {
 		if mySwitch.Class != sls_common.ClassRiver {
-			// Right now we only care about verifying that the river management switches have a corrensponding cabinet,
+			// Right now we only care about verifying that the river management switches have a corresponding cabinet,
 			// This means we are not doing any checking for the parent CDU for CDU switches.
 			continue
 		}
@@ -700,15 +700,23 @@ func (g *SLSStateGenerator) getNodeHardwareFromRow(row shcd_parser.HMNRow) (hard
 	// Start by seeing if this is a parent to something else.
 	_, isAParent := g.nodeParents[row.Source]
 	if isAParent {
-		// If it is, then the type is actually comptype_chassis_bmc.
-		parentHardware := sls_common.GenericHardware{
-			Parent:     row.SourceRack,
-			Xname:      fmt.Sprintf("%sc0s%db999", row.SourceRack, uInteger),
-			Type:       "comptype_chassis_bmc",
-			Class:      "River",
-			TypeString: "ChassisBMC",
+		if strings.TrimSpace(row.DestinationPort) != "" {
+			// Prevent the creation of a hardware object for a parent that isn't plugged in. This is primarily the
+			// case for multi-node Intel boxes, they don't have an actual piece of hardware you can talk to even if
+			// you wanted to.
+			// However, if there is a connection, then the type is actually comptype_chassis_bmc.
+			parentHardware := sls_common.GenericHardware{
+				Parent:     row.SourceRack,
+				Xname:      fmt.Sprintf("%sc0s%db999", row.SourceRack, uInteger),
+				Type:       "comptype_chassis_bmc",
+				Class:      "River",
+				TypeString: "ChassisBMC",
+			}
+			hardware = append(hardware, parentHardware)
+		} else {
+			logger.Debug("Not generating parent object because it doesn't appear plugged in",
+				zap.Any("row", row))
 		}
-		hardware = append(hardware, parentHardware)
 	} else {
 		nodeXname := fmt.Sprintf("%sc0s%db%dn0", row.SourceRack, uInteger, bmcNumber)
 
@@ -863,7 +871,7 @@ func (g *SLSStateGenerator) findRowWithSource(sourceParent string) shcd_parser.H
 // Mountain and Hill hardware
 //
 func (g *SLSStateGenerator) getHardwareForMountainCab(cabXname string,
-	cabClass sls_common.CabinetType) (nodes []sls_common.GenericHardware) {
+	cabClass sls_common.CabinetType) (hardware []sls_common.GenericHardware) {
 	logger := g.logger
 
 	var chassisList []string
@@ -873,7 +881,7 @@ func (g *SLSStateGenerator) getHardwareForMountainCab(cabXname string,
 	case sls_common.ClassHill:
 		chassisList = tdsChassisList
 	default:
-		logger.Fatal("Unable to generate mountain hardware for cabinet class",
+		logger.Fatal("Unable to generate Mountain hardware for cabinet class!",
 			zap.Any("cabClass", cabClass),
 			zap.String("cabXname", cabXname),
 		)
@@ -885,30 +893,56 @@ func (g *SLSStateGenerator) getHardwareForMountainCab(cabXname string,
 			Parent:     cabXname,
 			Xname:      fmt.Sprintf("%s%s", cabXname, chassis),
 			Type:       "comptype_chassis_bmc",
-			Class:      sls_common.CabinetType(cabClass),
+			Class:      cabClass,
 			TypeString: "ChassisBMC",
 		}
-		nodes = append(nodes, cmm)
+		hardware = append(hardware, cmm)
 
 		for slot := 0; slot < 8; slot++ {
 			for bmc := 0; bmc < 2; bmc++ {
+				// Generate a hardware object for all the BMCs.
+				bmcXname := fmt.Sprintf("%s%ss%db%d", cabXname, chassis, slot, bmc)
+
+				bmcExtraProperties := sls_common.ComptypeNodeBmc{
+					Aliases: []string{},
+				}
+
 				for node := 0; node < 2; node++ {
+					nidName := fmt.Sprintf("nid%06d", g.currentMountainNID)
+
 					newNode := sls_common.GenericHardware{
-						Parent:     fmt.Sprintf("%s%ss%db%d", cabXname, chassis, slot, bmc),
-						Xname:      fmt.Sprintf("%s%ss%db%dn%d", cabXname, chassis, slot, bmc, node),
+						Parent:     bmcXname,
+						Xname:      fmt.Sprintf("%sn%d", bmcXname, node),
 						Type:       "comptype_node",
-						Class:      sls_common.CabinetType(cabClass),
+						Class:      cabClass,
 						TypeString: "Node",
 						ExtraPropertiesRaw: sls_common.ComptypeNode{
 							NID:     g.currentMountainNID,
 							Role:    "Compute",
-							Aliases: []string{fmt.Sprintf("nid%06d", g.currentMountainNID)},
+							Aliases: []string{nidName},
 						},
 					}
-					nodes = append(nodes, newNode)
+					hardware = append(hardware, newNode)
+
+					// This is going to seem a little odd given that each BMC has usually more than one node but to
+					// remain consistent with the way we name things for River we'll add `-mgmt` entries for every
+					// child NID.
+					bmcExtraProperties.Aliases = append(bmcExtraProperties.Aliases,
+						fmt.Sprintf("%s-mgmt", nidName))
 
 					g.currentMountainNID++
 				}
+
+				// Now we can construct the full BMC object and add it.
+				bmcHardware := sls_common.GenericHardware{
+					Parent:             cmm.Xname,
+					Xname:              bmcXname,
+					Type:               "comptype_ncard",
+					Class:              cabClass,
+					TypeString:         "NodeBMC",
+					ExtraPropertiesRaw: bmcExtraProperties,
+				}
+				hardware = append(hardware, bmcHardware)
 			}
 		}
 	}
@@ -930,7 +964,11 @@ func (g *SLSStateGenerator) buildNetworksSection() (allNetworks map[string]sls_c
 
 // GenerateSLSState generates new SLSState object from an input state and hmn-connections file.
 func GenerateSLSState(inputState SLSGeneratorInputState, hmnRows []shcd_parser.HMNRow) sls_common.SLSState {
+	logLevel := os.Getenv("LOG_LEVEL")
+	logLevel = strings.ToUpper(logLevel)
+
 	atomicLevel := zap.NewAtomicLevel()
+
 	encoderCfg := zap.NewProductionEncoderConfig()
 	logger := zap.New(zapcore.NewCore(
 		zapcore.NewJSONEncoder(encoderCfg),
@@ -938,7 +976,22 @@ func GenerateSLSState(inputState SLSGeneratorInputState, hmnRows []shcd_parser.H
 		atomicLevel,
 	))
 
-	atomicLevel.SetLevel(zap.InfoLevel)
+	switch logLevel {
+	case "DEBUG":
+		atomicLevel.SetLevel(zap.DebugLevel)
+	case "INFO":
+		atomicLevel.SetLevel(zap.InfoLevel)
+	case "WARN":
+		atomicLevel.SetLevel(zap.WarnLevel)
+	case "ERROR":
+		atomicLevel.SetLevel(zap.ErrorLevel)
+	case "FATAL":
+		atomicLevel.SetLevel(zap.FatalLevel)
+	case "PANIC":
+		atomicLevel.SetLevel(zap.PanicLevel)
+	default:
+		atomicLevel.SetLevel(zap.InfoLevel)
+	}
 
 	logger.Info("Beginning SLS configuration generation.")
 
