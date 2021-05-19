@@ -5,6 +5,7 @@ Copyright 2021 Hewlett Packard Enterprise Development LP
 package pit
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -50,6 +51,14 @@ type NtpModule struct {
 	NTPServers []string  `json:"servers"`
 	NTPPools   []string  `json:"pools"`
 	Config     NtpConfig `json:"config"`
+}
+
+// WriteFiles enables use of the cloud-init write_files module
+type WriteFiles struct {
+	Content     string `json:"content"`
+	Owner       string `json:"owner"`
+	Path        string `json:"path"`
+	Permissions string `json:"permissions"`
 }
 
 // BaseCampGlobals is the set of information needed for an install to reach
@@ -293,6 +302,65 @@ func MakeBasecampGlobals(v *viper.Viper, logicalNcns []csi.LogicalNCN, shastaNet
 	return global, nil
 }
 
+// Traverse the networks, assembling a list of NMN and HMN routes for Hill/Mountain Cabinets
+// Format for ifroute-<interface> files
+func getMntHillNCNRoutes(v *viper.Viper, shastaNetworks map[string]*csi.IPV4Network) []WriteFiles {
+	var nmnGateway string
+	var hmnGateway string
+	var ifrouteNMN bytes.Buffer
+	var ifrouteHMN bytes.Buffer
+
+	nmnVlan := v.GetInt("nmn-bootstrap-vlan")
+	hmnVlan := v.GetInt("hmn-bootstrap-vlan")
+
+	// Determine all the mountain/hill routes (one per cab, + HMN & NMN gateways)
+	// N.B. The order of this range matters.  We get the nmn/hmn gateway values out of this first two.
+	// They need to remain first here; otherwise the inner loop here needs to become two loops,
+	// one to find & set the gateways, one to write the data out.
+	for _, netName := range []string{"NMN", "HMN", "NMN_MTN", "HMN_MTN", "NMN_RVR", "HMN_RVR"} {
+		if shastaNetworks[netName] != nil {
+			for _, subnet := range shastaNetworks[netName].Subnets {
+				if subnet.Name == "network_hardware" {
+					if netName == "NMN" {
+						nmnGateway = subnet.Gateway.String()
+					}
+					if netName == "HMN" {
+						hmnGateway = subnet.Gateway.String()
+					}
+				}
+				if strings.HasPrefix(subnet.Name, "cabinet_") {
+					if netName == "NMN" || netName == "NMN_MTN" || netName == "NMN_RVR" {
+						ifrouteNMN.WriteString(fmt.Sprintf("%s %s - vlan%03d\n", subnet.CIDR.String(), nmnGateway, nmnVlan))
+					} else {
+						ifrouteHMN.WriteString(fmt.Sprintf("%s %s - vlan%03d\n", subnet.CIDR.String(), hmnGateway, hmnVlan))
+					}
+				}
+			}
+		}
+	}
+
+	// We don't ever have NMN routes without corresponding HMN routes, so just check one
+	if ifrouteNMN.Len() == 0 {
+		return nil
+	}
+
+	writeFiles := []WriteFiles{
+		{
+			Content:     ifrouteNMN.String(),
+			Owner:       "root:root",
+			Path:        fmt.Sprintf("/etc/sysconfig/network/ifroute-vlan%03d", nmnVlan),
+			Permissions: "0644",
+		},
+		{
+			Content:     ifrouteHMN.String(),
+			Owner:       "root:root",
+			Path:        fmt.Sprintf("/etc/sysconfig/network/ifroute-vlan%03d", hmnVlan),
+			Permissions: "0644",
+		},
+	}
+	return writeFiles
+}
+
 // MakeBaseCampfromNCNs uses ncns and networks to create the basecamp config
 func MakeBaseCampfromNCNs(v *viper.Viper, ncns []csi.LogicalNCN, shastaNetworks map[string]*csi.IPV4Network) (map[string]CloudInit, error) {
 	basecampConfig := make(map[string]CloudInit)
@@ -301,6 +369,9 @@ func MakeBaseCampfromNCNs(v *viper.Viper, ncns []csi.LogicalNCN, shastaNetworks 
 		log.Fatal("basecamp_gen: Couldn't find the macvlan subnet in the NMN")
 	}
 	uaiReservations := uaiMacvlanSubnet.ReservationsByName()
+
+	writeFiles := getMntHillNCNRoutes(v, shastaNetworks)
+
 	for _, ncn := range ncns {
 		mac0Interface := make(map[string]interface{})
 		mac0Interface["ip"] = uaiReservations[ncn.Hostname].IPAddress
@@ -382,6 +453,10 @@ func MakeBaseCampfromNCNs(v *viper.Viper, ncns []csi.LogicalNCN, shastaNetworks 
 		}
 
 		userDataMap["ntp"] = ntpModule
+
+		if writeFiles != nil {
+			userDataMap["write_files"] = writeFiles
+		}
 	}
 
 	return basecampConfig, nil
