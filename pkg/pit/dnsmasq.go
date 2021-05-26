@@ -100,6 +100,7 @@ host-record={{.Hostname}},{{.Hostname}}.hmn,{{.HmnIP}}
 host-record={{.Hostname}},{{.Hostname}}.nmn,{{.NmnIP}}
 host-record={{.Hostname}},{{.Hostname}}.mtl,{{.MtlIP}}
 host-record={{.Xname}},{{.Hostname}}.nmn,{{.NmnIP}}
+host-record={{.Hostname}}-mgmt,{{.Hostname}}-mgmt.hmn,{{.BmcIP}}
 # Override root-path with {{.Hostname}}'s xname
 dhcp-option-force=tag:{{.Hostname}},17,{{.Xname}}
 {{end}}
