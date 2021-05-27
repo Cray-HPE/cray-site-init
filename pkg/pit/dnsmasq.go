@@ -21,13 +21,13 @@ var CMNConfigTemplate = []byte(`
 # CMN:
 server=/cmn/
 address=/cmn/
-dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:domain-search,cmn
-interface-name=pit.can,{{.VlanID | printf "vlan%03d"}}
-interface={{.VlanID | printf "vlan%03d"}}
+dhcp-option=interface:bond0.cmn0,option:domain-search,cmn
+interface-name=pit.can,bond0.cmn0
+interface=bond0.cmn0
 cname=packages.cmn,pit.cmn
 cname=registry.cmn,pit.cmn
-dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:router,{{.Gateway}}
-dhcp-range=interface:{{.VlanID | printf "vlan%03d"}},{{.DHCPStart}},{{.DHCPEnd}},10m
+dhcp-option=interface:bond0.cmn0,option:router,{{.Gateway}}
+dhcp-range=interface:bond0.cmn0,{{.DHCPStart}},{{.DHCPEnd}},10m
 `)
 
 // CANConfigTemplate manages the CAN portion of the DNSMasq configuration
@@ -35,31 +35,31 @@ var CANConfigTemplate = []byte(`
 # CAN:
 server=/can/
 address=/can/
-dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:domain-search,can
-interface-name=pit.can,{{.VlanID | printf "vlan%03d"}}
-interface={{.VlanID | printf "vlan%03d"}}
+dhcp-option=interface:bond0.can0,option:domain-search,can
+interface-name=pit.can,bond0.can0
+interface=bond0.can0
 cname=packages.can,pit.can
 cname=registry.can,pit.can
-dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:router,{{.Gateway}}
-dhcp-range=interface:{{.VlanID | printf "vlan%03d"}},{{.DHCPStart}},{{.DHCPEnd}},10m
+dhcp-option=interface:bond0.can0,option:router,{{.Gateway}}
+dhcp-range=interface:bond0.can0,{{.DHCPStart}},{{.DHCPEnd}},10m
 `)
 
-// HMNConfigTemplate manages the HMN portion of the DNSMasq configuration typically vlan004
+// HMNConfigTemplate manages the HMN portion of the DNSMasq configuration typically bond0.hmn0
 var HMNConfigTemplate = []byte(`
 # HMN:
 server=/hmn/
 address=/hmn/
 domain=hmn,{{.CIDR.IP}},{{.DHCPEnd}},local
-interface-name=pit.hmn,{{.VlanID | printf "vlan%03d"}}
-dhcp-option=interace:{{.VlanID | printf "vlan%03d"}},option:domain-search,hmn
-interface={{.VlanID | printf "vlan%03d"}}
+interface-name=pit.hmn,bond0.hmn0
+dhcp-option=interace:bond0.hmn0,option:domain-search,hmn
+interface=bond0.hmn0
 cname=packages.hmn,pit.hmn
 cname=registry.hmn,pit.hmn
 # This needs to point to the liveCD IP for provisioning in bare-metal environments.
-dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:dns-server,{{.Gateway}}
-dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:ntp-server,{{.Gateway}}
-dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:router,{{.Gateway}}
-dhcp-range=interface:{{.VlanID | printf "vlan%03d"}},{{.DHCPStart}},{{.DHCPEnd}},10m
+dhcp-option=interface:bond0.hmn0,option:dns-server,{{.Gateway}}
+dhcp-option=interface:bond0.hmn0,option:ntp-server,{{.Gateway}}
+dhcp-option=interface:bond0.hmn0,option:router,{{.Gateway}}
+dhcp-range=interface:bond0.hmn0,{{.DHCPStart}},{{.DHCPEnd}},10m
 `)
 
 // MTLConfigTemplate manages the MTL portion of the DNSMasq configuration
@@ -84,17 +84,17 @@ var NMNConfigTemplate = []byte(`
 # NMN:
 server=/nmn/
 address=/nmn/
-interface-name=pit.nmn,{{.VlanID | printf "vlan%03d"}}
+interface-name=pit.nmn,bond0.nmn0
 domain=nmn,{{.CIDR.IP}},{{.DHCPEnd}},local
-dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:domain-search,nmn
-interface={{.VlanID | printf "vlan%03d"}}
+dhcp-option=interface:bond0.nmn0,option:domain-search,nmn
+interface=bond0.nmn0
 cname=packages.nmn,pit.nmn
 cname=registry.nmn,pit.nmn
 # This needs to point to the liveCD IP for provisioning in bare-metal environments.
-dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:dns-server,{{.Gateway}}
-dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:ntp-server,{{.Gateway}}
-dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:router,{{.SupernetRouter}}
-dhcp-range=interface:{{.VlanID | printf "vlan%03d"}},{{.DHCPStart}},{{.DHCPEnd}},10m
+dhcp-option=interface:bond0.nmn0,option:dns-server,{{.Gateway}}
+dhcp-option=interface:bond0.nmn0,option:ntp-server,{{.Gateway}}
+dhcp-option=interface:bond0.nmn0,option:router,{{.SupernetRouter}}
+dhcp-range=interface:bond0.nmn0,{{.DHCPStart}},{{.DHCPEnd}},10m
 `)
 
 // StaticConfigTemplate manages the static portion of the DNSMasq configuration

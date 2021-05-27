@@ -9,8 +9,8 @@ import (
 	"net"
 	"os"
 
-	"github.com/gocarina/gocsv"
 	base "github.com/Cray-HPE/hms-base"
+	"github.com/gocarina/gocsv"
 )
 
 // ManagementSwitchBrand known list of Management switch brands

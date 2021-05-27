@@ -9,6 +9,10 @@ import (
 	"encoding/json"
 	"fmt"
 	csiFiles "github.com/Cray-HPE/cray-site-init/internal/files"
+	base "github.com/Cray-HPE/hms-base"
+	"github.com/Cray-HPE/hms-bss/pkg/bssTypes"
+	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
+	"github.com/Cray-HPE/hms-smd/pkg/sm"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh"
@@ -19,10 +23,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	base "github.com/Cray-HPE/hms-base"
-	"github.com/Cray-HPE/hms-bss/pkg/bssTypes"
-	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
-	"github.com/Cray-HPE/hms-smd/pkg/sm"
 	"strconv"
 	"strings"
 	"syscall"
@@ -53,7 +53,7 @@ var (
 	sshConfig     *ssh.ClientConfig
 	token         string
 
-	vlansToGather = []string{"vlan002"}
+	vlansToGather = []string{"bond0.nmn0"}
 )
 
 var handoffBSSMetadataCmd = &cobra.Command{

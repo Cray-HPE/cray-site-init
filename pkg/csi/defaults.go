@@ -29,7 +29,7 @@ Handy Netmask Cheet Sheet
 */
 
 const (
-	// DefaultHMNString is the Default HMN String (vlan004)
+	// DefaultHMNString is the Default HMN String (bond0.hmn0)
 	DefaultHMNString = "10.254.0.0/17"
 	// DefaultHMNVlan is the default HMN Bootstrap Vlan
 	DefaultHMNVlan = 4
@@ -37,7 +37,7 @@ const (
 	DefaultHMNMTNString = "10.104.0.0/17"
 	// DefaultHMNRVRString is the default HMN Network for River Cabinets with Grouped Configuration
 	DefaultHMNRVRString = "10.107.0.0/17"
-	// DefaultNMNString is the Default NMN String (vlan002)
+	// DefaultNMNString is the Default NMN String (bond0.nmn0)
 	DefaultNMNString = "10.252.0.0/17"
 	// DefaultNMNVlan is the default NMN Bootstrap Vlan
 	DefaultNMNVlan = 2
@@ -55,7 +55,7 @@ const (
 	DefaultMacVlanString = "10.252.124.0/23"
 	// DefaultHSNString is the Default HSN String
 	DefaultHSNString = "10.253.0.0/16"
-	// DefaultCMNString is the Default CMN String (vlan006)
+	// DefaultCMNString is the Default CMN String (bond0.cmn0)
 	DefaultCMNString = "10.103.6.0/24"
 	// DefaultCMNPoolString is the default pool for CMN addresses
 	DefaultCMNPoolString = "10.103.6.128/25"
@@ -63,7 +63,7 @@ const (
 	DefaultCMNStaticString = "10.103.6.112/28"
 	// DefaultCMNVlan is the default CMN Bootstrap Vlan
 	DefaultCMNVlan = 6
-	// DefaultCANString is the Default CAN String (vlan007)
+	// DefaultCANString is the Default CAN String (bond0.can0)
 	DefaultCANString = "10.102.11.0/24"
 	// DefaultCANPoolString is the default pool for CAN addresses
 	DefaultCANPoolString = "10.102.11.128/25"

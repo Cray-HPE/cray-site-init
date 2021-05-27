@@ -27,10 +27,10 @@ var validateCmd = &cobra.Command{
 		if validateNetwork {
 			runCommand("ip a show lan0")
 			runCommand("ip a show bond0")
-			runCommand("ip a show vlan002")
-			runCommand("ip a show vlan004")
-			runCommand("ip a show vlan006")
-			runCommand("ip a show vlan007")
+			runCommand("ip a show bond0.nmn0")
+			runCommand("ip a show bond0.hmn0")
+			runCommand("ip a show bond0.cmn0")
+			runCommand("ip a show bond0.can0")
 		}
 
 		// TODO: Replace with GOSS tests
