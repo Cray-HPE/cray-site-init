@@ -7,8 +7,8 @@ package csi
 import (
 	"testing"
 
-	"github.com/stretchr/testify/suite"
 	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
+	"github.com/stretchr/testify/suite"
 )
 
 type SLSTestSuite struct {

@@ -12,13 +12,13 @@ import (
 	"os"
 	"path/filepath"
 
+	hms_s3 "github.com/Cray-HPE/hms-s3"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
-	hms_s3 "github.com/Cray-HPE/hms-s3"
 )
 
 // loftsmanCmd represents the loftsman command

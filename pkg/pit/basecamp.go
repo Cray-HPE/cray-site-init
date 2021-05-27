@@ -20,12 +20,13 @@ import (
 // is only used for validating the required fields in the
 // `CloudInit` struct below.
 type MetaData struct {
-	Hostname         string `yaml:"local-hostname" json:"local-hostname"`       // should be local hostname e.g. ncn-m003
-	Xname            string `yaml:"xname" json:"xname"`                         // should be xname e.g. x3000c0s1b0n0
-	InstanceID       string `yaml:"instance-id" json:"instance-id"`             // should be unique for the life of the image
-	Region           string `yaml:"region" json:"region"`                       // unused currently
-	AvailabilityZone string `yaml:"availability-zone" json:"availability-zone"` // unused currently
-	ShastaRole       string `yaml:"shasta-role" json:"shasta-role"`             // map to HSM role
+	Hostname         string                 `yaml:"local-hostname" json:"local-hostname"`       // should be local hostname e.g. ncn-m003
+	Xname            string                 `yaml:"xname" json:"xname"`                         // should be xname e.g. x3000c0s1b0n0
+	InstanceID       string                 `yaml:"instance-id" json:"instance-id"`             // should be unique for the life of the image
+	Region           string                 `yaml:"region" json:"region"`                       // unused currently
+	AvailabilityZone string                 `yaml:"availability-zone" json:"availability-zone"` // unused currently
+	ShastaRole       string                 `yaml:"shasta-role" json:"shasta-role"`             // map to HSM role
+	IPAM             map[string]interface{} `yaml:"ipam" json:"ipam"`
 }
 
 // CloudInit is the main cloud-init struct. Leave the meta-data, user-data, and phone home
@@ -80,80 +81,55 @@ type BaseCampGlobals struct {
 	// Domain string `json:domain`        // dnsmasq should provide this
 	DNSServer string `json:"dns-server"`
 	// CanGateway  string `json:can-gw`   // dnsmasq should provide this
-	CanInterface string `json:"can-if"` // Do we need this?
 
 	// Kubernetes Installation Globals
-	KubernetesFirstMasterHostname string `json:"first-master-hostname"` // What's this for?
-	KubernetesVIP                 string `json:"kubernetes-virtual-ip"`
-	KubernetesMaxPods             string `json:"kubernetes-max-pods-per-node"`
-	KubernetesPodCIDR             string `json:"kubernetes-pods-cidr"`     // "10.32.0.0/12"
-	KubernetesServicesCIDR        string `json:"kubernetes-services-cidr"` // "10.16.0.0/12"
-	KubernetesWeaveMTU            string `json:"kubernetes-weave-mtu"`     // 1376
+	KubernetesVIP          string `json:"kubernetes-virtual-ip"`
+	KubernetesMaxPods      string `json:"kubernetes-max-pods-per-node"`
+	KubernetesPodCIDR      string `json:"kubernetes-pods-cidr"`     // "10.32.0.0/12"
+	KubernetesServicesCIDR string `json:"kubernetes-services-cidr"` // "10.16.0.0/12"
+	KubernetesWeaveMTU     string `json:"kubernetes-weave-mtu"`     // 1376
 
 	NumStorageNodes int `json:"num_storage_nodes"`
 }
 
 // Basecamp Defaults
 // We should try to make these customizable by the user at some point
-// FIXME: MTL-1294 replace these with real usages of cloud-init when appropriate (some scripts may be necessary).
 // k8sRunCMD has the list of scripts to run on NCN boot for
-// all members of the kubernets cluster
+// all members of the kubernetes cluster
 var k8sRunCMD = []string{
-	"/srv/cray/scripts/metal/install-bootloader.sh",
-	"/srv/cray/scripts/metal/set-host-records.sh",
-	"/srv/cray/scripts/metal/set-dhcp-to-static.sh",
-	"/srv/cray/scripts/metal/set-dns-config.sh",
-	"/srv/cray/scripts/metal/set-ntp-config.sh",
-	"/srv/cray/scripts/metal/enable-lldp.sh",
-	"/srv/cray/scripts/metal/set-bmc-bbs.sh",
-	"/srv/cray/scripts/metal/set-efi-bbs.sh",
-	"/srv/cray/scripts/metal/disable-cloud-init.sh",
+	"/srv/cray/scripts/metal/net-init.sh",
 	"/srv/cray/scripts/common/update_ca_certs.py",
-	"/srv/cray/scripts/metal/install-rpms.sh",
+	"/srv/cray/scripts/metal/install.sh",
 	"/srv/cray/scripts/common/kubernetes-cloudinit.sh",
+	"touch /etc/cloud/cloud-init.disabled",
 }
 
 // cephRunCMD has the list of scripts to run on NCN boot for
 // FIXME: MTL-1294 replace these with real usages of cloud-init when appropriate (some scripts may be necessary).
 // the first Ceph member which is responsible for installing the others
 var cephRunCMD = []string{
-	"/srv/cray/scripts/metal/install-bootloader.sh",
-	"/srv/cray/scripts/metal/set-host-records.sh",
-	"/srv/cray/scripts/metal/set-dhcp-to-static.sh",
-	"/srv/cray/scripts/metal/set-dns-config.sh",
-	"/srv/cray/scripts/metal/set-ntp-config.sh",
-	"/srv/cray/scripts/metal/enable-lldp.sh",
-	"/srv/cray/scripts/metal/set-bmc-bbs.sh",
-	"/srv/cray/scripts/metal/set-efi-bbs.sh",
-	"/srv/cray/scripts/metal/disable-cloud-init.sh",
+	"/srv/cray/scripts/metal/net-init.sh",
 	"/srv/cray/scripts/common/update_ca_certs.py",
-	"/srv/cray/scripts/metal/install-rpms.sh",
+	"/srv/cray/scripts/metal/install.sh",
 	"/srv/cray/scripts/common/pre-load-images.sh",
 	"/srv/cray/scripts/common/storage-ceph-cloudinit.sh",
+	"touch /etc/cloud/cloud-init.disabled",
 }
 
 // cephWorkerRunCMD has the list of scripts to run on NCN boot for
 // FIXME: MTL-1294 replace these with real usages of cloud-init when appropriate (some scripts may be necessary).
 // the Ceph nodes that are not supposed to run the installation.
 var cephWorkerRunCMD = []string{
-	"/srv/cray/scripts/metal/install-bootloader.sh",
-	"/srv/cray/scripts/metal/set-host-records.sh",
-	"/srv/cray/scripts/metal/set-dhcp-to-static.sh",
-	"/srv/cray/scripts/metal/set-dns-config.sh",
-	"/srv/cray/scripts/metal/set-ntp-config.sh",
-	"/srv/cray/scripts/metal/enable-lldp.sh",
-	"/srv/cray/scripts/metal/set-bmc-bbs.sh",
-	"/srv/cray/scripts/metal/set-efi-bbs.sh",
-	"/srv/cray/scripts/metal/disable-cloud-init.sh",
+	"/srv/cray/scripts/metal/net-init.sh",
 	"/srv/cray/scripts/common/update_ca_certs.py",
-	"/srv/cray/scripts/metal/install-rpms.sh",
+	"/srv/cray/scripts/metal/install.sh",
 	"/srv/cray/scripts/common/pre-load-images.sh",
+	"touch /etc/cloud/cloud-init.disabled",
 }
 
 // Make sure any "FIXME" added to this is updated in the MakeBasecampGlobals function below
 var basecampGlobalString = `{
 	"can-gw": "~FIXME~ e.g. 10.102.9.20",
-	"can-if": "vlan007",
 	"ceph-cephfs-image": "dtr.dev.cray.com/cray/cray-cephfs-provisioner:0.1.0-nautilus-1.3",
 	"ceph-rbd-image": "dtr.dev.cray.com/cray/cray-rbd-provisioner:0.1.0-nautilus-1.3",
 	"docker-image-registry": "dtr.dev.cray.com",
@@ -253,11 +229,10 @@ func MakeBasecampGlobals(v *viper.Viper, logicalNcns []csi.LogicalNCN, shastaNet
 		return global, err
 	}
 
-	// Update the FIXME values with our configs
-
 	// First loop through and see if there's a viper flag
 	// We register a few aliases because flags don't necessarily match data.json keys
 	v.RegisterAlias("can-gw", "can-gateway")
+	v.RegisterAlias("cmn-gw", "cmn-gateway")
 	for key := range global {
 		if v.IsSet(key) {
 			global[key] = v.GetString(key)
@@ -288,14 +263,11 @@ func MakeBasecampGlobals(v *viper.Viper, logicalNcns []csi.LogicalNCN, shastaNet
 	// Add these to the dns-server key
 	global["dns-server"] = dnsServers
 
-	// first-master-hostname is used to ??? TODO:
-	global["first-master-hostname"] = "ncn-m002"
 	// "k8s-virtual-ip" is the nmn alias for k8s
 	global["k8s-virtual-ip"] = reservations["kubeapi-vip"].IPAddress.String()
 	global["rgw-virtual-ip"] = reservations["rgw-vip"].IPAddress.String()
 
 	global["host_records"] = MakeBasecampHostRecords(logicalNcns, shastaNetworks, installNCN)
-
 	// start storage count at zero
 	var s = 0
 	for _, ncn := range logicalNcns {
@@ -304,7 +276,6 @@ func MakeBasecampGlobals(v *viper.Viper, logicalNcns []csi.LogicalNCN, shastaNet
 			s++
 		}
 	}
-
 	global["num_storage_nodes"] = s
 
 	return global, nil
@@ -317,9 +288,6 @@ func getMntHillNCNRoutes(v *viper.Viper, shastaNetworks map[string]*csi.IPV4Netw
 	var hmnGateway string
 	var ifrouteNMN bytes.Buffer
 	var ifrouteHMN bytes.Buffer
-
-	nmnVlan := v.GetInt("nmn-bootstrap-vlan")
-	hmnVlan := v.GetInt("hmn-bootstrap-vlan")
 
 	// Determine all the mountain/hill routes (one per cab, + HMN & NMN gateways)
 	// N.B. The order of this range matters.  We get the nmn/hmn gateway values out of this first two.
@@ -338,9 +306,9 @@ func getMntHillNCNRoutes(v *viper.Viper, shastaNetworks map[string]*csi.IPV4Netw
 				}
 				if strings.HasPrefix(subnet.Name, "cabinet_") {
 					if netName == "NMN" || netName == "NMN_MTN" || netName == "NMN_RVR" {
-						ifrouteNMN.WriteString(fmt.Sprintf("%s %s - vlan%03d\n", subnet.CIDR.String(), nmnGateway, nmnVlan))
+						ifrouteNMN.WriteString(fmt.Sprintf("%s %s - bond0.nmn0\n", subnet.CIDR.String(), nmnGateway))
 					} else {
-						ifrouteHMN.WriteString(fmt.Sprintf("%s %s - vlan%03d\n", subnet.CIDR.String(), hmnGateway, hmnVlan))
+						ifrouteHMN.WriteString(fmt.Sprintf("%s %s - bond0.hmn0\n", subnet.CIDR.String(), hmnGateway))
 					}
 				}
 			}
@@ -356,13 +324,13 @@ func getMntHillNCNRoutes(v *viper.Viper, shastaNetworks map[string]*csi.IPV4Netw
 		{
 			Content:     ifrouteNMN.String(),
 			Owner:       "root:root",
-			Path:        fmt.Sprintf("/etc/sysconfig/network/ifroute-vlan%03d", nmnVlan),
+			Path:        fmt.Sprintf("/etc/sysconfig/network/ifroute-bond0.nmn0"),
 			Permissions: "0644",
 		},
 		{
 			Content:     ifrouteHMN.String(),
 			Owner:       "root:root",
-			Path:        fmt.Sprintf("/etc/sysconfig/network/ifroute-vlan%03d", hmnVlan),
+			Path:        fmt.Sprintf("/etc/sysconfig/network/ifroute-bond0.hmn0"),
 			Permissions: "0644",
 		},
 	}
@@ -377,7 +345,6 @@ func MakeBaseCampfromNCNs(v *viper.Viper, ncns []csi.LogicalNCN, shastaNetworks 
 		log.Fatal("basecamp_gen: Couldn't find the macvlan subnet in the NMN")
 	}
 	uaiReservations := uaiMacvlanSubnet.ReservationsByName()
-
 	writeFiles := getMntHillNCNRoutes(v, shastaNetworks)
 
 	for _, ncn := range ncns {
@@ -385,10 +352,27 @@ func MakeBaseCampfromNCNs(v *viper.Viper, ncns []csi.LogicalNCN, shastaNetworks 
 		mac0Interface["ip"] = uaiReservations[ncn.Hostname].IPAddress
 		mac0Interface["mask"] = uaiMacvlanSubnet.CIDR.String()
 		mac0Interface["gateway"] = uaiMacvlanSubnet.Gateway
-
 		tempAvailabilityZone, err := csi.CabinetForXname(ncn.Xname)
 		if err != nil {
 			log.Printf("Couldn't generate cabinet name for %v: %v \n", ncn.Xname, err)
+		}
+		ncnIPAM := make(map[string]interface{})
+		for _, ncnNetwork := range ncn.Networks {
+
+			// get interface configs
+			for _, subnet := range shastaNetworks[ncnNetwork.NetworkName].Subnets {
+				// FIXME: Support multiple interfaces, nmn0-nmn1-nmn2 for each VLANID.
+				ncnNICSubnet := make(map[string]interface{})
+				ncnNICSubnet["gateway"] = subnet.Gateway
+				ncnNICSubnet["ip"] = ncnNetwork.CIDR
+				ncnNICSubnet["vlanid"] = ncnNetwork.Vlan
+				if strings.ToLower(ncnNetwork.NetworkName) == "sun" {
+					ncnNICSubnet["parent_device"] = "bond1"
+				} else {
+					ncnNICSubnet["parent_device"] = "bond0"
+				}
+				ncnIPAM[strings.ToLower(ncnNetwork.NetworkName)] = ncnNICSubnet
+			}
 		}
 		tempMetadata := MetaData{
 			Hostname:         ncn.Hostname,
@@ -397,6 +381,7 @@ func MakeBaseCampfromNCNs(v *viper.Viper, ncns []csi.LogicalNCN, shastaNetworks 
 			Region:           v.GetString("system-name"),
 			AvailabilityZone: tempAvailabilityZone,
 			ShastaRole:       "ncn-" + strings.ToLower(ncn.Subrole),
+			IPAM:             ncnIPAM,
 		}
 		userDataMap := make(map[string]interface{})
 		if ncn.Subrole == "Storage" {
@@ -432,7 +417,8 @@ func MakeBaseCampfromNCNs(v *viper.Viper, ncns []csi.LogicalNCN, shastaNetworks 
 
 		// ntp allowed networks should be a list of NMN and HMN CIDRS
 		var nmnNets []string
-		for _, netNetwork := range shastaNetworks {
+		for _, netNetwork := range ncn.Networks {
+			// get this for ntp:
 			nmnNets = append(nmnNets, netNetwork.CIDR)
 		}
 

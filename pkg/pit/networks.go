@@ -75,10 +75,10 @@ func WriteCPTNetworkConfig(path string, v *viper.Viper, ncn csi.LogicalNCN, shas
 	for _, network := range ncn.Networks {
 		if stringInSlice(network.NetworkName, csi.ValidNetNames) {
 			if network.Vlan != 0 {
-				csiFiles.WriteTemplate(filepath.Join(path, fmt.Sprintf("ifcfg-vlan%03d", network.Vlan)), template.Must(template.New("vlan").Parse(string(VlanConfigTemplate))), network)
+				csiFiles.WriteTemplate(filepath.Join(path, fmt.Sprintf("ifcfg-bond0.%s0", strings.ToLower(network.NetworkName))), template.Must(template.New("vlan").Parse(string(VlanConfigTemplate))), network)
 			}
 			if network.NetworkName == "NMN" {
-				csiFiles.WriteTemplate(filepath.Join(path, fmt.Sprintf("ifroute-vlan%03d", network.Vlan)), template.Must(template.New("vlan").Parse(string(VlanRouteTemplate))), []Route{metalLBRoute})
+				csiFiles.WriteTemplate(filepath.Join(path, fmt.Sprintf("ifroute-bond0.%s0", strings.ToLower(network.NetworkName))), template.Must(template.New("vlan").Parse(string(VlanRouteTemplate))), []Route{metalLBRoute})
 			}
 		}
 	}
@@ -99,6 +99,8 @@ ETHERDEVICE='bond0'
 
 # DO NOT CHANGE THESE:
 VLAN_PROTOCOL='ieee802-1Q'
+VLAN='yes'
+VLAN_ID={{.Vlan}}
 ONBOOT='yes'
 STARTMODE='auto'
 `)
