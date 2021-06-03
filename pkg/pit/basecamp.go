@@ -211,6 +211,7 @@ func MakeBasecampHostRecords(ncns []csi.LogicalNCN, shastaNetworks map[string]*c
 	pitres := nmnNetwork.ReservationsByName()[installNCN]
 	hostrecords = append(hostrecords, BasecampHostRecord{pitres.IPAddress.String(), []string{"pit", "pit.nmn"}})
 
+	// adding packages.local and registry.local that point to api-gw to the host_records object
 	apigwres := nmnLbNetwork.ReservationsByName()["istio-ingressgateway"]
 	hostrecords = append(hostrecords, BasecampHostRecord{apigwres.IPAddress.String(), []string{"packages.local", "registry.local"}})
 
