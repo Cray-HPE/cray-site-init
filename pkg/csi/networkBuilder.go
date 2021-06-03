@@ -93,7 +93,7 @@ func BuildCSMNetworks(internalNetConfigs map[string]NetworkLayoutConfiguration, 
 			var hmnAliases []string
 			for _, alias := range rsrv.Aliases {
 				if !strings.HasSuffix(alias, ".local") {
-					if !stringInSlice(alias, []string{"packages", "registry"}) {
+					if !stringInSlice(alias, []string{"packages", "registry", "spire", "api-gw", "api_gw"}) {
 						hmnAliases = append(hmnAliases, alias)
 
 					}
