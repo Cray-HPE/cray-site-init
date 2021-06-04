@@ -9,15 +9,16 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/spf13/cobra"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"stash.us.cray.com/HMS/hms-bss/pkg/bssTypes"
-	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
 	"strconv"
 	"strings"
+
+	"github.com/spf13/cobra"
+	"stash.us.cray.com/HMS/hms-bss/pkg/bssTypes"
+	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
 )
 
 const s3Prefix = "s3://ncn-images"
@@ -34,6 +35,7 @@ var (
 	paramsToUpdate []string
 	paramsToDelete []string
 	limitToXnames  []string
+	userDataJSON   string
 
 	desiredKubernetesVersion string
 	desiredCEPHVersion       string
@@ -180,24 +182,27 @@ func getBSSBootparametersForXname(xname string) bssTypes.BootParams {
 }
 
 func setupHandoffCommon() (limitManagementNCNs []sls_common.GenericHardware, setParams []paramTuple) {
-	if len(paramsToUpdate) == 0 && len(paramsToDelete) == 0 {
-		log.Fatalln("No parameters given to set or delete!")
-	}
-
-	// Build up a slice of tuples of all the values we want to set.
-	for _, setParam := range paramsToUpdate {
-		paramSplit := strings.Split(setParam, "=")
-
-		if len(paramSplit) != 2 {
-			log.Panicf("Set paramater had invalid format: %s", setParam)
+	// Don't process the cli if we have a json input file
+	if userDataJSON == "" {
+		if len(paramsToUpdate) == 0 && len(paramsToDelete) == 0 {
+			log.Fatalln("No parameters given to set or delete!")
 		}
 
-		tuple := paramTuple{
-			key:   paramSplit[0],
-			value: paramSplit[1],
-		}
+		// Build up a slice of tuples of all the values we want to set.
+		for _, setParam := range paramsToUpdate {
+			paramSplit := strings.Split(setParam, "=")
 
-		setParams = append(setParams, tuple)
+			if len(paramSplit) != 2 {
+				log.Panicf("Set paramater had invalid format: %s", setParam)
+			}
+
+			tuple := paramTuple{
+				key:   paramSplit[0],
+				value: paramSplit[1],
+			}
+
+			setParams = append(setParams, tuple)
+		}
 	}
 
 	// "Global" is a special NCN just used for cloud-init metadata in a global sense.
