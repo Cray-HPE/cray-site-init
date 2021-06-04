@@ -6,12 +6,22 @@ package cmd
 
 import (
 	"encoding/json"
-	"github.com/spf13/cobra"
+	"io/ioutil"
 	"log"
 	"net/http"
-	"stash.us.cray.com/HMS/hms-bss/pkg/bssTypes"
 	"strings"
+
+	"github.com/spf13/cobra"
+	"stash.us.cray.com/HMS/hms-bss/pkg/bssTypes"
 )
+
+var ciData bssTypes.CloudInit
+
+// "raw" to distiguish it from the purely string-based paramTuple used elsewhere
+type rawParamTuple struct {
+	key   string
+	value interface{}
+}
 
 var handoffBSSUpdateCloudInitCmd = &cobra.Command{
 	Use:   "bss-update-cloud-init",
@@ -21,7 +31,21 @@ var handoffBSSUpdateCloudInitCmd = &cobra.Command{
 		setupCommon()
 
 		log.Println("Updating NCN cloud-init parameters...")
-		updateNCNCloudInitParams()
+		// Are we reading json from a file or the cli?
+		if userDataJSON != "" {
+			userDataFile, _ := ioutil.ReadFile(userDataJSON)
+			err := json.Unmarshal(userDataFile, &ciData)
+			if err != nil {
+				log.Fatalln("Couldn't parse user-data file: ", err)
+			}
+			if ciData.UserData == nil {
+				log.Fatalf("Could not find \"user-data\" key in %s\n", userDataJSON)
+			}
+			updateNCNCloudInitParamsFromFile()
+		} else {
+			// process data provided directly via cli
+			updateNCNCloudInitParams()
+		}
 		log.Println("Done updating NCN cloud-init parameters.")
 	},
 }
@@ -36,6 +60,8 @@ func init() {
 			"regardless of value")
 	handoffBSSUpdateCloudInitCmd.Flags().StringArrayVar(&limitToXnames, "limit", []string{},
 		"Limit updates to just the xnames specified")
+	handoffBSSUpdateCloudInitCmd.Flags().StringVar(&userDataJSON, "user-data", "",
+		"json-formatted file with global cloud-init user-data")
 }
 
 func getFinalJSONObject(key string, bssEntry *bssTypes.BootParams) (string, *map[string]interface{}) {
@@ -79,6 +105,24 @@ func getFinalJSONObject(key string, bssEntry *bssTypes.BootParams) (string, *map
 	}
 
 	return nextKey, &object
+}
+
+func updateNCNCloudInitParamsFromFile() {
+	limitManagementNCNs, _ := setupHandoffCommon()
+
+	for _, ncn := range limitManagementNCNs {
+		// Get the BSS bootparamaters for this NCN.
+		bssEntry := getBSSBootparametersForXname(ncn.Xname)
+
+		for key, val := range ciData.UserData {
+			object := bssEntry.CloudInit.UserData
+			// key is user-data[key]
+			object[key] = val
+		}
+
+		// Now write it back to BSS.
+		uploadEntryToBSS(bssEntry, http.MethodPut)
+	}
 }
 
 func updateNCNCloudInitParams() {
