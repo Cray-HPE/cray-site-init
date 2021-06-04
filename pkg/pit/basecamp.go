@@ -200,6 +200,7 @@ func MakeBasecampHostRecords(ncns []csi.LogicalNCN, shastaNetworks map[string]*c
 		}
 	}
 	nmnNetwork, _ := shastaNetworks["NMN"].LookUpSubnet("bootstrap_dhcp")
+	nmnLbNetwork, _ := shastaNetworks["NMNLB"].LookUpSubnet("nmn_metallb_address_pool")
 	k8sres := nmnNetwork.ReservationsByName()["kubeapi-vip"]
 	hostrecords = append(hostrecords, BasecampHostRecord{k8sres.IPAddress.String(), []string{k8sres.Name, fmt.Sprintf("%s.nmn", k8sres.Name)}})
 
@@ -209,6 +210,10 @@ func MakeBasecampHostRecords(ncns []csi.LogicalNCN, shastaNetworks map[string]*c
 	// using installNCN value as the host that pit.nmn will point to
 	pitres := nmnNetwork.ReservationsByName()[installNCN]
 	hostrecords = append(hostrecords, BasecampHostRecord{pitres.IPAddress.String(), []string{"pit", "pit.nmn"}})
+
+	// adding packages.local and registry.local that point to api-gw to the host_records object
+	apigwres := nmnLbNetwork.ReservationsByName()["istio-ingressgateway"]
+	hostrecords = append(hostrecords, BasecampHostRecord{apigwres.IPAddress.String(), []string{"packages.local", "registry.local"}})
 
 	// Add entries for the switches
 	nmnNetNetwork, _ := shastaNetworks["NMN"].LookUpSubnet("network_hardware")
