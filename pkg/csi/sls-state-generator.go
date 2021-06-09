@@ -738,13 +738,6 @@ func (g *SLSStateGenerator) getNodeHardwareFromRow(row shcd_parser.HMNRow) (hard
 		}
 		hardware = append(hardware, nodeHardware)
 
-		// Next up is to compute the aliases for the BMC for this node. Basically, take all the existing ones and add
-		// `-mgmt` to the end of each.
-		var bmcAliases []string
-		for _, nodeAlias := range thisNodeExtraProperties.Aliases {
-			bmcAliases = append(bmcAliases, fmt.Sprintf("%s-mgmt", nodeAlias))
-		}
-
 		// Now build a BMC hardware object.
 		bmcHardware := sls_common.GenericHardware{
 			Parent:     row.SourceRack,
@@ -753,7 +746,9 @@ func (g *SLSStateGenerator) getNodeHardwareFromRow(row shcd_parser.HMNRow) (hard
 			Class:      "River",
 			TypeString: "NodeBMC",
 			ExtraPropertiesRaw: sls_common.ComptypeNodeBmc{
-				Aliases: bmcAliases,
+				// Mirror the aliases for the BMC hardware object so we get all of the same
+				// `alias.hmn.foo.bar` addresses.
+				Aliases: thisNodeExtraProperties.Aliases,
 			},
 		}
 		hardware = append(hardware, bmcHardware)
@@ -925,10 +920,9 @@ func (g *SLSStateGenerator) getHardwareForMountainCab(cabXname string,
 					hardware = append(hardware, newNode)
 
 					// This is going to seem a little odd given that each BMC has usually more than one node but to
-					// remain consistent with the way we name things for River we'll add `-mgmt` entries for every
-					// child NID.
-					bmcExtraProperties.Aliases = append(bmcExtraProperties.Aliases,
-						fmt.Sprintf("%s-mgmt", nidName))
+					// remain consistent with the way we name things for River we'll add all the node aliases to
+					// this BMC hardware object.
+					bmcExtraProperties.Aliases = append(bmcExtraProperties.Aliases, nidName)
 
 					g.currentMountainNID++
 				}
