@@ -270,8 +270,17 @@ var initCmd = &cobra.Command{
 		slsHillCabinets := csi.GetSLSCabinets(slsState, sls_common.ClassHill)
 		slsRiverCabinets := csi.GetSLSCabinets(slsState, sls_common.ClassRiver)
 
+		if v.IsSet("cabinets-yaml") && (v.IsSet("mountain-cabinets") ||
+			v.IsSet("starting-mountain-cabinet") ||
+			v.IsSet("river-cabinets") ||
+			v.IsSet("starting-river-cabinet") ||
+			v.IsSet("hill-cabinets") ||
+			v.IsSet("starting-hill-cabinet")) {
+			fmt.Printf("\nWARNING: cabinet flags are not honored when a cabinets-yaml file is provided\n")
+		}
+
 		// Print Summary
-		fmt.Printf("\n\n===== %v Installation Summary =====\n\n", v.GetString("system-name"))
+		fmt.Printf("\n===== %v Installation Summary =====\n\n", v.GetString("system-name"))
 		fmt.Printf("Installation Node: %v\n", v.GetString("install-ncn"))
 		fmt.Printf("Customer Access: %v GW: %v\n", v.GetString("can-cidr"), v.GetString("can-gateway"))
 		fmt.Printf("\tUpstream DNS: %v\n", v.GetString("ipv4-resolvers"))
