@@ -10,9 +10,7 @@ if [[ "$1" != "binary-only" ]]; then
         echo "Upgrading go from version ${INSTALLED_GO_VERSION} to ${GO_VERSION}"
         go get golang.org/dl/go$GO_VERSION || true
         $GOPATH/bin/go$GO_VERSION download || true
-        GO_EXEC=$(which go)
-        rm -f $GO_EXEC
-        cp $GOPATH/bin/go$GO_VERSION $GO_EXEC
+        ln -s $GOPATH/bin/go$GO_VERSION $GOPATH/bin/go
     fi
 
     mkdir -p $GOPATH/bin

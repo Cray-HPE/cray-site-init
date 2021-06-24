@@ -1,6 +1,8 @@
 SHELL := /bin/bash
 VERSION := $(shell cat .version)
 
+NAME ?= cray-site-init
+
 GO_FILES?=$$(find . -name '*.go' |grep -v vendor)
 TAG?=latest
 
@@ -12,6 +14,12 @@ TAG?=latest
 .BUILDTIME=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 CHANGELOG_VERSION_ORIG=$(grep -m1 \## CHANGELOG.MD | sed -e "s/\].*\$//" |sed -e "s/^.*\[//")
 CHANGELOG_VERSION=$(shell grep -m1 \ \[[0-9]*.[0-9]*.[0-9]*\] CHANGELOG.MD | sed -e "s/\].*$$//" |sed -e "s/^.*\[//")
+
+BUILD_METADATA ?= "1~development~$(shell git rev-parse --short HEAD)"
+RPM_SPEC_FILE ?= ${NAME}.spec
+RPM_SOURCE_NAME ?= ${NAME}-${.FS_VERSION}
+RPM_BUILD_DIR ?= $(PWD)/dist/rpmbuild
+RPM_SOURCE_PATH := ${RPM_BUILD_DIR}/SOURCES/${RPM_SOURCE_NAME}.tar.bz2
 
 # if we're an automated build, use .GIT_COMMIT_AND_BRANCH as-is, else add -dirty
 ifneq "$(origin BUILD_NUMBER)" "environment"
@@ -41,6 +49,7 @@ endif
 	version
 
 all: tools fmt lint reset build
+rpm: rpm_package_source rpm_build_source rpm_build
 
 help:
 	@echo 'Usage: make <OPTIONS> ... <TARGETS>'
@@ -134,3 +143,27 @@ version:
 update-version: build
 	@echo 'Version = ${CHANGELOG_VERSION}'
 	echo ${CHANGELOG_VERSION} > .version
+
+build_prep:
+	rm -rf $(RPM_BUILD_DIR)
+	mkdir -p $(RPM_BUILD_DIR)/SPECS $(RPM_BUILD_DIR)/SOURCES
+	cp $(RPM_SPEC_FILE) $(RPM_BUILD_DIR)/SPECS
+
+	./runBuildPrep.sh
+
+	go version
+
+build_lint:
+	./runLint.sh
+
+build_test:
+	./runUnitTest.sh
+
+rpm_package_source:
+	tar --transform 'flags=r;s,^,/$(RPM_SOURCE_NAME)/,' --exclude .git --exclude dist -cvjf $(RPM_SOURCE_PATH) .
+
+rpm_build_source:
+	BUILD_METADATA=$(BUILD_METADATA) rpmbuild -ts $(RPM_SOURCE_PATH) --define "_topdir $(RPM_BUILD_DIR)"
+
+rpm_build:
+	BUILD_METADATA=$(BUILD_METADATA) rpmbuild -ba $(RPM_SPEC_FILE) --define "_topdir $(RPM_BUILD_DIR)"

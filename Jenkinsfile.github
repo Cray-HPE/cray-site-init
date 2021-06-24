@@ -1,0 +1,61 @@
+@Library('csm-shared-library') _
+
+pipeline {
+    agent {
+        docker {
+            image "arti.dev.cray.com/dstbuildenv-docker-master-local/cray-sle15sp2_build_environment:latest"
+            label "metal-gcp-builder"
+        }
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: "10"))
+        timestamps()
+    }
+
+    environment {
+        NAME = "cray-site-init"
+        DESCRIPTION = "Cray Site Init (CSI) Tool"
+        IS_STABLE = getBuildIsStable()
+        VERSION = getDockerBuildVersion(isStable: env.IS_STABLE)
+        DOCKER_ARGS = getDockerBuildArgs(name: env.NAME, description: env.DESCRIPTION)
+        CHART_VERSION = getChartVersion(version: env.VERSION)
+        GOPATH = "/home/jenkins/go"
+    }
+
+    stages {
+        stage("Build Prep") {
+            steps {
+                sh "env"
+                sh "make build_prep"
+            }
+        }
+
+        stage("Lint") {
+            steps {
+                sh "make build_lint"
+            }
+        }
+
+        stage("Unit Test") {
+            steps {
+                sh "make build_test"
+            }
+        }
+
+        stage("Build RPM") {
+            steps {
+                sh "make rpm"
+            }
+        }
+
+        stage("Publish") {
+            steps {
+                script {
+                    publishCsmRpms(component: "metal-basecamp", pattern: "dist/rpmbuild/RPMS/x86_64/*.rpm", arch: "x86_64", isStable: env.IS_STABLE)
+                    publishCsmRpms(component: "metal-basecamp", pattern: "dist/rpmbuild/SRPMS/*.rpm", arch: "src", isStable: env.IS_STABLE)
+                }
+            }
+        }
+    }
+}
