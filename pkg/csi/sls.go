@@ -106,11 +106,14 @@ func ExtractUANs(sls *sls_common.SLSState) ([]LogicalUAN, error) {
 				return uans, err
 			}
 			if extra.Role == "Application" && extra.SubRole == "UAN" {
+				if extra.Aliases == nil {
+					log.Fatal("ERROR: UANs must have at least one alias defined in the application-node-config-yaml file")
+				}
 				uans = append(uans, LogicalUAN{
 					Xname:    key,
 					Role:     extra.Role,
 					Subrole:  extra.SubRole,
-					Hostname: fmt.Sprintf("uan%02d-can", uanIndex),
+					Hostname: extra.Aliases[0],
 					Aliases:  extra.Aliases,
 				})
 				uanIndex++
