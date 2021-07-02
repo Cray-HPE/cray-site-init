@@ -72,7 +72,8 @@ print-%:
 clean: clean-artifacts clean-releases
 	go clean -i ./...
 	rm -vf \
-	  $(CURDIR)/coverage.* \
+	  $(CURDIR)/build/results/coverage/* \
+		$(CURDIR)/build/results/unittest/* \
 
 clean-artifacts:
 	rm -Rf artifacts/*
@@ -84,7 +85,7 @@ clean-all: clean clean-artifacts
 
 # Run tests
 test: build
-	go test ./cmd/... ./internal/... ./pkg/... -v -cover -coverprofile cover.out -covermode count
+	go test ./cmd/... ./internal/... ./pkg/... -v -coverprofile coverage.out -covermode count
 
 tools:
 	go get -u github.com/axw/gocov/gocov
