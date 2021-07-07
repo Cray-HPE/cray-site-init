@@ -20,6 +20,7 @@
 
 title: Cray Site Initializer
 email: mtl@hpe.com
+repository: Cray-HPE/cray-site-init
 description: >- # this means to ignore newlines until "baseurl:"
   CSI creates, validates, installs, and upgrades a CRAY supercomputer or HPCaaS platform.
 
@@ -28,10 +29,13 @@ description: >- # this means to ignore newlines until "baseurl:"
   configuration details are accurate before attempting to use them for installation.
 # baseurl: "" # the subpath of your site, e.g. /blog
 # url: "" # the base hostname & protocol for your site, e.g. http://example.com
-github_username:  Cray-HPE
+github_username: Cray-HPE
+
+# logo: [Location of the logo]
+show_downloads: false
 
 # Build settings
-remote_theme: jekyll/minima
+theme: minimal
 plugins:
   - jekyll-feed
 
