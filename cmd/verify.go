@@ -24,4 +24,5 @@ var verifyCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(verifyCmd)
+	verifyCmd.DisableAutoGenTag = true
 }

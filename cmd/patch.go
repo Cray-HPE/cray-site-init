@@ -21,4 +21,5 @@ Runs patch operations against the CRAY.
 
 func init() {
 	rootCmd.AddCommand(patchCmd)
+	patchCmd.DisableAutoGenTag = true
 }

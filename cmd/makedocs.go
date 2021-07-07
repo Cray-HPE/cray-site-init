@@ -5,9 +5,13 @@ Copyright 2021 Hewlett Packard Enterprise Development LP
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"time"
+	"strings"
 	"path/filepath"
+	"path"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
@@ -33,8 +37,28 @@ var makedocsCmd = &cobra.Command{
 				log.Fatalf("Error accessing %v :%v", basepath, err)
 			}
 		}
+		const fmTemplate = `---
+date: %s
+title: "%s"
+layout: default
+---
+`
+
+		filePrepender := func(filename string) string {
+			now := time.Now().Format(time.RFC3339)
+			name := filepath.Base(filename)
+			base := strings.TrimSuffix(name, path.Ext(name))
+			// url := "/commands/" + strings.ToLower(base) + "/"
+			return fmt.Sprintf(fmTemplate, now, strings.Replace(base, "_", " ", -1))
+		}
+
+		linkHandler := func(name string) string {
+			base := strings.TrimSuffix(name, path.Ext(name))
+			return "/commands/" + strings.ToLower(base) + "/"
+		}
+
 		os.Mkdir(basepath, 0777)
-		err = doc.GenMarkdownTree(rootCmd, basepath)
+		err = doc.GenMarkdownTreeCustom(rootCmd, basepath, filePrepender, linkHandler)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -43,14 +67,5 @@ var makedocsCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(makedocsCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// makedocsCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// makedocsCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	makedocsCmd.DisableAutoGenTag = true
 }

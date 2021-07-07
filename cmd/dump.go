@@ -27,4 +27,5 @@ var dumpCmd = &cobra.Command{
 
 func init() {
 	configCmd.AddCommand(dumpCmd)
+	dumpCmd.DisableAutoGenTag = true
 }

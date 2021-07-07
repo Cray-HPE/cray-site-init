@@ -37,6 +37,7 @@ var configCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(configCmd)
+	configCmd.DisableAutoGenTag = true
 }
 
 // LoadConfig : Search reasonable places and read the installer configuration file

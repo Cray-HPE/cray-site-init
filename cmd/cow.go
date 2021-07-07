@@ -50,4 +50,5 @@ var cowCmd = &cobra.Command{
 
 func init() {
 	populateCmd.AddCommand(cowCmd)
+	cowCmd.DisableAutoGenTag = true
 }

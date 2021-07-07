@@ -52,6 +52,7 @@ var handoffBSSUpdateCloudInitCmd = &cobra.Command{
 
 func init() {
 	handoffCmd.AddCommand(handoffBSSUpdateCloudInitCmd)
+	handoffBSSUpdateCloudInitCmd.DisableAutoGenTag = true
 
 	handoffBSSUpdateCloudInitCmd.Flags().StringArrayVar(&paramsToUpdate, "set", []string{},
 		"For each kernel parameter you wish to update or add list it in the format of key=value")

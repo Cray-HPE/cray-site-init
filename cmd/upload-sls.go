@@ -29,7 +29,7 @@ var uploadSLSFile = &cobra.Command{
 	Example: csi upload-sls-file --sls-file /path/to/sls_input_file.json
 
 	Upload the given sls_input_file.json file into the SLS S3 Bucket, and delete the key "uploaded" if present in the SLS S3 bucket.
-	The "upload" flag is added by the SLS loader when it successfully loads SLS with data, and it is used as flag to determine if 
+	The "upload" flag is added by the SLS loader when it successfully loads SLS with data, and it is used as flag to determine if
 	the SLS loader has been used previously to upload the SLS file. If it is present the loader will not upload the SLS file.
 
 	Example: csi upload-sls-file --sls-file /path/to/sls_input_file.json --remove-upload-flag
@@ -43,6 +43,7 @@ var uploadSLSFile = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(uploadSLSFile)
+	uploadSLSFile.DisableAutoGenTag = true
 
 	home := homedir.HomeDir()
 	uploadSLSFile.Flags().String("kubeconfig", filepath.Join(home, ".kube", "config"),
