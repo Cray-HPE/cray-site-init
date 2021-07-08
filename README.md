@@ -1,20 +1,25 @@
-# CRAY Site init (csi)
+# Cray Site Initializer (`csi`)
 
-CSI is a GoLang tool for facilitating the installation of an HPCaaS cluster.
+`csi` is a tool for facilitating the installation of an HPCaaS cluster.
 
 > **`NOTE`** **This deprecates CrayCTL** (`crayctl`) from Shasta V1.4.0 and higher as the primary orchestrator tool.
 
+# Getting Started
+
+See https://cray-hpe.github.io/cray-site-init/ and follow the Site Survey directions.
+
 # Usage
 
-CSI can be installed into any local GoLang **`1.16`** environment.
+See https://cray-hpe.github.io/cray-site-init/commands for details on each command.
 
+# Developing and contributing
 
-> Note: You will need to add CRAY to the [GOPRIVATE lib][1] for a clean run: 
+## Build from source
+
+> Note: You will need to add CRAY to the [GOPRIVATE lib][1] for a clean run:
 > ```bash
 > export GOPRIVATE=*.us.cray.com go mod tidy`
 > ```
-
-### Build from source
 
 1. Using the `makefile`
     ```bash
@@ -27,21 +32,8 @@ CSI can be installed into any local GoLang **`1.16`** environment.
     $> ./bin/csi --help
     ```
 
-CSI is also built for distributing through Linux package managers.
+## Contributing
 
-### OS Package Management
-
-#### OpenSuSE 15.2 / SLES 15SP2 / SLE_HPC 15SP2
-
-```bash
-# Add repo.
-repo=http://car.dev.cray.com/artifactory/csm/MTL/sle15_sp2_ncn/x86_64/dev/master/
-zypper addrepo --no-gpgcheck --refresh "$repo" metal_x86-64
-
-# Install.
-# FIXME: --no-gpg-checks is not ideal.
-zypper --plus-repo=http://car.dev.cray.com/artifactory/csm/MTL/sle15_sp2_ncn/x86_64/dev/master/ --no-gpg-checks -n in -y cray-site-init
-```
-
+Please create a pull request and we will review it.
 
 [1]: https://golang.org/cmd/go/#hdr-Module_configuration_for_non_public_modules
