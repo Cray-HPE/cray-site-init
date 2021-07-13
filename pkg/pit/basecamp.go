@@ -108,6 +108,7 @@ var k8sRunCMD = []string{
 	"/srv/cray/scripts/metal/set-bmc-bbs.sh",
 	"/srv/cray/scripts/metal/set-efi-bbs.sh",
 	"/srv/cray/scripts/metal/disable-cloud-init.sh",
+    "/srv/cray/scripts/metal/install-rpms.sh",
 	"/srv/cray/scripts/common/update_ca_certs.py",
 	"/srv/cray/scripts/common/kubernetes-cloudinit.sh",
 }
@@ -125,6 +126,7 @@ var cephRunCMD = []string{
 	"/srv/cray/scripts/metal/set-bmc-bbs.sh",
 	"/srv/cray/scripts/metal/set-efi-bbs.sh",
 	"/srv/cray/scripts/metal/disable-cloud-init.sh",
+    "/srv/cray/scripts/metal/install-rpms.sh",
 	"/srv/cray/scripts/common/update_ca_certs.py",
 	"/srv/cray/scripts/common/pre-load-images.sh",
 	"/srv/cray/scripts/common/storage-ceph-cloudinit.sh",
@@ -143,6 +145,7 @@ var cephWorkerRunCMD = []string{
 	"/srv/cray/scripts/metal/set-bmc-bbs.sh",
 	"/srv/cray/scripts/metal/set-efi-bbs.sh",
 	"/srv/cray/scripts/metal/disable-cloud-init.sh",
+    "/srv/cray/scripts/metal/install-rpms.sh",
 	"/srv/cray/scripts/common/update_ca_certs.py",
 	"/srv/cray/scripts/common/pre-load-images.sh",
 }
