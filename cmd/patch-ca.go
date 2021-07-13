@@ -79,7 +79,7 @@ var patchCA = &cobra.Command{
 	Use:   "ca",
 	Short: "Patch cloud-init metadata with CA certs",
 	Long: `
-Patch cloud-init metadata (in place) with certificate authority (CA) certificates from 
+Patch cloud-init metadata (in place) with certificate authority (CA) certificates from
 shasta-cfg (customizations.yaml). Decrypts CA material from named sealed secret using the shasta-cfg
 private RSA key.`,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -148,6 +148,7 @@ private RSA key.`,
 
 func init() {
 	patchCmd.AddCommand(patchCA)
+	patchCA.DisableAutoGenTag = true
 	patchCA.Flags().StringVarP(&customizationsFile, "customizations-file", "", "", "path to customizations.yaml (shasta-cfg)")
 	patchCA.Flags().StringVarP(&cloudInitSeedFile, "cloud-init-seed-file", "", "", "Path to cloud-init metadata seed file")
 	patchCA.Flags().StringVarP(&sealedSecretsKeyFile, "sealed-secret-key-file", "", "", "Path to sealed secrets/shasta-cfg private key")

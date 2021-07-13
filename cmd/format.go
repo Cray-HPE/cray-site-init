@@ -52,6 +52,7 @@ func writeLiveCD(device string, iso string, size string) {
 
 func init() {
 	pitCmd.AddCommand(formatCmd)
+	formatCmd.DisableAutoGenTag = true
 	viper.SetEnvPrefix("pit") // will be uppercased automatically
 	viper.AutomaticEnv()
 	formatCmd.MarkFlagRequired("write-script")

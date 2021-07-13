@@ -303,6 +303,7 @@ var initCmd = &cobra.Command{
 
 func init() {
 	configCmd.AddCommand(initCmd)
+	initCmd.DisableAutoGenTag = true
 
 	// Flags with defaults for initializing a configuration
 

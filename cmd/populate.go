@@ -258,4 +258,5 @@ func CopyArtifactsToPart(src string, dest string, regex string) {
 
 func init() {
 	pitCmd.AddCommand(populateCmd)
+	populateCmd.DisableAutoGenTag = true
 }

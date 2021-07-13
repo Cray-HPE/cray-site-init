@@ -91,6 +91,7 @@ var handoffBSSMetadataCmd = &cobra.Command{
 
 func init() {
 	handoffCmd.AddCommand(handoffBSSMetadataCmd)
+	handoffBSSMetadataCmd.DisableAutoGenTag = true
 
 	handoffBSSMetadataCmd.Flags().StringVar(&dataFile, "data-file",
 		"", "data.json file with cloud-init configuration for each node and global")

@@ -1,0 +1,12 @@
+baseURL = "https://cray-hpe.github.io/cray-site-init/"
+languageCode = "en-us"
+title = "Cray Site Init"
+theme = "learn"
+publishDir = "../docs"
+
+[params]
+# Change default color scheme with a variant one. Can be "red", "blue", "green".
+themeVariant = "blue"
+# If set to false, a Home button will appear below the search bar on the menu.
+# It is redirecting to the landing page of the current language if specified. (Default is "/")
+disableLandingPageButton = true

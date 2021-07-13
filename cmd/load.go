@@ -43,6 +43,7 @@ var loadCmd = &cobra.Command{
 
 func init() {
 	configCmd.AddCommand(loadCmd)
+	loadCmd.DisableAutoGenTag = true
 }
 
 func loadSystemConfig(path string) (sysconf csi.SystemConfig, err error) {

@@ -54,6 +54,7 @@ var handoffCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(handoffCmd)
+	handoffCmd.DisableAutoGenTag = true
 
 	gatewayHostname = os.Getenv("GATEWAY_HOSTNAME")
 	if gatewayHostname == "" {

@@ -60,6 +60,7 @@ var pitdataCmd = &cobra.Command{
 
 func init() {
 	populateCmd.AddCommand(pitdataCmd)
+	// makedocsCmd.DisableAutoGenTag = true
 	viper.SetEnvPrefix("pit") // will be uppercased automatically
 	viper.AutomaticEnv()
 	pitdataCmd.Flags().BoolP("basecamp", "b", false, "Copy any discovered basecamp config files to the 'configs' directory on the PITDATA partition")

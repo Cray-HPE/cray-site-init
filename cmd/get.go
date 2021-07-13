@@ -71,4 +71,5 @@ func GetArtifact(dirpath string, url string) (err error) {
 
 func init() {
 	pitCmd.AddCommand(getCmd)
+	getCmd.DisableAutoGenTag = true
 }

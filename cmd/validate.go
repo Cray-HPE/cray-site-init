@@ -75,6 +75,7 @@ func runCommand(shellCode string) {
 
 func init() {
 	pitCmd.AddCommand(validateCmd)
+	validateCmd.DisableAutoGenTag = true
 	viper.SetEnvPrefix("pit")
 	viper.AutomaticEnv()
 	validateCmd.Flags().BoolVarP(&validateNetwork, "network", "N", false, "Run network tests")

@@ -23,4 +23,5 @@ var installCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(installCmd)
+	installCmd.DisableAutoGenTag = true
 }

@@ -63,6 +63,7 @@ var handoffNCNImagesCmd = &cobra.Command{
 
 func init() {
 	handoffCmd.AddCommand(handoffNCNImagesCmd)
+	handoffNCNImagesCmd.DisableAutoGenTag = true
 
 	home := homedir.HomeDir()
 	handoffNCNImagesCmd.Flags().StringVar(&kubeconfig, "kubeconfig", filepath.Join(home, ".kube", "config"),

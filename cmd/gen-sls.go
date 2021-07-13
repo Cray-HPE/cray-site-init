@@ -33,6 +33,7 @@ var genSLSCmd = &cobra.Command{
 
 func init() {
 	configCmd.AddCommand(genSLSCmd)
+	genSLSCmd.DisableAutoGenTag = true
 	genSLSCmd.Flags().Int16("river-cabinets", 1, "Number of River cabinets")
 	genSLSCmd.Flags().Int("hill-cabinets", 0, "Number of River cabinets")
 

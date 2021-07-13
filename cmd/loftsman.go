@@ -24,4 +24,5 @@ var loftsmanCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(loftsmanCmd)
+	loftsmanCmd.DisableAutoGenTag = true
 }

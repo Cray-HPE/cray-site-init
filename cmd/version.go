@@ -52,6 +52,7 @@ var versionCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(versionCmd)
+	versionCmd.DisableAutoGenTag = true
 	versionCmd.Flags().StringP("output", "o", "pretty", "output format pretty,json")
 	versionCmd.Flags().BoolP("simple", "s", false, "Simple version on a single line")
 	versionCmd.Flags().BoolP("git", "g", false, "Simple commit sha of the source tree on a single line. \"-dirty\" added to the end if uncommitted changes present")
