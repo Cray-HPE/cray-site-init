@@ -1,0 +1,44 @@
+@Library('csm-shared-library') _
+
+pipeline {
+  agent {
+    label "metal-gcp-builder"
+  }
+
+  options {
+    buildDiscarder(logRotator(numToKeepStr: "10"))
+    timestamps()
+  }
+
+  environment {
+    NAME = "cray-site-init"
+    SPEC_FILE = "cray-site-init.spec"
+    DESCRIPTION = "HPCaaS configuration and deployment tool for bare-metal or reinstallations"
+    IS_STABLE = getBuildIsStable()
+    BUILD_METADATA = getRpmRevision(isStable: env.IS_STABLE)
+  }
+
+  stages {
+    stage("Prepare") {
+      steps {
+        runLibraryScript("addRpmMetaData.sh", env.SPEC_FILE)
+        sh "make prepare"
+      }
+    }
+
+    stage('Rpm') {
+      steps {
+        sh "make rpm"
+      }
+    }
+
+    stage('Publish ') {
+      steps {
+        script {
+          publishCsmRpms(component: env.NAME, pattern: "dist/rpmbuild/RPMS/x86_64/*.rpm", arch: "x86_64", isStable: env.IS_STABLE)
+          publishCsmRpms(component: env.NAME, pattern: "dist/rpmbuild/SRPMS/*.rpm", arch: "src", isStable: env.IS_STABLE)
+        }
+      }
+    }
+  }
+}

@@ -1,5 +1,6 @@
 SHELL := /bin/bash
 VERSION := $(shell cat .version)
+SPEC_VERSION ?= $(shell cat .version)
 
 GO_FILES?=$$(find . -name '*.go' |grep -v vendor)
 TAG?=latest
@@ -12,6 +13,12 @@ TAG?=latest
 .BUILDTIME=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 CHANGELOG_VERSION_ORIG=$(grep -m1 \## CHANGELOG.MD | sed -e "s/\].*\$//" |sed -e "s/^.*\[//")
 CHANGELOG_VERSION=$(shell grep -m1 \ \[[0-9]*.[0-9]*.[0-9]*\] CHANGELOG.MD | sed -e "s/\].*$$//" |sed -e "s/^.*\[//")
+BUILD_DIR ?= $(PWD)/dist/rpmbuild
+SPEC_NAME ?= cray-site-init
+SPEC_FILE ?= ${SPEC_NAME}.spec
+SOURCE_NAME ?= ${SPEC_NAME}-${SPEC_VERSION}
+SOURCE_PATH := ${BUILD_DIR}/SOURCES/${SOURCE_NAME}.tar.bz2
+BUILD_METADATA ?= "$(shell git rev-parse --short HEAD)"
 
 # if we're an automated build, use .GIT_COMMIT_AND_BRANCH as-is, else add -dirty
 ifneq "$(origin BUILD_NUMBER)" "environment"
@@ -41,6 +48,7 @@ endif
 	version
 
 all: tools fmt lint reset build
+rpm: rpm_package_source rpm_build_source rpm_build
 
 help:
 	@echo 'Usage: make <OPTIONS> ... <TARGETS>'
@@ -68,6 +76,11 @@ help:
 
 print-%:
 	@echo $* = $($*)
+
+prepare:
+	rm -rf $(BUILD_DIR)
+	mkdir -p $(BUILD_DIR)/SPECS $(BUILD_DIR)/SOURCES
+	cp $(SPEC_FILE) $(BUILD_DIR)/SPECS/
 
 clean: clean-artifacts clean-releases
 	go clean -i ./...
@@ -125,6 +138,15 @@ build: fmt
 	-X stash.us.cray.com/MTL/csi/pkg/version.buildDate=${.BUILDTIME} \
 	-X stash.us.cray.com/MTL/csi/pkg/version.sha1ver=${.GIT_COMMIT_AND_BRANCH}"
 	bin/csi version
+
+rpm_package_source:
+	tar --transform 'flags=r;s,^,/$(SOURCE_NAME)/,' --exclude .git --exclude dist -cvjf $(SOURCE_PATH) .
+
+rpm_build_source:
+	BUILD_METADATA=$(BUILD_METADATA) rpmbuild -ts $(SOURCE_PATH) --define "_topdir $(BUILD_DIR)"
+
+rpm_build:
+	BUILD_METADATA=$(BUILD_METADATA) rpmbuild -ba $(SPEC_FILE) --define "_topdir $(BUILD_DIR)"
 
 doc:
 	godoc -http=:8080 -index
