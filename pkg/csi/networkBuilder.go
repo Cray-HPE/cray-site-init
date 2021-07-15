@@ -115,6 +115,7 @@ func BuildCSMNetworks(internalNetConfigs map[string]NetworkLayoutConfiguration, 
 func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, error) {
 	// log.Printf("Creating a network for %v with NetworkLayoutConfig %+v", conf.Template.Name, conf)
 	var canCIDR *net.IPNet
+	var cmnCIDR *net.IPNet
 	// I hope this viper is temporary
 	v := viper.GetViper()
 	// start with the defaults
@@ -125,7 +126,39 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 	aggSwitches := switchXnamesByType(conf.ManagementSwitches, "Aggregation")
 	cduSwitches := switchXnamesByType(conf.ManagementSwitches, "CDU")
 
-	// Do all the special stuff for the CAN
+	// Do all the special assembly for the CMN
+	if tempNet.Name == "CMN" {
+		_, cmnCIDR, _ = net.ParseCIDR(v.GetString("cmn-cidr"))
+		conf.DesiredBootstrapDHCPMask = cmnCIDR.Mask
+		_, cmnStaticPool, err := net.ParseCIDR(v.GetString("cmn-static-pool"))
+		if err != nil {
+			log.Printf("IP Addressing Failure\nInvalid cmn-static-pool.  Cowardly refusing to create it.")
+		} else {
+			static, err := tempNet.AddSubnetbyCIDR(*cmnStaticPool, "cmn_metallb_static_pool", int16(v.GetInt("cmn-bootstrap-vlan")))
+			if err != nil {
+				log.Fatalf("IP Addressing Failure\n"+
+					"Couldn't add MetalLB Static pool of %v to net %v: %v\n"+
+					"Possible missing or mismatched cmn-static-pool input value.",
+					v.GetString("cmn-static-pool"), tempNet.CIDR, err)
+			}
+			static.FullName = "CMN Static Pool MetalLB"
+		}
+		_, cmnDynamicPool, err := net.ParseCIDR(v.GetString("cmn-dynamic-pool"))
+		if err != nil {
+			log.Printf("IP Addressing Failure\nInvalid cmn-dynamic-pool.  Cowardly refusing to create it.")
+		} else {
+			pool, err := tempNet.AddSubnetbyCIDR(*cmnDynamicPool, "cmn_metallb_address_pool", int16(v.GetInt("cmn-bootstrap-vlan")))
+			if err != nil {
+				log.Fatalf("IP Addressing Failure\n"+
+					"Couldn't add MetalLB Dynamic pool of %v to net %v: %v\n"+
+					"Possible missing or mismatched cmn-dynamic-pool input value.",
+					v.GetString("cmn-dynamic-pool"), tempNet.CIDR, err)
+			}
+			pool.FullName = "CMN Dynamic MetalLB"
+		}
+	}
+
+	// Do all the special assembly for the CAN
 	if tempNet.Name == "CAN" {
 		_, canCIDR, _ = net.ParseCIDR(v.GetString("can-cidr"))
 		conf.DesiredBootstrapDHCPMask = canCIDR.Mask
@@ -135,7 +168,10 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 		} else {
 			static, err := tempNet.AddSubnetbyCIDR(*canStaticPool, "can_metallb_static_pool", int16(v.GetInt("can-bootstrap-vlan")))
 			if err != nil {
-				log.Fatalf("IP Addressing Failure\nCouldn't add MetalLB Static pool of %v to net %v: %v", v.GetString("can-static-pool"), tempNet.CIDR, err)
+				log.Fatalf("IP Addressing Failure\n"+
+					"Couldn't add MetalLB Static pool of %v to net %v: %v\n"+
+					"Possible missing or mismatched can-static-pool input value.",
+					v.GetString("can-static-pool"), tempNet.CIDR, err)
 			}
 			static.FullName = "CAN Static Pool MetalLB"
 			_, err = static.AddReservationWithIP("external-dns", v.GetString("can-external-dns"), "site to system lookups")
@@ -149,7 +185,11 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 		} else {
 			pool, err := tempNet.AddSubnetbyCIDR(*canDynamicPool, "can_metallb_address_pool", int16(v.GetInt("can-bootstrap-vlan")))
 			if err != nil {
-				log.Fatalf("IP Addressing Failure\nCouldn't add MetalLB Dynamic pool of %v to net %v: %v", v.GetString("can-dynamic-pool"), tempNet.CIDR, err)
+				log.Fatalf("IP Addressing Failure\n"+
+					"Couldn't add MetalLB Dynamic pool of %v to net %v: %v\n"+
+					"Possible missing or mismatched can-dynamic-pool value.",
+					v.GetString("can-dynamic-pool"), tempNet.CIDR, err)
+				log.Fatalf("Possible missing or mismatched can-dynamic-pool value.")
 			}
 			pool.FullName = "CAN Dynamic MetalLB"
 		}
@@ -190,8 +230,13 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 			return &tempNet, fmt.Errorf("unable to add bootstrap_dhcp subnet to %v because %v", conf.Template.Name, err)
 		}
 		subnet.FullName = fmt.Sprintf("%v Bootstrap DHCP Subnet", tempNet.Name)
-		if tempNet.Name == "NMN" || tempNet.Name == "CAN" || tempNet.Name == "HMN" {
-			if tempNet.Name == "CAN" {
+		if tempNet.Name == "NMN" || tempNet.Name == "HMN" || tempNet.Name == "CMN" || tempNet.Name == "CAN" {
+			if tempNet.Name == "CMN" {
+				subnet.CIDR = *cmnCIDR
+				subnet.Gateway = net.ParseIP(v.GetString("cmn-gateway"))
+				subnet.AddReservation("cmn-switch-1", "")
+				subnet.AddReservation("cmn-switch-2", "")
+			} else if tempNet.Name == "CAN" {
 				subnet.CIDR = *canCIDR
 				subnet.Gateway = net.ParseIP(v.GetString("can-gateway"))
 				subnet.AddReservation("can-switch-1", "")

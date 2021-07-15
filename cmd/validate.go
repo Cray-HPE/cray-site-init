@@ -29,6 +29,7 @@ var validateCmd = &cobra.Command{
 			runCommand("ip a show bond0")
 			runCommand("ip a show vlan002")
 			runCommand("ip a show vlan004")
+			runCommand("ip a show vlan006")
 			runCommand("ip a show vlan007")
 		}
 

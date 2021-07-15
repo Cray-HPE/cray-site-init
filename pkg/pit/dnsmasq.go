@@ -16,6 +16,20 @@ import (
 	"github.com/spf13/viper"
 )
 
+// CMNConfigTemplate manages the CAN portion of the DNSMasq configuration
+var CMNConfigTemplate = []byte(`
+# CMN:
+server=/cmn/
+address=/cmn/
+dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:domain-search,cmn
+interface-name=pit.can,{{.VlanID | printf "vlan%03d"}}
+interface={{.VlanID | printf "vlan%03d"}}
+cname=packages.cmn,pit.cmn
+cname=registry.cmn,pit.cmn
+dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:router,{{.Gateway}}
+dhcp-range=interface:{{.VlanID | printf "vlan%03d"}},{{.DHCPStart}},{{.DHCPEnd}},10m
+`)
+
 // CANConfigTemplate manages the CAN portion of the DNSMasq configuration
 var CANConfigTemplate = []byte(`
 # CAN:
@@ -169,10 +183,12 @@ func WriteDNSMasqConfig(path string, v *viper.Viper, bootstrap []csi.LogicalNCN,
 	}
 
 	// Shasta Networks:
+	netCMN, _ := template.New("cmnconfig").Parse(string(CMNConfigTemplate))
 	netCAN, _ := template.New("canconfig").Parse(string(CANConfigTemplate))
 	netHMN, _ := template.New("hmnconfig").Parse(string(HMNConfigTemplate))
 	netNMN, _ := template.New("nmnconfig").Parse(string(NMNConfigTemplate))
 	netMTL, _ := template.New("mtlconfig").Parse(string(MTLConfigTemplate))
+	writeConfig("CMN", path, *netCMN, networks)
 	writeConfig("CAN", path, *netCAN, networks)
 	writeConfig("HMN", path, *netHMN, networks)
 	writeConfig("NMN", path, *netNMN, networks)

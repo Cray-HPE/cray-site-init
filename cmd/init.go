@@ -102,6 +102,7 @@ var initCmd = &cobra.Command{
 		// Prepare the network layout configs for generating the networks
 		var internalNetConfigs = make(map[string]csi.NetworkLayoutConfiguration)
 		internalNetConfigs["HMN"] = csi.GenDefaultHMNConfig()
+		internalNetConfigs["CMN"] = csi.GenDefaultCMNConfig()
 		internalNetConfigs["CAN"] = csi.GenDefaultCANConfig()
 		internalNetConfigs["NMN"] = csi.GenDefaultNMNConfig()
 		internalNetConfigs["HSN"] = csi.GenDefaultHSNConfig()
@@ -112,7 +113,7 @@ var initCmd = &cobra.Command{
 				tmpHmnMtn := csi.GenDefaultHMNConfig()
 				tmpHmnMtn.Template.Name = "HMN_MTN"
 				tmpHmnMtn.Template.FullName = "Mountain Hardware Management Network"
-				tmpHmnMtn.Template.VlanRange = []int16{1000, 1256}
+				tmpHmnMtn.Template.VlanRange = []int16{3000, 3999}
 				tmpHmnMtn.SubdivideByCabinet = true
 				tmpHmnMtn.IncludeBootstrapDHCP = false
 				tmpHmnMtn.SuperNetHack = false
@@ -138,7 +139,7 @@ var initCmd = &cobra.Command{
 				tmpNmnMtn := csi.GenDefaultNMNConfig()
 				tmpNmnMtn.Template.Name = "NMN_MTN"
 				tmpNmnMtn.Template.FullName = "Mountain Node Management Network"
-				tmpNmnMtn.Template.VlanRange = []int16{1257, 1512}
+				tmpNmnMtn.Template.VlanRange = []int16{2000, 2999}
 				tmpNmnMtn.SubdivideByCabinet = true
 				tmpNmnMtn.IncludeBootstrapDHCP = false
 				tmpNmnMtn.SuperNetHack = false
@@ -150,7 +151,7 @@ var initCmd = &cobra.Command{
 				tmpNmnRvr := csi.GenDefaultNMNConfig()
 				tmpNmnRvr.Template.Name = "NMN_RVR"
 				tmpNmnRvr.Template.FullName = "River Node Management Network"
-				tmpNmnRvr.Template.VlanRange = []int16{1770, 2025}
+				tmpNmnRvr.Template.VlanRange = []int16{1770, 1999}
 				tmpNmnRvr.SubdivideByCabinet = true
 				tmpNmnRvr.IncludeBootstrapDHCP = false
 				tmpNmnRvr.SuperNetHack = false
@@ -170,6 +171,7 @@ var initCmd = &cobra.Command{
 			myLayout.BaseVlan = int16(v.GetInt(fmt.Sprintf("%v-bootstrap-vlan", normalizedName)))
 
 			myLayout.Template.CIDR = v.GetString(fmt.Sprintf("%v-cidr", normalizedName))
+			myLayout.Template.VlanRange[0] = int16(v.GetInt(fmt.Sprintf("%v-bootstrap-vlan", normalizedName)))
 
 			myLayout.AdditionalNetworkingSpace = v.GetInt("management-net-ips")
 			internalNetConfigs[name] = myLayout
@@ -216,7 +218,7 @@ var initCmd = &cobra.Command{
 				tempSubnet, err := shastaNetworks[netName].LookUpSubnet("bootstrap_dhcp")
 				if err == nil {
 					// Loop the reservations and update the NCN reservations with hostnames
-					// we likely didn't have when we registered the resevation
+					// we likely didn't have when we registered the reservation
 					updateReservations(tempSubnet, logicalNcns)
 					if netName == "CAN" {
 						// Do not use supernet hack for the CAN
@@ -282,6 +284,7 @@ var initCmd = &cobra.Command{
 		// Print Summary
 		fmt.Printf("\n===== %v Installation Summary =====\n\n", v.GetString("system-name"))
 		fmt.Printf("Installation Node: %v\n", v.GetString("install-ncn"))
+		fmt.Printf("Customer Management: %v GW: %v\n", v.GetString("cmn-cidr"), v.GetString("cmn-gateway"))
 		fmt.Printf("Customer Access: %v GW: %v\n", v.GetString("can-cidr"), v.GetString("can-gateway"))
 		fmt.Printf("\tUpstream DNS: %v\n", v.GetString("ipv4-resolvers"))
 		fmt.Printf("\tMetalLB Peers: %v\n", v.GetString("bgp-peers"))
@@ -320,7 +323,8 @@ func init() {
 	initCmd.Flags().String("ipv4-resolvers", "8.8.8.8, 9.9.9.9", "List of IP Addresses for DNS")
 	initCmd.Flags().String("v2-registry", "https://registry.nmn/", "URL for default v2 registry used for both helm and containers")
 	initCmd.Flags().String("rpm-repository", "https://packages.nmn/repository/shasta-master", "URL for default rpm repository")
-	initCmd.Flags().String("can-gateway", "", "Gateway for NCNs on the CAN")
+	initCmd.Flags().String("cmn-gateway", "", "Gateway for NCNs on the CMN (Management)")
+	initCmd.Flags().String("can-gateway", "", "Gateway for NCNs on the CAN (User)")
 	initCmd.Flags().String("ceph-cephfs-image", "dtr.dev.cray.com/cray/cray-cephfs-provisioner:0.1.0-nautilus-1.3", "The container image for the cephfs provisioner")
 	initCmd.Flags().String("ceph-rbd-image", "dtr.dev.cray.com/cray/cray-rbd-provisioner:0.1.0-nautilus-1.3", "The container image for the ceph rbd provisioner")
 	initCmd.Flags().String("docker-image-registry", "dtr.dev.cray.com", "Upstream docker registry for use during the install")
@@ -342,6 +346,9 @@ func init() {
 	initCmd.Flags().String("hmn-mtn-cidr", csi.DefaultHMNMTNString, "IPv4 CIDR for grouped Mountain Hardware Management subnets")
 	initCmd.Flags().String("hmn-rvr-cidr", csi.DefaultHMNRVRString, "IPv4 CIDR for grouped River Hardware Management subnets")
 
+	initCmd.Flags().String("cmn-cidr", csi.DefaultCMNString, "Overall IPv4 CIDR for all Customer Management subnets")
+	initCmd.Flags().String("cmn-static-pool", csi.DefaultCMNStaticString, "Overall IPv4 CIDR for static Customer Management addresses")
+	initCmd.Flags().String("cmn-dynamic-pool", csi.DefaultCMNPoolString, "Overall IPv4 CIDR for dynamic Customer Management addresses")
 	initCmd.Flags().String("can-cidr", csi.DefaultCANString, "Overall IPv4 CIDR for all Customer Access subnets")
 	initCmd.Flags().String("can-static-pool", csi.DefaultCANStaticString, "Overall IPv4 CIDR for static Customer Access addresses")
 	initCmd.Flags().String("can-dynamic-pool", csi.DefaultCANPoolString, "Overall IPv4 CIDR for dynamic Customer Access addresses")
@@ -355,6 +362,7 @@ func init() {
 	// Bootstrap VLANS
 	initCmd.Flags().Int("nmn-bootstrap-vlan", csi.DefaultNMNVlan, "Bootstrap VLAN for the NMN")
 	initCmd.Flags().Int("hmn-bootstrap-vlan", csi.DefaultHMNVlan, "Bootstrap VLAN for the HMN")
+	initCmd.Flags().Int("cmn-bootstrap-vlan", csi.DefaultCMNVlan, "Bootstrap VLAN for the CMN")
 	initCmd.Flags().Int("can-bootstrap-vlan", csi.DefaultCANVlan, "Bootstrap VLAN for the CAN")
 	initCmd.Flags().Int("macvlan-bootstrap-vlan", csi.DefaultMacVlanVlan, "Bootstrap VLAN for MacVlan")
 
@@ -590,7 +598,6 @@ func writeOutput(v *viper.Viper, shastaNetworks map[string]*csi.IPV4Network, sls
 	if err != nil {
 		log.Fatalln("Failed to encode SLS state:", err)
 	}
-	pit.WriteNetworkFiles(basepath, shastaNetworks)
 	v.SetConfigType("yaml")
 	v.Set("VersionInfo", version.Get())
 	v.WriteConfigAs(filepath.Join(basepath, "system_config.yaml"))
@@ -619,6 +626,7 @@ func validateFlags() []string {
 	v := viper.GetViper()
 	var requiredFlags = []string{
 		"system-name",
+		"cmn-gateway",
 		"can-gateway",
 		"site-ip",
 		"site-gw",
@@ -637,6 +645,7 @@ func validateFlags() []string {
 
 	var ipv4Flags = []string{
 		"site-dns",
+		"cmn-gateway",
 		"can-gateway",
 		"site-gw",
 	}
@@ -649,6 +658,9 @@ func validateFlags() []string {
 	}
 
 	var cidrFlags = []string{
+		"cmn-cidr",
+		"cmn-static-pool",
+		"cmn-dynamic-pool",
 		"can-cidr",
 		"can-static-pool",
 		"can-dynamic-pool",

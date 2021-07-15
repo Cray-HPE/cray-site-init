@@ -55,6 +55,14 @@ const (
 	DefaultMacVlanString = "10.252.124.0/23"
 	// DefaultHSNString is the Default HSN String
 	DefaultHSNString = "10.253.0.0/16"
+	// DefaultCMNString is the Default CMN String (vlan006)
+	DefaultCMNString = "10.103.6.0/24"
+	// DefaultCMNPoolString is the default pool for CMN addresses
+	DefaultCMNPoolString = "10.103.6.128/25"
+	// DefaultCMNStaticString is the default pool for Static CMN addresses
+	DefaultCMNStaticString = "10.103.6.112/28"
+	// DefaultCMNVlan is the default CMN Bootstrap Vlan
+	DefaultCMNVlan = 6
 	// DefaultCANString is the Default CAN String (vlan007)
 	DefaultCANString = "10.102.11.0/24"
 	// DefaultCANPoolString is the default pool for CAN addresses
@@ -68,7 +76,7 @@ const (
 )
 
 // ValidNetNames is the list of strings that enumerate valid main network names
-var ValidNetNames = []string{"HMN", "NMN", "CAN", "MTL", "HMN_RVR", "HMN_MTN", "NMN_RVR", "NMN_MTN"}
+var ValidNetNames = []string{"HMN", "NMN", "CMN", "CAN", "MTL", "HMN_RVR", "HMN_MTN", "NMN_RVR", "NMN_MTN"}
 
 // ValidCabinetTypes is the list of strings that enumerate valid cabinet types
 var ValidCabinetTypes = []string{"mountain", "river", "hill"}
@@ -133,7 +141,7 @@ func GenDefaultHMN() IPV4Network {
 		FullName:  "Hardware Management Network",
 		CIDR:      DefaultHMNString,
 		Name:      "HMN",
-		VlanRange: []int16{100, 356},
+		VlanRange: []int16{DefaultHMNVlan},
 		MTU:       9000,
 		NetType:   "ethernet",
 		Comment:   "",
@@ -146,7 +154,7 @@ func GenDefaultNMN() IPV4Network {
 		FullName:  "Node Management Network",
 		CIDR:      DefaultNMNString,
 		Name:      "NMN",
-		VlanRange: []int16{357, 612},
+		VlanRange: []int16{DefaultNMNVlan},
 		MTU:       9000,
 		NetType:   "ethernet",
 		Comment:   "",
@@ -164,12 +172,23 @@ var DefaultHSN = IPV4Network{
 	Comment:   "",
 }
 
+// DefaultCMN is the default structure for templating initial CMN configuration
+var DefaultCMN = IPV4Network{
+	FullName:  "Customer Management Network",
+	CIDR:      DefaultCMNString,
+	Name:      "CMN",
+	VlanRange: []int16{DefaultCMNVlan},
+	MTU:       9000,
+	NetType:   "ethernet",
+	Comment:   "",
+}
+
 // DefaultCAN is the default structure for templating initial CAN configuration
 var DefaultCAN = IPV4Network{
 	FullName:  "Customer Access Network",
 	CIDR:      DefaultCANString,
 	Name:      "CAN",
-	VlanRange: []int16{11, 35},
+	VlanRange: []int16{DefaultCANVlan},
 	MTU:       9000,
 	NetType:   "ethernet",
 	Comment:   "",
@@ -180,7 +199,7 @@ var DefaultMTL = IPV4Network{
 	FullName:  "Provisioning Network (untagged)",
 	CIDR:      DefaultMTLString,
 	Name:      "MTL",
-	VlanRange: []int16{36, 40},
+	VlanRange: []int16{1},
 	MTU:       9000,
 	NetType:   "ethernet",
 	Comment:   "This network is only valid for the NCNs",
@@ -228,6 +247,20 @@ func GenDefaultHSNConfig() NetworkLayoutConfiguration {
 		IncludeBootstrapDHCP:            false,
 		IncludeNetworkingHardwareSubnet: false,
 		IncludeUAISubnet:                false,
+	}
+}
+
+// GenDefaultCMNConfig returns the set of defaults for mapping the CMN
+func GenDefaultCMNConfig() NetworkLayoutConfiguration {
+
+	return NetworkLayoutConfiguration{
+		Template:                        DefaultCMN,
+		SubdivideByCabinet:              false,
+		SuperNetHack:                    false,
+		IncludeBootstrapDHCP:            true,
+		IncludeNetworkingHardwareSubnet: false,
+		IncludeUAISubnet:                false,
+		DesiredBootstrapDHCPMask:        net.CIDRMask(24, 32),
 	}
 }
 

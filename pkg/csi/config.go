@@ -34,6 +34,7 @@ type SystemConfig struct {
 	RpmRegistry     string   `form:"rpm-repository" mapstructure:"rpm-repository"`
 	NMNCidr         string   `form:"nmn-cidr" mapstructure:"nmn-cidr"`
 	HMNCidr         string   `form:"hmn-cidr" mapstructure:"hmn-cidr"`
+	CMNCidr         string   `form:"cmn-cidr" mapstructure:"cmn-cidr"`
 	CANCidr         string   `form:"can-cidr" mapstructure:"can-cidr"`
 	MTLCidr         string   `form:"mtl-cidr" mapstructure:"mtl-cidr"`
 	HSNCidr         string   `form:"hsn-cidr" mapstructure:"hsn-cidr"`

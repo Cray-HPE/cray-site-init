@@ -30,6 +30,7 @@ type LogicalNCN struct {
 	NmnIP            string         `yaml:"nmn-ip" json:"nmn-ip" csv:"-"`
 	HmnIP            string         `yaml:"hmn-ip" json:"hmn-ip" csv:"-"`
 	MtlIP            string         `yaml:"mtl-ip" json:"mtl-ip" csv:"-"`
+	CmnIP            string         `yaml:"cmn-ip" json:"cmn-ip" csv:"-"`
 	CanIP            string         `yaml:"can-ip" json:"can-ip" csv:"-"`
 	Xname            string         `yaml:"xname" json:"xname" csv:"NCN xname"`
 	Hostname         string         `yaml:"hostname" json:"hostname" csv:"-"`
