@@ -14,7 +14,7 @@ TAG?=latest
 CHANGELOG_VERSION_ORIG=$(grep -m1 \## CHANGELOG.MD | sed -e "s/\].*\$//" |sed -e "s/^.*\[//")
 CHANGELOG_VERSION=$(shell grep -m1 \ \[[0-9]*.[0-9]*.[0-9]*\] CHANGELOG.MD | sed -e "s/\].*$$//" |sed -e "s/^.*\[//")
 BUILD_DIR ?= $(PWD)/dist/rpmbuild
-SPEC_NAME ?= cray-site-init
+SPEC_NAME ?= ${GIT_REPO_NAME}
 SPEC_FILE ?= ${SPEC_NAME}.spec
 SOURCE_NAME ?= ${SPEC_NAME}-${SPEC_VERSION}
 SOURCE_PATH := ${BUILD_DIR}/SOURCES/${SOURCE_NAME}.tar.bz2
@@ -143,10 +143,10 @@ rpm_package_source:
 	tar --transform 'flags=r;s,^,/$(SOURCE_NAME)/,' --exclude .git --exclude dist -cvjf $(SOURCE_PATH) .
 
 rpm_build_source:
-	BUILD_METADATA=$(BUILD_METADATA) rpmbuild -ts $(SOURCE_PATH) --define "_topdir $(BUILD_DIR)"
+	BUILD_METADATA=$(BUILD_METADATA) rpmbuild --nodeps -ts $(SOURCE_PATH) --define "_topdir $(BUILD_DIR)"
 
 rpm_build:
-	BUILD_METADATA=$(BUILD_METADATA) rpmbuild -ba $(SPEC_FILE) --define "_topdir $(BUILD_DIR)"
+	BUILD_METADATA=$(BUILD_METADATA) rpmbuild --nodeps -ba $(SPEC_FILE) --define "_topdir $(BUILD_DIR)"
 
 doc:
 	godoc -http=:8080 -index
