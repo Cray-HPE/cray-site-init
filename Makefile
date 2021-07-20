@@ -19,6 +19,8 @@ SPEC_FILE ?= ${SPEC_NAME}.spec
 SOURCE_NAME ?= ${SPEC_NAME}-${SPEC_VERSION}
 SOURCE_PATH := ${BUILD_DIR}/SOURCES/${SOURCE_NAME}.tar.bz2
 BUILD_METADATA ?= "$(shell git rev-parse --short HEAD)"
+# TODO: Align TEST_OUTPUT_DIR to what GitHub runners need for collecting coverage:
+TEST_OUTPUT_DIR ?= $(CURDIR)/build/results
 
 # if we're an automated build, use .GIT_COMMIT_AND_BRANCH as-is, else add -dirty
 ifneq "$(origin BUILD_NUMBER)" "environment"
@@ -98,7 +100,11 @@ clean-all: clean clean-artifacts
 
 # Run tests
 test: build
-	go test ./cmd/... ./internal/... ./pkg/... -v -coverprofile coverage.out -covermode count
+	mkdir -pv $(TEST_OUTPUT_DIR)/unittest $(TEST_OUTPUT_DIR)/coverage
+	go test ./cmd/... ./internal/... ./pkg/... -v -coverprofile $(TEST_OUTPUT_DIR)/coverage.out -covermode count | tee "$(TEST_OUTPUT_DIR)/testing.out"
+	cat "$(TEST_OUTPUT_DIR)/testing.out" | go-junit-report | tee "$(TEST_OUTPUT_DIR)/unittest/testing.xml" | tee "$(TEST_OUTPUT_DIR)/unittest/testing.xml"
+	gocover-cobertura < $(TEST_OUTPUT_DIR)/coverage.out > "$(TEST_OUTPUT_DIR)/coverage/coverage.xml"
+	go tool cover -html=$(TEST_OUTPUT_DIR)/coverage.out -o "$(TEST_OUTPUT_DIR)/coverage/coverage.html"
 
 tools:
 	go get -u github.com/axw/gocov/gocov
@@ -106,7 +112,7 @@ tools:
 	go get -u golang.org/x/lint/golint
 	go get -u github.com/t-yuki/gocover-cobertura
 	go get -u github.com/jstemmer/go-junit-report
-	go env -w GOPRIVATE=*.us.cray.com
+	go env -w GOPRIVATE="stash.us.cray.com,github.com/Cray-HPE/*"
 
 vet: version
 	go vet -v ./...
@@ -133,10 +139,10 @@ reset:
 
 build: fmt
 	go build -o bin/csi -ldflags "\
-	-X stash.us.cray.com/MTL/csi/pkg/version.gitVersion=${.GIT_VERSION} \
-	-X stash.us.cray.com/MTL/csi/pkg/version.fsVersion=${.FS_VERSION} \
-	-X stash.us.cray.com/MTL/csi/pkg/version.buildDate=${.BUILDTIME} \
-	-X stash.us.cray.com/MTL/csi/pkg/version.sha1ver=${.GIT_COMMIT_AND_BRANCH}"
+	-X github.com/Cray-HPE/cray-site-init/pkg/version.gitVersion=${.GIT_VERSION} \
+	-X github.com/Cray-HPE/cray-site-init/pkg/version.fsVersion=${.FS_VERSION} \
+	-X github.com/Cray-HPE/cray-site-init/pkg/version.buildDate=${.BUILDTIME} \
+	-X github.com/Cray-HPE/cray-site-init/pkg/version.sha1ver=${.GIT_COMMIT_AND_BRANCH}"
 	bin/csi version
 
 rpm_package_source:

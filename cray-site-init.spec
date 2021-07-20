@@ -40,9 +40,7 @@ mkdir -pv ${RPM_BUILD_ROOT}/usr/bin/
 cp -pv bin/csi ${RPM_BUILD_ROOT}/usr/bin/csi
 
 mkdir -pv ${RPM_BUILD_ROOT}/usr/local/bin/
-cp -pv write-livecd.sh ${RPM_BUILD_ROOT}/usr/local/bin/write-livecd.sh
-
-%pre
+cp -pv scripts/write-livecd.sh ${RPM_BUILD_ROOT}/usr/local/bin/write-livecd.sh
 
 %clean
 
