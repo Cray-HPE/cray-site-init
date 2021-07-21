@@ -106,6 +106,10 @@ test: build
 	gocover-cobertura < $(TEST_OUTPUT_DIR)/coverage.out > "$(TEST_OUTPUT_DIR)/coverage/coverage.xml"
 	go tool cover -html=$(TEST_OUTPUT_DIR)/coverage.out -o "$(TEST_OUTPUT_DIR)/coverage/coverage.html"
 
+# Run integration tests
+integrate:
+	go test ./cmd/... ./internal/... ./pkg/... -tags=integration -v -coverprofile coverage.out -covermode count
+
 tools:
 	go get -u github.com/axw/gocov/gocov
 	go get -u github.com/AlekSi/gocov-xml

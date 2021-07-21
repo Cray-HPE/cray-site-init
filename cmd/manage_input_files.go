@@ -7,11 +7,11 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"path/filepath"
 
 	"github.com/Cray-HPE/cray-site-init/internal/files"
 	"github.com/Cray-HPE/cray-site-init/pkg/csi"
 	"github.com/spf13/viper"
-	"path/filepath"
 	shcd_parser "stash.us.cray.com/HMS/hms-shcd-parser/pkg/shcd-parser"
 )
 
@@ -55,7 +55,7 @@ func collectSwitches(v *viper.Viper) []*csi.ManagementSwitch {
 
 	switches, err := csi.ReadSwitchCSV(seedFileSwitchMetadata)
 	if err != nil {
-		log.Fatalln("Couldn't extract switches", err)
+		log.Fatalf("Couldn't extract switches, %v", err)
 	}
 
 	// Normalize the management switch data, before validation
@@ -100,7 +100,8 @@ func collectApplicationNodeConfig(v *viper.Viper) csi.SLSGeneratorApplicationNod
 func collectCabinets(v *viper.Viper) []csi.CabinetGroupDetail {
 	var cabDetailFile csi.CabinetDetailFile
 	if v.IsSet("cabinets-yaml") {
-		err := files.ReadYAMLConfig(v.GetString("cabinets-yaml"), &cabDetailFile)
+		seedFileCabinets := filepath.Dir(viper.ConfigFileUsed()) + "/cabinets.yaml"
+		err := files.ReadYAMLConfig(seedFileCabinets, &cabDetailFile)
 		if err != nil {
 			log.Fatalf("Unable to parse cabinets-yaml file: %s\nError: %v", v.GetString("cabinets-yaml"), err)
 		}
