@@ -9,30 +9,9 @@ import (
 	"io"
 	"log"
 	"os"
-	"path"
-	"path/filepath"
-	"strings"
 
 	"github.com/spf13/viper"
 )
-
-// ImportConfig converts a configuration file to a viper
-func ImportConfig(configfile string) (*viper.Viper, error) {
-	dirname, filename := path.Split(configfile)
-	extenstion := filepath.Ext(filename)
-	name := strings.TrimSuffix(filename, extenstion)
-
-	config := viper.New()
-	config.SetConfigType(strings.TrimPrefix(extenstion, "."))
-	config.SetConfigName(name)
-	config.AddConfigPath(dirname)
-	err := config.ReadInConfig()
-	if err != nil {
-		return config, err
-	}
-	config.WatchConfig()
-	return config, nil
-}
 
 // ExportConfig converts a viper to a file on disk
 func ExportConfig(configfile string, config *viper.Viper) error {

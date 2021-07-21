@@ -21,6 +21,7 @@ var versionCmd = &cobra.Command{
 	Short: "version",
 	Run: func(cmd *cobra.Command, args []string) {
 		v := viper.GetViper()
+		v.BindPFlags(cmd.Flags())
 		clientVersion := version.Get()
 		if v.GetBool("simple") {
 			fmt.Printf("%v.%v\n", clientVersion.Major, clientVersion.Minor)
