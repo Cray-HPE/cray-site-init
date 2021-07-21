@@ -35,32 +35,34 @@ func GetArtifact(dirpath string, url string) (err error) {
 			log.Fatal(err)
 		}
 
-		if resp.StatusCode != 200 {
-			fmt.Println(resp.StatusCode)
-		}
-		defer resp.Body.Close()
-
 		filename := resp.Request.URL.String()
 		var fullPath = dirpath + "/" + path.Base(filename)
 
-		fmt.Printf("%d Saving...%s\n", resp.StatusCode, fullPath)
-		// Create the file
-		out, err := os.Create(fullPath)
-		if err != nil {
-			fmt.Println(err)
-		}
-		defer out.Close()
+		// Downloading non-existent files gives a bunch of html, which csi doesn't need
+		if resp.Header.Get("Content-Type") == "text/html;charset=UTF-8" {
 
-		// Check server response
-		if resp.StatusCode != http.StatusOK {
-			return fmt.Errorf("bad status: %s", resp.Status)
+		} else {
+
+			// Create the file
+			out, err := os.Create(fullPath)
+			if err != nil {
+				fmt.Println(err)
+			}
+			defer out.Close()
+
+			// Check server response
+			if resp.StatusCode != http.StatusOK {
+				return fmt.Errorf("bad status: %s", resp.Status)
+			}
+
+			// Writer the body to file
+			_, err = io.Copy(out, resp.Body)
+			if err != nil {
+				return err
+			}
 		}
 
-		// Writer the body to file
-		_, err = io.Copy(out, resp.Body)
-		if err != nil {
-			return err
-		}
+		defer resp.Body.Close()
 
 	} else {
 		return fmt.Errorf("missing or malformed URL: %v", url)

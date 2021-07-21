@@ -29,7 +29,7 @@ import (
 // initCmd represents the init command
 var initCmd = &cobra.Command{
 	Use:   "init",
-	Short: "init generates the directory structure for a new system rooted in a directory matching the system-name argument",
+	Short: "Generates a Shasta configuration payload",
 	Long: `init generates a scaffolding the Shasta configuration payload.  It is based on several input files:
 	1. The hmn_connections.json which describes the cabling for the BMCs on the NCNs
 	2. The ncn_metadata.csv file documents the MAC addresses of the NCNs to be used in this installation
@@ -58,22 +58,16 @@ var initCmd = &cobra.Command{
 		var err error
 		// Initialize the global viper
 		v := viper.GetViper()
-		v.SetConfigName("system_config")
-		v.AddConfigPath(".")
-		// Attempt to read the config file, gracefully ignoring errors
-		// caused by a config file not being found. Return an error
-		// if we cannot parse the config file.
-		if err := v.ReadInConfig(); err != nil {
-			// It's okay if there isn't a config file
-			if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-				log.Fatalln(err)
-			}
-		}
+
+		v.BindPFlags(cmd.Flags())
 
 		flagErrors := validateFlags()
 		if len(flagErrors) > 0 {
 			cmd.Usage()
-			log.Fatalf(strings.Join(flagErrors, "/n"))
+			for _, e := range flagErrors {
+				log.Println(e)
+			}
+			log.Fatal("One or more flags are invalid")
 		}
 
 		if len(strings.Split(v.GetString("site-ip"), "/")) != 2 {
@@ -305,7 +299,6 @@ var initCmd = &cobra.Command{
 }
 
 func init() {
-	configCmd.AddCommand(initCmd)
 	initCmd.DisableAutoGenTag = true
 
 	// Flags with defaults for initializing a configuration
@@ -626,8 +619,8 @@ func validateFlags() []string {
 	v := viper.GetViper()
 	var requiredFlags = []string{
 		"system-name",
-		"cmn-gateway",
 		"can-gateway",
+		"cmn-gateway",
 		"site-ip",
 		"site-gw",
 		"can-external-dns",
@@ -639,7 +632,7 @@ func validateFlags() []string {
 
 	for _, flagName := range requiredFlags {
 		if !v.IsSet(flagName) {
-			errors = append(errors, fmt.Sprintf("%v is required and not set through flag or config file (.%s)", flagName, v.ConfigFileUsed()))
+			errors = append(errors, fmt.Sprintf("%v is required and not set through flag or config file (%s)", flagName, v.ConfigFileUsed()))
 		}
 	}
 

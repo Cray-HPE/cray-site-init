@@ -12,20 +12,18 @@ import (
 // dumpCmd represents the dump command
 var dumpCmd = &cobra.Command{
 	Use:   "dump",
-	Short: "",
+	Short: "Dumps an existing config to STDOUT",
+	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		LoadConfig()
 		if len(args) < 1 {
 			PrintConfig(viper.GetViper())
 		} else {
 			subv := viper.Sub(args[0])
 			PrintConfig(subv)
-
 		}
 	},
 }
 
 func init() {
-	configCmd.AddCommand(dumpCmd)
 	dumpCmd.DisableAutoGenTag = true
 }

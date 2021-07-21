@@ -19,9 +19,9 @@ import (
 // loadCmd represents the load command
 var loadCmd = &cobra.Command{
 	Use:   "load <path>",
-	Short: "load a valid Shasta directory of configuration",
+	Short: "Load an existing Shasta configuration",
 	Long: `Load a set of files that represent a Shasta system.
-	Often load is used with init which generates the files.`,
+	Often, 'load' is used with 'init', which generates the files.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
 			log.Fatalln(errors.New("path needs to be provided"))
@@ -42,8 +42,8 @@ var loadCmd = &cobra.Command{
 }
 
 func init() {
-	configCmd.AddCommand(loadCmd)
 	loadCmd.DisableAutoGenTag = true
+
 }
 
 func loadSystemConfig(path string) (sysconf csi.SystemConfig, err error) {
