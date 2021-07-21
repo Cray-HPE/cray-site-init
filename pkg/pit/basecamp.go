@@ -11,9 +11,9 @@ import (
 	"log"
 	"strings"
 
+	csiFiles "github.com/Cray-HPE/cray-site-init/internal/files"
+	"github.com/Cray-HPE/cray-site-init/pkg/csi"
 	"github.com/spf13/viper"
-	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
-	"stash.us.cray.com/MTL/csi/pkg/csi"
 )
 
 // MetaData is part of the cloud-init stucture and
@@ -109,7 +109,7 @@ var k8sRunCMD = []string{
 	"/srv/cray/scripts/metal/set-efi-bbs.sh",
 	"/srv/cray/scripts/metal/disable-cloud-init.sh",
 	"/srv/cray/scripts/common/update_ca_certs.py",
-    "/srv/cray/scripts/metal/install-rpms.sh",
+	"/srv/cray/scripts/metal/install-rpms.sh",
 	"/srv/cray/scripts/common/kubernetes-cloudinit.sh",
 }
 
@@ -127,7 +127,7 @@ var cephRunCMD = []string{
 	"/srv/cray/scripts/metal/set-efi-bbs.sh",
 	"/srv/cray/scripts/metal/disable-cloud-init.sh",
 	"/srv/cray/scripts/common/update_ca_certs.py",
-    "/srv/cray/scripts/metal/install-rpms.sh",
+	"/srv/cray/scripts/metal/install-rpms.sh",
 	"/srv/cray/scripts/common/pre-load-images.sh",
 	"/srv/cray/scripts/common/storage-ceph-cloudinit.sh",
 }
@@ -146,7 +146,7 @@ var cephWorkerRunCMD = []string{
 	"/srv/cray/scripts/metal/set-efi-bbs.sh",
 	"/srv/cray/scripts/metal/disable-cloud-init.sh",
 	"/srv/cray/scripts/common/update_ca_certs.py",
-    "/srv/cray/scripts/metal/install-rpms.sh",
+	"/srv/cray/scripts/metal/install-rpms.sh",
 	"/srv/cray/scripts/common/pre-load-images.sh",
 }
 

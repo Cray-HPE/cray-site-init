@@ -10,9 +10,9 @@ import (
 	"net"
 	"strings"
 
+	"github.com/Cray-HPE/cray-site-init/pkg/ipam"
 	"github.com/pkg/errors"
 	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
-	"stash.us.cray.com/MTL/csi/pkg/ipam"
 )
 
 // IPV4Network is a type for managing IPv4 Networks

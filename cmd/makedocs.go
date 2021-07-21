@@ -8,10 +8,10 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"time"
-	"strings"
-	"path/filepath"
 	"path"
+	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"

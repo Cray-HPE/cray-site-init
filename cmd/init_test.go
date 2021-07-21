@@ -8,8 +8,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/Cray-HPE/cray-site-init/pkg/csi"
 	"github.com/stretchr/testify/suite"
-	"stash.us.cray.com/MTL/csi/pkg/csi"
 )
 
 type InitCmdTestSuite struct {
