@@ -17,13 +17,6 @@ import (
 	"github.com/Cray-HPE/cray-site-init/pkg/csi"
 )
 
-// WriteNetworkFiles persistes our network configuration to disk in a directory of yaml files
-func WriteNetworkFiles(basepath string, networks map[string]*csi.IPV4Network) {
-	for k, v := range networks {
-		csiFiles.WriteYAMLConfig(filepath.Join(basepath, fmt.Sprintf("networks/%v.yaml", k)), v)
-	}
-}
-
 // WriteCPTNetworkConfig writes the Network Configuration details for the installation node  (PIT)
 func WriteCPTNetworkConfig(path string, v *viper.Viper, ncn csi.LogicalNCN, shastaNetworks map[string]*csi.IPV4Network) error {
 	type Route struct {
