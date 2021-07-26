@@ -358,7 +358,7 @@ func init() {
 	initCmd.Flags().Int("macvlan-bootstrap-vlan", csi.DefaultMacVlanVlan, "Bootstrap VLAN for MacVlan")
 
 	// Hardware Details
-	initCmd.Flags().Int("mountain-cabinets", 4, "Number of Mountain Cabinets") // 4 mountain cabinets per CDU
+	initCmd.Flags().Int("mountain-cabinets", 0, "Number of Mountain Cabinets") // 4 mountain cabinets per CDU
 	initCmd.Flags().Int("starting-mountain-cabinet", 1000, "Starting ID number for Mountain Cabinets")
 
 	initCmd.Flags().Int("river-cabinets", 1, "Number of River Cabinets")
