@@ -50,6 +50,7 @@ endif
 	version
 
 all: tools fmt lint reset build
+
 rpm: rpm_package_source rpm_build_source rpm_build
 
 help:
