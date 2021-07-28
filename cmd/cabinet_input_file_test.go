@@ -1,5 +1,3 @@
-// +build !integration
-
 /*
 Copyright 2021 Hewlett Packard Enterprise Development LP
 */
@@ -19,7 +17,7 @@ cabinets:
 - type: river
   cabinets:
     - id: 3000
-
+ 
 - type: hill
   cabinets:
     - id: 9000

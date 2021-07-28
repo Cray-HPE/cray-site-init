@@ -1,4 +1,3 @@
 bin/
 coverage*
 build/
-cmd/*/*
