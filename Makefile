@@ -40,7 +40,6 @@ endif
 	clean \
 	clean-artifacts \
 	clean-releases \
-	tools \
 	test \
 	vet \
 	lint \
@@ -50,7 +49,7 @@ endif
 	doc \
 	version
 
-all: tools fmt lint reset build
+all: fmt lint reset build
 
 rpm: rpm_package_source rpm_build_source rpm_build
 
@@ -64,7 +63,6 @@ help:
 	@echo '    clean              Remove binaries, artifacts and releases.'
 	@echo '    clean-artifacts    Remove build artifacts only.'
 	@echo '    clean-releases     Remove releases only.'
-	@echo '    tools              Install tools needed by the project.'
 	@echo '    test               Run unit tests.'
 	@echo '    vet                Run go vet.'
 	@echo '    lint               Run golint.'
@@ -107,14 +105,6 @@ test: build
 	cat "$(TEST_OUTPUT_DIR)/testing.out" | go-junit-report | tee "$(TEST_OUTPUT_DIR)/unittest/testing.xml" | tee "$(TEST_OUTPUT_DIR)/unittest/testing.xml"
 	gocover-cobertura < $(TEST_OUTPUT_DIR)/coverage.out > "$(TEST_OUTPUT_DIR)/coverage/coverage.xml"
 	go tool cover -html=$(TEST_OUTPUT_DIR)/coverage.out -o "$(TEST_OUTPUT_DIR)/coverage/coverage.html"
-
-tools:
-	go get -u github.com/axw/gocov/gocov
-	go get -u github.com/AlekSi/gocov-xml
-	go get -u golang.org/x/lint/golint
-	go get -u github.com/t-yuki/gocover-cobertura
-	go get -u github.com/jstemmer/go-junit-report
-	go env -w GOPRIVATE="stash.us.cray.com,github.com/Cray-HPE/*"
 
 vet: version
 	go vet -v ./...
