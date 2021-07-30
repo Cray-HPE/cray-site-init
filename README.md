@@ -18,11 +18,6 @@ See https://cray-hpe.github.io/cray-site-init/commands for details on each comma
 
 ## Build from source
 
-> Note: You will need to add CRAY to the [GOPRIVATE lib][1] for a clean run:
-> ```bash
-> export GOPRIVATE="stash.us.cray.com,github.com/Cray-HPE/*"
-> ```
-
 1. Using the `makefile`
     ```bash
     $> make
