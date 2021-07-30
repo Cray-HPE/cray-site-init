@@ -1,0 +1,108 @@
+HMS Go Redfish Library
+-------------------------------------------------------------------------
+This library is intended for L1 discovery, i.e. almost entirely 
+Redfish-based with no L2 dependencies.  One L2-like concept is xnames
+but we do not use L2 services to discover these and they rely on
+config files provided by the user.  While these are intended to be
+location based, it is simply a stand-in for the hostname provided at
+boot time.
+
+This library should be sufficient to both support a basic bootmanager
+daemon, a la our L1 functionality demo, but is also intended to provide
+the starting point for L2 discovery and support of State Manager.
+
+TODO: Determine the level of separation that is required here.
+
+Overview:
+=============
+A config file, which may or may not be populated by SSDP discovery
+provides the raw Redfish endpoints and user/pass credentials.  
+
+From there, we build a structure for each endpoint and contact the
+RF endpoint, building a set of inter-related structures for each of
+the crucial component types: Managers, ComputerSystems, Chassis, and
+Ethernet interfaces (ComputerSystem subcomponents TBD).  We also create
+structures for each of the various services.
+
+Because Redfish is a hypermedia representation of the system, i.e. it is
+not a hierarchical tree, the RFEndpoint structure serves as the "hub" of
+the discovered data.  Each structure has a backpointer to the RFEndpoint,
+and the RFEndpoint stores a map of pointers for each component type, keyed
+by the Redfish odata.ids, so that structs of different types can reference
+each other.
+
+At this point the only option is to collect all this information in a
+single go.  This may be fine for an initial discovery, but in the future
+we may want to re-query certain dynamic information, or even rediscover
+system components that may have changed.
+
+For a single BMC, the major system components should remain fixed, but
+a nested system that may have swapable components may require careful
+consideration.  When traversing links between component types, we shouldn't
+in theory, have changes occur that cause us to "fall off the edge".
+
+In any case, certain structures are always to be considered dynamic, in
+the sense they are not fixed in number and can change unexpectedly.
+
+- Event subscriptions
+- Accounts/Roles
+- Tasks
+
+For these, only the containing structures (e.g. the EventService) will be
+captured "permanently" during discovery, the individual member objects will
+need to be queried via a separate proces. 
+
+
+Outstanding issues and TODO:
+==================================
+- Connections to RF endpoints do no consider certificates at all, or try to
+  verify or otherwise manage them.
+  
+- Connections to RF endpoints do not use sessions.  At this point, this
+  isn't required.
+  
+- Discovery is parallel for all RF endpoints, but all interactions with
+  individual endpoints are serialized.  The discovery process still takes
+  under a minute, which isn't terrible, but faster would be better.  It's
+  not clear how much faster multiple connections to BMCs would be, though.
+
+- Number of simultaneous connections is capped so as to not exceed maximum
+  open file counts, but doesn't have any smarts at the moment and uses a
+  conservative number.  
+
+- Logging is very primitive with a fixed option to use stderr
+
+- Verbose and debug output blasts a ton of information that should be
+  tuned to be more useful.
+
+- Would like to be able to refresh data in a smart way and not just start
+  discovery over.
+
+- I added the "close" parameter to the client options to avoid getting a
+  bunch of junk on stderr and a "read unexpected data from client" error
+  on the next get.  This reduces the throughput so Dave might have a better
+  way of doing this.
+
+- When the Redfish endpoint does not supply a key, the corresponding
+  key value in the struct will be "", for number values, however, it will
+  be zero, which is a bigger problem.  Use json.Number or use pointer
+  arguments instead.  Even for strings, we can then tell whether the RF
+  endpoint gave us a blank value (supports value, but doesn't have one)
+  or just omitted the key entirely (probably doesn't support that property.
+  Is this worth all the nil checks?  Or does Go avoid a lot of the problems
+  with nil strings?
+  
+- How to handle OEM fields.  I've just been skipping them, since obviously
+  they will vary from component to component.  We may be able to decode
+  them as interface{}, which can then be turned into a string map.  Or maybe
+  just json.RawMessage is more flexible.  
+
+- BIOS "Attributes" seem to have a similar issue.  They are an array of 
+  "Name":"Value" pairs, but I don't think we can just pre-define them
+  all.  They are not in the Redfish BIOS schema as specific parameters  And
+  the values can be numbers, strings, bools, etc.
+
+Futher features TBD:
+=========================
+- Support activities: Event subscriptions, account and role creation, 
+  network configuration, etc.?

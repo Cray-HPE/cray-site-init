@@ -22,8 +22,8 @@ import (
 	"github.com/Cray-HPE/cray-site-init/pkg/ipam"
 	"github.com/Cray-HPE/cray-site-init/pkg/pit"
 	"github.com/Cray-HPE/cray-site-init/pkg/version"
-	shcd_parser "stash.us.cray.com/HMS/hms-shcd-parser/pkg/shcd-parser"
-	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
+	shcd_parser "github.com/Cray-HPE/hms-shcd-parser/pkg/shcd-parser"
+	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 )
 
 // initCmd represents the init command

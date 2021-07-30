@@ -12,8 +12,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/Cray-HPE/cray-site-init/pkg/csi"
-	base "stash.us.cray.com/HMS/hms-base"
-	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
+	base "github.com/Cray-HPE/hms-base"
+	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 )
 
 // initCmd represents the init command
