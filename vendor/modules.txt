@@ -1,3 +1,5 @@
+# github.com/AlekSi/gocov-xml v0.0.0-20190121064608-3a14fb1c4737
+## explicit
 # github.com/Cray-HPE/hms-base v1.15.0
 ## explicit
 github.com/Cray-HPE/hms-base
@@ -68,6 +70,8 @@ github.com/aws/aws-sdk-go/service/s3
 github.com/aws/aws-sdk-go/service/s3/internal/arn
 github.com/aws/aws-sdk-go/service/sts
 github.com/aws/aws-sdk-go/service/sts/stsiface
+# github.com/axw/gocov v1.0.0
+## explicit
 # github.com/cpuguy83/go-md2man/v2 v2.0.0
 github.com/cpuguy83/go-md2man/v2/md2man
 # github.com/davecgh/go-spew v1.1.1
@@ -140,6 +144,8 @@ github.com/inconshreveable/mousetrap
 github.com/jmespath/go-jmespath
 # github.com/json-iterator/go v1.1.10
 github.com/json-iterator/go
+# github.com/jstemmer/go-junit-report v0.9.1
+## explicit
 # github.com/magiconair/properties v1.8.1
 github.com/magiconair/properties
 # github.com/mitchellh/go-homedir v1.1.0
@@ -195,6 +201,8 @@ github.com/stretchr/testify/require
 github.com/stretchr/testify/suite
 # github.com/subosito/gotenv v1.2.0
 github.com/subosito/gotenv
+# github.com/t-yuki/gocover-cobertura v0.0.0-20180217150009-aaee18c8195c
+## explicit
 # go.uber.org/atomic v1.6.0
 go.uber.org/atomic
 # go.uber.org/multierr v1.5.0
@@ -244,7 +252,7 @@ golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 # golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e
 golang.org/x/time/rate
-# golang.org/x/tools v0.1.4
+# golang.org/x/tools v0.1.5
 ## explicit
 # google.golang.org/appengine v1.6.6
 google.golang.org/appengine/internal
