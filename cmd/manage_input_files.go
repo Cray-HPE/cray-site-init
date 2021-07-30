@@ -12,7 +12,7 @@ import (
 	"github.com/Cray-HPE/cray-site-init/pkg/csi"
 	"github.com/spf13/viper"
 	"path/filepath"
-	shcd_parser "stash.us.cray.com/HMS/hms-shcd-parser/pkg/shcd-parser"
+	shcd_parser "github.com/Cray-HPE/hms-shcd-parser/pkg/shcd-parser"
 )
 
 type cabinetDefinition struct {

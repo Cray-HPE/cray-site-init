@@ -22,6 +22,7 @@ BUILD_METADATA ?= "$(shell git rev-parse --short HEAD)"
 # TODO: Align TEST_OUTPUT_DIR to what GitHub runners need for collecting coverage:
 TEST_OUTPUT_DIR ?= $(CURDIR)/build/results
 
+
 # if we're an automated build, use .GIT_COMMIT_AND_BRANCH as-is, else add -dirty
 ifneq "$(origin BUILD_NUMBER)" "environment"
 # not a CJE pipeline build

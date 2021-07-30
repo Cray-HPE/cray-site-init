@@ -13,7 +13,7 @@ import (
 	"os"
 
 	"github.com/gocarina/gocsv"
-	base "stash.us.cray.com/HMS/hms-base"
+	base "github.com/Cray-HPE/hms-base"
 )
 
 // LogicalNCN is the main struct for NCNs
