@@ -107,7 +107,7 @@ func uploadFile(filePath string, s3KeyName string) {
 	}
 	defer file.Close()
 
-	_, err = s3Client.PutFileWithACL(s3KeyName, file, s3ACL)
+	_, err = s3Client.UploadFileWithACL(s3KeyName, file, s3ACL)
 	if err != nil {
 		log.Panic(err)
 	}

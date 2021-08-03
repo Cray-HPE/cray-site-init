@@ -6,7 +6,7 @@ github.com/Cray-HPE/hms-base
 github.com/Cray-HPE/hms-bss/pkg/bssTypes
 # github.com/Cray-HPE/hms-certs v1.3.2
 github.com/Cray-HPE/hms-certs/pkg/hms_certs
-# github.com/Cray-HPE/hms-s3 v1.9.3-0.20210803193508-c70e2b921e93
+# github.com/Cray-HPE/hms-s3 v1.9.3-0.20210803221915-414a4b65b16d
 ## explicit
 github.com/Cray-HPE/hms-s3
 # github.com/Cray-HPE/hms-securestorage v1.12.2
@@ -71,6 +71,8 @@ github.com/aws/aws-sdk-go/private/protocol/restjson
 github.com/aws/aws-sdk-go/private/protocol/restxml
 github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil
 github.com/aws/aws-sdk-go/service/s3
+github.com/aws/aws-sdk-go/service/s3/s3iface
+github.com/aws/aws-sdk-go/service/s3/s3manager
 github.com/aws/aws-sdk-go/service/sso
 github.com/aws/aws-sdk-go/service/sso/ssoiface
 github.com/aws/aws-sdk-go/service/sts
