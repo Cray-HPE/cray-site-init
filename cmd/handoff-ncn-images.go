@@ -14,12 +14,12 @@ import (
 	"path/filepath"
 	"regexp"
 
+	hms_s3 "github.com/Cray-HPE/hms-s3"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
-	hms_s3 "github.com/Cray-HPE/hms-s3"
 )
 
 const s3ACL = "public-read"
@@ -72,7 +72,7 @@ func init() {
 		_ = handoffCmd.MarkFlagRequired("kubeconfig")
 	}
 
-	handoffNCNImagesCmd.Flags().StringVar(&s3SecretName, "s3-secret", "sds-s3-credentials",
+	handoffNCNImagesCmd.Flags().StringVar(&s3SecretName, "s3-secret", "sts-s3-credentials",
 		"Secret to use for connecting to S3")
 	handoffNCNImagesCmd.Flags().StringVar(&s3BucketName, "s3-bucket", "ncn-images",
 		"Bucket to create and upload NCN images to")
