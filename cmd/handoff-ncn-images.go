@@ -11,10 +11,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
+	"time"
 
 	hms_s3 "github.com/Cray-HPE/hms-s3"
 	"github.com/spf13/cobra"
@@ -142,6 +144,10 @@ func uploadNCNImagesS3() {
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		DialContext: (&net.Dialer{
+			// If the image is sufficiently large it's possible for the connection to go stale.
+			KeepAlive: 10 * time.Second,
+		}).DialContext,
 	}
 	httpClient := &http.Client{Transport: tr}
 
