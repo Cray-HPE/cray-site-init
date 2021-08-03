@@ -1,0 +1,25 @@
+version: '3.7'
+
+networks:
+  hms3:
+
+services:
+  s3:
+    image: dtr.dev.cray.com/minio/minio
+    hostname: s3
+    environment:
+      MINIO_ACCESS_KEY: s3-access-key
+      MINIO_SECRET_KEY: s3-secret-key
+    command: server /data
+    networks:
+      - hms3
+  s3-init:
+    image: dtr.dev.cray.com/minio/mc
+    hostname: s3-init
+    environment:
+      - MC_HOST_S3=http://s3-access-key:s3-secret-key@s3:9000
+    command: mb S3/tester
+    depends_on:
+      - s3
+    networks:
+      - hms3

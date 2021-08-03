@@ -3,8 +3,9 @@ module stash.us.cray.com/MTL/csi
 replace k8s.io/client-go => k8s.io/client-go v0.19.4 // pinning this version for now.  Something is indirectly asking for an obsolete version
 
 require (
-	github.com/Cray-HPE/hms-s3 v1.9.3-0.20210803193508-c70e2b921e93
+	github.com/Cray-HPE/hms-s3 v1.9.3-0.20210803221157-1f1688dfe502
 	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef
+	github.com/aws/aws-sdk-go v1.40.14 // indirect
 	github.com/evanphx/json-patch v4.9.0+incompatible
 	github.com/gocarina/gocsv v0.0.0-20200925213129-04be9ee2e1a2
 	github.com/imdario/mergo v0.3.11 // indirect
