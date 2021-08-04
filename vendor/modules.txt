@@ -6,7 +6,7 @@ github.com/Cray-HPE/hms-base
 github.com/Cray-HPE/hms-bss/pkg/bssTypes
 # github.com/Cray-HPE/hms-certs v1.3.2
 github.com/Cray-HPE/hms-certs/pkg/hms_certs
-# github.com/Cray-HPE/hms-s3 v1.9.3-0.20210803221915-414a4b65b16d
+# github.com/Cray-HPE/hms-s3 v1.10.0
 ## explicit
 github.com/Cray-HPE/hms-s3
 # github.com/Cray-HPE/hms-securestorage v1.12.2

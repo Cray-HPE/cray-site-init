@@ -5,7 +5,7 @@ replace k8s.io/client-go => k8s.io/client-go v0.19.4 // pinning this version for
 require (
 	github.com/Cray-HPE/hms-base v1.15.0
 	github.com/Cray-HPE/hms-bss v1.9.5
-	github.com/Cray-HPE/hms-s3 v1.9.3-0.20210803221915-414a4b65b16d
+	github.com/Cray-HPE/hms-s3 v1.10.0
 	github.com/Cray-HPE/hms-shcd-parser v1.6.2
 	github.com/Cray-HPE/hms-sls v1.10.4
 	github.com/Cray-HPE/hms-smd v1.30.9
