@@ -53,10 +53,8 @@ github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/ClickHouse/clickhouse-go v1.3.12/go.mod h1:EaI/sW7Azgz9UATzd5ZdZHRUhHgv5+JMS9NSr2smCJI=
-github.com/Cray-HPE/hms-s3 v1.9.3-0.20210803193508-c70e2b921e93 h1:JjHfrT9UgO5pCrKxNsSjn1IcrA6WzkRyF0bkNzAPT6g=
-github.com/Cray-HPE/hms-s3 v1.9.3-0.20210803193508-c70e2b921e93/go.mod h1:rZZmnKhZCkujpMHivyRr3YTbSQ+Wwvhjz6ItwL3ChSs=
-github.com/Cray-HPE/hms-s3 v1.9.3-0.20210803221157-1f1688dfe502 h1:xPUHOLme7CG673SzIALZtHgrDF0goTXa25agoH7QCec=
-github.com/Cray-HPE/hms-s3 v1.9.3-0.20210803221157-1f1688dfe502/go.mod h1:rZZmnKhZCkujpMHivyRr3YTbSQ+Wwvhjz6ItwL3ChSs=
+github.com/Cray-HPE/hms-s3 v1.10.0 h1:R1WRwVhE6vhdC+O9fEn01Euma5GoU1oUur+vzTD5FRU=
+github.com/Cray-HPE/hms-s3 v1.10.0/go.mod h1:rZZmnKhZCkujpMHivyRr3YTbSQ+Wwvhjz6ItwL3ChSs=
 github.com/DATA-DOG/go-sqlmock v1.3.3/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
 github.com/DataDog/zstd v1.3.6-0.20190409195224-796139022798/go.mod h1:1jcaCB/ufaK+sKp1NBhlGmpz41jOoPQ35bpF36t7BBo=
 github.com/Masterminds/squirrel v1.4.0/go.mod h1:yaPeOnPG5ZRwL9oKdTsO/prlkPbXWZlRVMQ/gGlzIuA=

@@ -242,7 +242,7 @@ func (client *S3Client) PutObjectInputFileACL(key string, file *os.File, acl str
 }
 
 func (client *S3Client) UploadInputACL(key string, file *os.File, acl string) *s3manager.UploadInput {
-	return &	s3manager.UploadInput{
+	return &s3manager.UploadInput{
 		ACL:    aws.String(acl),
 		Bucket: aws.String(client.ConnInfo.Bucket),
 		Key:    aws.String(key),
