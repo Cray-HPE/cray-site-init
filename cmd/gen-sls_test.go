@@ -10,8 +10,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
-	"stash.us.cray.com/MTL/csi/pkg/csi"
+	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
+	"github.com/Cray-HPE/cray-site-init/pkg/csi"
 )
 
 type GenSLSTestSuite struct {

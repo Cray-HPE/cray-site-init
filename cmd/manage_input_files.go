@@ -9,9 +9,10 @@ import (
 	"log"
 
 	"github.com/spf13/viper"
-	shcd_parser "stash.us.cray.com/HMS/hms-shcd-parser/pkg/shcd-parser"
-	"stash.us.cray.com/MTL/csi/internal/files"
-	"stash.us.cray.com/MTL/csi/pkg/csi"
+	"path/filepath"
+	shcd_parser "github.com/Cray-HPE/hms-shcd-parser/pkg/shcd-parser"
+	"github.com/Cray-HPE/cray-site-init/internal/files"
+	"github.com/Cray-HPE/cray-site-init/pkg/csi"
 )
 
 type cabinetDefinition struct {

@@ -14,8 +14,12 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"stash.us.cray.com/HMS/hms-bss/pkg/bssTypes"
-	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
+	"strconv"
+	"strings"
+
+	"github.com/spf13/cobra"
+	"github.com/Cray-HPE/hms-bss/pkg/bssTypes"
+	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 )
 
 const gatewayHostname = "api-gw-service-nmn.local"
