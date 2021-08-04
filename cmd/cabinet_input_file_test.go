@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"gopkg.in/yaml.v2"
-	"stash.us.cray.com/MTL/csi/pkg/csi"
+	"github.com/Cray-HPE/cray-site-init/pkg/csi"
 )
 
 var cabinetsWithHill = `

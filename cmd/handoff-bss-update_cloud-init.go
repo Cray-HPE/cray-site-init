@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"stash.us.cray.com/HMS/hms-bss/pkg/bssTypes"
+	"github.com/Cray-HPE/hms-bss/pkg/bssTypes"
 )
 
 var ciData bssTypes.CloudInit

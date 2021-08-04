@@ -18,7 +18,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
-	hms_s3 "stash.us.cray.com/HMS/hms-s3"
+	hms_s3 "github.com/Cray-HPE/hms-s3"
 )
 
 // loftsmanCmd represents the loftsman command

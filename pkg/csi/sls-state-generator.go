@@ -12,9 +12,9 @@ import (
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	base "stash.us.cray.com/HMS/hms-base"
-	shcd_parser "stash.us.cray.com/HMS/hms-shcd-parser/pkg/shcd-parser"
-	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
+	base "github.com/Cray-HPE/hms-base"
+	shcd_parser "github.com/Cray-HPE/hms-shcd-parser/pkg/shcd-parser"
+	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 )
 
 var (
