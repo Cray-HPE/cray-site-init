@@ -10,8 +10,8 @@ import (
 	"net"
 	"strings"
 
-	"github.com/spf13/viper"
 	"github.com/Cray-HPE/cray-site-init/pkg/ipam"
+	"github.com/spf13/viper"
 )
 
 // NetworkLayoutConfiguration is the internal configuration structure for shasta networks

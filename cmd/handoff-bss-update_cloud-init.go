@@ -11,8 +11,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/spf13/cobra"
 	"github.com/Cray-HPE/hms-bss/pkg/bssTypes"
+	"github.com/spf13/cobra"
 )
 
 var ciData bssTypes.CloudInit

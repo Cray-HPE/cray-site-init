@@ -9,9 +9,9 @@ import (
 	"net"
 	"strings"
 
+	"github.com/Cray-HPE/cray-site-init/pkg/csi"
 	valid "github.com/asaskevich/govalidator"
 	"github.com/spf13/viper"
-	"github.com/Cray-HPE/cray-site-init/pkg/csi"
 )
 
 // CustomizationsWLM is the struct for holding all WLM related values for customizations.yaml
