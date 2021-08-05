@@ -5,11 +5,12 @@ replace k8s.io/client-go => k8s.io/client-go v0.19.4 // pinning this version for
 require (
 	github.com/Cray-HPE/hms-base v1.15.0
 	github.com/Cray-HPE/hms-bss v1.9.5
-	github.com/Cray-HPE/hms-s3 v1.9.2
+	github.com/Cray-HPE/hms-s3 v1.10.0
 	github.com/Cray-HPE/hms-shcd-parser v1.6.2
 	github.com/Cray-HPE/hms-sls v1.10.4
 	github.com/Cray-HPE/hms-smd v1.30.9
 	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef
+	github.com/aws/aws-sdk-go v1.40.14
 	github.com/evanphx/json-patch v4.9.0+incompatible
 	github.com/gocarina/gocsv v0.0.0-20200925213129-04be9ee2e1a2
 	github.com/imdario/mergo v0.3.11 // indirect

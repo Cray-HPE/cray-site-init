@@ -8,11 +8,15 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
+	"time"
 
 	hms_s3 "github.com/Cray-HPE/hms-s3"
 	"github.com/spf13/cobra"
@@ -103,7 +107,7 @@ func uploadFile(filePath string, s3KeyName string) {
 	}
 	defer file.Close()
 
-	_, err = s3Client.PutFileWithACL(s3KeyName, file, s3ACL)
+	_, err = s3Client.UploadFileWithACL(s3KeyName, file, s3ACL)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -140,6 +144,10 @@ func uploadNCNImagesS3() {
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		DialContext: (&net.Dialer{
+			// If the image is sufficiently large it's possible for the connection to go stale.
+			KeepAlive: 10 * time.Second,
+		}).DialContext,
 	}
 	httpClient := &http.Client{Transport: tr}
 
@@ -151,10 +159,16 @@ func uploadNCNImagesS3() {
 	// Create public-read bucket.
 	_, err = s3Client.CreateBucketWithACL(s3BucketName, s3ACL)
 	if err != nil {
-		log.Panic(err)
-	}
+		awsErr := err.(awserr.Error)
 
-	fmt.Printf("Sucessfully created %s bucket.\n", s3BucketName)
+		if awsErr.Code() == s3.ErrCodeBucketAlreadyExists {
+			log.Printf("Bucket already exists.\n")
+		} else {
+			log.Panic(err)
+		}
+	} else {
+		fmt.Printf("Sucessfully created %s bucket.\n", s3BucketName)
+	}
 
 	// Need to figure out the versions of these images.
 	versionRegex := regexp.MustCompile(`.*-(.+[0-9])\.squashfs`)

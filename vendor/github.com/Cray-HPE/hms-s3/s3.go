@@ -35,6 +35,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
 type ConnectionInfo struct {
@@ -114,8 +115,9 @@ func LoadConnectionInfoFromEnvVars() (info ConnectionInfo, err error) {
 }
 
 type S3Client struct {
-	Session *session.Session
-	S3      *s3.S3
+	Session  *session.Session
+	Uploader *s3manager.Uploader
+	S3       *s3.S3
 	//Service service
 	ConnInfo ConnectionInfo
 }
@@ -143,6 +145,8 @@ func NewS3Client(info ConnectionInfo, httpClient *http.Client) (*S3Client, error
 
 	client.S3 = s3.New(client.Session)
 	client.ConnInfo = info
+
+	client.Uploader = s3manager.NewUploader(client.Session)
 
 	return &client, nil
 }
@@ -237,6 +241,15 @@ func (client *S3Client) PutObjectInputFileACL(key string, file *os.File, acl str
 	}
 }
 
+func (client *S3Client) UploadInputACL(key string, file *os.File, acl string) *s3manager.UploadInput {
+	return &s3manager.UploadInput{
+		ACL:    aws.String(acl),
+		Bucket: aws.String(client.ConnInfo.Bucket),
+		Key:    aws.String(key),
+		Body:   file,
+	}
+}
+
 func (client *S3Client) PutObject(key string, payloadBytes []byte) (*s3.PutObjectOutput, error) {
 	return client.S3.PutObject(client.PutObjectInputBytes(key, payloadBytes))
 }
@@ -247,6 +260,10 @@ func (client *S3Client) PutFile(key string, file *os.File) (*s3.PutObjectOutput,
 
 func (client *S3Client) PutFileWithACL(key string, file *os.File, acl string) (*s3.PutObjectOutput, error) {
 	return client.S3.PutObject(client.PutObjectInputFileACL(key, file, acl))
+}
+
+func (client *S3Client) UploadFileWithACL(key string, file *os.File, acl string) (*s3manager.UploadOutput, error) {
+	return client.Uploader.Upload(client.UploadInputACL(key, file, acl))
 }
 
 // Delete
