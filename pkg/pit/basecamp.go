@@ -11,9 +11,9 @@ import (
 	"log"
 	"strings"
 
-	"github.com/spf13/viper"
 	csiFiles "github.com/Cray-HPE/cray-site-init/internal/files"
 	"github.com/Cray-HPE/cray-site-init/pkg/csi"
+	"github.com/spf13/viper"
 )
 
 // MetaData is part of the cloud-init stucture and
