@@ -10,10 +10,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/spf13/cobra"
-	shcd_parser "github.com/Cray-HPE/hms-shcd-parser/pkg/shcd-parser"
 	csiFiles "github.com/Cray-HPE/cray-site-init/internal/files"
 	"github.com/Cray-HPE/cray-site-init/pkg/csi"
+	shcd_parser "github.com/Cray-HPE/hms-shcd-parser/pkg/shcd-parser"
+	"github.com/spf13/cobra"
 )
 
 // loadCmd represents the load command
