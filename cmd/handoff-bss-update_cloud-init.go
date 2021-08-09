@@ -62,7 +62,7 @@ func init() {
 	handoffBSSUpdateCloudInitCmd.Flags().StringArrayVar(&limitToXnames, "limit", []string{},
 		"Limit updates to just the xnames specified")
 	handoffBSSUpdateCloudInitCmd.Flags().StringVar(&userDataJSON, "user-data", "",
-		"json-formatted file with global cloud-init user-data")
+		"json-formatted file with cloud-init user-data")
 }
 
 func getFinalJSONObject(key string, bssEntry *bssTypes.BootParams) (string, *map[string]interface{}) {
