@@ -1,0 +1,84 @@
+[
+  {
+    "common_name": "something",
+    "id": 0,
+    "location": {
+      "rack": "x1000",
+      "elevation": "u42"
+    },
+    "architecture": "arch",
+    "model": "1234_ABC567",
+    "type": "switch",
+    "vendor": "aruba",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 10,
+        "slot": null,
+        "destination_node_id": 36,
+        "destination_port": 2,
+        "destination_slot": null
+      },
+      {
+        "port": 2,
+        "speed": 10,
+        "slot": null,
+        "destination_node_id": 37,
+        "destination_port": 2,
+        "destination_slot": null
+      }
+    ]
+  },
+  {
+    "common_name": "another_thing",
+    "id": 1,
+    "location": {
+      "rack": "x1000",
+      "elevation": "u42"
+    },
+    "architecture": "spine",
+    "model": "GHIJ_KLM789",
+    "type": "switch",
+    "vendor": "aruba",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 100,
+        "slot": null,
+        "destination_node_id": 7,
+        "destination_port": 54,
+        "destination_slot": null
+      },
+      {
+        "port": 2,
+        "speed": 100,
+        "slot": null,
+        "destination_node_id": 6,
+        "destination_port": 54,
+        "destination_slot": null
+      }
+    ]
+  },
+  {
+    "common_name": "thingy",
+    "id": 2,
+    "location": {
+      "rack": "x1000",
+      "elevation": "u42"
+    },
+    "architecture": "agg",
+    "model": "cec",
+    "type": "none",
+    "vendor": "cray",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 0,
+        "destination_port": 48,
+        "destination_slot": null
+      }
+    ]
+  }
+]

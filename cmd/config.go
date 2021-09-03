@@ -26,6 +26,7 @@ func init() {
 	configCmd.AddCommand(genSLSCmd)
 	configCmd.AddCommand(initCmd)
 	configCmd.AddCommand(loadCmd)
+	configCmd.AddCommand(shcdCmd)
 }
 
 // PrintConfig : Dump all configuration information as a yaml file on stdout
