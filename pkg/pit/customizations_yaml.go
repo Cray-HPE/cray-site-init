@@ -56,12 +56,15 @@ type CustomizationsNetworking struct {
 		NcnStorage         []net.IP `yaml:"nmn_ncn_storage" valid:"required"`
 	}
 	DNS struct {
-		ExternalDomain string `yaml:"external" valid:"host,required"`
-		ExternalS3     string `yaml:"external_s3" valid:"required,host"`
-		ExternalAuth   string `yaml:"external_auth" valid:"required,host"`
-		ExternalAPI    string `yaml:"external_api" valid:"required,host"`
-		InternalS3     string `yaml:"internal_s3" valid:"required,host"`
-		InternalAPI    string `yaml:"internal_api" valid:"required,host"`
+		ExternalDomain    string `yaml:"external" valid:"host,required"`
+		ExternalS3        string `yaml:"external_s3" valid:"required,host"`
+		ExternalAuth      string `yaml:"external_auth" valid:"required,host"`
+		ExternalAPI       string `yaml:"external_api" valid:"required,host"`
+		InternalS3        string `yaml:"internal_s3" valid:"required,host"`
+		InternalAPI       string `yaml:"internal_api" valid:"required,host"`
+		PrimaryServerName string `yaml:"primary_server_name" valid:"required,host"`
+		SecondaryServers  string `yaml:"secondary_servers" valid:"required,host"`
+		NotifyZones       string `yaml:"notify_zones" valid:"required,host"`
 	}
 }
 
@@ -137,19 +140,25 @@ func GenCustomizationsYaml(ncns []csi.LogicalNCN, shastaNetworks map[string]*csi
 			NcnStorage:         storage,
 		},
 		DNS: struct {
-			ExternalDomain string "yaml:\"external\" valid:\"host,required\""
-			ExternalS3     string "yaml:\"external_s3\" valid:\"required,host\""
-			ExternalAuth   string "yaml:\"external_auth\" valid:\"required,host\""
-			ExternalAPI    string "yaml:\"external_api\" valid:\"required,host\""
-			InternalS3     string "yaml:\"internal_s3\" valid:\"required,host\""
-			InternalAPI    string "yaml:\"internal_api\" valid:\"required,host\""
+			ExternalDomain    string "yaml:\"external\" valid:\"host,required\""
+			ExternalS3        string "yaml:\"external_s3\" valid:\"required,host\""
+			ExternalAuth      string "yaml:\"external_auth\" valid:\"required,host\""
+			ExternalAPI       string "yaml:\"external_api\" valid:\"required,host\""
+			InternalS3        string "yaml:\"internal_s3\" valid:\"required,host\""
+			InternalAPI       string "yaml:\"internal_api\" valid:\"required,host\""
+			PrimaryServerName string `yaml:"primary_server_name" valid:"required,host"`
+			SecondaryServers  string `yaml:"secondary_servers" valid:"required,host"`
+			NotifyZones       string `yaml:"notify_zones" valid:"required,host"`
 		}{
-			ExternalDomain: strings.ToLower(fmt.Sprintf("%s.%s", systemName, siteDomain)),
-			ExternalS3:     strings.ToLower(fmt.Sprintf("s3.%s.%s", systemName, siteDomain)),
-			ExternalAuth:   strings.ToLower(fmt.Sprintf("auth.%s.%s", systemName, siteDomain)),
-			ExternalAPI:    strings.ToLower(fmt.Sprintf("api.%s.%s", systemName, siteDomain)),
-			InternalS3:     "rgw-vip.nmn",
-			InternalAPI:    "api-gw-service-nmn.local",
+			ExternalDomain:    strings.ToLower(fmt.Sprintf("%s.%s", systemName, siteDomain)),
+			ExternalS3:        strings.ToLower(fmt.Sprintf("s3.%s.%s", systemName, siteDomain)),
+			ExternalAuth:      strings.ToLower(fmt.Sprintf("auth.%s.%s", systemName, siteDomain)),
+			ExternalAPI:       strings.ToLower(fmt.Sprintf("api.%s.%s", systemName, siteDomain)),
+			InternalS3:        "rgw-vip.nmn",
+			InternalAPI:       "api-gw-service-nmn.local",
+			PrimaryServerName: v.GetString("primary-server-name"),
+			SecondaryServers:  v.GetString("secondary-servers"),
+			NotifyZones:       v.GetString("notify-zones"),
 		},
 	}
 	output.Networking = customizationsNetworks
