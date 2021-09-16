@@ -7,7 +7,11 @@ Copyright 2021 Hewlett Packard Enterprise Development LP
 package cmd
 
 import (
+	"fmt"
 	"io/ioutil"
+	"log"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -21,6 +25,7 @@ var tests = []struct {
 	expectedErrorMsg       string
 	expectedSchemaErrorMsg string
 	name                   string
+	expectedHMNConnections []byte
 }{
 	{
 		fixture:                "../testdata/fixtures/valid_shcd.json",
@@ -28,6 +33,35 @@ var tests = []struct {
 		expectedErrorMsg:       "",
 		expectedSchemaErrorMsg: "",
 		name:                   "ValidFile",
+		expectedHMNConnections: []byte(`[
+{
+  "Source": "something",
+	"SourceRack": "x1000",
+	"SourceLocation": "u42",
+	"SourceSubLocation": "",
+	"DestinationRack": "",
+	"DestinationLocation": 0,
+	"DestinationPort": ""
+},
+{
+  "Source": "another_thing",
+	"SourceRack": "x1000",
+	"SourceLocation": "u42",
+	"SourceSubLocation": "",
+	"DestinationRack": "",
+	"DestinationLocation": 0,
+	"DestinationPort": ""
+},
+{
+	"Source": "thingy",
+	"SourceRack": "x1000",
+	"SourceLocation": "u42",
+	"SourceSubLocation": "",
+	"DestinationRack": "",
+	"DestinationLocation": 0,
+	"DestinationPort": ""
+	}
+	]`),
 	},
 	{
 		fixture:                "../testdata/fixtures/invalid_shcd.json",
@@ -102,5 +136,54 @@ func TestSHCDAgainstSchema(t *testing.T) {
 
 			}
 		})
+	}
+}
+
+func TestCreateHMNConnections(t *testing.T) {
+
+	for _, test := range tests {
+
+		if test.fixture == "../testdata/fixtures/valid_shcd.json" {
+
+			t.Run(test.name, func(t *testing.T) {
+
+				// Open the file since we know it is valid
+				shcdFile, err := ioutil.ReadFile(test.fixture)
+
+				if err != nil {
+					log.Fatalf(err.Error())
+				}
+
+				// Create hmn_connections.json
+				createHMNSeed(shcdFile, hmn_connections)
+
+				// Validate the file was created
+				assert.FileExists(t, filepath.Join(".", hmn_connections))
+
+				// Read the csv and validate it's contents
+				f, err := os.Open(filepath.Join(".", hmn_connections))
+
+				if err != nil {
+					log.Fatal("Unable to read "+filepath.Join(".", hmn_connections), err)
+				}
+
+				defer f.Close()
+
+				hmnFile, err := os.Open(filepath.Join(".", hmn_connections))
+
+				// if we os.Open returns an error then handle it
+				if err != nil {
+					fmt.Println(err)
+				}
+
+				defer hmnFile.Close()
+
+				hmnActual, _ := ioutil.ReadAll(hmnFile)
+
+				hmnExpected := test.expectedHMNConnections
+
+				assert.JSONEq(t, string(hmnExpected), string(hmnActual))
+			})
+		}
 	}
 }

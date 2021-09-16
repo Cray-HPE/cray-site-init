@@ -16,6 +16,9 @@ import (
 )
 
 const schemaFile = "internal/files/shcd-schema.json"
+const hmn_connections = "hmn_connections.json"
+
+var createHMN bool
 
 // initCmd represents the init command
 var shcdCmd = &cobra.Command{
@@ -63,6 +66,12 @@ var shcdCmd = &cobra.Command{
 				log.Fatalf(err.Error())
 			}
 
+			if v.IsSet("hmn-connections") {
+
+				createHMNSeed(shcdFile, hmn_connections)
+
+			}
+
 			// TODO: instead of printing the entire thing, create some of the seed file automatically
 			fmt.Println(string(shcd))
 
@@ -81,6 +90,7 @@ var shcdCmd = &cobra.Command{
 func init() {
 	shcdCmd.DisableAutoGenTag = true
 	shcdCmd.Flags().SortFlags = true
+	shcdCmd.Flags().BoolVarP(&createHMN, "hmn-connections", "H", false, "Generate the hmn_connections.json file")
 }
 
 // The Shcd type represents the entire machine-readable SHCD inside a go struct
@@ -111,6 +121,55 @@ type Port struct {
 type Location struct {
 	Elevation string `json:"elevation"`
 	Rack      string `json:"rack"`
+}
+
+// HMNConnections type is the go equivalent structure of hmn_connections.json
+type HMNConnections []HMNComponent
+
+// HMNComponent is an individual component in the HMNConnections slice
+type HMNComponent struct {
+	Source              string
+	SourceRack          string
+	SourceLocation      string
+	SourceSubLocation   string
+	DestinationRack     string
+	DestinationLocation int
+	DestinationPort     string
+}
+
+// createHMNSeed creates hmn_connections.json using information from the shcd
+func createHMNSeed(s []byte, f string) {
+
+	var shcd Shcd
+	var hmn HMNConnections
+
+	// unmarshall it
+	err := json.Unmarshal(s, &shcd)
+
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+
+	// For each entry in the shcd
+	for i := range shcd {
+
+		// Create a new HMNComponent type and append it to the HMNConnections slice
+		hmn = append(hmn, HMNComponent{
+			Source:         shcd[i].CommonName,
+			SourceRack:     shcd[i].Location.Rack,
+			SourceLocation: shcd[i].Location.Elevation,
+		})
+
+	}
+
+	// Indent the file for better human-readability
+	file, _ := json.MarshalIndent(hmn, "", " ")
+
+	// Write the file to disk
+	_ = ioutil.WriteFile(hmn_connections, file, 0644)
+
+	log.Printf("Created %v from SHCD data\n", hmn_connections)
+
 }
 
 // ValidateSchema compares a JSON file to the defined schema file
