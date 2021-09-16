@@ -7,6 +7,7 @@ Copyright 2021 Hewlett Packard Enterprise Development LP
 package cmd
 
 import (
+	"encoding/csv"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -25,6 +26,7 @@ var tests = []struct {
 	expectedErrorMsg       string
 	expectedSchemaErrorMsg string
 	name                   string
+	expectedSwitchMetadata [][]string
 	expectedHMNConnections []byte
 }{
 	{
@@ -33,6 +35,7 @@ var tests = []struct {
 		expectedErrorMsg:       "",
 		expectedSchemaErrorMsg: "",
 		name:                   "ValidFile",
+		expectedSwitchMetadata: [][]string{{"Switch Xname", "Type", "Brand"}, {"x1000", "switch", "aruba"}, {"x1000", "switch", "aruba"}, {"x1000", "none", "cray"}},
 		expectedHMNConnections: []byte(`[
 {
   "Source": "something",
@@ -183,6 +186,50 @@ func TestCreateHMNConnections(t *testing.T) {
 				hmnExpected := test.expectedHMNConnections
 
 				assert.JSONEq(t, string(hmnExpected), string(hmnActual))
+			})
+		}
+	}
+}
+
+func TestCreateSwitchMetadata(t *testing.T) {
+
+	for _, test := range tests {
+
+		if test.fixture == "../testdata/fixtures/valid_shcd.json" {
+
+			t.Run(test.name, func(t *testing.T) {
+
+				// Open the file since we know it is valid
+				shcdFile, err := ioutil.ReadFile(test.fixture)
+
+				if err != nil {
+					log.Fatalf(err.Error())
+				}
+
+				// Create switch_metadata.csv
+				createSwitchSeed(shcdFile, switch_metadata)
+
+				// Validate the file was created
+				assert.FileExists(t, filepath.Join(".", switch_metadata))
+
+				// Read the csv and validate it's contents
+				f, err := os.Open(filepath.Join(".", switch_metadata))
+
+				if err != nil {
+					log.Fatal("Unable to read "+filepath.Join(".", switch_metadata), err)
+				}
+
+				defer f.Close()
+
+				csvReader := csv.NewReader(f)
+
+				content, err := csvReader.ReadAll()
+
+				if err != nil {
+					log.Fatal("Unable to parse as a CSV: "+filepath.Join(".", switch_metadata), err)
+				}
+
+				assert.Equal(t, test.expectedSwitchMetadata, content)
 			})
 		}
 	}

@@ -5,10 +5,12 @@ Copyright 2021 Hewlett Packard Enterprise Development LP
 package cmd
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -17,8 +19,9 @@ import (
 
 const schemaFile = "internal/files/shcd-schema.json"
 const hmn_connections = "hmn_connections.json"
+const switch_metadata = "switch_metadata.csv"
 
-var createHMN bool
+var createHMN, createSM bool
 
 // initCmd represents the init command
 var shcdCmd = &cobra.Command{
@@ -72,6 +75,12 @@ var shcdCmd = &cobra.Command{
 
 			}
 
+			if v.IsSet("switch-metadata") {
+
+				createSwitchSeed(shcdFile, switch_metadata)
+
+			}
+
 			// TODO: instead of printing the entire thing, create some of the seed file automatically
 			fmt.Println(string(shcd))
 
@@ -91,6 +100,7 @@ func init() {
 	shcdCmd.DisableAutoGenTag = true
 	shcdCmd.Flags().SortFlags = true
 	shcdCmd.Flags().BoolVarP(&createHMN, "hmn-connections", "H", false, "Generate the hmn_connections.json file")
+	shcdCmd.Flags().BoolVarP(&createSM, "switch-metadata", "S", false, "Generate the switch_metadata.csv file")
 }
 
 // The Shcd type represents the entire machine-readable SHCD inside a go struct
@@ -135,6 +145,84 @@ type HMNComponent struct {
 	DestinationRack     string
 	DestinationLocation int
 	DestinationPort     string
+}
+
+// SwitchMetadata type is the go equivalent structure of switch_metadata.csv
+type SwitchMetadata []Switch
+
+// Switch is a row in switch_metadata.csv
+type Switch struct {
+	Xname string
+	Type  string
+	Brand string
+}
+
+// createSwitchSeed creates switch_metadata.csv using information from the shcd
+func createSwitchSeed(s []byte, f string) {
+	var shcd Shcd
+	var switches SwitchMetadata
+
+	// unmarshall it
+	err := json.Unmarshal(s, &shcd)
+
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+
+	// For each entry in the SHCD
+	for i := range shcd {
+
+		// Create a new Switch type and append it to the SwitchMetadata slice
+		switches = append(switches, Switch{
+			Xname: shcd[i].Location.Rack,
+			Type:  shcd[i].Type,
+			Brand: shcd[i].Vendor,
+		})
+
+	}
+
+	// When writing to csv, the first row should be the headers
+	headers := []string{"Switch Xname", "Type", "Brand"}
+
+	// Set up the records we need to write to the file
+	// To begin, this contains the headers
+	records := [][]string{headers}
+
+	// Then create a new slice with the three pieces of information needed
+	for _, v := range switches {
+		row := []string{v.Xname, v.Type, v.Brand}
+		// Append it to the records slice under the column headers
+		records = append(records, row)
+	}
+
+	// Create the file object
+	sm, err := os.Create(switch_metadata)
+
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	defer sm.Close()
+
+	// Create a writer, which will write the data to the file
+	writer := csv.NewWriter(sm)
+
+	defer writer.Flush()
+
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// For each item in the records slice
+	for _, v := range records {
+		// Write it to the csv file
+		if err := writer.Write(v); err != nil {
+			log.Fatalln(err)
+		}
+	}
+
+	// Let the user know the file was created
+	log.Printf("Created %v from SHCD data\n", switch_metadata)
 }
 
 // createHMNSeed creates hmn_connections.json using information from the shcd
