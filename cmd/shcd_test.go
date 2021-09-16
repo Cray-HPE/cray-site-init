@@ -13,29 +13,35 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const _schemaFile = "../internal/files/shcd-schema.json"
+
 var tests = []struct {
-	fixture          string
-	expectedError    bool
-	expectedErrorMsg string
-	name             string
+	fixture                string
+	expectedError          bool
+	expectedErrorMsg       string
+	expectedSchemaErrorMsg string
+	name                   string
 }{
 	{
-		fixture:          "../testdata/fixtures/valid_shcd.json",
-		expectedError:    false,
-		expectedErrorMsg: "",
-		name:             "ValidFile",
+		fixture:                "../testdata/fixtures/valid_shcd.json",
+		expectedError:          false,
+		expectedErrorMsg:       "",
+		expectedSchemaErrorMsg: "",
+		name:                   "ValidFile",
 	},
 	{
-		fixture:          "../testdata/fixtures/invalid_shcd.json",
-		expectedError:    true,
-		expectedErrorMsg: "invalid character ',' after top-level value",
-		name:             "MissingBracketFile",
+		fixture:                "../testdata/fixtures/invalid_shcd.json",
+		expectedError:          true,
+		expectedErrorMsg:       "invalid character ',' after top-level value",
+		expectedSchemaErrorMsg: "SHCD schema error: (root): Invalid type. Expected: array, given: object",
+		name:                   "MissingBracketFile",
 	},
 	{
-		fixture:          "../testdata/fixtures/invalid_data_types_shcd.json",
-		expectedError:    true,
-		expectedErrorMsg: "json: cannot unmarshal string into Go struct field Id.id of type int",
-		name:             "InvalidDataTypeFile",
+		fixture:                "../testdata/fixtures/invalid_data_types_shcd.json",
+		expectedError:          true,
+		expectedErrorMsg:       "json: cannot unmarshal string into Go struct field Id.id of type int",
+		expectedSchemaErrorMsg: "SHCD schema error: 0.id: Invalid type. Expected: integer, given: string",
+		name:                   "InvalidDataTypeFile",
 	},
 }
 
@@ -68,6 +74,32 @@ func TestValidSHCDJSONTest(t *testing.T) {
 				if assert.Error(t, err) {
 					assert.EqualError(t, err, test.expectedErrorMsg)
 				}
+			}
+		})
+	}
+}
+
+func TestSHCDAgainstSchema(t *testing.T) {
+
+	for _, test := range tests {
+
+		t.Run(test.name, func(t *testing.T) {
+
+			// Validate the file passed against the pre-defined schema
+			validSHCD, err := ValidateSchema(test.fixture, _schemaFile)
+
+			if test.expectedError == false {
+
+				// If it meets the schema, it should return true
+				assert.Equal(t, validSHCD, true)
+
+			} else {
+
+				// Otherwise, check the error message
+				if assert.Error(t, err) {
+					assert.EqualError(t, err, test.expectedSchemaErrorMsg)
+				}
+
 			}
 		})
 	}
