@@ -1,0 +1,18 @@
+.github/            @Cray-HPE/metal
+
+cmd/cow.go          jacob.salmela@hpe.com
+cmd/get.go          jacob.salmela@hpe.com
+cmd/format.go       jacob.salmela@hpe.com
+cmd/init.go         jacob.salmela@hpe.com
+cmd/makedocs.go     jacob.salmela@hpe.com
+cmd/pit.go          jacob.salmela@hpe.com
+cmd/pitdata.go      jacob.salmela@hpe.com
+cmd/populate.go     jacob.salmela@hpe.com
+cmd/validate.go     jacob.salmela@hpe.com
+write-livecd.sh     jacob.salmela@hpe.com
+
+cmd/handoff.go                          sean.wallace@hpe.com
+cmd/handoff-bss-metadata.go             sean.wallace@hpe.com
+cmd/handoff-bss-update_cloud-init.go    sean.wallace@hpe.com
+cmd/handoff-bss-update_param.go         sean.wallace@hpe.com
+cmd/handoff-bss-update_param.go         sean.wallace@hpe.com
