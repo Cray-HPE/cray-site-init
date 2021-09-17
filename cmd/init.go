@@ -397,7 +397,7 @@ func init() {
 
 	// DNS zone transfer settings
 	initCmd.Flags().String("primary-server-name", "primary", "Desired name for the primary DNS server")
-	initCmd.Flags().String("secondary-servers", "", "Comma seperated list of FQDN/IP for all DNS servers to accept transfer requests from")
+	initCmd.Flags().String("secondary-servers", "", "Comma seperated list of FQDN/IP for all DNS servers to notify when zone changes are made")
 	initCmd.Flags().String("notify-zones", "", "Comma seperated list of the zones to be allowed transfer")
 }
 
