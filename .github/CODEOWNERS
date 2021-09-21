@@ -1,5 +1,8 @@
 .github/            @Cray-HPE/metal
-
+*                   @Cray-HPE/metal
+pkg/pit             @Cray-HPE/metal
+pkg/csi             @Cray-HPE/metal
+pkg/version         @Cray-HPE/metal
 cmd/cow.go          jacob.salmela@hpe.com
 cmd/get.go          jacob.salmela@hpe.com
 cmd/format.go       jacob.salmela@hpe.com
