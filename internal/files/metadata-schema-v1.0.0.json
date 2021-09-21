@@ -1,5 +1,5 @@
 {
-  "$id": "https://github.com/Cray-HPE/cray-site-init/tree/main/internal/files/metadata-schema.json",
+  "$id": "https://github.com/Cray-HPE/cray-site-init/tree/main/internal/files/#",
   "description": "Metadata used within CSM",
   "type": "object",
   "minProperties":19,
