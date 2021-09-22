@@ -9,13 +9,10 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/spf13/cobra"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"strconv"
-	"strings"
 
 	"github.com/Cray-HPE/hms-bss/pkg/bssTypes"
 	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
