@@ -10,9 +10,9 @@ import (
 	"log"
 	"strings"
 
+	csiFiles "github.com/Cray-HPE/cray-site-init/internal/files"
+	"github.com/Cray-HPE/cray-site-init/pkg/csi"
 	"github.com/spf13/viper"
-	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
-	"stash.us.cray.com/MTL/csi/pkg/csi"
 )
 
 // MetaData is part of the cloud-init stucture and
@@ -73,9 +73,9 @@ type BaseCampGlobals struct {
 // Basecamp Defaults
 // We should try to make these customizable by the user at some point
 
-// k8sRunCMD has the list of scripts to run on NCN boot for
-// all members of the kubernets cluster
-var k8sRunCMD = []string{
+// k8sWorkersRunCMD has the list of scripts to run on NCN boot for
+// worker members of the kubernetes cluster
+var k8sWorkersRunCMD = []string{
 	"/srv/cray/scripts/metal/install-bootloader.sh",
 	"/srv/cray/scripts/metal/set-host-records.sh",
 	"/srv/cray/scripts/metal/set-dhcp-to-static.sh",
@@ -84,7 +84,26 @@ var k8sRunCMD = []string{
 	"/srv/cray/scripts/metal/set-bmc-bbs.sh",
 	"/srv/cray/scripts/metal/disable-cloud-init.sh",
 	"/srv/cray/scripts/common/update_ca_certs.py",
+	"/srv/cray/scripts/metal/install-rpms.sh",
 	"/srv/cray/scripts/common/kubernetes-cloudinit.sh",
+}
+
+// k8sMastersRunCMD has the list of scripts to run on NCN boot for
+// worker members of the kubernetes cluster
+var k8sMastersRunCMD = []string{
+	"/srv/cray/scripts/metal/install-bootloader.sh",
+	"/srv/cray/scripts/metal/set-host-records.sh",
+	"/srv/cray/scripts/metal/set-dhcp-to-static.sh",
+	"/srv/cray/scripts/metal/set-dns-config.sh",
+	"/srv/cray/scripts/metal/set-ntp-config.sh",
+	"/srv/cray/scripts/metal/set-bmc-bbs.sh",
+	"/srv/cray/scripts/metal/disable-cloud-init.sh",
+	"/srv/cray/scripts/common/update_ca_certs.py",
+	"/srv/cray/scripts/metal/install-rpms.sh",
+	"/srv/cray/scripts/common/kubernetes-cloudinit.sh",
+	"sed -i 's/--bind-address=127.0.0.1/--bind-address=0.0.0.0/' /etc/kubernetes/manifests/kube-controller-manager.yaml",
+	"sed -i 's/--port=0/d' /etc/kubernetes/manifests/kube-scheduler.yaml",
+	"sed -i 's/--bind-address=127.0.0.1/--bind-address=0.0.0.0/' /etc/kubernetes/manifests/kube-scheduler.yaml",
 }
 
 // cephRunCMD has the list of scripts to run on NCN boot for
@@ -98,6 +117,8 @@ var cephRunCMD = []string{
 	"/srv/cray/scripts/metal/set-bmc-bbs.sh",
 	"/srv/cray/scripts/metal/disable-cloud-init.sh",
 	"/srv/cray/scripts/common/update_ca_certs.py",
+	"/srv/cray/scripts/metal/install-rpms.sh",
+	"/srv/cray/scripts/common/pre-load-images.sh",
 	"/srv/cray/scripts/common/storage-ceph-cloudinit.sh",
 }
 
@@ -112,6 +133,8 @@ var cephWorkerRunCMD = []string{
 	"/srv/cray/scripts/metal/set-bmc-bbs.sh",
 	"/srv/cray/scripts/metal/disable-cloud-init.sh",
 	"/srv/cray/scripts/common/update_ca_certs.py",
+	"/srv/cray/scripts/metal/install-rpms.sh",
+	"/srv/cray/scripts/common/pre-load-images.sh",
 }
 
 // Make sure any "FIXME" added to this is updated in the MakeBasecampGlobals function below
@@ -285,7 +308,11 @@ func MakeBaseCampfromNCNs(v *viper.Viper, ncns []csi.LogicalNCN, shastaNetworks 
 				userDataMap["runcmd"] = cephWorkerRunCMD
 			}
 		} else {
-			userDataMap["runcmd"] = k8sRunCMD
+			if strings.HasPrefix(ncn.Hostname, "ncn-m0") {
+				userDataMap["runcmd"] = k8sMastersRunCMD
+			} else {
+				userDataMap["runcmd"] = k8sWorkersRunCMD
+			}
 		}
 		userDataMap["hostname"] = ncn.Hostname
 		userDataMap["local_hostname"] = ncn.Hostname

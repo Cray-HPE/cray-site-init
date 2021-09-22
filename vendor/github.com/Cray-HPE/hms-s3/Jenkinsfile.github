@@ -1,0 +1,34 @@
+@Library('csm-shared-library') _
+
+pipeline {
+    agent {
+        label "metal-gcp-builder"
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: "10"))
+        timestamps()
+    }
+
+    environment {
+        NAME = "hms-s3"
+        DESCRIPTION = "Cray HMS S3 code."
+        IS_STABLE = getBuildIsStable()
+        VERSION = getDockerBuildVersion(isStable: env.IS_STABLE)
+        DOCKER_ARGS = getDockerBuildArgs(name: env.NAME, description: env.DESCRIPTION, version: env.VERSION)
+    }
+
+    stages {
+        stage("Image") {
+            steps {
+                sh "make image"
+            }
+        }
+
+        stage("Run Unit Tests") {
+            steps {
+                sh "make unittest"
+            }
+        }
+    }
+}

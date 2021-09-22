@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"stash.us.cray.com/MTL/csi/pkg/version"
+	"github.com/Cray-HPE/cray-site-init/pkg/version"
 )
 
 // versionCmd represents the version command

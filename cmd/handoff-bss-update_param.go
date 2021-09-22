@@ -6,10 +6,10 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/Cray-HPE/hms-bss/pkg/bssTypes"
 	"github.com/spf13/cobra"
 	"log"
 	"net/http"
-	"stash.us.cray.com/HMS/hms-bss/pkg/bssTypes"
 	"strings"
 )
 

@@ -7,9 +7,9 @@ package pit
 import (
 	"text/template"
 
+	csiFiles "github.com/Cray-HPE/cray-site-init/internal/files"
+	"github.com/Cray-HPE/cray-site-init/pkg/csi"
 	"github.com/spf13/viper"
-	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
-	"stash.us.cray.com/MTL/csi/pkg/csi"
 )
 
 // ConmanConfigTemplate manages the Conman Configuration

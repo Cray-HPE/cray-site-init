@@ -8,8 +8,8 @@ import (
 	"log"
 	"testing"
 
+	"github.com/Cray-HPE/cray-site-init/pkg/csi"
 	"gopkg.in/yaml.v2"
-	"stash.us.cray.com/MTL/csi/pkg/csi"
 )
 
 var cabinetsWithHill = `

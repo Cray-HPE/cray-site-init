@@ -29,7 +29,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 
-	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
+	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 )
 
 // ParseSLSFile takes a path and returns an SLSState struct for parsing

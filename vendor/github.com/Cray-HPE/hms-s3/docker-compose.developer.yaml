@@ -1,0 +1,27 @@
+version: '3.7'
+
+networks:
+  hms3:
+
+services:
+  s3:
+    image: arti.dev.cray.com/third-party-docker-stable-local/minio/minio:RELEASE.2020-04-10T03-34-42Z
+    hostname: s3
+    environment:
+      MINIO_ACCESS_KEY: s3-access-key
+      MINIO_SECRET_KEY: s3-secret-key
+    command: server /data
+    ports:
+    - "9000:9000"
+    networks:
+      - hms3
+  s3-init:
+    image: arti.dev.cray.com/third-party-docker-stable-local/minio/mc:latest
+    hostname: s3-init
+    environment:
+      - MC_HOST_S3=http://s3-access-key:s3-secret-key@s3:9000
+    command: mb S3/tester
+    depends_on:
+      - s3
+    networks:
+      - hms3

@@ -13,8 +13,8 @@ import (
 
 	"github.com/spf13/viper"
 
-	csiFiles "stash.us.cray.com/MTL/csi/internal/files"
-	"stash.us.cray.com/MTL/csi/pkg/csi"
+	csiFiles "github.com/Cray-HPE/cray-site-init/internal/files"
+	"github.com/Cray-HPE/cray-site-init/pkg/csi"
 )
 
 // WriteNetworkFiles persistes our network configuration to disk in a directory of yaml files

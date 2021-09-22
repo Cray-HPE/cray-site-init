@@ -7,13 +7,13 @@ import (
 	"os"
 	"testing"
 
+	base "github.com/Cray-HPE/hms-base"
+	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	base "stash.us.cray.com/HMS/hms-base"
-	sls_common "stash.us.cray.com/HMS/hms-sls/pkg/sls-common"
 
-	shcd_parser "stash.us.cray.com/HMS/hms-shcd-parser/pkg/shcd-parser"
+	shcd_parser "github.com/Cray-HPE/hms-shcd-parser/pkg/shcd-parser"
 )
 
 /*

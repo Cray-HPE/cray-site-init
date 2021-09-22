@@ -7,7 +7,7 @@ import (
 	"math/rand"
 	"time"
 
-	"stash.us.cray.com/MTL/csi/cmd"
+	"github.com/Cray-HPE/cray-site-init/cmd"
 )
 
 func main() {
