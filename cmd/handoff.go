@@ -91,6 +91,10 @@ func getManagementNCNsFromSLS() (managementNCNs []sls_common.GenericHardware, er
 	url := fmt.Sprintf("https://%s/apis/sls/v1/search/hardware?extra_properties.Role=Management",
 		gatewayHostname)
 	req, err := http.NewRequest("GET", url, nil)
+
+	// indicates whether or not to close the connection after sending the request
+	req.Close = true
+
 	if err != nil {
 		err = fmt.Errorf("failed to create new request: %w", err)
 		return
@@ -102,6 +106,8 @@ func getManagementNCNsFromSLS() (managementNCNs []sls_common.GenericHardware, er
 		err = fmt.Errorf("failed to do request: %w", err)
 		return
 	}
+
+	defer resp.Body.Close()
 
 	body, _ := ioutil.ReadAll(resp.Body)
 	err = json.Unmarshal(body, &managementNCNs)
