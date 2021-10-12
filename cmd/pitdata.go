@@ -25,6 +25,7 @@ var pitdataCmd = &cobra.Command{
 	// Arg is the path to the csi generated files
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
+		viper.BindPFlags(cmd.Flags())
 		if viper.GetBool("basecamp") {
 			// Copies data.json to the configs folder
 			copyAllFiles(filepath.Join(args[0], "basecamp/"), filepath.Join(args[1]))
