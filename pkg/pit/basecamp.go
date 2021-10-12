@@ -278,6 +278,8 @@ func MakeBasecampGlobals(v *viper.Viper, logicalNcns []csi.LogicalNCN, shastaNet
 	}
 	global["num_storage_nodes"] = s
 
+	global["first-master-hostname"] = v.GetString("first-master-hostname")
+
 	return global, nil
 }
 

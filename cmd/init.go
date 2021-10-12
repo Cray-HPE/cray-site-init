@@ -306,6 +306,7 @@ func init() {
 	// System Configuration Flags based on previous system_config.yml and networks_derived.yml
 	initCmd.Flags().String("system-name", "sn-2024", "Name of the System")
 	initCmd.Flags().String("site-domain", "dev.cray.com", "Site Domain Name")
+	initCmd.Flags().String("first-master-hostname", "ncn-m002", "Hostname of the first master node")
 	// initCmd.Flags().String("internal-domain", "unicos.shasta", "Internal Domain Name")
 	initCmd.Flags().String("ntp-pool", "time.nist.gov", "Hostname for Upstream NTP Pool")
 	initCmd.Flags().MarkDeprecated("ntp-pool", "please use --ntp-pools (plural) instead")
