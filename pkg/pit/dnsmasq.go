@@ -44,7 +44,7 @@ cname=registry.hmn,pit.hmn
 # This needs to point to the liveCD IP for provisioning in bare-metal environments.
 dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:dns-server,{{.Gateway}}
 dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:ntp-server,{{.Gateway}}
-dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:router,{{.Gateway}}
+dhcp-option=interface:{{.VlanID | printf "vlan%03d"}},option:router,{{.SupernetRouter}}
 dhcp-range=interface:{{.VlanID | printf "vlan%03d"}},{{.DHCPStart}},{{.DHCPEnd}},10m
 `)
 
