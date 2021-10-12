@@ -37,6 +37,7 @@ var uploadSLSFile = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		// Initialize the global viper
 		v := viper.GetViper()
+		v.BindPFlags(cmd.Flags())
 		uploadSLSInputFile(v)
 	},
 }
