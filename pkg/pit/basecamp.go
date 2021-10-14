@@ -254,12 +254,14 @@ func MakeBasecampGlobals(v *viper.Viper, logicalNcns []csi.LogicalNCN, shastaNet
 			ncns = append(ncns, k)
 		}
 	}
-	// get the nmnlb subnet
+	// get the nmnlb and hmnlb subnets
 	nmnlbSubnet := shastaNetworks["NMNLB"].SubnetbyName("nmn_metallb_address_pool")
+	hmnlbSubnet := shastaNetworks["HMNLB"].SubnetbyName("hmn_metallb_address_pool")
 	// get the unbound network from subnets above
-	unbound := nmnlbSubnet.ReservationsByName()
+	unboundNMN := nmnlbSubnet.ReservationsByName()
+	unboundHMN := hmnlbSubnet.ReservationsByName()
 	// include the pit and unbound in the list of dns servers
-	dnsServers := unbound["unbound"].IPAddress.String() + " " + reservations[installNCN].IPAddress.String()
+	dnsServers := unboundNMN["unbound"].IPAddress.String() + " " + reservations[installNCN].IPAddress.String() + " " + unboundHMN["unbound"].IPAddress.String()
 	// Add these to the dns-server key
 	global["dns-server"] = dnsServers
 
