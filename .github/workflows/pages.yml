@@ -26,13 +26,13 @@ jobs:
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@v2
         with:
-          hugo-version: '0.85.0'
+          hugo-version: '0.88.1'
           # extended: true
 
       - name: Build
         run: |
           pushd hugo
-          hugo --themesDir themes/ --minify
+          hugo --enableGitInfo --themesDir themes/ --minify
           popd
 
       - name: Deploy
