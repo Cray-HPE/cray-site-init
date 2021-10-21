@@ -6,7 +6,7 @@
 <meta name=description content="Cray Site Initializer documentation">
 <meta name=author content="Cray-HPE">
 <link rel=icon href=/cray-site-init/images/favicon.png type=image/png>
-<title>csi config - Cray Site Init</title>
+<title>Using a canu-generated shcd.json with csi - Cray Site Init</title>
 <link href=/cray-site-init/css/nucleus.css?1634848136 rel=stylesheet>
 <link href=/cray-site-init/css/fontawesome-all.min.css?1634848136 rel=stylesheet>
 <link href=/cray-site-init/css/hybrid.css?1634848136 rel=stylesheet>
@@ -22,7 +22,7 @@
 <script src=/cray-site-init/js/jquery-3.3.1.min.js?1634848136></script>
 <style>:root #header+#content>#left>#rlblock_left{display:none!important}</style>
 </head>
-<body data-url=/cray-site-init/commands/csi_config/>
+<body data-url=/cray-site-init/shcds/using_shcds/>
 <nav id=sidebar class=showVisitedLinks>
 <div id=header-wrapper>
 <div id=header><svg viewBox="0 0 240 80" xmlns="http://www.w3.org/2000/svg"><style>.small{font:italic 13px sans-serif}.heavy{font:700 30px sans-serif}</style><text x="40" y="35" class="heavy">CSI</text><text x="55" y="55" class="small">Cray Site Initilizer</text></svg>
@@ -39,8 +39,7 @@
 </div>
 <div class=highlightable>
 <ul class=topics>
-<li data-nav-id=/cray-site-init/commands/ title=Commands class="dd-item
-parent">
+<li data-nav-id=/cray-site-init/commands/ title=Commands class=dd-item>
 <a href=/cray-site-init/commands/>
 Commands
 <i class="fas fa-check read-icon"></i>
@@ -52,7 +51,7 @@ csi
 <i class="fas fa-check read-icon"></i>
 </a>
 </li>
-<li data-nav-id=/cray-site-init/commands/csi_config/ title="csi config" class="dd-item active">
+<li data-nav-id=/cray-site-init/commands/csi_config/ title="csi config" class=dd-item>
 <a href=/cray-site-init/commands/csi_config/>
 csi config
 <i class="fas fa-check read-icon"></i>
@@ -192,13 +191,14 @@ csi version
 </li>
 </ul>
 </li>
-<li data-nav-id=/cray-site-init/shcds/ title=SHCDs class=dd-item>
+<li data-nav-id=/cray-site-init/shcds/ title=SHCDs class="dd-item
+parent">
 <a href=/cray-site-init/shcds/>
 SHCDs
 <i class="fas fa-check read-icon"></i>
 </a>
 <ul>
-<li data-nav-id=/cray-site-init/shcds/using_shcds/ title="Using a canu-generated shcd.json with csi" class=dd-item>
+<li data-nav-id=/cray-site-init/shcds/using_shcds/ title="Using a canu-generated shcd.json with csi" class="dd-item active">
 <a href=/cray-site-init/shcds/using_shcds/>
 Using a canu-generated shcd.json with csi
 <i class="fas fa-check read-icon"></i>
@@ -224,7 +224,7 @@ Using a canu-generated shcd.json with csi
 <div>
 <div id=top-bar>
 <div id=top-github-link>
-<a class=github-link title="Edit this page" href=https://github.com/Cray-HPE/cray-site-init/tree/main/hugo/content/commands/csi_config.md target=blank>
+<a class=github-link title="Edit this page" href=https://github.com/Cray-HPE/cray-site-init/tree/main/hugo/content/shcds/using_shcds.md target=blank>
 <i class="fas fa-code-branch"></i>
 <span id=top-github-link-text>Edit this page</span>
 </a>
@@ -237,19 +237,16 @@ Using a canu-generated shcd.json with csi
 </span>
 <span id=toc-menu><i class="fas fa-list-alt"></i></span>
 <span class=links>
-<a href=/cray-site-init/>Cray Site Init</a> > <a href=/cray-site-init/commands/>Commands</a> > csi config
+<a href=/cray-site-init/>Cray Site Init</a> > <a href=/cray-site-init/shcds/>SHCDs</a> > Using a canu-generated shcd.json with csi
 </span>
 </div>
 <div class=progress>
 <div class=wrapper>
 <nav id=TableOfContents>
 <ul>
-<li><a href=#csi-config>csi config</a>
+<li><a href=#seed-files>Seed Files</a>
 <ul>
-<li><a href=#synopsis>Synopsis</a></li>
-<li><a href=#options>Options</a></li>
-<li><a href=#options-inherited-from-parent-commands>Options inherited from parent commands</a></li>
-<li><a href=#see-also>SEE ALSO</a></li>
+<li><a href=#auto-generating-the-seed-files>Auto-generating the Seed Files</a></li>
 </ul>
 </li>
 </ul>
@@ -262,25 +259,34 @@ Using a canu-generated shcd.json with csi
 </div>
 <div id=body-inner>
 <h1>
-csi config
+Using a canu-generated shcd.json with csi
 </h1>
-<h2 id=csi-config>csi config</h2>
-<p>Interact with a Shasta config</p>
-<h3 id=synopsis>Synopsis</h3>
-<p>Interact with a Shasta config</p>
-<h3 id=options>Options</h3>
-<pre tabindex=0><code>  -h, --help   help for config
-</code></pre><h3 id=options-inherited-from-parent-commands>Options inherited from parent commands</h3>
-<pre tabindex=0><code>      --config string   config file
-</code></pre><h3 id=see-also>SEE ALSO</h3>
+<p>In CSM 1.2+ <code>csi</code> will have the ability to ingest a JSON file and automatically generate the seed files needed for the <code>csi config init</code> command.</p>
+<h2 id=seed-files>Seed Files</h2>
+<p><code>csi config init</code> relies on several &ldquo;seed&rdquo; files in oder to produce a Shasta configuration payload:</p>
 <ul>
-<li><a href=/commands/csi/>csi</a> - Cray Site Init. For new sites, re-installs, and upgrades.</li>
-<li><a href=/commands/csi_config_dump/>csi config dump</a> - Dumps an existing config to STDOUT</li>
-<li><a href=/commands/csi_config_gen-sls/>csi config gen-sls</a> - Generates SLS input file</li>
-<li><a href=/commands/csi_config_init/>csi config init</a> - Generates a Shasta configuration payload</li>
-<li><a href=/commands/csi_config_load/>csi config load</a> - Load an existing Shasta configuration</li>
-<li><a href=/commands/csi_config_shcd/>csi config shcd</a> - Generates hmn_connections.json and switch_metadata.csv from an SHCD JSON file</li>
+<li><code>hmn_connections.json</code>: maps which switch ports on the Leaf switches are cabled to what the River node BMCs, PDUs, or other hardware</li>
+<li><code>ncn_metadata.csv</code>: maps the MACs of the Management NCNs to their xnames and is used to initialize the management cluster</li>
+<li><code>switch_metdata.csv</code>: maps the switch xname, brand, type, and model for the management switches in the system</li>
+<li>(optional) <code>application_node_config.yaml</code>: offers additional control of the application node identification in SLS</li>
+<li>(optional) <code>cabinets.yaml</code>: a mapping file is necessary for systems with non-sequential cabinet ID numbers</li>
 </ul>
+<p>The three non-optional files represent the <em>minimum</em> set of inputs <code>csi</code> needs to generate a new configuration payload.</p>
+<h3 id=auto-generating-the-seed-files>Auto-generating the Seed Files</h3>
+<p>In older versions of CSM, these seed files needed to be hand-crafted, which was painful and error-prone. This process has improved some in CSM v1.2 with the help of <a href=https://github.com/Cray-HPE/canu><code>canu</code></a>.</p>
+<p>You can automatically generate the seed files in <code>csi</code> <em>after</em> you create a <code>shcd.json</code> using <code>canu</code>. This JSON file is a machine-readable version the SHCD.</p>
+<p>Here is an example workflow:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=color:#75715e># Generate a machine-readable JSON file from an Excel spreadsheet</span>
+canu validate shcd --shcd MySystem_SHCD.xlsx --tabs HMN --corners j20,u53 -a v1 --out MySystem.json
+
+<span style=color:#75715e># Use the machine-readable JSON with csi to auto-generate the seed files</span>
+<span style=color:#75715e># In this example, the hmn_connections.json file and the switch_metadata.csv are being generated</span>
+<span style=color:#75715e># This allows you to generate the entire set of seed files or just certain ones</span>
+csi config shcd --hmn-connections --switch-metadata MySystem.json
+
+<span style=color:#75715e># Use the newly-generated files with the traditional workflow</span>
+csi config init
+</code></pre></div>
 <footer class=footline>
 </footer>
 </div>
