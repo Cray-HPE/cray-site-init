@@ -341,12 +341,12 @@ func init() {
 	initCmd.Flags().String("hmn-rvr-cidr", csi.DefaultHMNRVRString, "IPv4 CIDR for grouped River Hardware Management subnets")
 
 	initCmd.Flags().String("cmn-cidr", csi.DefaultCMNString, "Overall IPv4 CIDR for all Customer Management subnets")
-	initCmd.Flags().String("cmn-static-pool", csi.DefaultCMNStaticString, "Overall IPv4 CIDR for static Customer Management addresses")
-	initCmd.Flags().String("cmn-dynamic-pool", csi.DefaultCMNPoolString, "Overall IPv4 CIDR for dynamic Customer Management addresses")
+	initCmd.Flags().String("cmn-static-pool", csi.DefaultCMNStaticString, "Overall IPv4 CIDR for static Customer Management load balancer addresses")
+	initCmd.Flags().String("cmn-dynamic-pool", csi.DefaultCMNPoolString, "Overall IPv4 CIDR for dynamic Customer Management load balancer addresses")
+	initCmd.Flags().String("cmn-external-dns", "", "IP Address in the cmn-static-pool for the external dns service \"site-to-system lookups\"")
 	initCmd.Flags().String("can-cidr", csi.DefaultCANString, "Overall IPv4 CIDR for all Customer Access subnets")
-	initCmd.Flags().String("can-static-pool", csi.DefaultCANStaticString, "Overall IPv4 CIDR for static Customer Access addresses")
-	initCmd.Flags().String("can-dynamic-pool", csi.DefaultCANPoolString, "Overall IPv4 CIDR for dynamic Customer Access addresses")
-	initCmd.Flags().String("can-external-dns", "", "IP Address in the can-static-pool for the external dns service \"site-to-system lookups\"")
+	initCmd.Flags().String("can-static-pool", csi.DefaultCANStaticString, "Overall IPv4 CIDR for static Customer Access load balancer addresses")
+	initCmd.Flags().String("can-dynamic-pool", csi.DefaultCANPoolString, "Overall IPv4 CIDR for dynamic Customer Access load balancer addresses")
 
 	initCmd.Flags().String("mtl-cidr", csi.DefaultMTLString, "Overall IPv4 CIDR for all Provisioning subnets")
 	initCmd.Flags().String("hsn-cidr", csi.DefaultHSNString, "Overall IPv4 CIDR for all HSN subnets")
@@ -629,7 +629,7 @@ func validateFlags() []string {
 		"cmn-gateway",
 		"site-ip",
 		"site-gw",
-		"can-external-dns",
+		"cmn-external-dns",
 		"site-dns",
 		"site-nic",
 		"bootstrap-ncn-bmc-user",
