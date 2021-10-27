@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -56,14 +57,14 @@ var shcdCmd = &cobra.Command{
 			}
 
 			// Parse the JSON and return an Shcd object
-			s, err := ParseSHCD(shcdFile)
+			// s, err := ParseSHCD(shcdFile)
 
 			if err != nil {
 				log.Fatalf(err.Error())
 			}
 
 			// Pretty print the structured data
-			shcd, err := json.MarshalIndent(&s, "", " ")
+			// shcd, err := json.MarshalIndent(&s, "", " ")
 
 			if err != nil {
 				log.Fatalf(err.Error())
@@ -82,7 +83,7 @@ var shcdCmd = &cobra.Command{
 			}
 
 			// TODO: instead of printing the entire thing, create some of the seed file automatically
-			fmt.Println(string(shcd))
+			// fmt.Println(string(shcd))
 
 		} else {
 
@@ -138,13 +139,14 @@ type HMNConnections []HMNComponent
 
 // HMNComponent is an individual component in the HMNConnections slice
 type HMNComponent struct {
-	Source              string
-	SourceRack          string
-	SourceLocation      string
-	SourceSubLocation   string
-	DestinationRack     string
-	DestinationLocation int
-	DestinationPort     string
+	Source              string `json:"Source"`
+	SourceRack          string `json:"SourceRack"`
+	SourceLocation      string `json:"SourceLocation"`
+	SourceParent        string `json:"SourceParent,omitempty"`
+	SourceSubLocation   string `json:"SourceSubLocation,omitempty"`
+	DestinationRack     string `json:"DestinationRack"`
+	DestinationLocation string `json:"DestinationLocation"`
+	DestinationPort     string `json:"DestinationPort"`
 }
 
 // SwitchMetadata type is the go equivalent structure of switch_metadata.csv
@@ -226,12 +228,14 @@ func createSwitchSeed(s []byte, f string) {
 }
 
 // createHMNSeed creates hmn_connections.json using information from the shcd
+// Really, creating this file is a pain, but it's the only way to get the data without revamping 'config init'
+// This way, we can have the computer generate the file, and then the user can use it as normal with 'config init'
 func createHMNSeed(s []byte, f string) {
 
 	var shcd Shcd
 	var hmn HMNConnections
 
-	// unmarshall it
+	// unmarshall the bytes received into the Shcd type
 	err := json.Unmarshal(s, &shcd)
 
 	if err != nil {
@@ -241,13 +245,46 @@ func createHMNSeed(s []byte, f string) {
 	// For each entry in the shcd
 	for i := range shcd {
 
-		// Create a new HMNComponent type and append it to the HMNConnections slice
-		hmn = append(hmn, HMNComponent{
-			Source:         shcd[i].CommonName,
-			SourceRack:     shcd[i].Location.Rack,
-			SourceLocation: shcd[i].Location.Elevation,
-		})
+		// instantiate a new HMNComponent
+		hmnConnection := HMNComponent{}
 
+		// This just aligns the names to better match existing hmn_connections.json's
+		// The SHCD and shcd.json all use different names, so why should csi be any different?
+		// nodeName := unNormalizeSemiStandardShcdNonName(shcd[i].CommonName)
+
+		// Setting the source name, source rack, source location, is pretty straightforward here
+		hmnConnection.Source = shcd[i].CommonName
+		hmnConnection.SourceRack = shcd[i].Location.Rack
+		hmnConnection.SourceLocation = shcd[i].Location.Elevation
+
+		// Now it starts to get more complex.
+		// shcd.json has an array of ports that the device is connected to
+		// loop through the ports and find the destination id, which can be used
+		// to find the destination info
+		for p := range shcd[i].Ports {
+			// get the id of the destination node, so it can be easily used an an index
+			destId := shcd[i].Ports[p].DestNodeID
+			// Special to this hmn_connections.json file, we need this SubRack/dense node stuff
+			// if the node is a dense compute node--indiciated by L or R in the location,
+			// we need to add the SourceSubLocation and SourceParent
+			// There should be a row in the shcd that has the SubRack name, which
+			// shares the same u location as the entries with the L or R in the location
+			if strings.HasSuffix(shcd[i].Location.Elevation, "L") || strings.HasSuffix(shcd[i].Location.Elevation, "R") {
+				// hmnConnection.SourceSubLocation = shcd[i].Location.Rack
+				hmnConnection.SourceParent = "FIXME INSERT SUBRACK HERE"
+				// FIXME: remove above and uncomment below when we have a way to get the subrack name
+				// hmnConnection.SourceParent = fmt.Sprint(shcd[destId].CommonName)
+			}
+
+			// Now use the destId again to set the destination info
+			hmnConnection.DestinationRack = shcd[destId].Location.Rack
+			hmnConnection.DestinationLocation = shcd[destId].Location.Elevation
+			hmnConnection.DestinationPort = fmt.Sprint("j", shcd[i].Ports[p].DestPort)
+		}
+
+		// finally, append the created HMNComponent to the HMNConnections slice
+		// This slice will be what is written to the file as hmn_connections.json
+		hmn = append(hmn, hmnConnection)
 	}
 
 	// Indent the file for better human-readability
@@ -301,3 +338,36 @@ func ParseSHCD(f []byte) (Shcd, error) {
 
 	return shcd, nil
 }
+
+// unNormalizeSemiStandardShcdNonName takes a semi-standard name and returns a normal name
+// why is this necessary?
+// 1. SHCD.xlsx has their own names
+// 2. shcd.json has their own names
+// 3. hmn_connections.json has their own names
+// 4. other things probably have their own names
+// func unNormalizeSemiStandardShcdNonName(s string) string {
+// 	var name string
+// 	// here begins the mind-blowing algorithm
+// 	if strings.HasPrefix(s, "mn") {
+// 		// it's a master node, get just the digits
+// 		s = strings.TrimPrefix(s, "mn")
+// 		// add the non name back in
+// 		name = "ncn-m" + s
+// 	} else if strings.HasPrefix(s, "wn") {
+// 		// it's a worker node
+// 		s = strings.TrimPrefix(s, "mn")
+// 		name = "ncn-w" + s
+// 	} else if strings.HasPrefix(s, "sn") {
+// 		// it's a storage node
+// 		s = strings.TrimPrefix(s, "sn")
+// 		name = "ncn-s" + s
+// 	} else if strings.HasPrefix(s, "cn") {
+// 		// it's a compute node
+// 		s = strings.TrimPrefix(s, "cn")
+// 		name = "nid" + s
+// 	} else {
+// 		name = s
+// 	}
+
+// 	return name
+// }

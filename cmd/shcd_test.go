@@ -8,7 +8,6 @@ package cmd
 
 import (
 	"encoding/csv"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -20,14 +19,17 @@ import (
 
 const _schemaFile = "../internal/files/shcd-schema.json"
 
+var switch_meta_expected = "../testdata/expected/" + switch_metadata
+var hmn_conn_expected = "../testdata/expected/" + hmn_connections
+
 var tests = []struct {
 	fixture                string
 	expectedError          bool
 	expectedErrorMsg       string
 	expectedSchemaErrorMsg string
 	name                   string
-	expectedSwitchMetadata [][]string
-	expectedHMNConnections []byte
+	expectedSwitchMetadata string
+	expectedHMNConnections string
 }{
 	{
 		fixture:                "../testdata/fixtures/valid_shcd.json",
@@ -35,36 +37,8 @@ var tests = []struct {
 		expectedErrorMsg:       "",
 		expectedSchemaErrorMsg: "",
 		name:                   "ValidFile",
-		expectedSwitchMetadata: [][]string{{"Switch Xname", "Type", "Brand"}, {"x1000", "switch", "aruba"}, {"x1000", "switch", "aruba"}, {"x1000", "none", "cray"}},
-		expectedHMNConnections: []byte(`[
-{
-  "Source": "something",
-	"SourceRack": "x1000",
-	"SourceLocation": "u42",
-	"SourceSubLocation": "",
-	"DestinationRack": "",
-	"DestinationLocation": 0,
-	"DestinationPort": ""
-},
-{
-  "Source": "another_thing",
-	"SourceRack": "x1000",
-	"SourceLocation": "u42",
-	"SourceSubLocation": "",
-	"DestinationRack": "",
-	"DestinationLocation": 0,
-	"DestinationPort": ""
-},
-{
-	"Source": "thingy",
-	"SourceRack": "x1000",
-	"SourceLocation": "u42",
-	"SourceSubLocation": "",
-	"DestinationRack": "",
-	"DestinationLocation": 0,
-	"DestinationPort": ""
-	}
-	]`),
+		expectedSwitchMetadata: switch_meta_expected,
+		expectedHMNConnections: hmn_conn_expected,
 	},
 	{
 		fixture:                "../testdata/fixtures/invalid_shcd.json",
@@ -163,29 +137,33 @@ func TestCreateHMNConnections(t *testing.T) {
 				// Validate the file was created
 				assert.FileExists(t, filepath.Join(".", hmn_connections))
 
-				// Read the csv and validate it's contents
-				f, err := os.Open(filepath.Join(".", hmn_connections))
+				// Read the generated json and validate it's contents
+				hmnGenerated, err := os.Open(filepath.Join(".", hmn_connections))
 
 				if err != nil {
-					log.Fatal("Unable to read "+filepath.Join(".", hmn_connections), err)
+					log.Fatal(err)
 				}
 
-				defer f.Close()
+				defer hmnGenerated.Close()
 
-				hmnFile, err := os.Open(filepath.Join(".", hmn_connections))
+				hmnExpected, err := os.Open(test.expectedHMNConnections)
 
 				// if we os.Open returns an error then handle it
 				if err != nil {
-					fmt.Println(err)
+					log.Fatal(err)
 				}
 
-				defer hmnFile.Close()
+				defer hmnExpected.Close()
 
-				hmnActual, _ := ioutil.ReadAll(hmnFile)
+				hmnActual, _ := ioutil.ReadAll(hmnGenerated)
 
-				hmnExpected := test.expectedHMNConnections
+				hmnConnections, err := ioutil.ReadAll(hmnExpected)
 
-				assert.JSONEq(t, string(hmnExpected), string(hmnActual))
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				assert.JSONEq(t, string(hmnConnections), string(hmnActual))
 			})
 		}
 	}
@@ -213,23 +191,40 @@ func TestCreateSwitchMetadata(t *testing.T) {
 				assert.FileExists(t, filepath.Join(".", switch_metadata))
 
 				// Read the csv and validate it's contents
-				f, err := os.Open(filepath.Join(".", switch_metadata))
+				generated, err := os.Open(filepath.Join(".", switch_metadata))
 
 				if err != nil {
 					log.Fatal("Unable to read "+filepath.Join(".", switch_metadata), err)
 				}
 
-				defer f.Close()
+				defer generated.Close()
 
-				csvReader := csv.NewReader(f)
+				smGenerated := csv.NewReader(generated)
 
-				content, err := csvReader.ReadAll()
+				actual, err := smGenerated.ReadAll()
 
 				if err != nil {
 					log.Fatal("Unable to parse as a CSV: "+filepath.Join(".", switch_metadata), err)
 				}
 
-				assert.Equal(t, test.expectedSwitchMetadata, content)
+				// Read the csv and validate it's contents
+				expected, err := os.Open(filepath.Join(".", switch_metadata))
+
+				if err != nil {
+					log.Fatal("Unable to read "+filepath.Join(".", switch_metadata), err)
+				}
+
+				defer expected.Close()
+
+				csvReader := csv.NewReader(expected)
+
+				smExpected, err := csvReader.ReadAll()
+
+				if err != nil {
+					log.Fatal("Unable to parse as a CSV: "+test.expectedSwitchMetadata, err)
+				}
+
+				assert.Equal(t, smExpected, actual)
 			})
 		}
 	}

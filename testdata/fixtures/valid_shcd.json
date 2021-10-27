@@ -1,84 +1,935 @@
 [
   {
-    "common_name": "something",
+    "common_name": "pdu-001",
     "id": 0,
-    "location": {
-      "rack": "x1000",
-      "elevation": "u42"
-    },
-    "architecture": "arch",
-    "model": "1234_ABC567",
-    "type": "switch",
-    "vendor": "aruba",
+    "architecture": "pdu",
+    "model": "pdu",
+    "type": "none",
+    "vendor": "hpe",
     "ports": [
       {
         "port": 1,
-        "speed": 10,
-        "slot": null,
-        "destination_node_id": 36,
-        "destination_port": 2,
-        "destination_slot": null
-      },
-      {
-        "port": 2,
-        "speed": 10,
-        "slot": null,
-        "destination_node_id": 37,
-        "destination_port": 2,
+        "speed": 1,
+        "slot": "bmc",
+        "destination_node_id": 1,
+        "destination_port": 48,
         "destination_slot": null
       }
-    ]
+    ],
+    "location": {
+      "rack": "x3000",
+      "elevation": "p1"
+    }
   },
   {
-    "common_name": "another_thing",
+    "common_name": "sw-leaf-bmc-002",
     "id": 1,
-    "location": {
-      "rack": "x1000",
-      "elevation": "u42"
-    },
-    "architecture": "spine",
-    "model": "GHIJ_KLM789",
+    "architecture": "river_bmc_leaf",
+    "model": "S3048-ON",
     "type": "switch",
-    "vendor": "aruba",
+    "vendor": "dell",
     "ports": [
       {
-        "port": 1,
-        "speed": 100,
+        "port": 25,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 21,
+        "destination_port": 1,
+        "destination_slot": "bmc"
+      },
+      {
+        "port": 26,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 20,
+        "destination_port": 1,
+        "destination_slot": "bmc"
+      },
+      {
+        "port": 27,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 19,
+        "destination_port": 1,
+        "destination_slot": "bmc"
+      },
+      {
+        "port": 28,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 18,
+        "destination_port": 1,
+        "destination_slot": "bmc"
+      },
+      {
+        "port": 30,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 32,
+        "destination_port": 1,
+        "destination_slot": "bmc"
+      },
+      {
+        "port": 31,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 28,
+        "destination_port": 1,
+        "destination_slot": "bmc"
+      },
+      {
+        "port": 32,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 27,
+        "destination_port": 1,
+        "destination_slot": "bmc"
+      },
+      {
+        "port": 33,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 26,
+        "destination_port": 1,
+        "destination_slot": "bmc"
+      },
+      {
+        "port": 34,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 23,
+        "destination_port": 1,
+        "destination_slot": "bmc"
+      },
+      {
+        "port": 35,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 22,
+        "destination_port": 0,
+        "destination_slot": "bmc"
+      },
+      {
+        "port": 36,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 17,
+        "destination_port": 0,
+        "destination_slot": "bmc"
+      },
+      {
+        "port": 41,
+        "speed": 1,
         "slot": null,
         "destination_node_id": 7,
-        "destination_port": 54,
-        "destination_slot": null
+        "destination_port": 1,
+        "destination_slot": "bmc"
       },
       {
-        "port": 2,
-        "speed": 100,
+        "port": 43,
+        "speed": 1,
         "slot": null,
         "destination_node_id": 6,
-        "destination_port": 54,
-        "destination_slot": null
+        "destination_port": 1,
+        "destination_slot": "bmc"
+      },
+      {
+        "port": 47,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 4,
+        "destination_port": 1,
+        "destination_slot": "bmc"
+      },
+      {
+        "port": 48,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 0,
+        "destination_port": 1,
+        "destination_slot": "bmc"
       }
-    ]
+    ],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u32"
+    }
   },
   {
-    "common_name": "thingy",
+    "common_name": "pdu-000",
     "id": 2,
-    "location": {
-      "rack": "x1000",
-      "elevation": "u42"
-    },
-    "architecture": "agg",
-    "model": "cec",
+    "architecture": "pdu",
+    "model": "pdu",
     "type": "none",
+    "vendor": "hpe",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 1,
+        "slot": "bmc",
+        "destination_node_id": 3,
+        "destination_port": 48,
+        "destination_slot": null
+      }
+    ],
+    "location": {
+      "rack": "x3000",
+      "elevation": "p0"
+    }
+  },
+  {
+    "common_name": "sw-leaf-bmc-001",
+    "id": 3,
+    "architecture": "river_bmc_leaf",
+    "model": "S3048-ON",
+    "type": "switch",
+    "vendor": "dell",
+    "ports": [
+      {
+        "port": 29,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 33,
+        "destination_port": 1,
+        "destination_slot": "bmc"
+      },
+      {
+        "port": 30,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 31,
+        "destination_port": 1,
+        "destination_slot": "bmc"
+      },
+      {
+        "port": 31,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 30,
+        "destination_port": 1,
+        "destination_slot": "bmc"
+      },
+      {
+        "port": 32,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 29,
+        "destination_port": 1,
+        "destination_slot": "bmc"
+      },
+      {
+        "port": 33,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 25,
+        "destination_port": 1,
+        "destination_slot": "bmc"
+      },
+      {
+        "port": 34,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 24,
+        "destination_port": 1,
+        "destination_slot": "bmc"
+      },
+      {
+        "port": 35,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 12,
+        "destination_port": 1,
+        "destination_slot": "bmc"
+      },
+      {
+        "port": 36,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 11,
+        "destination_port": 1,
+        "destination_slot": "bmc"
+      },
+      {
+        "port": 37,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 10,
+        "destination_port": 1,
+        "destination_slot": "bmc"
+      },
+      {
+        "port": 38,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 9,
+        "destination_port": 1,
+        "destination_slot": "bmc"
+      },
+      {
+        "port": 40,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 8,
+        "destination_port": 1,
+        "destination_slot": "bmc"
+      },
+      {
+        "port": 47,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 5,
+        "destination_port": 1,
+        "destination_slot": "bmc"
+      },
+      {
+        "port": 48,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 2,
+        "destination_port": 1,
+        "destination_slot": "bmc"
+      }
+    ],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u31"
+    }
+  },
+  {
+    "common_name": "sw-hsn-002",
+    "id": 4,
+    "architecture": "slingshot_hsn_switch",
+    "model": "slingshot_hsn_switch",
+    "type": "switch",
     "vendor": "cray",
     "ports": [
       {
         "port": 1,
         "speed": 1,
-        "slot": null,
-        "destination_node_id": 0,
-        "destination_port": 48,
+        "slot": "bmc",
+        "destination_node_id": 1,
+        "destination_port": 47,
         "destination_slot": null
       }
-    ]
+    ],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u40"
+    }
+  },
+  {
+    "common_name": "sw-hsn-001",
+    "id": 5,
+    "architecture": "slingshot_hsn_switch",
+    "model": "slingshot_hsn_switch",
+    "type": "switch",
+    "vendor": "cray",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 1,
+        "slot": "bmc",
+        "destination_node_id": 3,
+        "destination_port": 47,
+        "destination_slot": null
+      }
+    ],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u39"
+    }
+  },
+  {
+    "common_name": "uan000",
+    "id": 6,
+    "architecture": "river_ncn_node_4_port_gigabyte",
+    "model": "river_ncn_node_4_port_gigabyte",
+    "type": "server",
+    "vendor": "gigabyte",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 1,
+        "slot": "bmc",
+        "destination_node_id": 1,
+        "destination_port": 43,
+        "destination_slot": null
+      }
+    ],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u29"
+    }
+  },
+  {
+    "common_name": "lnet01",
+    "id": 7,
+    "architecture": "river_ncn_node_4_port_gigabyte",
+    "model": "river_ncn_node_4_port_gigabyte",
+    "type": "server",
+    "vendor": "gigabyte",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 1,
+        "slot": "bmc",
+        "destination_node_id": 1,
+        "destination_port": 41,
+        "destination_slot": null
+      }
+    ],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u27"
+    }
+  },
+  {
+    "common_name": "uan006",
+    "id": 8,
+    "architecture": "river_ncn_node_4_port_gigabyte",
+    "model": "river_ncn_node_4_port_gigabyte",
+    "type": "server",
+    "vendor": "gigabyte",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 1,
+        "slot": "bmc",
+        "destination_node_id": 3,
+        "destination_port": 40,
+        "destination_slot": null
+      }
+    ],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u25"
+    }
+  },
+  {
+    "common_name": "uan004",
+    "id": 9,
+    "architecture": "river_ncn_node_4_port_gigabyte",
+    "model": "river_ncn_node_4_port_gigabyte",
+    "type": "server",
+    "vendor": "gigabyte",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 1,
+        "slot": "bmc",
+        "destination_node_id": 3,
+        "destination_port": 38,
+        "destination_slot": null
+      }
+    ],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u21"
+    }
+  },
+  {
+    "common_name": "uan003",
+    "id": 10,
+    "architecture": "river_ncn_node_4_port_gigabyte",
+    "model": "river_ncn_node_4_port_gigabyte",
+    "type": "server",
+    "vendor": "gigabyte",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 1,
+        "slot": "bmc",
+        "destination_node_id": 3,
+        "destination_port": 37,
+        "destination_slot": null
+      }
+    ],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u19"
+    }
+  },
+  {
+    "common_name": "uan002",
+    "id": 11,
+    "architecture": "river_ncn_node_4_port_gigabyte",
+    "model": "river_ncn_node_4_port_gigabyte",
+    "type": "server",
+    "vendor": "gigabyte",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 1,
+        "slot": "bmc",
+        "destination_node_id": 3,
+        "destination_port": 36,
+        "destination_slot": null
+      }
+    ],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u18"
+    }
+  },
+  {
+    "common_name": "uan001",
+    "id": 12,
+    "architecture": "river_ncn_node_4_port_gigabyte",
+    "model": "river_ncn_node_4_port_gigabyte",
+    "type": "server",
+    "vendor": "gigabyte",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 1,
+        "slot": "bmc",
+        "destination_node_id": 3,
+        "destination_port": 35,
+        "destination_slot": null
+      }
+    ],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u17"
+    }
+  },
+  {
+    "common_name": "cn008",
+    "id": 13,
+    "architecture": "river_compute_node",
+    "model": "river_compute_node",
+    "type": "node",
+    "vendor": "none",
+    "ports": [],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u15L"
+    }
+  },
+  {
+    "common_name": "cn007",
+    "id": 14,
+    "architecture": "river_compute_node",
+    "model": "river_compute_node",
+    "type": "node",
+    "vendor": "none",
+    "ports": [],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u16L"
+    }
+  },
+  {
+    "common_name": "cn006",
+    "id": 15,
+    "architecture": "river_compute_node",
+    "model": "river_compute_node",
+    "type": "node",
+    "vendor": "none",
+    "ports": [],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u16R"
+    }
+  },
+  {
+    "common_name": "cn005",
+    "id": 16,
+    "architecture": "river_compute_node",
+    "model": "river_compute_node",
+    "type": "node",
+    "vendor": "none",
+    "ports": [],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u15R"
+    }
+  },
+  {
+    "common_name": "SubRack-002-CMC",
+    "id": 17,
+    "architecture": "dense_compute_node",
+    "model": "dense_compute_node",
+    "type": "server",
+    "vendor": "hpe",
+    "ports": [
+      {
+        "port": 0,
+        "speed": 1,
+        "slot": "bmc",
+        "destination_node_id": 1,
+        "destination_port": 36,
+        "destination_slot": null
+      }
+    ],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u15"
+    }
+  },
+  {
+    "common_name": "cn004",
+    "id": 18,
+    "architecture": "river_compute_node",
+    "model": "river_compute_node",
+    "type": "node",
+    "vendor": "none",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 1,
+        "slot": "bmc",
+        "destination_node_id": 1,
+        "destination_port": 28,
+        "destination_slot": null
+      }
+    ],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u13L"
+    }
+  },
+  {
+    "common_name": "cn003",
+    "id": 19,
+    "architecture": "river_compute_node",
+    "model": "river_compute_node",
+    "type": "node",
+    "vendor": "none",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 1,
+        "slot": "bmc",
+        "destination_node_id": 1,
+        "destination_port": 27,
+        "destination_slot": null
+      }
+    ],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u14L"
+    }
+  },
+  {
+    "common_name": "cn002",
+    "id": 20,
+    "architecture": "river_compute_node",
+    "model": "river_compute_node",
+    "type": "node",
+    "vendor": "none",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 1,
+        "slot": "bmc",
+        "destination_node_id": 1,
+        "destination_port": 26,
+        "destination_slot": null
+      }
+    ],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u13R"
+    }
+  },
+  {
+    "common_name": "cn001",
+    "id": 21,
+    "architecture": "river_compute_node",
+    "model": "river_compute_node",
+    "type": "node",
+    "vendor": "none",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 1,
+        "slot": "bmc",
+        "destination_node_id": 1,
+        "destination_port": 25,
+        "destination_slot": null
+      }
+    ],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u14R"
+    }
+  },
+  {
+    "common_name": "SubRack-001-CMC",
+    "id": 22,
+    "architecture": "dense_compute_node",
+    "model": "dense_compute_node",
+    "type": "server",
+    "vendor": "hpe",
+    "ports": [
+      {
+        "port": 0,
+        "speed": 1,
+        "slot": "bmc",
+        "destination_node_id": 1,
+        "destination_port": 35,
+        "destination_slot": null
+      }
+    ],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u13"
+    }
+  },
+  {
+    "common_name": "ncn-s003",
+    "id": 23,
+    "architecture": "river_ncn_node_2_port_gigabyte",
+    "model": "river_ncn_node_2_port_gigabyte",
+    "type": "server",
+    "vendor": "gigabyte",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 1,
+        "slot": "bmc",
+        "destination_node_id": 1,
+        "destination_port": 34,
+        "destination_slot": null
+      }
+    ],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u12"
+    }
+  },
+  {
+    "common_name": "ncn-s002",
+    "id": 24,
+    "architecture": "river_ncn_node_2_port_gigabyte",
+    "model": "river_ncn_node_2_port_gigabyte",
+    "type": "server",
+    "vendor": "gigabyte",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 1,
+        "slot": "bmc",
+        "destination_node_id": 3,
+        "destination_port": 34,
+        "destination_slot": null
+      }
+    ],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u11"
+    }
+  },
+  {
+    "common_name": "ncn-s001",
+    "id": 25,
+    "architecture": "river_ncn_node_2_port_gigabyte",
+    "model": "river_ncn_node_2_port_gigabyte",
+    "type": "server",
+    "vendor": "gigabyte",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 1,
+        "slot": "bmc",
+        "destination_node_id": 3,
+        "destination_port": 33,
+        "destination_slot": null
+      }
+    ],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u10"
+    }
+  },
+  {
+    "common_name": "ncn-w006",
+    "id": 26,
+    "architecture": "river_ncn_node_2_port_gigabyte",
+    "model": "river_ncn_node_2_port_gigabyte",
+    "type": "server",
+    "vendor": "gigabyte",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 1,
+        "slot": "bmc",
+        "destination_node_id": 1,
+        "destination_port": 33,
+        "destination_slot": null
+      }
+    ],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u09"
+    }
+  },
+  {
+    "common_name": "ncn-w005",
+    "id": 27,
+    "architecture": "river_ncn_node_2_port_gigabyte",
+    "model": "river_ncn_node_2_port_gigabyte",
+    "type": "server",
+    "vendor": "gigabyte",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 1,
+        "slot": "bmc",
+        "destination_node_id": 1,
+        "destination_port": 32,
+        "destination_slot": null
+      }
+    ],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u08"
+    }
+  },
+  {
+    "common_name": "ncn-w004",
+    "id": 28,
+    "architecture": "river_ncn_node_2_port_gigabyte",
+    "model": "river_ncn_node_2_port_gigabyte",
+    "type": "server",
+    "vendor": "gigabyte",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 1,
+        "slot": "bmc",
+        "destination_node_id": 1,
+        "destination_port": 31,
+        "destination_slot": null
+      }
+    ],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u07"
+    }
+  },
+  {
+    "common_name": "ncn-w003",
+    "id": 29,
+    "architecture": "river_ncn_node_2_port_gigabyte",
+    "model": "river_ncn_node_2_port_gigabyte",
+    "type": "server",
+    "vendor": "gigabyte",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 1,
+        "slot": "bmc",
+        "destination_node_id": 3,
+        "destination_port": 32,
+        "destination_slot": null
+      }
+    ],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u06"
+    }
+  },
+  {
+    "common_name": "ncn-w002",
+    "id": 30,
+    "architecture": "river_ncn_node_2_port_gigabyte",
+    "model": "river_ncn_node_2_port_gigabyte",
+    "type": "server",
+    "vendor": "gigabyte",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 1,
+        "slot": "bmc",
+        "destination_node_id": 3,
+        "destination_port": 31,
+        "destination_slot": null
+      }
+    ],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u05"
+    }
+  },
+  {
+    "common_name": "ncn-w001",
+    "id": 31,
+    "architecture": "river_ncn_node_2_port_gigabyte",
+    "model": "river_ncn_node_2_port_gigabyte",
+    "type": "server",
+    "vendor": "gigabyte",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 1,
+        "slot": "bmc",
+        "destination_node_id": 3,
+        "destination_port": 30,
+        "destination_slot": null
+      }
+    ],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u04"
+    }
+  },
+  {
+    "common_name": "ncn-m003",
+    "id": 32,
+    "architecture": "river_ncn_node_4_port_gigabyte",
+    "model": "river_ncn_node_4_port_gigabyte",
+    "type": "server",
+    "vendor": "gigabyte",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 1,
+        "slot": "bmc",
+        "destination_node_id": 1,
+        "destination_port": 30,
+        "destination_slot": null
+      }
+    ],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u03"
+    }
+  },
+  {
+    "common_name": "ncn-m002",
+    "id": 33,
+    "architecture": "river_ncn_node_4_port_gigabyte",
+    "model": "river_ncn_node_4_port_gigabyte",
+    "type": "server",
+    "vendor": "gigabyte",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 1,
+        "slot": "bmc",
+        "destination_node_id": 3,
+        "destination_port": 29,
+        "destination_slot": null
+      }
+    ],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u02"
+    }
+  },
+  {
+    "common_name": "ncn-m001",
+    "id": 34,
+    "architecture": "river_ncn_node_4_port_gigabyte",
+    "model": "river_ncn_node_4_port_gigabyte",
+    "type": "server",
+    "vendor": "gigabyte",
+    "ports": [],
+    "location": {
+      "rack": "x3000",
+      "elevation": "u01"
+    }
   }
 ]
