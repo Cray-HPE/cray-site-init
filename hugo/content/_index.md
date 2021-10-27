@@ -118,10 +118,10 @@ Block".
 
 > example: 10.102.11.112/28
 
-### `--cmn-external-dns`
+### `--can-external-dns`
 
-The CMN IP address to reserved for the CSM DNS endpoint which must be
-part of the CMN Static Pool.  This is generally referred to as the
+The CAN IP address to reserved for the CSM DNS endpoint which must be
+part of the CAN Static Pool.  This is generally referred to as the
 site-to-system lookup target.  The DNS zone \<sytem-name>.\<site-domain>
 will be served by a DNS server at this IP address.
 

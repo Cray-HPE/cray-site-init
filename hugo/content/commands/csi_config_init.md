@@ -51,7 +51,6 @@ csi config init [flags]
       --v2-registry string                    URL for default v2 registry used for both helm and containers (default "https://registry.nmn/")
       --rpm-repository string                 URL for default rpm repository (default "https://packages.nmn/repository/shasta-master")
       --can-gateway string                    Gateway for NCNs on the CAN
-      --cmn-gateway string                    Gateway for NCNs on the CMN
       --ceph-cephfs-image string              The container image for the cephfs provisioner (default "dtr.dev.cray.com/cray/cray-cephfs-provisioner:0.1.0-nautilus-1.3")
       --ceph-rbd-image string                 The container image for the ceph rbd provisioner (default "dtr.dev.cray.com/cray/cray-rbd-provisioner:0.1.0-nautilus-1.3")
       --docker-image-registry string          Upstream docker registry for use during the install (default "dtr.dev.cray.com")
@@ -70,10 +69,7 @@ csi config init [flags]
       --can-cidr string                       Overall IPv4 CIDR for all Customer Access subnets (default "10.102.11.0/24")
       --can-static-pool string                Overall IPv4 CIDR for static Customer Access addresses (default "10.102.11.112/28")
       --can-dynamic-pool string               Overall IPv4 CIDR for dynamic Customer Access addresses (default "10.102.11.128/25")
-      --cmn-cidr string                       Overall IPv4 CIDR for all Customer Management subnets (default "10.103.6.0/24")
-      --cmn-static-pool string                Overall IPv4 CIDR for static Customer Management addresses (default "10.103.6.112/28")
-      --cmn-dynamic-pool string               Overall IPv4 CIDR for dynamic Customer Management addresses (default "10.103.6.128/25")
-      --cmn-external-dns string               IP Address in the cmn-static-pool for the external dns service "site-to-system lookups"
+      --can-external-dns string               IP Address in the can-static-pool for the external dns service "site-to-system lookups"
       --mtl-cidr string                       Overall IPv4 CIDR for all Provisioning subnets (default "10.1.1.0/16")
       --hsn-cidr string                       Overall IPv4 CIDR for all HSN subnets (default "10.253.0.0/16")
       --supernet                              Use the supernet mask and gateway for NCNs and Switches (default true)

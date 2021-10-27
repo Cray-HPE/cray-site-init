@@ -142,10 +142,6 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 					v.GetString("cmn-static-pool"), tempNet.CIDR, err)
 			}
 			static.FullName = "CMN Static Pool MetalLB"
-			_, err = static.AddReservationWithIP("external-dns", v.GetString("cmn-external-dns"), "site to system lookups")
-			if err != nil {
-				log.Fatal(err)
-			}
 		}
 		_, cmnDynamicPool, err := net.ParseCIDR(v.GetString("cmn-dynamic-pool"))
 		if err != nil {
@@ -178,6 +174,10 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 					v.GetString("can-static-pool"), tempNet.CIDR, err)
 			}
 			static.FullName = "CAN Static Pool MetalLB"
+			_, err = static.AddReservationWithIP("external-dns", v.GetString("can-external-dns"), "site to system lookups")
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 		_, canDynamicPool, err := net.ParseCIDR(v.GetString("can-dynamic-pool"))
 		if err != nil {
