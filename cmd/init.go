@@ -162,10 +162,17 @@ var initCmd = &cobra.Command{
 			// Update with flags
 			normalizedName := strings.ReplaceAll(strings.ToLower(name), "_", "-")
 
-			myLayout.BaseVlan = int16(v.GetInt(fmt.Sprintf("%v-bootstrap-vlan", normalizedName)))
+			// Use CLI values if available, otherwise defaults
+			if v.IsSet(fmt.Sprintf("%v-bootstrap-vlan", normalizedName)) {
+				myLayout.BaseVlan = int16(v.GetInt(fmt.Sprintf("%v-bootstrap-vlan", normalizedName)))
+				myLayout.Template.VlanRange[0] = int16(v.GetInt(fmt.Sprintf("%v-bootstrap-vlan", normalizedName)))
+			} else {
+				myLayout.BaseVlan = layout.Template.VlanRange[0]
+			}
+			// myLayout.BaseVlan = int16(v.GetInt(fmt.Sprintf("%v-bootstrap-vlan", normalizedName)))
+			fmt.Println(normalizedName, myLayout.BaseVlan, layout.Template.VlanRange)
 
 			myLayout.Template.CIDR = v.GetString(fmt.Sprintf("%v-cidr", normalizedName))
-			myLayout.Template.VlanRange[0] = int16(v.GetInt(fmt.Sprintf("%v-bootstrap-vlan", normalizedName)))
 
 			myLayout.AdditionalNetworkingSpace = v.GetInt("management-net-ips")
 			internalNetConfigs[name] = myLayout
