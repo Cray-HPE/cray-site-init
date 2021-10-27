@@ -379,7 +379,7 @@ func (g *SLSStateGenerator) getRiverHardwareFromRow(row shcd_parser.HMNRow) (har
 	}
 
 	// Management switches
-	if strings.HasPrefix(sourceLowerCase, "sw-agg") || strings.HasPrefix(sourceLowerCase, "sw-25g") || strings.HasPrefix(sourceLowerCase, "sw-40g") || strings.HasPrefix(sourceLowerCase, "sw-smn") {
+	if strings.HasPrefix(sourceLowerCase, "sw-agg") || strings.HasPrefix(sourceLowerCase, "sw-25g") || strings.HasPrefix(sourceLowerCase, "sw-40g") || strings.HasPrefix(sourceLowerCase, "sw-100g") || strings.HasPrefix(sourceLowerCase, "sw-smn") {
 		return g.getManagementSwitchHardwareFrom(row)
 	}
 
