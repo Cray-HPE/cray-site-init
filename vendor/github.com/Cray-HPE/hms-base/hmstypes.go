@@ -24,6 +24,7 @@ package base
 
 import (
 	"encoding/json"
+	"fmt"
 	"regexp"
 	"strings"
 	"unicode"
@@ -92,13 +93,14 @@ const (
 	RouterBMCNic             HMSType = "RouterBMCNic"             // xXcCrRbBiI
 	RouterPowerConnector     HMSType = "RouterPowerConnector"     // xXcCrRvV
 
-	HSNBoard            HMSType = "HSNBoard"            // xXcCrReE
-	HSNLink             HMSType = "HSNLink"             // xXcCrRaAlL
-	HSNConnector        HMSType = "HSNConnector"        // xXcCrRjJ
-	HSNConnectorPort    HMSType = "HSNConnectorPort"    // xXcCrRjJpP
-	MgmtSwitch          HMSType = "MgmtSwitch"          // xXcCwW
-	MgmtHLSwitch        HMSType = "MgmtHLSwitch"        // xXcChHsS
-	MgmtSwitchConnector HMSType = "MgmtSwitchConnector" // xXcCwWjJ
+	HSNBoard              HMSType = "HSNBoard"              // xXcCrReE
+	HSNLink               HMSType = "HSNLink"               // xXcCrRaAlL
+	HSNConnector          HMSType = "HSNConnector"          // xXcCrRjJ
+	HSNConnectorPort      HMSType = "HSNConnectorPort"      // xXcCrRjJpP
+	MgmtSwitch            HMSType = "MgmtSwitch"            // xXcCwW
+	MgmtHLSwitchEnclosure HMSType = "MgmtHLSwitchEnclosure" // xXcChH
+	MgmtHLSwitch          HMSType = "MgmtHLSwitch"          // xXcChHsS
+	MgmtSwitchConnector   HMSType = "MgmtSwitchConnector"   // xXcCwWjJ
 
 	// Special types and wildcards
 	SMSBox         HMSType = "SMSBox"    // smsN
@@ -488,9 +490,16 @@ var hmsCompRecognitionTable = map[string]hmsCompRecognitionEntry{
 		"x%dc%dw%dj%d",
 		4,
 	},
+	"mgmthlswitchenclosure": {
+		MgmtHLSwitchEnclosure,
+		Chassis,
+		regexp.MustCompile("^x([0-9]{1,4})c([0-7])h([1-9][0-9]*)$"),
+		"x%dc%dh%d",
+		3,
+	},
 	"mgmthlswitch": {
 		MgmtHLSwitch,
-		Chassis,
+		MgmtHLSwitchEnclosure,
 		regexp.MustCompile("^x([0-9]{1,4})c([0-7])h([1-9][0-9]*)s([1-9])$"),
 		"x%dc%dh%ds%d",
 		4,
@@ -502,6 +511,7 @@ var hmsCompRecognitionTable = map[string]hmsCompRecognitionEntry{
 	//		"x%dc%d%s%d"
 	//	},
 }
+
 
 // Get the HMSType for a given xname, based on its pattern in the recognition
 // table above.
@@ -650,6 +660,16 @@ func ToHMSType(typeStr string) HMSType {
 	} else {
 		return value.Type
 	}
+}
+
+// TODO
+func GetHMSTypeFormatString(hmsType HMSType) (string, int, error) {
+	typeLower := strings.ToLower(hmsType.String())
+	if value, ok := hmsCompRecognitionTable[typeLower]; ok {
+		return value.GenStr, value.NumArgs, nil
+	}
+	
+	return "", 0, fmt.Errorf("unknown HMSType: %s", typeLower)
 }
 
 // Allow HMSType to be treated as a standard string type.

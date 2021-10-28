@@ -3,7 +3,7 @@ module github.com/Cray-HPE/cray-site-init
 replace k8s.io/client-go => k8s.io/client-go v0.19.4 // pinning this version for now.  Something is indirectly asking for an obsolete version
 
 require (
-	github.com/Cray-HPE/hms-base v1.15.0
+	github.com/Cray-HPE/hms-base v1.15.2-0.20210928201115-8d9f61f26219
 	github.com/Cray-HPE/hms-bss v1.9.5
 	github.com/Cray-HPE/hms-s3 v1.10.0
 	github.com/Cray-HPE/hms-shcd-parser v1.6.2
@@ -14,13 +14,14 @@ require (
 	github.com/evanphx/json-patch v4.9.0+incompatible
 	github.com/gocarina/gocsv v0.0.0-20200925213129-04be9ee2e1a2
 	github.com/imdario/mergo v0.3.11 // indirect
-	github.com/mitchellh/go-homedir v1.1.0
+	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.3.0
 	github.com/pkg/errors v0.9.1
 	github.com/smartystreets/assertions v1.0.0 // indirect
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.6.1
+	github.com/xeipuuv/gojsonschema v1.2.0
 	go.uber.org/zap v1.15.0
 	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
