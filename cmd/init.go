@@ -221,19 +221,22 @@ var initCmd = &cobra.Command{
 					// Loop the reservations and update the NCN reservations with hostnames
 					// we likely didn't have when we registered the reservation
 					updateReservations(tempSubnet, logicalNcns)
-					if netName == "CAN" {
-						// Do not use supernet hack for the CAN
+					if netName == "CAN" || netName == "CMN" {
+						netNameLower := strings.ToLower(netName)
+						// Do not use supernet hack for the CAN/CMN
 						tempSubnet.UpdateDHCPRange(false)
-						// Do not overlap the can-static or can-dynamic pools
-						_, canStaticPool, _ := net.ParseCIDR(v.GetString("can-static-pool"))
+						// Do not overlap the static or dynamic pools
+						myStaticPoolName := fmt.Sprintf("%s-static-pool", netNameLower)
+						_, myStaticPool, _ := net.ParseCIDR(v.GetString(myStaticPoolName))
 						// Guidance has changed on whether the CAN gw should be at the start or end of the
 						// range.  Here we account for it being at the end of the range.
-						if tempSubnet.Gateway.String() == ipam.Add(canStaticPool.IP, -1).String() {
+						// Leaving this check in place for CMN because it is harmless to do so.
+						if tempSubnet.Gateway.String() == ipam.Add(myStaticPool.IP, -1).String() {
 							// The gw *is* at the end, so shorten the range to accommodate
-							tempSubnet.DHCPEnd = ipam.Add(canStaticPool.IP, -2)
+							tempSubnet.DHCPEnd = ipam.Add(myStaticPool.IP, -2)
 						} else {
 							// The gw is not at the end
-							tempSubnet.DHCPEnd = ipam.Add(canStaticPool.IP, -1)
+							tempSubnet.DHCPEnd = ipam.Add(myStaticPool.IP, -1)
 						}
 					} else {
 						tempSubnet.UpdateDHCPRange(v.GetBool("supernet"))
