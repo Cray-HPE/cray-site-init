@@ -1,6 +1,7 @@
-# github.com/Cray-HPE/hms-base v1.15.0
+# github.com/Cray-HPE/hms-base v1.15.2-0.20210928201115-8d9f61f26219
 ## explicit
 github.com/Cray-HPE/hms-base
+github.com/Cray-HPE/hms-base/xname
 # github.com/Cray-HPE/hms-bss v1.9.5
 ## explicit
 github.com/Cray-HPE/hms-bss/pkg/bssTypes
