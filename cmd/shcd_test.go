@@ -22,6 +22,8 @@ const _schemaFile = "../internal/files/shcd-schema.json"
 var switch_meta_expected = "../testdata/expected/" + switch_metadata
 var hmn_conn_expected = "../testdata/expected/" + hmn_connections
 
+// Generate shcd.json example:
+// canu validate shcd -a Full --shcd shcd.xlsx --tabs 10G_25G_40G_100G,NMN,HMN,MTN_TDS --corners I37,T125,J15,T24,J20,U51,K15,U36 --out shcd.json
 var tests = []struct {
 	fixture                string
 	expectedError          bool

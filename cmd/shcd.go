@@ -387,6 +387,11 @@ func createSwitchSeed(s []byte, f string) {
 		// for switch_metadata.csv, we only care about the switches
 		case "switch":
 
+			// HSN switch should not be in switch_metadata.csv
+			if strings.HasPrefix(shcd[i].CommonName, "sw-hsn") {
+				continue
+			}
+
 			// Generate the xname based on the rules we predefine
 			switchXname := shcd[i].GenerateXname()
 			// Do the same for the switch type
