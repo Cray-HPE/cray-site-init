@@ -169,8 +169,6 @@ var initCmd = &cobra.Command{
 			} else {
 				myLayout.BaseVlan = layout.Template.VlanRange[0]
 			}
-			// myLayout.BaseVlan = int16(v.GetInt(fmt.Sprintf("%v-bootstrap-vlan", normalizedName)))
-			fmt.Println(normalizedName, myLayout.BaseVlan, layout.Template.VlanRange)
 
 			myLayout.Template.CIDR = v.GetString(fmt.Sprintf("%v-cidr", normalizedName))
 
