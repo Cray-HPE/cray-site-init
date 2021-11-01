@@ -29,6 +29,8 @@ Handy Netmask Cheet Sheet
 */
 
 const (
+	// DefaultMTLVlan is the default MTL Bootstrap Vlan - zero (0) represents untagged.
+	DefaultMTLVlan = 0
 	// DefaultHMNString is the Default HMN String (bond0.hmn0)
 	DefaultHMNString = "10.254.0.0/17"
 	// DefaultHMNVlan is the default HMN Bootstrap Vlan
@@ -199,7 +201,7 @@ var DefaultMTL = IPV4Network{
 	FullName:  "Provisioning Network (untagged)",
 	CIDR:      DefaultMTLString,
 	Name:      "MTL",
-	VlanRange: []int16{1},
+	VlanRange: []int16{DefaultMTLVlan},
 	MTU:       9000,
 	NetType:   "ethernet",
 	Comment:   "This network is only valid for the NCNs",
