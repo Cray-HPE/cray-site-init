@@ -95,6 +95,7 @@ var initCmd = &cobra.Command{
 
 		// Prepare the network layout configs for generating the networks
 		var internalNetConfigs = make(map[string]csi.NetworkLayoutConfiguration)
+		internalNetConfigs["BICAN"] = csi.GenDefaultBICANConfig()
 		internalNetConfigs["HMN"] = csi.GenDefaultHMNConfig()
 		internalNetConfigs["CMN"] = csi.GenDefaultCMNConfig()
 		internalNetConfigs["CAN"] = csi.GenDefaultCANConfig()
@@ -171,7 +172,9 @@ var initCmd = &cobra.Command{
 				myLayout.BaseVlan = layout.Template.VlanRange[0]
 			}
 
-			myLayout.Template.CIDR = v.GetString(fmt.Sprintf("%v-cidr", normalizedName))
+			if v.IsSet(fmt.Sprintf("%v-cidr", normalizedName)) {
+				myLayout.Template.CIDR = v.GetString(fmt.Sprintf("%v-cidr", normalizedName))
+			}
 
 			myLayout.AdditionalNetworkingSpace = v.GetInt("management-net-ips")
 			internalNetConfigs[name] = myLayout

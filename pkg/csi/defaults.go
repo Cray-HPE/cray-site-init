@@ -79,6 +79,8 @@ const (
 	DefaultCHNVlan = 5
 	// DefaultMTLString is the Default MTL String (bond0 interface)
 	DefaultMTLString = "10.1.1.0/16"
+	// DefaultBICANNetwork is the Network is where the system default route points at install
+	DefaultBICANNetwork = "CMN"
 )
 
 // DefaultApplicationNodePrefixes is the list of default Application node prefixes, for source column in the hmn_connections.json
@@ -99,7 +101,7 @@ var DefaultApplicationNodeSubroles = map[string]string{
 const SubrolePlaceHolder = "~fixme~"
 
 // ValidNetNames is the list of strings that enumerate valid main network names
-var ValidNetNames = []string{"HMN", "NMN", "CMN", "CAN", "CHN", "MTL", "HMN_RVR", "HMN_MTN", "NMN_RVR", "NMN_MTN"}
+var ValidNetNames = []string{"BICAN", "HMN", "NMN", "CMN", "CAN", "MTL", "HMN_RVR", "HMN_MTN", "NMN_RVR", "NMN_MTN"}
 
 // ValidCabinetTypes is the list of strings that enumerate valid cabinet types
 var ValidCabinetTypes = []string{"mountain", "river", "hill"}
@@ -184,6 +186,17 @@ func GenDefaultNMN() IPV4Network {
 	}
 }
 
+// DefaultBICAN is the default structure for templating the initial BICAN toggle - CMN
+var DefaultBICAN = IPV4Network{
+	FullName:  "SystemDefaultRoute points the network name of the default route",
+	CIDR:      "0.0.0.0/0",
+	Name:      "BICAN",
+	VlanRange: []int16{0},
+	MTU:       9000,
+	NetType:   "ethernet",
+	Comment:   "",
+}
+
 // DefaultHSN is the default structure for templating initial HSN configuration
 var DefaultHSN = IPV4Network{
 	FullName:  "High Speed Network",
@@ -237,6 +250,18 @@ var DefaultMTL = IPV4Network{
 	MTU:       9000,
 	NetType:   "ethernet",
 	Comment:   "This network is only valid for the NCNs",
+}
+
+// GenDefaultBICANConfig returns the set of defaults for mapping the BICAN toggle
+func GenDefaultBICANConfig() NetworkLayoutConfiguration {
+
+	return NetworkLayoutConfiguration{
+		Template:                        DefaultBICAN,
+		SubdivideByCabinet:              false,
+		IncludeBootstrapDHCP:            false,
+		IncludeNetworkingHardwareSubnet: false,
+		IncludeUAISubnet:                false,
+	}
 }
 
 // GenDefaultHMNConfig is the set of defaults for mapping the HMN
