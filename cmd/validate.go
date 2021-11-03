@@ -69,7 +69,7 @@ func runCommand(shellCode string) {
 	fmt.Printf("%s\n", stdoutStderr)
 	if err != nil {
 		lastFailure = err
-		log.Println(err)
+		log.Fatalln(err)
 	}
 }
 
