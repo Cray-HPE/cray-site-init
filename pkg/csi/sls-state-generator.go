@@ -21,20 +21,6 @@ var (
 	mountainChassisList = []string{"c0", "c1", "c2", "c3", "c4", "c5", "c6", "c7"}
 	tdsChassisList      = []string{"c1", "c3"}
 
-	// Default Application node prefixes, for source column in the hmn_connections.json
-	defaultApplicationNodePrefixes = []string{
-		"uan",
-		"gn",
-		"ln",
-	}
-
-	// Default Application Node Subroles, these can be overridden via ApplicationNodeConfig
-	defaultApplicationNodeSubroles = map[string]string{
-		"uan": "UAN",
-		"ln":  "UAN", // Nodes with the ln prefix are also UAN nodes
-		"gn":  "Gateway",
-	}
-
 	// Regular expressions to get around humans.
 	portRegex        = regexp.MustCompile(`[a-zA-Z]*(\d+)`)
 	uRegex           = regexp.MustCompile(`[a-zA-Z]*(\d+)([a-zA-Z]*)`)
@@ -87,6 +73,19 @@ func (applicationNodeConfig *SLSGeneratorApplicationNodeConfig) Validate() error
 			}
 			allAliases[alias] = xname
 		}
+	}
+
+	// Verify that there are no subrole placeholders that need replacing.
+	prefixErr := make([]string, 0, 1)
+	for prefix, subrole := range applicationNodeConfig.PrefixHSMSubroles {
+		if subrole == SubrolePlaceHolder {
+			prefixErr = append(prefixErr, prefix)
+		}
+	}
+	if len(prefixErr) > 1 {
+		return fmt.Errorf("Prefixes, '%v', have no subrole mapping. Replace `%s` placeholders with valid subroles in the Application Node Config file.", prefixErr, SubrolePlaceHolder)
+	} else if len(prefixErr) == 1 {
+		return fmt.Errorf("Prefix, '%v', has no subrole mapping. Replace `%s` placeholder with a valid subrole in the Application Node Config file.", prefixErr, SubrolePlaceHolder)
 	}
 
 	return nil
@@ -485,11 +484,11 @@ func (g *SLSStateGenerator) isApplicationNode(sourceLowerCase string) (isApplica
 	// Merge default Application node prefixes with the user provided prefixes.
 	prefixes := []string{}
 	prefixes = append(prefixes, applicationNodeConfig.Prefixes...)
-	prefixes = append(prefixes, defaultApplicationNodePrefixes...)
+	prefixes = append(prefixes, DefaultApplicationNodePrefixes...)
 
 	// Merge default Application node subroles with the user provided subroles. User provided subroles can override the default subroles
 	subRoles := map[string]string{}
-	for prefix, subRole := range defaultApplicationNodeSubroles {
+	for prefix, subRole := range DefaultApplicationNodeSubroles {
 		subRoles[prefix] = subRole
 	}
 	for prefix, subRole := range applicationNodeConfig.PrefixHSMSubroles {

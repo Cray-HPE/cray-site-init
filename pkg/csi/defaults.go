@@ -75,6 +75,23 @@ const (
 	DefaultMTLString = "10.1.1.0/16"
 )
 
+// Default Application node prefixes, for source column in the hmn_connections.json
+var DefaultApplicationNodePrefixes = []string{
+	"uan",
+	"gn",
+	"ln",
+}
+
+// Default Application Node Subroles, these can be overridden via ApplicationNodeConfig
+var DefaultApplicationNodeSubroles = map[string]string{
+	"uan": "UAN",
+	"ln":  "UAN", // Nodes with the ln prefix are also UAN nodes
+	"gn":  "Gateway",
+}
+
+// Placeholder used to indicate that a prefix has no subrole mapping in ApplicationNodeConfig.
+const SubrolePlaceHolder = "~fixme~"
+
 // ValidNetNames is the list of strings that enumerate valid main network names
 var ValidNetNames = []string{"HMN", "NMN", "CMN", "CAN", "MTL", "HMN_RVR", "HMN_MTN", "NMN_RVR", "NMN_MTN"}
 
