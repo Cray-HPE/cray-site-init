@@ -83,9 +83,9 @@ func (applicationNodeConfig *SLSGeneratorApplicationNodeConfig) Validate() error
 		}
 	}
 	if len(prefixErr) > 1 {
-		return fmt.Errorf("Prefixes, '%v', have no subrole mapping. Replace `%s` placeholders with valid subroles in the Application Node Config file.", prefixErr, SubrolePlaceHolder)
+		return fmt.Errorf("prefixes, '%v', have no subrole mapping. Replace `%s` placeholders with valid subroles in the Application Node Config file", prefixErr, SubrolePlaceHolder)
 	} else if len(prefixErr) == 1 {
-		return fmt.Errorf("Prefix, '%v', has no subrole mapping. Replace `%s` placeholder with a valid subrole in the Application Node Config file.", prefixErr, SubrolePlaceHolder)
+		return fmt.Errorf("prefix, '%v', has no subrole mapping. Replace `%s` placeholder with a valid subrole in the Application Node Config file", prefixErr, SubrolePlaceHolder)
 	}
 
 	return nil
