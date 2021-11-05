@@ -98,6 +98,7 @@ var initCmd = &cobra.Command{
 		internalNetConfigs["HMN"] = csi.GenDefaultHMNConfig()
 		internalNetConfigs["CMN"] = csi.GenDefaultCMNConfig()
 		internalNetConfigs["CAN"] = csi.GenDefaultCANConfig()
+		internalNetConfigs["CHN"] = csi.GenDefaultCHNConfig()
 		internalNetConfigs["NMN"] = csi.GenDefaultNMNConfig()
 		internalNetConfigs["HSN"] = csi.GenDefaultHSNConfig()
 		internalNetConfigs["MTL"] = csi.GenDefaultMTLConfig()
@@ -219,22 +220,57 @@ var initCmd = &cobra.Command{
 					// Loop the reservations and update the NCN reservations with hostnames
 					// we likely didn't have when we registered the reservation
 					updateReservations(tempSubnet, logicalNcns)
-					if netName == "CAN" || netName == "CMN" {
+					if netName == "CAN" || netName == "CMN" || netName == "CHN" {
 						netNameLower := strings.ToLower(netName)
-						// Do not use supernet hack for the CAN/CMN
+
+						// Do not use supernet hack for the CAN/CMN/CHN
 						tempSubnet.UpdateDHCPRange(false)
+
+						myNetName := fmt.Sprintf("%s-cidr", netNameLower)
+						myNetCIDR := v.GetString(myNetName)
+						if myNetCIDR == "" {
+							continue
+						}
+						_, myNet, _ := net.ParseCIDR(myNetCIDR)
+
+						// If neither static nor dynamic pool is defined we can use the last available IP in the subnet
+						poolStartIP := ipam.Broadcast(*myNet)
+
 						// Do not overlap the static or dynamic pools
 						myStaticPoolName := fmt.Sprintf("%s-static-pool", netNameLower)
-						_, myStaticPool, _ := net.ParseCIDR(v.GetString(myStaticPoolName))
+						myDynPoolName := fmt.Sprintf("%s-dynamic-pool", netNameLower)
+
+						myStaticPoolCIDR := v.GetString(myStaticPoolName)
+						myDynPoolCIDR := v.GetString(myDynPoolName)
+
+						if len(myStaticPoolCIDR) > 0 && len(myDynPoolCIDR) > 0 {
+							// Both pools are defined so find the start of whichever pool comes first
+							_, myStaticPool, _ := net.ParseCIDR(myStaticPoolCIDR)
+							_, myDynamicPool, _ := net.ParseCIDR(myDynPoolCIDR)
+							if ipam.IPLessThan(myStaticPool.IP, myDynamicPool.IP) {
+								poolStartIP = myStaticPool.IP
+							} else {
+								poolStartIP = myDynamicPool.IP
+							}
+						} else if len(myStaticPoolCIDR) > 0 && len(myDynPoolCIDR) == 0 {
+							// Only the static pool is defined so use the first IP of that pool
+							_, myStaticPool, _ := net.ParseCIDR(myStaticPoolCIDR)
+							poolStartIP = myStaticPool.IP
+						} else if len(myStaticPoolCIDR) == 0 && len(myDynPoolCIDR) > 0 {
+							// Only the dynamic pool is defined so use the first IP of that pool
+							_, myDynamicPool, _ := net.ParseCIDR(myDynPoolCIDR)
+							poolStartIP = myDynamicPool.IP
+						}
+
 						// Guidance has changed on whether the CAN gw should be at the start or end of the
 						// range.  Here we account for it being at the end of the range.
 						// Leaving this check in place for CMN because it is harmless to do so.
-						if tempSubnet.Gateway.String() == ipam.Add(myStaticPool.IP, -1).String() {
+						if tempSubnet.Gateway.String() == ipam.Add(poolStartIP, -1).String() {
 							// The gw *is* at the end, so shorten the range to accommodate
-							tempSubnet.DHCPEnd = ipam.Add(myStaticPool.IP, -2)
+							tempSubnet.DHCPEnd = ipam.Add(poolStartIP, -2)
 						} else {
 							// The gw is not at the end
-							tempSubnet.DHCPEnd = ipam.Add(myStaticPool.IP, -1)
+							tempSubnet.DHCPEnd = ipam.Add(poolStartIP, -1)
 						}
 					} else {
 						tempSubnet.UpdateDHCPRange(v.GetBool("supernet"))
@@ -327,6 +363,7 @@ func init() {
 	initCmd.Flags().String("rpm-repository", "https://packages.nmn/repository/shasta-master", "URL for default rpm repository")
 	initCmd.Flags().String("cmn-gateway", "", "Gateway for NCNs on the CMN (Management)")
 	initCmd.Flags().String("can-gateway", "", "Gateway for NCNs on the CAN (User)")
+	initCmd.Flags().String("chn-gateway", "", "Gateway for NCNs on the CHN (User)")
 	initCmd.Flags().String("ceph-cephfs-image", "dtr.dev.cray.com/cray/cray-cephfs-provisioner:0.1.0-nautilus-1.3", "The container image for the cephfs provisioner")
 	initCmd.Flags().String("ceph-rbd-image", "dtr.dev.cray.com/cray/cray-rbd-provisioner:0.1.0-nautilus-1.3", "The container image for the ceph rbd provisioner")
 	initCmd.Flags().String("docker-image-registry", "dtr.dev.cray.com", "Upstream docker registry for use during the install")
@@ -349,12 +386,15 @@ func init() {
 	initCmd.Flags().String("hmn-rvr-cidr", csi.DefaultHMNRVRString, "IPv4 CIDR for grouped River Hardware Management subnets")
 
 	initCmd.Flags().String("cmn-cidr", csi.DefaultCMNString, "Overall IPv4 CIDR for all Customer Management subnets")
-	initCmd.Flags().String("cmn-static-pool", csi.DefaultCMNStaticString, "Overall IPv4 CIDR for static Customer Management load balancer addresses")
-	initCmd.Flags().String("cmn-dynamic-pool", csi.DefaultCMNPoolString, "Overall IPv4 CIDR for dynamic Customer Management load balancer addresses")
+	initCmd.Flags().String("cmn-static-pool", "", "Overall IPv4 CIDR for static Customer Management load balancer addresses")
+	initCmd.Flags().String("cmn-dynamic-pool", "", "Overall IPv4 CIDR for dynamic Customer Management load balancer addresses")
 	initCmd.Flags().String("cmn-external-dns", "", "IP Address in the cmn-static-pool for the external dns service \"site-to-system lookups\"")
 	initCmd.Flags().String("can-cidr", csi.DefaultCANString, "Overall IPv4 CIDR for all Customer Access subnets")
-	initCmd.Flags().String("can-static-pool", csi.DefaultCANStaticString, "Overall IPv4 CIDR for static Customer Access load balancer addresses")
-	initCmd.Flags().String("can-dynamic-pool", csi.DefaultCANPoolString, "Overall IPv4 CIDR for dynamic Customer Access load balancer addresses")
+	initCmd.Flags().String("can-static-pool", "", "Overall IPv4 CIDR for static Customer Access load balancer addresses")
+	initCmd.Flags().String("can-dynamic-pool", "", "Overall IPv4 CIDR for dynamic Customer Access load balancer addresses")
+	initCmd.Flags().String("chn-cidr", "", "Overall IPv4 CIDR for all Customer High-Speed subnets")
+	initCmd.Flags().String("chn-static-pool", "", "Overall IPv4 CIDR for static Customer High-Speed load balancer addresses")
+	initCmd.Flags().String("chn-dynamic-pool", "", "Overall IPv4 CIDR for dynamic Customer High-Speed load balancer addresses")
 
 	initCmd.Flags().String("mtl-cidr", csi.DefaultMTLString, "Overall IPv4 CIDR for all Provisioning subnets")
 	initCmd.Flags().String("hsn-cidr", csi.DefaultHSNString, "Overall IPv4 CIDR for all HSN subnets")

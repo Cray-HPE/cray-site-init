@@ -73,12 +73,16 @@ const (
 	DefaultCANStaticString = "10.102.11.112/28"
 	// DefaultCANVlan is the default CAN Bootstrap Vlan
 	DefaultCANVlan = 7
+	// DefaultCHNString is the Default CMN String (bond0.cmn0)
+	DefaultCHNString = "10.104.7.0/24"
+	// DefaultCHNVlan is the default CHN Bootstrap Vlan
+	DefaultCHNVlan = 5
 	// DefaultMTLString is the Default MTL String (bond0 interface)
 	DefaultMTLString = "10.1.1.0/16"
 )
 
 // ValidNetNames is the list of strings that enumerate valid main network names
-var ValidNetNames = []string{"HMN", "NMN", "CMN", "CAN", "MTL", "HMN_RVR", "HMN_MTN", "NMN_RVR", "NMN_MTN"}
+var ValidNetNames = []string{"HMN", "NMN", "CMN", "CAN", "CHN", "MTL", "HMN_RVR", "HMN_MTN", "NMN_RVR", "NMN_MTN"}
 
 // ValidCabinetTypes is the list of strings that enumerate valid cabinet types
 var ValidCabinetTypes = []string{"mountain", "river", "hill"}
@@ -196,6 +200,17 @@ var DefaultCAN = IPV4Network{
 	Comment:   "",
 }
 
+// DefaultCHN is the default structure for templating initial CHN configuration
+var DefaultCHN = IPV4Network{
+	FullName:  "Customer High-Speed Network",
+	CIDR:      DefaultCHNString,
+	Name:      "CHN",
+	VlanRange: []int16{DefaultCHNVlan},
+	MTU:       9000,
+	NetType:   "ethernet",
+	Comment:   "",
+}
+
 // DefaultMTL is the default structure for templating initial MTL configuration
 var DefaultMTL = IPV4Network{
 	FullName:  "Provisioning Network (untagged)",
@@ -271,6 +286,20 @@ func GenDefaultCANConfig() NetworkLayoutConfiguration {
 
 	return NetworkLayoutConfiguration{
 		Template:                        DefaultCAN,
+		SubdivideByCabinet:              false,
+		SuperNetHack:                    false,
+		IncludeBootstrapDHCP:            true,
+		IncludeNetworkingHardwareSubnet: false,
+		IncludeUAISubnet:                false,
+		DesiredBootstrapDHCPMask:        net.CIDRMask(24, 32),
+	}
+}
+
+// GenDefaultCHNConfig returns the set of defaults for mapping the CHN
+func GenDefaultCHNConfig() NetworkLayoutConfiguration {
+
+	return NetworkLayoutConfiguration{
+		Template:                        DefaultCHN,
 		SubdivideByCabinet:              false,
 		SuperNetHack:                    false,
 		IncludeBootstrapDHCP:            true,

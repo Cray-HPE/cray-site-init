@@ -38,12 +38,12 @@ data:
     {{- end}}
 `)
 
-// PeerDetail holds information about each of the BGP routers that we peer with in MetalLB 
+// PeerDetail holds information about each of the BGP routers that we peer with in MetalLB
 type PeerDetail struct {
-	Network       string
-	IPAddress     string
-	PeerASN	      string
-	MyASN         string
+	Network   string
+	IPAddress string
+	PeerASN   string
+	MyASN     string
 }
 
 // MetalLBConfigMap holds information needed by the MetalLBConfigMapTemplate
@@ -90,12 +90,12 @@ func WriteMetalLBConfigMap(path string, v *viper.Viper, networks map[string]*csi
 		for _, subnet := range network.Subnets {
 			// This is a v1.4 HACK related to the supernet.
 			if name == "NMN" && subnet.Name == "network_hardware" {
-	                        var tmpPeer PeerDetail
+				var tmpPeer PeerDetail
 				for _, reservation := range subnet.IPReservations {
-                 			tmpPeer = PeerDetail{}
+					tmpPeer = PeerDetail{}
 					tmpPeer.Network = name
-					tmpPeer.PeerASN = v.GetString("bgp-asn") 
-					tmpPeer.MyASN = v.GetString("bgp-asn") 
+					tmpPeer.PeerASN = v.GetString("bgp-asn")
+					tmpPeer.MyASN = v.GetString("bgp-asn")
 					tmpPeer.IPAddress = reservation.IPAddress.String()
 					for _, switchXname := range spineSwitchXnames {
 						if reservation.Comment == switchXname {
@@ -110,13 +110,13 @@ func WriteMetalLBConfigMap(path string, v *viper.Viper, networks map[string]*csi
 				}
 			}
 			if name == "CMN" && subnet.Name == "bootstrap_dhcp" {
-	                        var tmpPeer PeerDetail
+				var tmpPeer PeerDetail
 				for _, reservation := range subnet.IPReservations {
 					if strings.Contains(reservation.Name, "cmn-switch") {
-	                 			tmpPeer = PeerDetail{}
+						tmpPeer = PeerDetail{}
 						tmpPeer.Network = name
-						tmpPeer.PeerASN = v.GetString("bgp-asn") 
-						tmpPeer.MyASN = v.GetString("bgp-cmn-asn") 
+						tmpPeer.PeerASN = v.GetString("bgp-asn")
+						tmpPeer.MyASN = v.GetString("bgp-cmn-asn")
 						tmpPeer.IPAddress = reservation.IPAddress.String()
 						if bgpPeers == "spine" {
 							configStruct.SpineSwitches = append(configStruct.SpineSwitches, tmpPeer)
@@ -133,10 +133,20 @@ func WriteMetalLBConfigMap(path string, v *viper.Viper, networks map[string]*csi
 					configStruct.Networks[val] = subnet.CIDR.String()
 				}
 			}
-			configStruct.Networks["customer-access-static"] = v.GetString("can-static-pool")
-			configStruct.Networks["customer-access"] = v.GetString("can-dynamic-pool")
 			configStruct.Networks["customer-management-static"] = v.GetString("cmn-static-pool")
 			configStruct.Networks["customer-management"] = v.GetString("cmn-dynamic-pool")
+			if v.GetString("can-static-pool") != "" {
+				configStruct.Networks["customer-access-static"] = v.GetString("can-static-pool")
+			}
+			if v.GetString("can-dynamic-pool") != "" {
+				configStruct.Networks["customer-access"] = v.GetString("can-dynamic-pool")
+			}
+			if v.GetString("chn-static-pool") != "" {
+				configStruct.Networks["customer-high-speed-static"] = v.GetString("chn-static-pool")
+			}
+			if v.GetString("chn-dynamic-pool") != "" {
+				configStruct.Networks["customer-high-speed"] = v.GetString("chn-dynamic-pool")
+			}
 		}
 	}
 
