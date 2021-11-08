@@ -11,18 +11,23 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
+	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/Cray-HPE/cray-site-init/pkg/csi"
+	"github.com/Cray-HPE/hms-base/xname"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/xeipuuv/gojsonschema"
 	"gopkg.in/yaml.v3"
 )
 
-const schemaFile = "internal/files/shcd-schema.json"
+const schema = "shcd-schema.json"
 const hmn_connections = "hmn_connections.json"
 const switch_metadata = "switch_metadata.csv"
 const application_node_config = "application_node_config.yaml"
@@ -30,6 +35,8 @@ const application_node_config = "application_node_config.yaml"
 var createHMN, createSM, createANC bool
 
 var prefixSubroleMapIn map[string]string
+
+var schemaFile, customSchema string
 
 // initCmd represents the init command
 var shcdCmd = &cobra.Command{
@@ -45,6 +52,12 @@ var shcdCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		v := viper.GetViper()
 		v.BindPFlags(cmd.Flags())
+
+		if v.IsSet("schema-file") {
+			schemaFile = customSchema
+		} else {
+			schemaFile = filepath.Join("internal/files/", schema)
+		}
 
 		// Validate the file passed against the pre-defined schema
 		validSHCD, err := ValidateSchema(args[0], schemaFile)
@@ -69,16 +82,6 @@ var shcdCmd = &cobra.Command{
 			if err != nil {
 				log.Fatalf(err.Error())
 			}
-
-			// Pretty print the structured data
-			shcd, err := json.MarshalIndent(&s, "", " ")
-
-			if err != nil {
-				log.Fatalf(err.Error())
-			}
-
-			// TODO: instead of printing the entire thing, create some of the seed file automatically
-			fmt.Println(string(shcd))
 
 			if v.IsSet("hmn-connections") {
 
@@ -113,6 +116,7 @@ var shcdCmd = &cobra.Command{
 func init() {
 	shcdCmd.DisableAutoGenTag = true
 	shcdCmd.Flags().SortFlags = true
+	shcdCmd.Flags().StringVarP(&customSchema, "schema-file", "j", "", "Use a custom schema file")
 	shcdCmd.Flags().BoolVarP(&createHMN, "hmn-connections", "H", false, "Generate the hmn_connections.json file")
 	shcdCmd.Flags().BoolVarP(&createSM, "switch-metadata", "S", false, "Generate the switch_metadata.csv file")
 	shcdCmd.Flags().BoolVarP(&createANC, "application-node-config", "A", false, "Generate the application_node_config.yaml file")
@@ -154,13 +158,14 @@ type HMNConnections []HMNComponent
 
 // HMNComponent is an individual component in the HMNConnections slice
 type HMNComponent struct {
-	Source              string
-	SourceRack          string
-	SourceLocation      string
-	SourceSubLocation   string
-	DestinationRack     string
-	DestinationLocation int
-	DestinationPort     string
+	Source              string `json:"Source"`
+	SourceRack          string `json:"SourceRack"`
+	SourceLocation      string `json:"SourceLocation"`
+	SourceParent        string `json:"SourceParent,omitempty"`
+	SourceSubLocation   string `json:"SourceSubLocation,omitempty"`
+	DestinationRack     string `json:"DestinationRack"`
+	DestinationLocation string `json:"DestinationLocation"`
+	DestinationPort     string `json:"DestinationPort"`
 }
 
 // SwitchMetadata type is the go equivalent structure of switch_metadata.csv
@@ -173,6 +178,209 @@ type Switch struct {
 	Brand string
 }
 
+// Crafts and prints the xname of a give Id type in the SHCD
+func (id Id) GenerateXname() (xn string) {
+	// Schema decoder ring:
+	// 		cabinet = rack
+	// 		chassis = defaults to 0  River: c0, Mountain/Hill: this is the CMM number
+	// 		slot = elevation
+	// 		space =
+
+	// Each xname has a different structure depending on what the device is
+	// This is just a big string of if/else conditionals to determine this
+	// At present, this is limited to checking the nodes needed in switch_metadata.csv
+
+	// If it's a CDU switch
+	if strings.HasPrefix(id.CommonName, "sw-cdu-") {
+
+		// We need just the number
+		i := strings.TrimPrefix(id.CommonName, "sw-cdu-")
+
+		// convert it to an int, which the struct expects
+		slot, err := strconv.Atoi(i)
+
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		// Create the xname
+		// dDwW
+		x := xname.CDUMgmtSwitch{
+			CoolingGroup: 0,    // D: 0-999
+			Slot:         slot, // W: 0-31
+		}
+
+		// Convert it to a string
+		xn = x.String()
+
+		// Leaf switches have their own needs
+	} else if strings.HasPrefix(id.CommonName, "sw-leaf-bmc-") {
+
+		// Get the just number of the elevation
+		i := strings.TrimPrefix(id.Location.Elevation, "u")
+
+		// Convert it to an int
+		slot, err := strconv.Atoi(i)
+
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		// Get the rack as a string
+		cabString := id.Location.Rack
+
+		// Strip the "x"
+		_, cabNum := utf8.DecodeRuneInString(cabString)
+
+		// Convert to an int
+		cabinet, err := strconv.Atoi(cabString[cabNum:])
+
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		// Create the xname
+		// Chassis defaults to 0 in most cases
+		// xXcCwW
+		x := xname.MgmtSwitch{
+			Cabinet: cabinet, // X: 0-999
+			Chassis: 0,       // C: 0-7
+			Slot:    slot,    // W: 1-48
+		}
+
+		// Convert it to a string
+		xn = x.String()
+
+		// Spine switches
+	} else if strings.HasPrefix(id.CommonName, "sw-spine") ||
+		strings.HasPrefix(id.CommonName, "sw-leaf") {
+
+		// Convert the rack to a string
+		cabString := id.Location.Rack
+
+		// Strip the "x"
+		_, cabNum := utf8.DecodeRuneInString(cabString)
+
+		// Convert to an int
+		cabinet, err := strconv.Atoi(cabString[cabNum:])
+
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		// Strip the u
+		i := strings.TrimPrefix(id.Location.Elevation, "u")
+
+		// Convert it to an int
+		slot, err := strconv.Atoi(i)
+
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		// Create the xname
+		// Chassis and Space default to 0 and 1 in most cases
+		// xXcChHsS
+		x := xname.MgmtHLSwitch{
+			Cabinet: cabinet, // X: 0-999
+			Chassis: 0,       // C: 0-7
+			Slot:    slot,    // H: 1-48
+			Space:   1,       // S: 1-4
+		}
+
+		xn = x.String()
+
+	}
+
+	// Return the crafted xname
+	return xn
+}
+
+// Crafts and prints the switch types that switch_metadata.csv expects
+func (id Id) GenerateSwitchType() (st string) {
+
+	// The switch type in switch_metadata.csv differs from the types in the SHCD
+	// These conditionals just adjust for the names we expect in that file
+	if strings.Contains(id.Architecture, "bmc") {
+
+		st = "Leaf"
+
+	} else if strings.Contains(id.Architecture, "spine") {
+
+		st = "Spine"
+
+	} else if strings.Contains(id.Architecture, "river_ncn_leaf") {
+
+		st = "Aggregation"
+
+	} else if strings.Contains(id.CommonName, "cdu") {
+
+		st = "CDU"
+	}
+
+	// Return the switch type switch_metadata.csv is expecting
+	return st
+}
+
+// Crafts and prints the switch types that switch_metadata.csv expects
+func (id Id) GenerateHMNSourceName() (src string) {
+
+	// var prefix string
+
+	// The Source in hmn_connections.json differs from the common_name in the SHCD
+	// These conditionals just adjust for the names we expect in that file
+	if strings.HasPrefix(id.CommonName, "ncn-m") ||
+		strings.HasPrefix(id.CommonName, "ncn-s") ||
+		strings.HasPrefix(id.CommonName, "ncn-w") ||
+		strings.HasPrefix(id.CommonName, "uan") ||
+		strings.HasPrefix(id.CommonName, "cn") ||
+		strings.HasPrefix(id.CommonName, "sw-hsn") ||
+		strings.HasPrefix(id.CommonName, "x3000p") ||
+		strings.HasPrefix(id.CommonName, "lnet") {
+
+		// Get the just number of the elevation
+		r := regexp.MustCompile(`\d+`)
+
+		// matches contains the numbers found in the common name
+		matches := r.FindAllString(id.CommonName, -1)
+
+		if strings.HasPrefix(id.CommonName, "uan") {
+
+			// if it's a uan, print "uan" and the number
+			src = string(id.CommonName[0:3]) + matches[0]
+
+		} else if strings.HasPrefix(id.CommonName, "cn") {
+
+			// if it's a compute node, print "cn" and the number
+			src = string(id.CommonName[0:2]) + matches[0]
+
+		} else if strings.HasPrefix(id.CommonName, "lnet") {
+
+			// if it's an lnet, print "lnet" and the number
+			src = string(id.CommonName[0:4]) + matches[0]
+
+		} else if strings.HasPrefix(id.CommonName, "x3000p") {
+
+			// if it's a pdu, print the entire name
+			src = string(id.CommonName)
+
+		} else if strings.HasPrefix(id.CommonName, "sw-hsn") {
+
+			// if it's a hsn switch, print the entire name
+			src = string(id.CommonName)
+
+		} else {
+
+			// if nothing else matches, return an empty string
+			src = ""
+
+		}
+	}
+
+	// Return the Source name hmn_connections.json is expecting
+	return src
+}
+
 // createSwitchSeed creates switch_metadata.csv using information from the shcd
 func createSwitchSeed(shcd Shcd, f string) {
 	var switches SwitchMetadata
@@ -180,13 +388,34 @@ func createSwitchSeed(shcd Shcd, f string) {
 	// For each entry in the SHCD
 	for i := range shcd {
 
-		// Create a new Switch type and append it to the SwitchMetadata slice
-		switches = append(switches, Switch{
-			Xname: shcd[i].Location.Rack,
-			Type:  shcd[i].Type,
-			Brand: shcd[i].Vendor,
-		})
+		switch shcd[i].Type {
 
+		// for switch_metadata.csv, we only care about the switches
+		case "switch":
+
+			// HSN switch should not be in switch_metadata.csv
+			if strings.HasPrefix(shcd[i].CommonName, "sw-hsn") {
+				continue
+			}
+
+			// Generate the xname based on the rules we predefine
+			switchXname := shcd[i].GenerateXname()
+			// Do the same for the switch type
+			switchType := shcd[i].GenerateSwitchType()
+			// The vendor just needs to be capitalized
+			switchVendor := strings.Title(shcd[i].Vendor)
+
+			// Create a new Switch type and append it to the SwitchMetadata slice
+			switches = append(switches, Switch{
+				Xname: switchXname,
+				Type:  switchType,
+				Brand: switchVendor,
+			})
+
+		default:
+			// Skip anything else since we only need switches
+			continue
+		}
 	}
 
 	// When writing to csv, the first row should be the headers
@@ -198,9 +427,12 @@ func createSwitchSeed(shcd Shcd, f string) {
 
 	// Then create a new slice with the three pieces of information needed
 	for _, v := range switches {
+
 		row := []string{v.Xname, v.Type, v.Brand}
+
 		// Append it to the records slice under the column headers
 		records = append(records, row)
+
 	}
 
 	// Create the file object
@@ -220,6 +452,14 @@ func createSwitchSeed(shcd Shcd, f string) {
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	// Create a var for all the records except the header
+	r := records[1:]
+
+	// Pass an anonymous function to sort.Slice to sort everything except the headers
+	sort.Slice(r, func(i, j int) bool {
+		return r[i][0] < r[j][0]
+	})
 
 	// For each item in the records slice
 	for _, v := range records {
@@ -241,13 +481,46 @@ func createHMNSeed(shcd Shcd, f string) {
 	// For each entry in the shcd
 	for i := range shcd {
 
-		// Create a new HMNComponent type and append it to the HMNConnections slice
-		hmn = append(hmn, HMNComponent{
-			Source:         shcd[i].CommonName,
-			SourceRack:     shcd[i].Location.Rack,
-			SourceLocation: shcd[i].Location.Elevation,
-		})
+		// instantiate a new HMNComponent
+		hmnConnection := HMNComponent{}
 
+		// This just aligns the names to better match existing hmn_connections.json's
+		// The SHCD and shcd.json all use different names, so why should csi be any different?
+		// nodeName := unNormalizeSemiStandardShcdNonName(shcd[i].CommonName)
+
+		// Setting the source name, source rack, source location, is pretty straightforward here
+		hmnConnection.Source = shcd[i].CommonName
+		hmnConnection.SourceRack = shcd[i].Location.Rack
+		hmnConnection.SourceLocation = shcd[i].Location.Elevation
+
+		// Now it starts to get more complex.
+		// shcd.json has an array of ports that the device is connected to
+		// loop through the ports and find the destination id, which can be used
+		// to find the destination info
+		for p := range shcd[i].Ports {
+			// get the id of the destination node, so it can be easily used an an index
+			destId := shcd[i].Ports[p].DestNodeID
+			// Special to this hmn_connections.json file, we need this SubRack/dense node stuff
+			// if the node is a dense compute node--indiciated by L or R in the location,
+			// we need to add the SourceSubLocation and SourceParent
+			// There should be a row in the shcd that has the SubRack name, which
+			// shares the same u location as the entries with the L or R in the location
+			if strings.HasSuffix(shcd[i].Location.Elevation, "L") || strings.HasSuffix(shcd[i].Location.Elevation, "R") {
+				// hmnConnection.SourceSubLocation = shcd[i].Location.Rack
+				hmnConnection.SourceParent = "FIXME INSERT SUBRACK HERE"
+				// FIXME: remove above and uncomment below when we have a way to get the subrack name
+				// hmnConnection.SourceParent = fmt.Sprint(shcd[destId].CommonName)
+			}
+
+			// Now use the destId again to set the destination info
+			hmnConnection.DestinationRack = shcd[destId].Location.Rack
+			hmnConnection.DestinationLocation = shcd[destId].Location.Elevation
+			hmnConnection.DestinationPort = fmt.Sprint("j", shcd[i].Ports[p].DestPort)
+		}
+
+		// finally, append the created HMNComponent to the HMNConnections slice
+		// This slice will be what is written to the file as hmn_connections.json
+		hmn = append(hmn, hmnConnection)
 	}
 
 	// Indent the file for better human-readability
