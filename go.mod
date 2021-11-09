@@ -3,7 +3,7 @@ module github.com/Cray-HPE/cray-site-init
 replace k8s.io/client-go => k8s.io/client-go v0.19.4 // pinning this version for now.  Something is indirectly asking for an obsolete version
 
 require (
-	github.com/Cray-HPE/hms-base v1.15.0
+	github.com/Cray-HPE/hms-base v1.15.2-0.20210928201115-8d9f61f26219
 	github.com/Cray-HPE/hms-bss v1.9.5
 	github.com/Cray-HPE/hms-s3 v1.10.0
 	github.com/Cray-HPE/hms-shcd-parser v1.6.2
