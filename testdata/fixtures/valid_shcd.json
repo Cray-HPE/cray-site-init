@@ -80,5 +80,115 @@
         "destination_slot": null
       }
     ]
+  },
+  {
+    "common_name": "gateway01",
+    "id": 3,
+    "location": {
+      "rack": "x3000",
+      "elevation": "u29"
+    },
+    "architecture": "agg",
+    "model": "cec",
+    "type": "server",
+    "vendor": "cray",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 0,
+        "destination_port": 42,
+        "destination_slot": null
+      }
+    ]
+  },
+  {
+    "common_name": "login02",
+    "id": 4,
+    "location": {
+      "rack": "x3000",
+      "elevation": "u28"
+    },
+    "architecture": "agg",
+    "model": "cec",
+    "type": "server",
+    "vendor": "cray",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 0,
+        "destination_port": 43,
+        "destination_slot": null
+      }
+    ]
+  },
+  {
+    "common_name": "lnet01",
+    "id": 5,
+    "location": {
+      "rack": "x3000",
+      "elevation": "u27"
+    },
+    "architecture": "agg",
+    "model": "cec",
+    "type": "server",
+    "vendor": "cray",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 0,
+        "destination_port": 41,
+        "destination_slot": null
+      }
+    ]
+  },
+  {
+    "common_name": "vn01",
+    "id": 6,
+    "location": {
+      "rack": "x3000",
+      "elevation": "u25"
+    },
+    "architecture": "agg",
+    "model": "cec",
+    "type": "server",
+    "vendor": "cray",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 0,
+        "destination_port": 40,
+        "destination_slot": null
+      }
+    ]
+  },
+  {
+    "common_name": "uan01",
+    "id": 7,
+    "location": {
+      "rack": "x3000",
+      "elevation": "u23"
+    },
+    "architecture": "agg",
+    "model": "cec",
+    "type": "server",
+    "vendor": "cray",
+    "ports": [
+      {
+        "port": 1,
+        "speed": 1,
+        "slot": null,
+        "destination_node_id": 0,
+        "destination_port": 39,
+        "destination_slot": null
+      }
+    ]
   }
 ]
