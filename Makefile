@@ -110,6 +110,9 @@ test: build
 integrate:
 	go test ./cmd/... ./internal/... ./pkg/... -tags=integration -v -coverprofile coverage.out -covermode count
 
+shcds:
+	go test ./cmd/... ./internal/... ./pkg/... -tags=integration,shcd -v
+
 vet: version
 	go vet -v ./...
 

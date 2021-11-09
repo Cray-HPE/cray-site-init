@@ -11,6 +11,8 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"unicode"
@@ -22,7 +24,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const schemaFile = "internal/files/shcd-schema.json"
+const schema = "shcd-schema.json"
 const hmn_connections = "hmn_connections.json"
 const switch_metadata = "switch_metadata.csv"
 const application_node_config = "application_node_config.yaml"
@@ -30,6 +32,8 @@ const application_node_config = "application_node_config.yaml"
 var createHMN, createSM, createANC bool
 
 var prefixSubroleMapIn map[string]string
+
+var schemaFile, customSchema string
 
 // initCmd represents the init command
 var shcdCmd = &cobra.Command{
@@ -45,6 +49,12 @@ var shcdCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		v := viper.GetViper()
 		v.BindPFlags(cmd.Flags())
+
+		if v.IsSet("schema-file") {
+			schemaFile = customSchema
+		} else {
+			schemaFile = filepath.Join("internal/files/", schema)
+		}
 
 		// Validate the file passed against the pre-defined schema
 		validSHCD, err := ValidateSchema(args[0], schemaFile)
@@ -69,16 +79,6 @@ var shcdCmd = &cobra.Command{
 			if err != nil {
 				log.Fatalf(err.Error())
 			}
-
-			// Pretty print the structured data
-			shcd, err := json.MarshalIndent(&s, "", " ")
-
-			if err != nil {
-				log.Fatalf(err.Error())
-			}
-
-			// TODO: instead of printing the entire thing, create some of the seed file automatically
-			fmt.Println(string(shcd))
 
 			if v.IsSet("hmn-connections") {
 
@@ -113,6 +113,7 @@ var shcdCmd = &cobra.Command{
 func init() {
 	shcdCmd.DisableAutoGenTag = true
 	shcdCmd.Flags().SortFlags = true
+	shcdCmd.Flags().StringVarP(&customSchema, "schema-file", "j", "", "Use a custom schema file")
 	shcdCmd.Flags().BoolVarP(&createHMN, "hmn-connections", "H", false, "Generate the hmn_connections.json file")
 	shcdCmd.Flags().BoolVarP(&createSM, "switch-metadata", "S", false, "Generate the switch_metadata.csv file")
 	shcdCmd.Flags().BoolVarP(&createANC, "application-node-config", "A", false, "Generate the application_node_config.yaml file")
@@ -154,13 +155,14 @@ type HMNConnections []HMNComponent
 
 // HMNComponent is an individual component in the HMNConnections slice
 type HMNComponent struct {
-	Source              string
-	SourceRack          string
-	SourceLocation      string
-	SourceSubLocation   string
-	DestinationRack     string
-	DestinationLocation int
-	DestinationPort     string
+	Source              string `json:"Source"`
+	SourceRack          string `json:"SourceRack"`
+	SourceLocation      string `json:"SourceLocation"`
+	SourceParent        string `json:"SourceParent,omitempty"`
+	SourceSubLocation   string `json:"SourceSubLocation,omitempty"`
+	DestinationRack     string `json:"DestinationRack"`
+	DestinationLocation string `json:"DestinationLocation"`
+	DestinationPort     string `json:"DestinationPort"`
 }
 
 // SwitchMetadata type is the go equivalent structure of switch_metadata.csv
@@ -171,6 +173,91 @@ type Switch struct {
 	Xname string
 	Type  string
 	Brand string
+}
+
+// Crafts and prints the switch types that switch_metadata.csv expects
+func (id Id) GenerateSwitchType() (st string) {
+
+	// The switch type in switch_metadata.csv differs from the types in the SHCD
+	// These conditionals just adjust for the names we expect in that file
+	if strings.Contains(id.Architecture, "bmc") {
+
+		st = "Leaf"
+
+	} else if strings.Contains(id.Architecture, "spine") {
+
+		st = "Spine"
+
+	} else if strings.Contains(id.Architecture, "river_ncn_leaf") {
+
+		st = "Aggregation"
+
+	} else if strings.Contains(id.CommonName, "cdu") {
+
+		st = "CDU"
+	}
+
+	// Return the switch type switch_metadata.csv is expecting
+	return st
+}
+
+// Crafts and prints the switch types that switch_metadata.csv expects
+func (id Id) GenerateHMNSourceName() (src string) {
+
+	// var prefix string
+
+	// The Source in hmn_connections.json differs from the common_name in the SHCD
+	// These conditionals just adjust for the names we expect in that file
+	if strings.HasPrefix(id.CommonName, "ncn-m") ||
+		strings.HasPrefix(id.CommonName, "ncn-s") ||
+		strings.HasPrefix(id.CommonName, "ncn-w") ||
+		strings.HasPrefix(id.CommonName, "uan") ||
+		strings.HasPrefix(id.CommonName, "cn") ||
+		strings.HasPrefix(id.CommonName, "sw-hsn") ||
+		strings.HasPrefix(id.CommonName, "x3000p") ||
+		strings.HasPrefix(id.CommonName, "lnet") {
+
+		// Get the just number of the elevation
+		r := regexp.MustCompile(`\d+`)
+
+		// matches contains the numbers found in the common name
+		matches := r.FindAllString(id.CommonName, -1)
+
+		if strings.HasPrefix(id.CommonName, "uan") {
+
+			// if it's a uan, print "uan" and the number
+			src = string(id.CommonName[0:3]) + matches[0]
+
+		} else if strings.HasPrefix(id.CommonName, "cn") {
+
+			// if it's a compute node, print "cn" and the number
+			src = string(id.CommonName[0:2]) + matches[0]
+
+		} else if strings.HasPrefix(id.CommonName, "lnet") {
+
+			// if it's an lnet, print "lnet" and the number
+			src = string(id.CommonName[0:4]) + matches[0]
+
+		} else if strings.HasPrefix(id.CommonName, "x3000p") {
+
+			// if it's a pdu, print the entire name
+			src = string(id.CommonName)
+
+		} else if strings.HasPrefix(id.CommonName, "sw-hsn") {
+
+			// if it's a hsn switch, print the entire name
+			src = string(id.CommonName)
+
+		} else {
+
+			// if nothing else matches, return an empty string
+			src = ""
+
+		}
+	}
+
+	// Return the Source name hmn_connections.json is expecting
+	return src
 }
 
 // createSwitchSeed creates switch_metadata.csv using information from the shcd
@@ -241,13 +328,46 @@ func createHMNSeed(shcd Shcd, f string) {
 	// For each entry in the shcd
 	for i := range shcd {
 
-		// Create a new HMNComponent type and append it to the HMNConnections slice
-		hmn = append(hmn, HMNComponent{
-			Source:         shcd[i].CommonName,
-			SourceRack:     shcd[i].Location.Rack,
-			SourceLocation: shcd[i].Location.Elevation,
-		})
+		// instantiate a new HMNComponent
+		hmnConnection := HMNComponent{}
 
+		// This just aligns the names to better match existing hmn_connections.json's
+		// The SHCD and shcd.json all use different names, so why should csi be any different?
+		// nodeName := unNormalizeSemiStandardShcdNonName(shcd[i].CommonName)
+
+		// Setting the source name, source rack, source location, is pretty straightforward here
+		hmnConnection.Source = shcd[i].CommonName
+		hmnConnection.SourceRack = shcd[i].Location.Rack
+		hmnConnection.SourceLocation = shcd[i].Location.Elevation
+
+		// Now it starts to get more complex.
+		// shcd.json has an array of ports that the device is connected to
+		// loop through the ports and find the destination id, which can be used
+		// to find the destination info
+		for p := range shcd[i].Ports {
+			// get the id of the destination node, so it can be easily used an an index
+			destId := shcd[i].Ports[p].DestNodeID
+			// Special to this hmn_connections.json file, we need this SubRack/dense node stuff
+			// if the node is a dense compute node--indiciated by L or R in the location,
+			// we need to add the SourceSubLocation and SourceParent
+			// There should be a row in the shcd that has the SubRack name, which
+			// shares the same u location as the entries with the L or R in the location
+			if strings.HasSuffix(shcd[i].Location.Elevation, "L") || strings.HasSuffix(shcd[i].Location.Elevation, "R") {
+				// hmnConnection.SourceSubLocation = shcd[i].Location.Rack
+				hmnConnection.SourceParent = "FIXME INSERT SUBRACK HERE"
+				// FIXME: remove above and uncomment below when we have a way to get the subrack name
+				// hmnConnection.SourceParent = fmt.Sprint(shcd[destId].CommonName)
+			}
+
+			// Now use the destId again to set the destination info
+			hmnConnection.DestinationRack = shcd[destId].Location.Rack
+			hmnConnection.DestinationLocation = shcd[destId].Location.Elevation
+			hmnConnection.DestinationPort = fmt.Sprint("j", shcd[i].Ports[p].DestPort)
+		}
+
+		// finally, append the created HMNComponent to the HMNConnections slice
+		// This slice will be what is written to the file as hmn_connections.json
+		hmn = append(hmn, hmnConnection)
 	}
 
 	// Indent the file for better human-readability
