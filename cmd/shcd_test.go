@@ -18,123 +18,35 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const _schemaFile = "../internal/files/shcd-schema.json"
+const _schema = "shcd-schema.json"
 
+var _schemaFile = filepath.Join("../internal/files", _schema)
+
+var switch_meta_expected = "../testdata/expected/" + switch_metadata
+var hmn_conn_expected = "../testdata/expected/" + hmn_connections
+var app_node_expected = "../testdata/expected/" + application_node_config
+
+// Generate shcd.json example:
+// canu validate shcd -a Full --shcd shcd.xlsx --tabs 10G_25G_40G_100G,NMN,HMN,MTN_TDS --corners I37,T125,J15,T24,J20,U51,K15,U36 --out shcd.json
 var tests = []struct {
 	fixture                       string
 	expectedError                 bool
 	expectedErrorMsg              string
 	expectedSchemaErrorMsg        string
 	name                          string
-	expectedSwitchMetadata        [][]string
-	expectedHMNConnections        []byte
-	expectedApplicationNodeConfig []byte
+	expectedSwitchMetadata        string
+	expectedHMNConnections        string
+	expectedApplicationNodeConfig string
 }{
 	{
-		fixture:                "../testdata/fixtures/valid_shcd.json",
-		expectedError:          false,
-		expectedErrorMsg:       "",
-		expectedSchemaErrorMsg: "",
-		name:                   "ValidFile",
-		expectedSwitchMetadata: [][]string{{"Switch Xname", "Type", "Brand"}, {"x1000", "switch", "aruba"}, {"x1000", "switch", "aruba"}, {"x1000", "none", "cray"}, []string{"x3000", "server", "cray"}, []string{"x3000", "server", "cray"}, []string{"x3000", "server", "cray"}, []string{"x3000", "server", "cray"}, []string{"x3000", "server", "cray"}},
-		expectedHMNConnections: []byte(`[
-{
-  "Source": "something",
-	"SourceRack": "x1000",
-	"SourceLocation": "u42",
-	"SourceSubLocation": "",
-	"DestinationRack": "",
-	"DestinationLocation": 0,
-	"DestinationPort": ""
-},
-{
-  "Source": "another_thing",
-	"SourceRack": "x1000",
-	"SourceLocation": "u42",
-	"SourceSubLocation": "",
-	"DestinationRack": "",
-	"DestinationLocation": 0,
-	"DestinationPort": ""
-},
-{
-	"Source": "thingy",
-	"SourceRack": "x1000",
-	"SourceLocation": "u42",
-	"SourceSubLocation": "",
-	"DestinationRack": "",
-	"DestinationLocation": 0,
-	"DestinationPort": ""
-},
-{
-	"Source": "gateway01",
-	"SourceRack": "x3000",
-	"SourceLocation": "u29",
-	"SourceSubLocation": "",
-	"DestinationRack": "",
-	"DestinationLocation": 0,
-	"DestinationPort": ""
-},
-{
-	"Source": "login02",
-	"SourceRack": "x3000",
-	"SourceLocation": "u28",
-	"SourceSubLocation": "",
-	"DestinationRack": "",
-	"DestinationLocation": 0,
-	"DestinationPort": ""
-},
-{
-	"Source": "lnet01",
-	"SourceRack": "x3000",
-	"SourceLocation": "u27",
-	"SourceSubLocation": "",
-	"DestinationRack": "",
-	"DestinationLocation": 0,
-	"DestinationPort": ""
-},
-{
-	"Source": "vn01",
-	"SourceRack": "x3000",
-	"SourceLocation": "u25",
-	"SourceSubLocation": "",
-	"DestinationRack": "",
-	"DestinationLocation": 0,
-	"DestinationPort": ""
-},
-{
-	"Source": "uan01",
-	"SourceRack": "x3000",
-	"SourceLocation": "u23",
-	"SourceSubLocation": "",
-	"DestinationRack": "",
-	"DestinationLocation": 0,
-	"DestinationPort": ""
-}
-		]`),
-		expectedApplicationNodeConfig: []byte(
-			`---
-# Additional application node prefixes to match in the hmn_connections.json file
-prefixes:
-  - gateway
-  - lnet
-  - login
-  - vn
-
-# Additional HSM SubRoles
-prefix_hsm_subroles:
-  gateway: Gateway
-  lnet: LNETRouter
-  login: UAN
-  vn: Visualization
-
-# Application Node aliases
-aliases:
-  x3000c0s23b0n0: ["uan01"]
-  x3000c0s25b0n0: ["vn01"]
-  x3000c0s27b0n0: ["lnet01"]
-  x3000c0s28b0n0: ["login02"]
-  x3000c0s29b0n0: ["gateway01"]
-`),
+		fixture:                       "../testdata/fixtures/valid_shcd.json",
+		expectedError:                 false,
+		expectedErrorMsg:              "",
+		expectedSchemaErrorMsg:        "",
+		name:                          "ValidFile",
+		expectedSwitchMetadata:        switch_meta_expected,
+		expectedHMNConnections:        hmn_conn_expected,
+		expectedApplicationNodeConfig: app_node_expected,
 	},
 	{
 		fixture:                "../testdata/fixtures/invalid_shcd.json",
@@ -239,29 +151,33 @@ func TestCreateHMNConnections(t *testing.T) {
 				// Validate the file was created
 				assert.FileExists(t, filepath.Join(".", hmn_connections))
 
-				// Read the csv and validate it's contents
-				f, err := os.Open(filepath.Join(".", hmn_connections))
+				// Read the generated json and validate it's contents
+				hmnGenerated, err := os.Open(filepath.Join(".", hmn_connections))
 
 				if err != nil {
-					log.Fatal("Unable to read "+filepath.Join(".", hmn_connections), err)
+					log.Fatal(err)
 				}
 
-				defer f.Close()
+				defer hmnGenerated.Close()
 
-				hmnFile, err := os.Open(filepath.Join(".", hmn_connections))
+				hmnExpected, err := os.Open(test.expectedHMNConnections)
 
 				// if we os.Open returns an error then handle it
 				if err != nil {
-					fmt.Println(err)
+					log.Fatal(err)
 				}
 
-				defer hmnFile.Close()
+				defer hmnExpected.Close()
 
-				hmnActual, _ := ioutil.ReadAll(hmnFile)
+				hmnActual, _ := ioutil.ReadAll(hmnGenerated)
 
-				hmnExpected := test.expectedHMNConnections
+				hmnConnections, err := ioutil.ReadAll(hmnExpected)
 
-				assert.JSONEq(t, string(hmnExpected), string(hmnActual))
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				assert.JSONEq(t, string(hmnConnections), string(hmnActual))
 			})
 		}
 	}
@@ -295,23 +211,40 @@ func TestCreateSwitchMetadata(t *testing.T) {
 				assert.FileExists(t, filepath.Join(".", switch_metadata))
 
 				// Read the csv and validate it's contents
-				f, err := os.Open(filepath.Join(".", switch_metadata))
+				generated, err := os.Open(filepath.Join(".", switch_metadata))
 
 				if err != nil {
 					log.Fatal("Unable to read "+filepath.Join(".", switch_metadata), err)
 				}
 
-				defer f.Close()
+				defer generated.Close()
 
-				csvReader := csv.NewReader(f)
+				smGenerated := csv.NewReader(generated)
 
-				content, err := csvReader.ReadAll()
+				actual, err := smGenerated.ReadAll()
 
 				if err != nil {
 					log.Fatal("Unable to parse as a CSV: "+filepath.Join(".", switch_metadata), err)
 				}
 
-				assert.Equal(t, test.expectedSwitchMetadata, content)
+				// Read the csv and validate it's contents
+				expected, err := os.Open(filepath.Join(".", switch_metadata))
+
+				if err != nil {
+					log.Fatal("Unable to read "+filepath.Join(".", switch_metadata), err)
+				}
+
+				defer expected.Close()
+
+				csvReader := csv.NewReader(expected)
+
+				smExpected, err := csvReader.ReadAll()
+
+				if err != nil {
+					log.Fatal("Unable to parse as a CSV: "+test.expectedSwitchMetadata, err)
+				}
+
+				assert.Equal(t, smExpected, actual)
 			})
 		}
 	}
@@ -352,28 +285,32 @@ func TestCreateApplicationNodeConfig(t *testing.T) {
 				assert.FileExists(t, filepath.Join(".", application_node_config))
 
 				// Read the yaml and validate it's contents
-				f, err := os.Open(filepath.Join(".", application_node_config))
+				ancGenerated, err := os.Open(filepath.Join(".", application_node_config))
 
 				if err != nil {
 					log.Fatal("Unable to read "+filepath.Join(".", application_node_config), err)
 				}
 
-				defer f.Close()
+				defer ancGenerated.Close()
 
-				ancFile, err := os.Open(filepath.Join(".", application_node_config))
+				ancExpected, err := os.Open(test.expectedApplicationNodeConfig)
 
 				// if we os.Open returns an error then handle it
 				if err != nil {
 					fmt.Println(err)
 				}
 
-				defer ancFile.Close()
+				defer ancExpected.Close()
 
-				ancActual, _ := ioutil.ReadAll(ancFile)
+				ancActual, _ := ioutil.ReadAll(ancGenerated)
 
-				ancExpected := test.expectedApplicationNodeConfig
+				appNodeConfig, err := ioutil.ReadAll(ancExpected)
 
-				assert.YAMLEq(t, string(ancExpected), string(ancActual))
+				if err != nil {
+					fmt.Println(err)
+				}
+
+				assert.YAMLEq(t, string(appNodeConfig), string(ancActual))
 			})
 		}
 	}

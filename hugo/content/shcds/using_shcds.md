@@ -37,3 +37,62 @@ csi config shcd --hmn-connections --switch-metadata MySystem.json
 # Use the newly-generated files with the traditional workflow
 csi config init
 ```
+
+# Running integration tests with canu and csi
+
+The SHCD is the beginning source of truth for how a system is laid out and connected.  The information found there is used through several different tools throughout the install of CSM, so if changes are made to an SHCD, it can be beneficial in both development and production environments to see how those changes might propogate.
+
+To that end, there are some integration tests built in to `csi` that can test the flow mentioned above. 
+
+
+## Add testdata
+
+`canu` requires several arguments in order to generate an `shcd.json`.  The necessary arguments can be added to the `tests` struct in `cmd/shcd_integration_test.go` similar to the example below.
+
+```
+var canus = []struct {
+	systemName string
+	version    string
+	tabs       string
+	corners    string
+}{
+	{
+		systemName: "mysupercomputer",
+		version:    "V1",
+		tabs:       "25G_10G,NMN,HMN",
+		corners:    "I14,S65,J16,T23,J20,U46",
+	},
+```
+
+Once that test data is in place,
+
+```bash
+mkdir testdata/shcds
+# ensure SHCD spreadsheets are in testdata/shcds and the system name is somewhere in the filename
+cp mysupercomputer.xlsx testdata/shcds
+# make sure canu is installed
+make shcds
+```
+
+On a successful test, you'll see output similiar to:
+
+```
+=== RUN   TestConfigShcd_GenerateSeeds
+2021/11/02 12:47:54 Running canu to create shcd.json for baldar...
+2021/11/02 12:47:56 Using schema file: ../internal/files/shcd-schema.json
+2021/11/02 12:47:56 Created switch_metadata.csv from SHCD data
+2021/11/02 12:47:56 Created hmn_connections.json from SHCD data
+2021/11/02 12:47:56 Running canu to create shcd.json for drax...
+2021/11/02 12:47:58 Using schema file: ../internal/files/shcd-schema.json
+2021/11/02 12:47:58 Created switch_metadata.csv from SHCD data
+2021/11/02 12:47:56 Created hmn_connections.json from SHCD data
+2021/11/02 12:47:58 Running canu to create shcd.json for ego...
+...
+...
+```
+
+`testdata/shcds/` will also have folders matching each of the system names and contain the following files:
+
+- `shcd.json`
+- `switch_metadata.csv`
+- `hmn_connections.json`
