@@ -74,7 +74,7 @@ func WriteCPTNetworkConfig(path string, v *viper.Viper, ncn csi.LogicalNCN, shas
 	csiFiles.WriteTemplate(filepath.Join(path, "ifroute-lan0"), template.Must(template.New("vlan").Parse(string(VlanRouteTemplate))), []interface{}{lan0RouteStruct})
 	for _, network := range ncn.Networks {
 		if stringInSlice(network.NetworkName, csi.ValidNetNames) {
-			if network.Vlan != 0 {
+			if network.Vlan != 0 && network.NetworkName != "CHN" {
 				csiFiles.WriteTemplate(filepath.Join(path, fmt.Sprintf("ifcfg-bond0.%s0", strings.ToLower(network.NetworkName))), template.Must(template.New("vlan").Parse(string(VlanConfigTemplate))), network)
 			}
 			if network.NetworkName == "NMN" {

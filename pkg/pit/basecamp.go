@@ -129,7 +129,6 @@ var cephWorkerRunCMD = []string{
 
 // Make sure any "FIXME" added to this is updated in the MakeBasecampGlobals function below
 var basecampGlobalString = `{
-	"can-gw": "~FIXME~ e.g. 10.102.9.20",
 	"ceph-cephfs-image": "dtr.dev.cray.com/cray/cray-cephfs-provisioner:0.1.0-nautilus-1.3",
 	"ceph-rbd-image": "dtr.dev.cray.com/cray/cray-rbd-provisioner:0.1.0-nautilus-1.3",
 	"docker-image-registry": "dtr.dev.cray.com",

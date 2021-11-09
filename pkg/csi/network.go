@@ -59,6 +59,7 @@ func (iNet *IPV4Network) GenSubnets(cabinetDetails []CabinetGroupDetail, mask ne
 	_, myNet, _ := net.ParseCIDR(iNet.CIDR)
 	mySubnets := iNet.AllocatedSubnets()
 	myIPv4Subnets := iNet.Subnets
+	var minVlan, maxVlan int16 = 4095, 0
 
 	for _, cabinetDetail := range cabinetDetails {
 		if cabinetType == cabinetDetail.Kind {
@@ -88,9 +89,17 @@ func (iNet *IPV4Network) GenSubnets(cabinetDetails []CabinetGroupDetail, mask ne
 				}
 				tempSubnet.UpdateDHCPRange(false)
 				myIPv4Subnets = append(myIPv4Subnets, &tempSubnet)
+				if tmpVlanID < minVlan {
+					minVlan = tmpVlanID
+				}
+				if tmpVlanID > maxVlan {
+					maxVlan = tmpVlanID
+				}
 			}
 		}
 	}
+	iNet.VlanRange[0] = minVlan
+	iNet.VlanRange[1] = maxVlan
 	iNet.Subnets = myIPv4Subnets
 	return nil
 }

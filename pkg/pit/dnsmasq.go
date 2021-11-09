@@ -22,7 +22,7 @@ var CMNConfigTemplate = []byte(`
 server=/cmn/
 address=/cmn/
 dhcp-option=interface:bond0.cmn0,option:domain-search,cmn
-interface-name=pit.can,bond0.cmn0
+interface-name=pit.cmn,bond0.cmn0
 interface=bond0.cmn0
 cname=packages.cmn,pit.cmn
 cname=registry.cmn,pit.cmn
@@ -212,6 +212,9 @@ func writeConfig(name, path string, tpl template.Template, networks map[string]*
 	}
 	if tempNet.Name == "CAN" {
 		bootstrapSubnet.Gateway = net.ParseIP(v.GetString("can-gateway"))
+	}
+	if tempNet.Name == "CMN" {
+		bootstrapSubnet.Gateway = net.ParseIP(v.GetString("cmn-gateway"))
 	}
 	// Normalize the CIDR before using it
 	_, superNet, _ := net.ParseCIDR(bootstrapSubnet.CIDR.String())

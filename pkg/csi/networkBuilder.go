@@ -116,6 +116,7 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 	// log.Printf("Creating a network for %v with NetworkLayoutConfig %+v", conf.Template.Name, conf)
 	var canCIDR *net.IPNet
 	var cmnCIDR *net.IPNet
+	var chnCIDR *net.IPNet
 	// I hope this viper is temporary
 	v := viper.GetViper()
 	// start with the defaults
@@ -142,6 +143,10 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 					v.GetString("cmn-static-pool"), tempNet.CIDR, err)
 			}
 			static.FullName = "CMN Static Pool MetalLB"
+			_, err = static.AddReservationWithIP("external-dns", v.GetString("cmn-external-dns"), "site to system lookups")
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 		_, cmnDynamicPool, err := net.ParseCIDR(v.GetString("cmn-dynamic-pool"))
 		if err != nil {
@@ -160,38 +165,81 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 
 	// Do all the special assembly for the CAN
 	if tempNet.Name == "CAN" {
-		_, canCIDR, _ = net.ParseCIDR(v.GetString("can-cidr"))
-		conf.DesiredBootstrapDHCPMask = canCIDR.Mask
-		_, canStaticPool, err := net.ParseCIDR(v.GetString("can-static-pool"))
-		if err != nil {
-			log.Printf("IP Addressing Failure\nInvalid can-static-pool.  Cowardly refusing to create it.")
-		} else {
-			static, err := tempNet.AddSubnetbyCIDR(*canStaticPool, "can_metallb_static_pool", int16(v.GetInt("can-bootstrap-vlan")))
-			if err != nil {
-				log.Fatalf("IP Addressing Failure\n"+
-					"Couldn't add MetalLB Static pool of %v to net %v: %v\n"+
-					"Possible missing or mismatched can-static-pool input value.",
-					v.GetString("can-static-pool"), tempNet.CIDR, err)
+		if v.GetString("can-cidr") != "" {
+			_, canCIDR, _ = net.ParseCIDR(v.GetString("can-cidr"))
+			conf.DesiredBootstrapDHCPMask = canCIDR.Mask
+
+			if v.GetString("can-static-pool") != "" {
+				_, canStaticPool, err := net.ParseCIDR(v.GetString("can-static-pool"))
+				if err != nil {
+					log.Printf("IP Addressing Failure\nInvalid can-static-pool.  Cowardly refusing to create it.")
+				} else {
+					static, err := tempNet.AddSubnetbyCIDR(*canStaticPool, "can_metallb_static_pool", int16(v.GetInt("can-bootstrap-vlan")))
+					if err != nil {
+						log.Fatalf("IP Addressing Failure\n"+
+							"Couldn't add MetalLB Static pool of %v to net %v: %v\n"+
+							"Possible missing or mismatched can-static-pool input value.",
+							v.GetString("can-static-pool"), tempNet.CIDR, err)
+					}
+					static.FullName = "CAN Static Pool MetalLB"
+				}
 			}
-			static.FullName = "CAN Static Pool MetalLB"
-			_, err = static.AddReservationWithIP("external-dns", v.GetString("can-external-dns"), "site to system lookups")
-			if err != nil {
-				log.Fatal(err)
+			if v.GetString("can-dynamic-pool") != "" {
+				_, canDynamicPool, err := net.ParseCIDR(v.GetString("can-dynamic-pool"))
+				if err != nil {
+					log.Printf("IP Addressing Failure\nInvalid can-dynamic-pool.  Cowardly refusing to create it.")
+				} else {
+					pool, err := tempNet.AddSubnetbyCIDR(*canDynamicPool, "can_metallb_address_pool", int16(v.GetInt("can-bootstrap-vlan")))
+					if err != nil {
+						log.Fatalf("IP Addressing Failure\n"+
+							"Couldn't add MetalLB Dynamic pool of %v to net %v: %v\n"+
+							"Possible missing or mismatched can-dynamic-pool value.",
+							v.GetString("can-dynamic-pool"), tempNet.CIDR, err)
+						log.Fatalf("Possible missing or mismatched can-dynamic-pool value.")
+					}
+					pool.FullName = "CAN Dynamic MetalLB"
+				}
 			}
 		}
-		_, canDynamicPool, err := net.ParseCIDR(v.GetString("can-dynamic-pool"))
-		if err != nil {
-			log.Printf("IP Addressing Failure\nInvalid can-dynamic-pool.  Cowardly refusing to create it.")
-		} else {
-			pool, err := tempNet.AddSubnetbyCIDR(*canDynamicPool, "can_metallb_address_pool", int16(v.GetInt("can-bootstrap-vlan")))
-			if err != nil {
-				log.Fatalf("IP Addressing Failure\n"+
-					"Couldn't add MetalLB Dynamic pool of %v to net %v: %v\n"+
-					"Possible missing or mismatched can-dynamic-pool value.",
-					v.GetString("can-dynamic-pool"), tempNet.CIDR, err)
-				log.Fatalf("Possible missing or mismatched can-dynamic-pool value.")
+	}
+
+	// Do all the special assembly for the CHN
+	if tempNet.Name == "CHN" {
+		if v.GetString("chn-cidr") != "" {
+			_, chnCIDR, _ = net.ParseCIDR(v.GetString("chn-cidr"))
+			conf.DesiredBootstrapDHCPMask = chnCIDR.Mask
+
+			if v.GetString("chn-static-pool") != "" {
+				_, chnStaticPool, err := net.ParseCIDR(v.GetString("chn-static-pool"))
+				if err != nil {
+					log.Printf("IP Addressing Failure\nInvalid chn-static-pool.  Cowardly refusing to create it.")
+				} else {
+					static, err := tempNet.AddSubnetbyCIDR(*chnStaticPool, "chn_metallb_static_pool", int16(v.GetInt("chn-bootstrap-vlan")))
+					if err != nil {
+						log.Fatalf("IP Addressing Failure\n"+
+							"Couldn't add MetalLB Static pool of %v to net %v: %v\n"+
+							"Possible missing or mismatched chn-static-pool input value.",
+							v.GetString("chn-static-pool"), tempNet.CIDR, err)
+					}
+					static.FullName = "CHN Static Pool MetalLB"
+				}
 			}
-			pool.FullName = "CAN Dynamic MetalLB"
+			if v.GetString("chn-dynamic-pool") != "" {
+				_, chnDynamicPool, err := net.ParseCIDR(v.GetString("chn-dynamic-pool"))
+				if err != nil {
+					log.Printf("IP Addressing Failure\nInvalid chn-dynamic-pool.  Cowardly refusing to create it.")
+				} else {
+					pool, err := tempNet.AddSubnetbyCIDR(*chnDynamicPool, "chn_metallb_address_pool", int16(v.GetInt("chn-bootstrap-vlan")))
+					if err != nil {
+						log.Fatalf("IP Addressing Failure\n"+
+							"Couldn't add MetalLB Dynamic pool of %v to net %v: %v\n"+
+							"Possible missing or mismatched chn-dynamic-pool value.",
+							v.GetString("chn-dynamic-pool"), tempNet.CIDR, err)
+						log.Fatalf("Possible missing or mismatched chn-dynamic-pool value.")
+					}
+					pool.FullName = "CHN Dynamic MetalLB"
+				}
+			}
 		}
 	}
 
@@ -224,29 +272,38 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 
 	// Set up the Boostrap DHCP subnet(s)
 	if conf.IncludeBootstrapDHCP {
-		var subnet *IPV4Subnet
-		subnet, err := tempNet.AddBiggestSubnet(conf.DesiredBootstrapDHCPMask, "bootstrap_dhcp", conf.BaseVlan)
-		if err != nil {
-			return &tempNet, fmt.Errorf("unable to add bootstrap_dhcp subnet to %v because %v", conf.Template.Name, err)
-		}
-		subnet.FullName = fmt.Sprintf("%v Bootstrap DHCP Subnet", tempNet.Name)
-		if tempNet.Name == "NMN" || tempNet.Name == "HMN" || tempNet.Name == "CMN" || tempNet.Name == "CAN" {
-			if tempNet.Name == "CMN" {
-				subnet.CIDR = *cmnCIDR
-				subnet.Gateway = net.ParseIP(v.GetString("cmn-gateway"))
-				subnet.AddReservation("cmn-switch-1", "")
-				subnet.AddReservation("cmn-switch-2", "")
-			} else if tempNet.Name == "CAN" {
-				subnet.CIDR = *canCIDR
-				subnet.Gateway = net.ParseIP(v.GetString("can-gateway"))
-				subnet.AddReservation("can-switch-1", "")
-				subnet.AddReservation("can-switch-2", "")
-			} else {
-				subnet.ReserveNetMgmtIPs([]string{}, []string{}, []string{}, []string{}, conf.AdditionalNetworkingSpace)
+		netNameLower := strings.ToLower(tempNet.Name)
+		myNet := fmt.Sprintf("%s-cidr", netNameLower)
+		if v.GetString(myNet) != "" {
+			var subnet *IPV4Subnet
+			subnet, err := tempNet.AddBiggestSubnet(conf.DesiredBootstrapDHCPMask, "bootstrap_dhcp", conf.BaseVlan)
+			if err != nil {
+				return &tempNet, fmt.Errorf("unable to add bootstrap_dhcp subnet to %v because %v", conf.Template.Name, err)
 			}
-			subnet.AddReservation("kubeapi-vip", "k8s-virtual-ip")
-			if tempNet.Name == "NMN" {
-				subnet.AddReservation("rgw-vip", "rgw-virtual-ip")
+			subnet.FullName = fmt.Sprintf("%v Bootstrap DHCP Subnet", tempNet.Name)
+			if tempNet.Name == "NMN" || tempNet.Name == "HMN" || tempNet.Name == "CMN" || tempNet.Name == "CAN" || tempNet.Name == "CHN" {
+				if tempNet.Name == "CMN" {
+					subnet.CIDR = *cmnCIDR
+					subnet.Gateway = net.ParseIP(v.GetString("cmn-gateway"))
+					subnet.AddReservation("cmn-switch-1", "")
+					subnet.AddReservation("cmn-switch-2", "")
+				} else if tempNet.Name == "CAN" {
+					subnet.CIDR = *canCIDR
+					subnet.Gateway = net.ParseIP(v.GetString("can-gateway"))
+					subnet.AddReservation("can-switch-1", "")
+					subnet.AddReservation("can-switch-2", "")
+				} else if tempNet.Name == "CHN" {
+					subnet.CIDR = *chnCIDR
+					subnet.Gateway = net.ParseIP(v.GetString("chn-gateway"))
+					subnet.AddReservation("chn-switch-1", "")
+					subnet.AddReservation("chn-switch-2", "")
+				} else {
+					subnet.ReserveNetMgmtIPs([]string{}, []string{}, []string{}, []string{}, conf.AdditionalNetworkingSpace)
+				}
+				subnet.AddReservation("kubeapi-vip", "k8s-virtual-ip")
+				if tempNet.Name == "NMN" {
+					subnet.AddReservation("rgw-vip", "rgw-virtual-ip")
+				}
 			}
 		}
 	}
