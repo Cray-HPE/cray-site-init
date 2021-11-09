@@ -14,10 +14,13 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/Cray-HPE/cray-site-init/pkg/csi"
+	"github.com/Cray-HPE/hms-base/xname"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/xeipuuv/gojsonschema"
@@ -175,6 +178,124 @@ type Switch struct {
 	Brand string
 }
 
+// Crafts and prints the xname of a give Id type in the SHCD
+func (id Id) GenerateXname() (xn string) {
+	// Schema decoder ring:
+	// 		cabinet = rack
+	// 		chassis = defaults to 0  River: c0, Mountain/Hill: this is the CMM number
+	// 		slot = elevation
+	// 		space =
+
+	// Each xname has a different structure depending on what the device is
+	// This is just a big string of if/else conditionals to determine this
+	// At present, this is limited to checking the nodes needed in switch_metadata.csv
+
+	// If it's a CDU switch
+	if strings.HasPrefix(id.CommonName, "sw-cdu-") {
+
+		// We need just the number
+		i := strings.TrimPrefix(id.CommonName, "sw-cdu-")
+
+		// convert it to an int, which the struct expects
+		slot, err := strconv.Atoi(i)
+
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		// Create the xname
+		// dDwW
+		x := xname.CDUMgmtSwitch{
+			CoolingGroup: 0,    // D: 0-999
+			Slot:         slot, // W: 0-31
+		}
+
+		// Convert it to a string
+		xn = x.String()
+
+		// Leaf switches have their own needs
+	} else if strings.HasPrefix(id.CommonName, "sw-leaf-bmc-") {
+
+		// Get the just number of the elevation
+		i := strings.TrimPrefix(id.Location.Elevation, "u")
+
+		// Convert it to an int
+		slot, err := strconv.Atoi(i)
+
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		// Get the rack as a string
+		cabString := id.Location.Rack
+
+		// Strip the "x"
+		_, cabNum := utf8.DecodeRuneInString(cabString)
+
+		// Convert to an int
+		cabinet, err := strconv.Atoi(cabString[cabNum:])
+
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		// Create the xname
+		// Chassis defaults to 0 in most cases
+		// xXcCwW
+		x := xname.MgmtSwitch{
+			Cabinet: cabinet, // X: 0-999
+			Chassis: 0,       // C: 0-7
+			Slot:    slot,    // W: 1-48
+		}
+
+		// Convert it to a string
+		xn = x.String()
+
+		// Spine switches
+	} else if strings.HasPrefix(id.CommonName, "sw-spine") ||
+		strings.HasPrefix(id.CommonName, "sw-leaf") {
+
+		// Convert the rack to a string
+		cabString := id.Location.Rack
+
+		// Strip the "x"
+		_, cabNum := utf8.DecodeRuneInString(cabString)
+
+		// Convert to an int
+		cabinet, err := strconv.Atoi(cabString[cabNum:])
+
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		// Strip the u
+		i := strings.TrimPrefix(id.Location.Elevation, "u")
+
+		// Convert it to an int
+		slot, err := strconv.Atoi(i)
+
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		// Create the xname
+		// Chassis and Space default to 0 and 1 in most cases
+		// xXcChHsS
+		x := xname.MgmtHLSwitch{
+			Cabinet: cabinet, // X: 0-999
+			Chassis: 0,       // C: 0-7
+			Slot:    slot,    // H: 1-48
+			Space:   1,       // S: 1-4
+		}
+
+		xn = x.String()
+
+	}
+
+	// Return the crafted xname
+	return xn
+}
+
 // Crafts and prints the switch types that switch_metadata.csv expects
 func (id Id) GenerateSwitchType() (st string) {
 
@@ -267,13 +388,34 @@ func createSwitchSeed(shcd Shcd, f string) {
 	// For each entry in the SHCD
 	for i := range shcd {
 
-		// Create a new Switch type and append it to the SwitchMetadata slice
-		switches = append(switches, Switch{
-			Xname: shcd[i].Location.Rack,
-			Type:  shcd[i].Type,
-			Brand: shcd[i].Vendor,
-		})
+		switch shcd[i].Type {
 
+		// for switch_metadata.csv, we only care about the switches
+		case "switch":
+
+			// HSN switch should not be in switch_metadata.csv
+			if strings.HasPrefix(shcd[i].CommonName, "sw-hsn") {
+				continue
+			}
+
+			// Generate the xname based on the rules we predefine
+			switchXname := shcd[i].GenerateXname()
+			// Do the same for the switch type
+			switchType := shcd[i].GenerateSwitchType()
+			// The vendor just needs to be capitalized
+			switchVendor := strings.Title(shcd[i].Vendor)
+
+			// Create a new Switch type and append it to the SwitchMetadata slice
+			switches = append(switches, Switch{
+				Xname: switchXname,
+				Type:  switchType,
+				Brand: switchVendor,
+			})
+
+		default:
+			// Skip anything else since we only need switches
+			continue
+		}
 	}
 
 	// When writing to csv, the first row should be the headers
@@ -285,9 +427,12 @@ func createSwitchSeed(shcd Shcd, f string) {
 
 	// Then create a new slice with the three pieces of information needed
 	for _, v := range switches {
+
 		row := []string{v.Xname, v.Type, v.Brand}
+
 		// Append it to the records slice under the column headers
 		records = append(records, row)
+
 	}
 
 	// Create the file object
@@ -307,6 +452,14 @@ func createSwitchSeed(shcd Shcd, f string) {
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	// Create a var for all the records except the header
+	r := records[1:]
+
+	// Pass an anonymous function to sort.Slice to sort everything except the headers
+	sort.Slice(r, func(i, j int) bool {
+		return r[i][0] < r[j][0]
+	})
 
 	// For each item in the records slice
 	for _, v := range records {
