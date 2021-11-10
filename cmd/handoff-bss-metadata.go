@@ -53,7 +53,8 @@ var (
 	sshConfig     *ssh.ClientConfig
 	token         string
 
-	vlansToGather = []string{"bond0.nmn0"}
+	// TODO: SET THIS BACK
+	vlansToGather = []string{"vlan002"}
 )
 
 var handoffBSSMetadataCmd = &cobra.Command{
@@ -524,8 +525,8 @@ func populateNCNMetadata() {
 				// Be sure to normalize all the MACs.
 				macWithoutPunctuation := strings.ReplaceAll(macAddr, ":", "")
 
-				url := fmt.Sprintf("https://%s/apis/smd/hsm/v1/Inventory/EthernetInterfaces/%s",
-					gatewayHostname, macWithoutPunctuation)
+				url := fmt.Sprintf("%s/hsm/v1/Inventory/EthernetInterfaces/%s",
+					hsmBaseURL, macWithoutPunctuation)
 				response := uploadCompEthInterfaceToHSM(*compEthInterface, url, "PATCH")
 
 				if response.StatusCode != http.StatusOK {
@@ -554,8 +555,7 @@ func getCompEthInterfaceForMAC(macAddr string) *sm.CompEthInterface {
 	// Be sure to normalize all the MACs.
 	macWithoutPunctuation := strings.ReplaceAll(macAddr, ":", "")
 
-	url := fmt.Sprintf("https://%s/apis/smd/hsm/v1/Inventory/EthernetInterfaces/%s",
-		gatewayHostname, macWithoutPunctuation)
+	url := fmt.Sprintf("%s/hsm/v1/Inventory/EthernetInterfaces/%s", hsmBaseURL, macWithoutPunctuation)
 
 	request, requestErr := http.NewRequest(http.MethodGet, url, nil)
 	if requestErr != nil {
@@ -614,7 +614,7 @@ func uploadCompEthInterfaceToHSM(compInterface sm.CompEthInterface, url string,
 }
 
 func generateAndSendInterfaceForNCN(xname string, ip string, macAddr string, description string) {
-	url := fmt.Sprintf("https://%s/apis/smd/hsm/v1/Inventory/EthernetInterfaces", gatewayHostname)
+	url := fmt.Sprintf("%s/hsm/v1/Inventory/EthernetInterfaces", hsmBaseURL)
 
 	// Be sure to normalize all the MACs.
 	macWithoutPunctuation := strings.ReplaceAll(macAddr, ":", "")
@@ -671,7 +671,7 @@ func populateHSMEthernetInterface(xname string, ipString string, vlan string) {
 }
 
 func uploadHSMComponents(array base.ComponentArray) {
-	url := fmt.Sprintf("https://%s/apis/smd/hsm/v1/State/Components", gatewayHostname)
+	url := fmt.Sprintf("%s/hsm/v1/State/Components", hsmBaseURL)
 
 	payloadBytes, marshalErr := json.MarshalIndent(array, "", "\t")
 	if marshalErr != nil {
