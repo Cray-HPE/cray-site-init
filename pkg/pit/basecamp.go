@@ -286,6 +286,7 @@ func MakeBasecampGlobals(v *viper.Viper, logicalNcns []csi.LogicalNCN, shastaNet
 }
 
 // Traverse the networks, assembling a list of NMN and HMN routes for Hill/Mountain Cabinets
+// Additionally, add a route from the MTL bootstrap network to the NMN network via bond0.nmn
 // Format for ifroute-<interface> files
 func getMntHillNCNRoutes(v *viper.Viper, shastaNetworks map[string]*csi.IPV4Network) []WriteFiles {
 	var nmnGateway string
@@ -297,7 +298,7 @@ func getMntHillNCNRoutes(v *viper.Viper, shastaNetworks map[string]*csi.IPV4Netw
 	// N.B. The order of this range matters.  We get the nmn/hmn gateway values out of this first two.
 	// They need to remain first here; otherwise the inner loop here needs to become two loops,
 	// one to find & set the gateways, one to write the data out.
-	for _, netName := range []string{"NMN", "HMN", "NMN_MTN", "HMN_MTN", "NMN_RVR", "HMN_RVR"} {
+	for _, netName := range []string{"NMN", "HMN", "NMN_MTN", "HMN_MTN", "NMN_RVR", "HMN_RVR", "MTL"} {
 		if shastaNetworks[netName] != nil {
 			for _, subnet := range shastaNetworks[netName].Subnets {
 				if subnet.Name == "network_hardware" {
@@ -306,6 +307,9 @@ func getMntHillNCNRoutes(v *viper.Viper, shastaNetworks map[string]*csi.IPV4Netw
 					}
 					if netName == "HMN" {
 						hmnGateway = subnet.Gateway.String()
+					}
+					if netName == "MTL" {
+						ifrouteNMN.WriteString(fmt.Sprintf("%s %s - bond0.nmn0\n", subnet.CIDR.String(), nmnGateway))
 					}
 				}
 				if strings.HasPrefix(subnet.Name, "cabinet_") {
@@ -319,9 +323,9 @@ func getMntHillNCNRoutes(v *viper.Viper, shastaNetworks map[string]*csi.IPV4Netw
 		}
 	}
 
-	// We don't ever have NMN routes without corresponding HMN routes, so just check one
-	if ifrouteNMN.Len() == 0 {
-		return nil
+	// we should always have routes
+	if ifrouteNMN.Len() == 0 || ifrouteHMN.Len() == 0 {
+		log.Panic("Error generating routes")
 	}
 
 	writeFiles := []WriteFiles{
