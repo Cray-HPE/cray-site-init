@@ -1,0 +1,418 @@
+[
+  {
+   "Source": "sw-cdu-002",
+   "SourceRack": "x1000",
+   "SourceLocation": "u42",
+   "DestinationRack": "x1000",
+   "DestinationLocation": "u41",
+   "DestinationPort": "j52"
+  },
+  {
+   "Source": "sw-spine-002",
+   "SourceRack": "x3000",
+   "SourceLocation": "u38",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u37",
+   "DestinationPort": "j32"
+  },
+  {
+   "Source": "sw-spine-001",
+   "SourceRack": "x3000",
+   "SourceLocation": "u37",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u38",
+   "DestinationPort": "j32"
+  },
+  {
+   "Source": "sw-cdu-001",
+   "SourceRack": "x1000",
+   "SourceLocation": "u41",
+   "DestinationRack": "x1000",
+   "DestinationLocation": "u42",
+   "DestinationPort": "j52"
+  },
+  {
+   "Source": "sw-leaf-004",
+   "SourceRack": "x3000",
+   "SourceLocation": "u36",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u35",
+   "DestinationPort": "j56"
+  },
+  {
+   "Source": "sw-leaf-003",
+   "SourceRack": "x3000",
+   "SourceLocation": "u35",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u36",
+   "DestinationPort": "j56"
+  },
+  {
+   "Source": "sw-leaf-002",
+   "SourceRack": "x3000",
+   "SourceLocation": "u34",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u33",
+   "DestinationPort": "j56"
+  },
+  {
+   "Source": "sw-leaf-001",
+   "SourceRack": "x3000",
+   "SourceLocation": "u33",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u34",
+   "DestinationPort": "j56"
+  },
+  {
+   "Source": "sw-leaf-bmc-002",
+   "SourceRack": "x3000",
+   "SourceLocation": "u32",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u36",
+   "DestinationPort": "j48"
+  },
+  {
+   "Source": "sw-leaf-bmc-001",
+   "SourceRack": "x3000",
+   "SourceLocation": "u31",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u34",
+   "DestinationPort": "j48"
+  },
+  {
+   "Source": "lnet01",
+   "SourceRack": "x3000",
+   "SourceLocation": "u27",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u36",
+   "DestinationPort": "j9"
+  },
+  {
+   "Source": "uan006",
+   "SourceRack": "x3000",
+   "SourceLocation": "u25",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u34",
+   "DestinationPort": "j19"
+  },
+  {
+   "Source": "uan004",
+   "SourceRack": "x3000",
+   "SourceLocation": "u21",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u34",
+   "DestinationPort": "j17"
+  },
+  {
+   "Source": "uan003",
+   "SourceRack": "x3000",
+   "SourceLocation": "u19",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u34",
+   "DestinationPort": "j16"
+  },
+  {
+   "Source": "uan002",
+   "SourceRack": "x3000",
+   "SourceLocation": "u18",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u34",
+   "DestinationPort": "j15"
+  },
+  {
+   "Source": "uan001",
+   "SourceRack": "x3000",
+   "SourceLocation": "u17",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u34",
+   "DestinationPort": "j14"
+  },
+  {
+   "Source": "ncn-s003",
+   "SourceRack": "x3000",
+   "SourceLocation": "u12",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u36",
+   "DestinationPort": "j8"
+  },
+  {
+   "Source": "ncn-s002",
+   "SourceRack": "x3000",
+   "SourceLocation": "u11",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u36",
+   "DestinationPort": "j6"
+  },
+  {
+   "Source": "ncn-s001",
+   "SourceRack": "x3000",
+   "SourceLocation": "u10",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u36",
+   "DestinationPort": "j5"
+  },
+  {
+   "Source": "ncn-w006",
+   "SourceRack": "x3000",
+   "SourceLocation": "u09",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u36",
+   "DestinationPort": "j4"
+  },
+  {
+   "Source": "ncn-w005",
+   "SourceRack": "x3000",
+   "SourceLocation": "u08",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u36",
+   "DestinationPort": "j3"
+  },
+  {
+   "Source": "ncn-w004",
+   "SourceRack": "x3000",
+   "SourceLocation": "u07",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u36",
+   "DestinationPort": "j2"
+  },
+  {
+   "Source": "ncn-w003",
+   "SourceRack": "x3000",
+   "SourceLocation": "u06",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u34",
+   "DestinationPort": "j5"
+  },
+  {
+   "Source": "ncn-w002",
+   "SourceRack": "x3000",
+   "SourceLocation": "u05",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u34",
+   "DestinationPort": "j4"
+  },
+  {
+   "Source": "ncn-w001",
+   "SourceRack": "x3000",
+   "SourceLocation": "u04",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u34",
+   "DestinationPort": "j3"
+  },
+  {
+   "Source": "ncn-m003",
+   "SourceRack": "x3000",
+   "SourceLocation": "u03",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u36",
+   "DestinationPort": "j1"
+  },
+  {
+   "Source": "ncn-m002",
+   "SourceRack": "x3000",
+   "SourceLocation": "u02",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u34",
+   "DestinationPort": "j2"
+  },
+  {
+   "Source": "ncn-m001",
+   "SourceRack": "x3000",
+   "SourceLocation": "u01",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u34",
+   "DestinationPort": "j1"
+  },
+  {
+   "Source": "cn008",
+   "SourceRack": "x3000",
+   "SourceLocation": "u15L",
+   "SourceParent": "FIXME INSERT SUBRACK HERE",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u31",
+   "DestinationPort": "j8"
+  },
+  {
+   "Source": "cn007",
+   "SourceRack": "x3000",
+   "SourceLocation": "u16L",
+   "SourceParent": "FIXME INSERT SUBRACK HERE",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u31",
+   "DestinationPort": "j7"
+  },
+  {
+   "Source": "cn006",
+   "SourceRack": "x3000",
+   "SourceLocation": "u16R",
+   "SourceParent": "FIXME INSERT SUBRACK HERE",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u31",
+   "DestinationPort": "j6"
+  },
+  {
+   "Source": "cn005",
+   "SourceRack": "x3000",
+   "SourceLocation": "u15R",
+   "SourceParent": "FIXME INSERT SUBRACK HERE",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u31",
+   "DestinationPort": "j5"
+  },
+  {
+   "Source": "cn004",
+   "SourceRack": "x3000",
+   "SourceLocation": "u13L",
+   "SourceParent": "FIXME INSERT SUBRACK HERE",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u32",
+   "DestinationPort": "j28"
+  },
+  {
+   "Source": "cn003",
+   "SourceRack": "x3000",
+   "SourceLocation": "u14L",
+   "SourceParent": "FIXME INSERT SUBRACK HERE",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u32",
+   "DestinationPort": "j27"
+  },
+  {
+   "Source": "cn002",
+   "SourceRack": "x3000",
+   "SourceLocation": "u13R",
+   "SourceParent": "FIXME INSERT SUBRACK HERE",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u32",
+   "DestinationPort": "j26"
+  },
+  {
+   "Source": "cn001",
+   "SourceRack": "x3000",
+   "SourceLocation": "u14R",
+   "SourceParent": "FIXME INSERT SUBRACK HERE",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u32",
+   "DestinationPort": "j25"
+  },
+  {
+   "Source": "pdu-001",
+   "SourceRack": "x3000",
+   "SourceLocation": "p1",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u32",
+   "DestinationPort": "j48"
+  },
+  {
+   "Source": "pdu-000",
+   "SourceRack": "x3000",
+   "SourceLocation": "p0",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u31",
+   "DestinationPort": "j48"
+  },
+  {
+   "Source": "sw-hsn-002",
+   "SourceRack": "x3000",
+   "SourceLocation": "u40",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u32",
+   "DestinationPort": "j47"
+  },
+  {
+   "Source": "sw-hsn-001",
+   "SourceRack": "x3000",
+   "SourceLocation": "u39",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u31",
+   "DestinationPort": "j47"
+  },
+  {
+   "Source": "uan000",
+   "SourceRack": "x3000",
+   "SourceLocation": "u29",
+   "DestinationRack": "x3000",
+   "DestinationLocation": "u32",
+   "DestinationPort": "j43"
+  },
+  {
+   "Source": "cmm-x1000-000",
+   "SourceRack": "x1000",
+   "SourceLocation": "c0",
+   "DestinationRack": "x1000",
+   "DestinationLocation": "u42",
+   "DestinationPort": "j1"
+  },
+  {
+   "Source": "cmm-x1000-001",
+   "SourceRack": "x1000",
+   "SourceLocation": "c1",
+   "DestinationRack": "x1000",
+   "DestinationLocation": "u42",
+   "DestinationPort": "j2"
+  },
+  {
+   "Source": "cmm-x1000-002",
+   "SourceRack": "x1000",
+   "SourceLocation": "c2",
+   "DestinationRack": "x1000",
+   "DestinationLocation": "u42",
+   "DestinationPort": "j3"
+  },
+  {
+   "Source": "cmm-x1000-003",
+   "SourceRack": "x1000",
+   "SourceLocation": "c3",
+   "DestinationRack": "x1000",
+   "DestinationLocation": "u42",
+   "DestinationPort": "j4"
+  },
+  {
+   "Source": "cmm-x1000-004",
+   "SourceRack": "x1000",
+   "SourceLocation": "c4",
+   "DestinationRack": "x1000",
+   "DestinationLocation": "u42",
+   "DestinationPort": "j5"
+  },
+  {
+   "Source": "cmm-x1000-005",
+   "SourceRack": "x1000",
+   "SourceLocation": "c5",
+   "DestinationRack": "x1000",
+   "DestinationLocation": "u42",
+   "DestinationPort": "j6"
+  },
+  {
+   "Source": "cmm-x1000-006",
+   "SourceRack": "x1000",
+   "SourceLocation": "c6",
+   "DestinationRack": "x1000",
+   "DestinationLocation": "u42",
+   "DestinationPort": "j7"
+  },
+  {
+   "Source": "cmm-x1000-007",
+   "SourceRack": "x1000",
+   "SourceLocation": "c7",
+   "DestinationRack": "x1000",
+   "DestinationLocation": "u42",
+   "DestinationPort": "j8"
+  },
+  {
+   "Source": "cec-x1000-000",
+   "SourceRack": "x1000",
+   "SourceLocation": "c6",
+   "DestinationRack": "x1000",
+   "DestinationLocation": "u41",
+   "DestinationPort": "j48"
+  },
+  {
+   "Source": "cec-x1000-001",
+   "SourceRack": "x1000",
+   "SourceLocation": "c7",
+   "DestinationRack": "x1000",
+   "DestinationLocation": "u42",
+   "DestinationPort": "j48"
+  }
+ ]

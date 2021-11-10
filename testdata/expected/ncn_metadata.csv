@@ -1,0 +1,13 @@
+Xname,Role,Subrole,BMC MAC,Bootstrap MAC,Bond0 MAC0,Bond0 MAC1
+x3000c0s10b0n0,Management,Storage,MAC1,MAC2,MAC3,MAC4
+x3000c0s11b0n0,Management,Storage,MAC1,MAC2,MAC3,MAC4
+x3000c0s12b0n0,Management,Storage,MAC1,MAC2,MAC3,MAC4
+x3000c0s1b0n0,Management,Master,MAC1,MAC2,MAC3,MAC4
+x3000c0s2b0n0,Management,Master,MAC1,MAC2,MAC3,MAC4
+x3000c0s3b0n0,Management,Master,MAC1,MAC2,MAC3,MAC4
+x3000c0s4b0n0,Management,Worker,MAC1,MAC2,MAC3,MAC4
+x3000c0s5b0n0,Management,Worker,MAC1,MAC2,MAC3,MAC4
+x3000c0s6b0n0,Management,Worker,MAC1,MAC2,MAC3,MAC4
+x3000c0s7b0n0,Management,Worker,MAC1,MAC2,MAC3,MAC4
+x3000c0s8b0n0,Management,Worker,MAC1,MAC2,MAC3,MAC4
+x3000c0s9b0n0,Management,Worker,MAC1,MAC2,MAC3,MAC4

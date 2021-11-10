@@ -31,8 +31,9 @@ const schema = "shcd-schema.json"
 const hmn_connections = "hmn_connections.json"
 const switch_metadata = "switch_metadata.csv"
 const application_node_config = "application_node_config.yaml"
+const ncn_metadata = "ncn_metadata.csv"
 
-var createHMN, createSM, createANC bool
+var createHMN, createSM, createANC, createNCN bool
 
 var prefixSubroleMapIn map[string]string
 
@@ -101,6 +102,12 @@ var shcdCmd = &cobra.Command{
 
 			}
 
+			if v.IsSet("ncn-metadata") {
+
+				createNCNSeed(s, ncn_metadata)
+
+			}
+
 		} else {
 
 			log.Printf("- %s\n", err)
@@ -118,6 +125,7 @@ func init() {
 	shcdCmd.Flags().SortFlags = true
 	shcdCmd.Flags().StringVarP(&customSchema, "schema-file", "j", "", "Use a custom schema file")
 	shcdCmd.Flags().BoolVarP(&createHMN, "hmn-connections", "H", false, "Generate the hmn_connections.json file")
+	shcdCmd.Flags().BoolVarP(&createNCN, "ncn-metadata", "N", false, "Generate the ncn_metadata.csv file")
 	shcdCmd.Flags().BoolVarP(&createSM, "switch-metadata", "S", false, "Generate the switch_metadata.csv file")
 	shcdCmd.Flags().BoolVarP(&createANC, "application-node-config", "A", false, "Generate the application_node_config.yaml file")
 	shcdCmd.Flags().StringToStringVarP(&prefixSubroleMapIn, "prefix-subrole-mapping", "M", map[string]string{}, "Specify one or more additional <Prefix>=<Subrole> mappings to use when generating application_node_config.yaml. Multiple mappings can be specified in the format of <prefix1>=<subrole1>,<prefix2>=<subrole2>")
@@ -168,6 +176,20 @@ type HMNComponent struct {
 	DestinationPort     string `json:"DestinationPort"`
 }
 
+// NCNMetadata type is the go equivalent structure of ncn_metadata.csv
+type NCNMetadata []NcnMacs
+
+// NcnMacs is a row in ncn_metadata.csv
+type NcnMacs struct {
+	Xname        string
+	Role         string
+	Subrole      string
+	BmcMac       string
+	BootstrapMac string
+	Bond0Mac0    string
+	Bond0Mac1    string
+}
+
 // SwitchMetadata type is the go equivalent structure of switch_metadata.csv
 type SwitchMetadata []Switch
 
@@ -189,6 +211,8 @@ func (id Id) GenerateXname() (xn string) {
 	// Each xname has a different structure depending on what the device is
 	// This is just a big string of if/else conditionals to determine this
 	// At present, this is limited to checking the nodes needed in switch_metadata.csv
+
+	var bmcOrdinal int
 
 	// If it's a CDU switch
 	if strings.HasPrefix(id.CommonName, "sw-cdu-") {
@@ -290,10 +314,107 @@ func (id Id) GenerateXname() (xn string) {
 
 		xn = x.String()
 
+	} else if strings.HasPrefix(id.CommonName, "ncn-") {
+
+		// Convert the rack to a string
+		cabString := id.Location.Rack
+
+		// Strip the "x"
+		_, cabNum := utf8.DecodeRuneInString(cabString)
+
+		// Convert to an int
+		cabinet, err := strconv.Atoi(cabString[cabNum:])
+
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		// Strip the u
+		i := strings.TrimPrefix(id.Location.Elevation, "u")
+
+		// Check if this is a dense 4 node chassis or dual node chassis as additional logic is needed for these to find the slot number
+		if strings.HasSuffix(i, "L") || strings.HasSuffix(i, "R") {
+			// Dense 4 node chassis - Gigabyte or Intel chassis --
+			// The BMC ordinal for the nodes BMC is derived from the NID of the node, by applying a modulo of 4 plus 1
+			if id.Vendor == "gigabyte" || id.Vendor == "intel" {
+
+				i = strings.TrimSuffix(i, "L")
+				i = strings.TrimSuffix(i, "R")
+
+				slot, err := strconv.Atoi(i)
+
+				if err != nil {
+					log.Fatalln(err)
+				}
+
+				bmcOrdinal = (slot % 4) + 1
+
+				// Dual node chassis - Apollo 6500 XL645D -- L == b1, R == b2
+			} else if id.Vendor == "hpe" {
+
+				if strings.HasSuffix(i, "L") {
+
+					bmcOrdinal = 1
+
+				} else if strings.HasSuffix(i, "R") {
+
+					bmcOrdinal = 2
+
+				}
+
+			}
+		} else {
+			// Single node chassis bB is always 0
+			bmcOrdinal = 0
+		}
+
+		// Convert it to an int
+		slot, err := strconv.Atoi(i)
+
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		// xCcCsSbBnN
+		x := xname.Node{
+			Cabinet: cabinet,    // X: 0-999
+			Chassis: 0,          // C: 0-7
+			Slot:    slot,       // S: 1-63
+			BMC:     bmcOrdinal, // B: 0-1 - TODO the HSOS document is wrong here. as we do actually use greater than 1
+			// For all river hardware the value of N should be always be 0
+			Node: 0, // N: 0-7
+
+		}
+
+		xn = x.String()
+
 	}
 
 	// Return the crafted xname
 	return xn
+}
+
+// GenerateNCNRoleSubrole generates the appropriate role and subrole based on the ncn-* name
+func (id Id) GenerateNCNRoleSubrole() (r string, sr string) {
+
+	if strings.HasPrefix(id.CommonName, "ncn-s") {
+		r = "Management"
+		sr = "Storage"
+
+	} else if strings.HasPrefix(id.CommonName, "ncn-w") {
+
+		r = "Management"
+		sr = "Worker"
+
+	} else if strings.HasPrefix(id.CommonName, "ncn-m") {
+
+		r = "Management"
+		sr = "Master"
+
+	}
+
+	// Return the role and subrole ncn_metadata.csv is expecting
+	return r, sr
 }
 
 // Crafts and prints the switch types that switch_metadata.csv expects
@@ -379,6 +500,100 @@ func (id Id) GenerateHMNSourceName() (src string) {
 
 	// Return the Source name hmn_connections.json is expecting
 	return src
+}
+
+// createNCNSeed creates ncn_metadata.csv using information from the shcd
+func createNCNSeed(shcd Shcd, f string) {
+	var ncns NCNMetadata
+
+	// For each entry in the SHCD
+	for i := range shcd {
+
+		switch shcd[i].Type {
+
+		// for ncn_metadata.csv, we only care about the servers
+		case "server":
+
+			// Only NCNs should be in ncn_metadata.csv
+			if !strings.HasPrefix(shcd[i].CommonName, "ncn") {
+				continue
+			}
+
+			// Generate the xname based on the rules we predefine
+			ncnXname := shcd[i].GenerateXname()
+			// Do the same for the ncn role and subrole
+			ncnRole, ncnSubrole := shcd[i].GenerateNCNRoleSubrole()
+
+			// Create a new Switch type and append it to the SwitchMetadata slice
+			ncns = append(ncns, NcnMacs{
+				Xname:        ncnXname,
+				Role:         ncnRole,
+				Subrole:      ncnSubrole,
+				BmcMac:       "MAC1",
+				BootstrapMac: "MAC2",
+				Bond0Mac0:    "MAC3",
+				Bond0Mac1:    "MAC4",
+			})
+
+		default:
+			// Skip anything else since we only need ncns
+			continue
+		}
+	}
+
+	// When writing to csv, the first row should be the headers
+	headers := []string{"Xname", "Role", "Subrole", "BMC MAC", "Bootstrap MAC", "Bond0 MAC0", "Bond0 MAC1"}
+
+	// Set up the records we need to write to the file
+	// To begin, this contains the headers
+	records := [][]string{headers}
+
+	// Then create a new slice with the three pieces of information needed
+	for _, v := range ncns {
+
+		row := []string{v.Xname, v.Role, v.Subrole, v.BmcMac, v.BootstrapMac, v.Bond0Mac0, v.Bond0Mac1}
+
+		// Append it to the records slice under the column headers
+		records = append(records, row)
+
+	}
+
+	// Create the file object
+	ncnmeta, err := os.Create(ncn_metadata)
+
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	defer ncnmeta.Close()
+
+	// Create a writer, which will write the data to the file
+	writer := csv.NewWriter(ncnmeta)
+
+	defer writer.Flush()
+
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// Create a var for all the records except the header
+	r := records[1:]
+
+	// Pass an anonymous function to sort.Slice to sort everything except the headers
+	sort.Slice(r, func(i, j int) bool {
+		return r[i][0] < r[j][0]
+	})
+
+	// For each item in the records slice
+	for _, v := range records {
+		// Write it to the csv file
+		if err := writer.Write(v); err != nil {
+			log.Fatalln(err)
+		}
+	}
+
+	// Let the user know the file was created
+	log.Printf("Created %v from SHCD data\n", ncn_metadata)
 }
 
 // createSwitchSeed creates switch_metadata.csv using information from the shcd
