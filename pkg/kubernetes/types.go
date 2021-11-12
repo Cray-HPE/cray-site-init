@@ -6,14 +6,18 @@ import (
 	"k8s.io/kubectl/pkg/drain"
 )
 
-const MIN_MASTERS = 1
-const MIN_WORKERS = 3
+// MinMasters - Minimum number of master nodes the cluster can survive with.
+const MinMasters = 1
+// MinWorkers - Minimum number of workers nodes the cluster can survive with.
+const MinWorkers = 3
 
+// UtilsClient - Structure for kubernetes client.
 type UtilsClient struct {
-	Logger KubernetesLogger
+	Logger kubernetesLogger
 
 	clientSet *kubernetes.Clientset
 	helper    *drain.Helper
 }
 
+// NodeMap - Data type to hold a map between NCN name and Kubernetes node pointer.
 type NodeMap map[string]corev1.Node

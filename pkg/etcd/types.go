@@ -6,8 +6,10 @@ import (
 	"net/http"
 )
 
-const ETCD_SECRET_NAME = "kube-etcdbackup-etcd"
+// EtcdSecretName - Name of the secret containing the etcd keys.
+const EtcdSecretName = "kube-etcdbackup-etcd"
 
+// UtilsClient - Structure for etcd client.
 type UtilsClient struct {
 	client     *clientv3.Client
 	cluster    clientv3.Cluster
@@ -17,6 +19,7 @@ type UtilsClient struct {
 	Endpoints []string
 }
 
+// Health - Structure to support unmarshalling health payload from etcd.
 type Health struct {
 	Health string `json:"health"`
 }

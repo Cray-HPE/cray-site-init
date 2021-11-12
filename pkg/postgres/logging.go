@@ -5,17 +5,11 @@ import (
 	"log"
 )
 
-type BuiltinLogger interface {
-	Debugf(format string, args ...interface{})
-	Warningf(format string, args ...interface{})
-	Printf(format string, args ...interface{})
-}
-
-type PostgresLogger struct {
+type postgresLogger struct {
 	Logger interface{}
 }
 
-func (logger *PostgresLogger) Debugf(format string, args ...interface{}) {
+func (logger *postgresLogger) debugf(format string, args ...interface{}) {
 	if logger.Logger != nil {
 		switch v := logger.Logger.(type) {
 		case *log.Logger:
@@ -25,7 +19,7 @@ func (logger *PostgresLogger) Debugf(format string, args ...interface{}) {
 	}
 }
 
-func (logger *PostgresLogger) Warningf(format string, args ...interface{}) {
+func (logger *postgresLogger) warningf(format string, args ...interface{}) {
 	if logger.Logger != nil {
 
 		switch v := logger.Logger.(type) {
@@ -36,7 +30,7 @@ func (logger *PostgresLogger) Warningf(format string, args ...interface{}) {
 	}
 }
 
-func (logger *PostgresLogger) Printf(format string, args ...interface{}) {
+func (logger *postgresLogger) printf(format string, args ...interface{}) {
 	if logger.Logger != nil {
 		switch v := logger.Logger.(type) {
 		case log.Logger:

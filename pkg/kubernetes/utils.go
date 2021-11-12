@@ -13,6 +13,7 @@ import (
 	"log"
 )
 
+// NewKubernetesClient - Creates a new kubernetes client.
 func NewKubernetesClient(kubeconfig string) (utilsClient *UtilsClient, err error) {
 	// Build config from kubeconfig file.
 	config, configErr := clientcmd.BuildConfigFromFlags("", kubeconfig)
@@ -45,13 +46,14 @@ func NewKubernetesClient(kubeconfig string) (utilsClient *UtilsClient, err error
 
 	// Log progress when draining.
 	utilsClient.helper.OnPodDeletedOrEvicted = func(pod *corev1.Pod, usingEviction bool) {
-		utilsClient.Logger.Debugf("Pod %s (in %s namespace) deleted (using eviction: %t) while draining %s.",
+		utilsClient.Logger.debugf("Pod %s (in %s namespace) deleted (using eviction: %t) while draining %s.",
 			pod.Name, pod.Namespace, usingEviction, pod.Spec.NodeName)
 	}
 
 	return
 }
 
+// ChangeNCNCordonState - Cordons or uncordons the given NCN.
 func (utilsClient *UtilsClient) ChangeNCNCordonState(ncn string, cordoned bool) error {
 	// Get the node.
 	node, err := utilsClient.clientSet.CoreV1().Nodes().Get(context.Background(), ncn, v1.GetOptions{})
@@ -66,9 +68,11 @@ func (utilsClient *UtilsClient) ChangeNCNCordonState(ncn string, cordoned bool) 
 
 	return nil
 }
+// CordonNCN - Cordons the given NCN.
 func (utilsClient *UtilsClient) CordonNCN(ncn string) error {
 	return utilsClient.ChangeNCNCordonState(ncn, true)
 }
+// UnCordonNCN - Uncordons the given NCN.
 func (utilsClient *UtilsClient) UnCordonNCN(ncn string) error {
 	return utilsClient.ChangeNCNCordonState(ncn, false)
 }
@@ -83,7 +87,7 @@ func (utilsClient *UtilsClient) DrainNCN(ncn string) error {
 		return fmt.Errorf("failed to drain NCN: %w", err)
 	}
 
-	utilsClient.Logger.Debugf("%s cordoned.", ncn)
+	utilsClient.Logger.debugf("%s cordoned.", ncn)
 
 	// Now identify any pods running on this NCN that also have a pod distribution budget.
 	budgets, err := utilsClient.clientSet.PolicyV1beta1().PodDisruptionBudgets("").List(context.Background(),
@@ -111,14 +115,14 @@ func (utilsClient *UtilsClient) DrainNCN(ncn string) error {
 						return fmt.Errorf("failed to drain NCN: %w", err)
 					}
 
-					utilsClient.Logger.Debugf("Deleted pod %s in %s namespace to satisfy pod disruption policy.",
+					utilsClient.Logger.debugf("Deleted pod %s in %s namespace to satisfy pod disruption policy.",
 						pod.Name, pod.Namespace)
 				}
 			}
 		}
 	}
 
-	utilsClient.Logger.Debugf("Pod disruption budgets satisfied.")
+	utilsClient.Logger.debugf("Pod disruption budgets satisfied.")
 
 	// Now finally we can drain the node.
 	err = utilsClient.runNodeDrain(utilsClient.helper, ncn)
@@ -138,7 +142,7 @@ func (utilsClient *UtilsClient) runNodeDrain(drainer *drain.Helper, nodeName str
 		return utilerrors.NewAggregate(errs)
 	}
 	if warnings := list.Warnings(); warnings != "" {
-		utilsClient.Logger.Warningf("%s", warnings)
+		utilsClient.Logger.warningf("%s", warnings)
 	}
 
 	if err := drainer.DeleteOrEvictPods(list.Pods()); err != nil {
@@ -149,6 +153,7 @@ func (utilsClient *UtilsClient) runNodeDrain(drainer *drain.Helper, nodeName str
 	return nil
 }
 
+// DeleteNCN - Deletes the NCN from Kubernetes.
 func (utilsClient *UtilsClient) DeleteNCN(ncn string) error {
 	// Start by making sure the NCN is drained.
 	drainErr := utilsClient.DrainNCN(ncn)
@@ -165,14 +170,15 @@ func (utilsClient *UtilsClient) DeleteNCN(ncn string) error {
 	return nil
 }
 
+// IsMember - Returns true if the given NCN is a member of Kubernetes.
 func (utilsClient *UtilsClient) IsMember(ncn string) (bool, error) {
 	node, err := utilsClient.clientSet.CoreV1().Nodes().Get(context.Background(), ncn, v1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return false, nil
-		} else {
-			return false, fmt.Errorf("failed to get node: %w", err)
 		}
+
+		return false, fmt.Errorf("failed to get node: %w", err)
 	}
 
 	// Make sure the node is ready.
@@ -187,6 +193,7 @@ func (utilsClient *UtilsClient) IsMember(ncn string) (bool, error) {
 	return ready, nil
 }
 
+// GetNodes - Returns a map of all the nodes.
 func (utilsClient *UtilsClient) GetNodes() (nodeMap NodeMap, err error) {
 	nodes, listErr := utilsClient.clientSet.CoreV1().Nodes().List(context.Background(), v1.ListOptions{})
 	if listErr != nil {
@@ -203,8 +210,9 @@ func (utilsClient *UtilsClient) GetNodes() (nodeMap NodeMap, err error) {
 	return
 }
 
+// IsMaster - Returns true if the given node is a master.
 func IsMaster(node corev1.Node) (bool) {
-	for key, _ := range node.Labels {
+	for key := range node.Labels {
 		if key == "node-role.kubernetes.io/master" {
 			return true
 		}

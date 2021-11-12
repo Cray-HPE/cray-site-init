@@ -72,11 +72,11 @@ func verifyLossAcceptable() {
 	}
 
 	// Now check our conditions.
-	if numMasters < kubernetes.MIN_MASTERS {
-		log.Fatalf("Insufficant number of remaining masters (%d - need %d)!", numMasters, kubernetes.MIN_MASTERS)
+	if numMasters < kubernetes.MinMasters {
+		log.Fatalf("Insufficant number of remaining masters (%d - need %d)!", numMasters, kubernetes.MinMasters)
 	}
-	if numWorkers < kubernetes.MIN_WORKERS {
-		log.Fatalf("Insufficant number of remaining workers (%d - need %d)!", numWorkers, kubernetes.MIN_WORKERS)
+	if numWorkers < kubernetes.MinWorkers {
+		log.Fatalf("Insufficant number of remaining workers (%d - need %d)!", numWorkers, kubernetes.MinWorkers)
 	}
 
 	log.Printf("Loss of %s is acceptable.", ncns)

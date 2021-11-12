@@ -10,12 +10,14 @@ import (
 	"net/http"
 )
 
+// UtilsClient - Structure for BSS client.
 type UtilsClient struct {
 	baseURL    string
 	httpClient *http.Client
 	token      string
 }
 
+// NewBSSClient - Creates a new BSS client.
 func NewBSSClient(baseURL string, httpClient *http.Client, token string) *UtilsClient {
 	if httpClient == nil {
 		transport := http.DefaultTransport.(*http.Transport).Clone()
@@ -32,6 +34,7 @@ func NewBSSClient(baseURL string, httpClient *http.Client, token string) *UtilsC
 	}
 }
 
+// UploadEntryToBSS - Uploads an entry to BSS.
 func (utilsClient *UtilsClient) UploadEntryToBSS(bssEntry bssTypes.BootParams, method string) (string, error) {
 	url := fmt.Sprintf("%s/boot/v1/bootparameters", utilsClient.baseURL)
 
@@ -64,6 +67,7 @@ func (utilsClient *UtilsClient) UploadEntryToBSS(bssEntry bssTypes.BootParams, m
 	return string(jsonPrettyBytes), nil
 }
 
+// GetBSSBootparametersForXname - Gets the BSS boot parameters for a given xname.
 func (utilsClient *UtilsClient) GetBSSBootparametersForXname(xname string) (*bssTypes.BootParams, error) {
 	url := fmt.Sprintf("%s/boot/v1/bootparameters?name=%s", utilsClient.baseURL, xname)
 

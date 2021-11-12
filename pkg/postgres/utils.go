@@ -14,6 +14,7 @@ import (
 	"time"
 )
 
+// NewPostgresClient - Creates a new Postgres client.
 func NewPostgresClient(kubeconfig string) (utilsClient *UtilsClient, err error) {
 	// Build config from kubeconfig file.
 	config, configErr := clientcmd.BuildConfigFromFlags("", kubeconfig)
@@ -39,8 +40,9 @@ func NewPostgresClient(kubeconfig string) (utilsClient *UtilsClient, err error) 
 	return
 }
 
-func (utilsClient *UtilsClient) GetAllClusters() (clusters map[string]Cluster, err error) {
-	clusters = make(map[string]Cluster)
+// GetAllClusters - Retruns a map of all the Postgres clusters.
+func (utilsClient *UtilsClient) GetAllClusters() (clusters map[string]PatroniCluster, err error) {
+	clusters = make(map[string]PatroniCluster)
 
 	pods, listErr := utilsClient.clientSet.CoreV1().Pods("").List(context.Background(),
 		v1.ListOptions{
@@ -67,7 +69,7 @@ func (utilsClient *UtilsClient) GetAllClusters() (clusters map[string]Cluster, e
 			return
 		}
 
-		var cluster Cluster
+		var cluster PatroniCluster
 		decodeErr := json.NewDecoder(response.Body).Decode(&cluster)
 		if decodeErr != nil {
 			err = fmt.Errorf("failed to decode response from %s: %w", endpoint, decodeErr)
@@ -79,7 +81,8 @@ func (utilsClient *UtilsClient) GetAllClusters() (clusters map[string]Cluster, e
 	return
 }
 
-func HealthCheckCluster(cluster Cluster) error {
+// HealthCheckCluster - Checks the health of a given cluster.
+func HealthCheckCluster(cluster PatroniCluster) error {
 	timeline := cluster.Members[0].Timeline
 	for _, member := range cluster.Members {
 		// Make sure all members are on the same timeline.
@@ -92,7 +95,7 @@ func HealthCheckCluster(cluster Cluster) error {
 		case string:
 			return fmt.Errorf("unacceptable lag: %s (currently: %s)", member.Name, v)
 		case int:
-			if v > MAX_LAG {
+			if v > MaxLag {
 				return fmt.Errorf("unacceptable lag: %s (currently %d)", member.Name, v)
 			}
 		}
@@ -106,6 +109,7 @@ func HealthCheckCluster(cluster Cluster) error {
 	return nil
 }
 
+// HealthCheckAllClusters - Checks the health of all clusters.
 func (utilsClient *UtilsClient) HealthCheckAllClusters() error {
 	var errors []error
 
@@ -123,14 +127,16 @@ func (utilsClient *UtilsClient) HealthCheckAllClusters() error {
 
 	if len(errors) == 0 {
 		// All clusters must be healthy if we get to this point.
-		for clusterName, _ := range clusters {
-			utilsClient.Logger.Debugf("%s is healthy.", clusterName)
+		for clusterName := range clusters {
+			utilsClient.Logger.debugf("%s is healthy.", clusterName)
 		}
 	}
 
 	return utilerrors.NewAggregate(errors)
 }
 
+// FailoverPostgresLeaders - Instructs Patroni to failover all Postgres instances that have their "Leader" running on
+// the given NCN.
 func (utilsClient *UtilsClient) FailoverPostgresLeaders(ncn string) error {
 	// Find all the Postgres pods running on the given NCN.
 	postgresPods, err := utilsClient.clientSet.CoreV1().Pods("").List(context.Background(),
@@ -154,7 +160,7 @@ func (utilsClient *UtilsClient) FailoverPostgresLeaders(ncn string) error {
 		}
 
 		// Find the current leader.
-		var currentLeader Member
+		var currentLeader PatroniMember
 		var candidates []string
 		for _, member := range cluster.Members {
 			if member.Role == "leader" {
@@ -175,7 +181,7 @@ func (utilsClient *UtilsClient) FailoverPostgresLeaders(ncn string) error {
 
 		// Do we need to failover?
 		if !isRunningLeader {
-			utilsClient.Logger.Debugf("Not failing over %s because leader pod (%s) is not on %s.",
+			utilsClient.Logger.debugf("Not failing over %s because leader pod (%s) is not on %s.",
 				clusterName, currentLeader.Name, ncn)
 			continue
 		}
@@ -202,7 +208,7 @@ func (utilsClient *UtilsClient) FailoverPostgresLeaders(ncn string) error {
 			return fmt.Errorf("failover cluster %s from %s to %s gave unexpected status code: %d",
 				clusterName, currentLeader.Name, pick, response.StatusCode)
 		} else {
-			utilsClient.Logger.Debugf("%s failed over from %s to %s.",
+			utilsClient.Logger.debugf("%s failed over from %s to %s.",
 				clusterName, currentLeader.Name, pick)
 		}
 	}

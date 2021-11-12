@@ -17,6 +17,7 @@ import (
 	"time"
 )
 
+// NewETCDClient - Creates a new etcd client.
 func NewETCDClient(endpoints []string, kubeconfig string) (utilsClient *UtilsClient, err error) {
 	// Use Kubernetes for all certificate related activities.
 	config, configErr := clientcmd.BuildConfigFromFlags("", kubeconfig)
@@ -86,10 +87,12 @@ func NewETCDClient(endpoints []string, kubeconfig string) (utilsClient *UtilsCli
 	return
 }
 
+// CloseETCDClient - Closes the current etcd client.
 func (utilsClient *UtilsClient) CloseETCDClient() error {
 	return utilsClient.client.Close()
 }
 
+// IsMember - Returns true if the given NCN (of the format ncn-mXXX) is a member of the etcd cluster.
 func (utilsClient *UtilsClient) IsMember(ncn string) (bool, error) {
 	members, err := utilsClient.getMembers()
 	if err != nil {
@@ -117,6 +120,7 @@ func (utilsClient *UtilsClient) getMembers() (members []*etcdserverpb.Member, er
 	return
 }
 
+// RemoveMember - Removes the given NCN from the etcd cluster.
 func (utilsClient *UtilsClient) RemoveMember(ncn string) (bool, error) {
 	// Do not allow the removal if the cluster isn't healthy!
 	if err := utilsClient.ClusterIsHealthy(); err != nil {
@@ -148,6 +152,7 @@ func (utilsClient *UtilsClient) RemoveMember(ncn string) (bool, error) {
 	return true, nil
 }
 
+// AddMember - Adds an NCN to the etcd cluster.
 func (utilsClient *UtilsClient) AddMember(ncn string) (bool, error) {
 	// Sanity check, make sure it's not already a member.
 	isMember, err := utilsClient.IsMember(ncn)
@@ -182,6 +187,7 @@ func (utilsClient *UtilsClient) AddMember(ncn string) (bool, error) {
 	return true, nil
 }
 
+// ClusterIsHealthy - Returns true if the etcd cluster is healthy.
 func (utilsClient *UtilsClient) ClusterIsHealthy() error {
 	// Unfortunately there isn't anything built into the Go package to do this for us, so we have to hit each endpoint
 	// and figure it out for ourselves.
@@ -209,7 +215,7 @@ func (utilsClient *UtilsClient) ClusterIsHealthy() error {
 func getETCDCertsData(clientSet *kubernetes.Clientset) (caCertData []byte, tlsCertData []byte, tlsKeyData []byte,
 	err error) {
 	secret, getErr := clientSet.CoreV1().Secrets("kube-system").Get(context.Background(),
-		ETCD_SECRET_NAME, v1.GetOptions{})
+		EtcdSecretName, v1.GetOptions{})
 	if getErr != nil {
 		err = fmt.Errorf("failed to get secret %s: %w", secret, getErr)
 		return

@@ -5,17 +5,11 @@ import (
 	"log"
 )
 
-type BuiltinLogger interface {
-	Debugf(format string, args ...interface{})
-	Warningf(format string, args ...interface{})
-	Printf(format string, args ...interface{})
-}
-
-type KubernetesLogger struct {
+type kubernetesLogger struct {
 	Logger interface{}
 }
 
-func (logger *KubernetesLogger) Debugf(format string, args ...interface{}) {
+func (logger *kubernetesLogger) debugf(format string, args ...interface{}) {
 	if logger.Logger != nil {
 		switch v := logger.Logger.(type) {
 		case *log.Logger:
@@ -25,7 +19,7 @@ func (logger *KubernetesLogger) Debugf(format string, args ...interface{}) {
 	}
 }
 
-func (logger *KubernetesLogger) Warningf(format string, args ...interface{}) {
+func (logger *kubernetesLogger) warningf(format string, args ...interface{}) {
 	if logger.Logger != nil {
 
 		switch v := logger.Logger.(type) {
@@ -36,7 +30,7 @@ func (logger *KubernetesLogger) Warningf(format string, args ...interface{}) {
 	}
 }
 
-func (logger *KubernetesLogger) Printf(format string, args ...interface{}) {
+func (logger *kubernetesLogger) printf(format string, args ...interface{}) {
 	if logger.Logger != nil {
 		switch v := logger.Logger.(type) {
 		case log.Logger:

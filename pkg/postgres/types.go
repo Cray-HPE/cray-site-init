@@ -5,10 +5,12 @@ import (
 	"net/http"
 )
 
-const MAX_LAG = 100
+// MaxLag - The maximum lag in MB to tolerate when determining health of a Postgres cluster.
+const MaxLag = 100
 
+// UtilsClient - Structure for Postgres client.
 type UtilsClient struct {
-	Logger PostgresLogger
+	Logger postgresLogger
 
 	clientSet *kubernetes.Clientset
 
@@ -17,7 +19,8 @@ type UtilsClient struct {
 
 // Structures for Patroni responses.
 
-type Member struct {
+// PatroniMember - Structure that allows for unmarshalling the response from Patroni.
+type PatroniMember struct {
 	Name     string `json:"name"`
 	Role     string `json:"role"`
 	State    string `json:"state"`
@@ -30,6 +33,7 @@ type Member struct {
 	Lag interface{} `json:"lag"`
 }
 
-type Cluster struct {
-	Members []Member `json:"members"`
+// PatroniCluster - Structure that allows for unmarshalling the response from Patroni.
+type PatroniCluster struct {
+	Members []PatroniMember `json:"members"`
 }
