@@ -68,10 +68,12 @@ func (utilsClient *UtilsClient) ChangeNCNCordonState(ncn string, cordoned bool) 
 
 	return nil
 }
+
 // CordonNCN - Cordons the given NCN.
 func (utilsClient *UtilsClient) CordonNCN(ncn string) error {
 	return utilsClient.ChangeNCNCordonState(ncn, true)
 }
+
 // UnCordonNCN - Uncordons the given NCN.
 func (utilsClient *UtilsClient) UnCordonNCN(ncn string) error {
 	return utilsClient.ChangeNCNCordonState(ncn, false)
@@ -211,7 +213,7 @@ func (utilsClient *UtilsClient) GetNodes() (nodeMap NodeMap, err error) {
 }
 
 // IsMaster - Returns true if the given node is a master.
-func IsMaster(node corev1.Node) (bool) {
+func IsMaster(node corev1.Node) bool {
 	for key := range node.Labels {
 		if key == "node-role.kubernetes.io/master" {
 			return true

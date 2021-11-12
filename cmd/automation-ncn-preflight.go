@@ -13,7 +13,7 @@ var (
 var automateNCNPreflight = &cobra.Command{
 	Use:   "preflight",
 	Short: "tools used to automate preflight checks",
-	Long:  "A series of subcommands that automates preflight checks around shutdown/reboot/rebuilt NCN lifecycle" +
+	Long: "A series of subcommands that automates preflight checks around shutdown/reboot/rebuilt NCN lifecycle" +
 		" activities.",
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error

@@ -19,7 +19,7 @@ import (
 var handoffUploadUtils = &cobra.Command{
 	Use:   "upload-utils",
 	Short: "uploads utilities to S3",
-	Long: "Uploads utilities to S3 so they may be used throughout the cluster.",
+	Long:  "Uploads utilities to S3 so they may be used throughout the cluster.",
 	Run: func(cmd *cobra.Command, args []string) {
 		setupS3()
 

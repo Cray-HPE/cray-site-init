@@ -8,6 +8,7 @@ import (
 
 // MinMasters - Minimum number of master nodes the cluster can survive with.
 const MinMasters = 1
+
 // MinWorkers - Minimum number of workers nodes the cluster can survive with.
 const MinWorkers = 3
 
