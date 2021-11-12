@@ -93,6 +93,7 @@ On a successful test, you'll see output similiar to:
 
 `testdata/shcds/` will also have folders matching each of the system names and contain the following files:
 
+- `application_node_config.yaml`
 - `shcd.json`
 - `switch_metadata.csv`
 - `hmn_connections.json`
