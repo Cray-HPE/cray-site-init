@@ -285,10 +285,11 @@ func MakeBasecampGlobals(v *viper.Viper, logicalNcns []csi.LogicalNCN, shastaNet
 	return global, nil
 }
 
-// Traverse the networks, assembling a list of NMN and HMN routes for Hill/Mountain Cabinets
-// Additionally, add a route from the MTL bootstrap network to the NMN network via bond0.nmn
+// Traverse the networks, assembling a list of NMN and HMN routes for Hill/Mountain Cabinets.
+// Add a route from the MTL bootstrap network to the NMN network via bond0.nmn.
+// Lastly, add the HMN/NMN k8s routes
 // Format for ifroute-<interface> files
-func getMntHillNCNRoutes(v *viper.Viper, shastaNetworks map[string]*csi.IPV4Network) []WriteFiles {
+func getNCNStaticRoutes(v *viper.Viper, shastaNetworks map[string]*csi.IPV4Network) []WriteFiles {
 	var nmnGateway string
 	var hmnGateway string
 	var ifrouteNMN bytes.Buffer
@@ -323,10 +324,14 @@ func getMntHillNCNRoutes(v *viper.Viper, shastaNetworks map[string]*csi.IPV4Netw
 		}
 	}
 
-	// we should always have routes
+	// we should always have routes at this point
 	if ifrouteNMN.Len() == 0 || ifrouteHMN.Len() == 0 {
 		log.Panic("Error generating routes")
 	}
+
+	// add k8s routes
+	ifrouteNMN.WriteString(fmt.Sprintf("%s %s - bond0.nmn0\n", shastaNetworks["NMNLB"].CIDR, nmnGateway))
+	ifrouteHMN.WriteString(fmt.Sprintf("%s %s - bond0.hmn0\n", shastaNetworks["HMNLB"].CIDR, hmnGateway))
 
 	writeFiles := []WriteFiles{
 		{
@@ -353,7 +358,7 @@ func MakeBaseCampfromNCNs(v *viper.Viper, ncns []csi.LogicalNCN, shastaNetworks 
 		log.Fatal("basecamp_gen: Couldn't find the macvlan subnet in the NMN")
 	}
 	uaiReservations := uaiMacvlanSubnet.ReservationsByName()
-	writeFiles := getMntHillNCNRoutes(v, shastaNetworks)
+	writeFiles := getNCNStaticRoutes(v, shastaNetworks)
 
 	for _, ncn := range ncns {
 		mac0Interface := make(map[string]interface{})
