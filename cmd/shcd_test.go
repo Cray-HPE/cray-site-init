@@ -25,6 +25,7 @@ var _schemaFile = filepath.Join("../internal/files", _schema)
 var switch_meta_expected = "../testdata/expected/" + switch_metadata
 var hmn_conn_expected = "../testdata/expected/" + hmn_connections
 var app_node_expected = "../testdata/expected/" + application_node_config
+var ncn_meta_expected = "../testdata/expected/" + ncn_metadata
 
 // Generate shcd.json example:
 // canu validate shcd -a Full --shcd shcd.xlsx --tabs 10G_25G_40G_100G,NMN,HMN,MTN_TDS --corners I37,T125,J15,T24,J20,U51,K15,U36 --out shcd.json
@@ -37,6 +38,7 @@ var tests = []struct {
 	expectedSwitchMetadata        string
 	expectedHMNConnections        string
 	expectedApplicationNodeConfig string
+	expectedNCNMetadata           string
 }{
 	{
 		fixture:                       "../testdata/fixtures/valid_shcd.json",
@@ -47,6 +49,7 @@ var tests = []struct {
 		expectedSwitchMetadata:        switch_meta_expected,
 		expectedHMNConnections:        hmn_conn_expected,
 		expectedApplicationNodeConfig: app_node_expected,
+		expectedNCNMetadata:           ncn_meta_expected,
 	},
 	{
 		fixture:                "../testdata/fixtures/invalid_shcd.json",
@@ -245,6 +248,73 @@ func TestCreateSwitchMetadata(t *testing.T) {
 				}
 
 				assert.Equal(t, smExpected, actual)
+			})
+		}
+	}
+}
+
+func TestCreateNCNMetadata(t *testing.T) {
+
+	for _, test := range tests {
+
+		if test.fixture == "../testdata/fixtures/valid_shcd.json" {
+
+			t.Run(test.name, func(t *testing.T) {
+
+				// Open the file since we know it is valid
+				shcdFile, err := ioutil.ReadFile(test.fixture)
+
+				if err != nil {
+					log.Fatalf(err.Error())
+				}
+
+				shcd, err := ParseSHCD(shcdFile)
+
+				if err != nil {
+					log.Fatalf(err.Error())
+				}
+
+				// Create ncn_metadata.csv
+				createNCNSeed(shcd, ncn_metadata)
+
+				// Validate the file was created
+				assert.FileExists(t, filepath.Join(".", ncn_metadata))
+
+				// Read the csv and validate it's contents
+				generated, err := os.Open(filepath.Join(".", ncn_metadata))
+
+				if err != nil {
+					log.Fatal("Unable to read "+filepath.Join(".", ncn_metadata), err)
+				}
+
+				defer generated.Close()
+
+				ncnGenerated := csv.NewReader(generated)
+
+				actual, err := ncnGenerated.ReadAll()
+
+				if err != nil {
+					log.Fatal("Unable to parse as a CSV: "+filepath.Join(".", ncn_metadata), err)
+				}
+
+				// Read the csv and validate it's contents
+				expected, err := os.Open(filepath.Join(".", ncn_metadata))
+
+				if err != nil {
+					log.Fatal("Unable to read "+filepath.Join(".", ncn_metadata), err)
+				}
+
+				defer expected.Close()
+
+				csvReader := csv.NewReader(expected)
+
+				ncnExpected, err := csvReader.ReadAll()
+
+				if err != nil {
+					log.Fatal("Unable to parse as a CSV: "+test.expectedNCNMetadata, err)
+				}
+
+				assert.Equal(t, ncnExpected, actual)
 			})
 		}
 	}
