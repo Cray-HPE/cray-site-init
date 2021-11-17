@@ -51,7 +51,6 @@ var (
 	dataFile      string
 	cloudInitData map[string]bssTypes.CloudInit
 	sshConfig     *ssh.ClientConfig
-	token         string
 
 	// TODO: SET THIS BACK
 	vlansToGather = []string{"vlan002"}

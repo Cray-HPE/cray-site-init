@@ -37,7 +37,6 @@ type paramTuple struct {
 
 var (
 	managementNCNs []sls_common.GenericHardware
-	httpClient     *http.Client
 
 	paramsToUpdate []string
 	paramsToDelete []string
@@ -49,9 +48,6 @@ var (
 
 	bssClient *bss.UtilsClient
 
-	bssBaseURL     string
-	hsmBaseURL     string
-	slsBaseURL     string
 	verboseLogging bool
 
 	s3Client *hms_s3.S3Client
@@ -63,7 +59,7 @@ var (
 // handoffCmd represents the handoff command
 var handoffCmd = &cobra.Command{
 	Use:   "handoff",
-	Short: "runs migration steps to transition from LiveCD",
+	Short: "Runs migration steps to transition from LiveCD",
 	Long: "A series of subcommands that facilitate the migration of assets/configuration/etc from the LiveCD to the " +
 		"production version inside the Kubernetes cluster.",
 }
@@ -72,39 +68,17 @@ func init() {
 	rootCmd.AddCommand(handoffCmd)
 	handoffCmd.DisableAutoGenTag = true
 
-	bssBaseURL = os.Getenv("BSS_BASE_URL")
-	if bssBaseURL == "" {
-		bssBaseURL = "https://api-gw-service-nmn.local/apis/bss"
-	}
-
-	hsmBaseURL = os.Getenv("HSM_BASE_URL")
-	if hsmBaseURL == "" {
-		hsmBaseURL = "https://api-gw-service-nmn.local/apis/smd"
-	}
-
-	slsBaseURL = os.Getenv("SLS_BASE_URL")
-	if slsBaseURL == "" {
-		slsBaseURL = "https://api-gw-service-nmn.local/apis/sls"
-	}
-
 	verboseLogging = false
 	verboseLogging, _ = strconv.ParseBool(os.Getenv("VERBOSE"))
 }
 
+// setupCommon - These are steps that every handoff function have in common.
 func setupCommon() {
 	var err error
 
-	// These are steps that every handoff function have in common.
-	token = os.Getenv("TOKEN")
-	if token == "" {
-		log.Panicln("Environment variable TOKEN can NOT be blank!")
-	}
+	setupEnvs()
 
-	transport := http.DefaultTransport.(*http.Transport).Clone()
-	transport.TLSClientConfig = &tls.Config{
-		InsecureSkipVerify: true,
-	}
-	httpClient = &http.Client{Transport: transport}
+	setupHTTPClient()
 
 	bssClient = bss.NewBSSClient(bssBaseURL, httpClient, token)
 
@@ -121,7 +95,7 @@ func getManagementNCNsFromSLS() (managementNCNs []sls_common.GenericHardware, er
 		slsBaseURL)
 	req, err := http.NewRequest("GET", url, nil)
 
-	// indicates whether or not to close the connection after sending the request
+	// Indicates whether to close the connection after sending the request
 	req.Close = true
 
 	if err != nil {

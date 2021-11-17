@@ -6,7 +6,7 @@ import (
 
 var automateCommand = &cobra.Command{
 	Use:   "automate",
-	Short: "tools used to automate system lifecycle events",
+	Short: "Tools used to automate system lifecycle events",
 	Long:  "A series of subcommands that automates the day-to-day administration of common lifecycle events.",
 }
 
