@@ -231,7 +231,6 @@ func convertIPV4NetworkToSLS(n *csi.IPV4Network) sls_common.Network {
 	route := ""
 	if n.Name == "BICAN" {
 		route = csi.DefaultBICANNetwork
-		fmt.Println("BLAH: ", n.CIDR)
 	}
 
 	return sls_common.Network{
