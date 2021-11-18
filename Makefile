@@ -4,6 +4,14 @@ SPEC_VERSION ?= $(shell cat .version)
 
 GO_VERSION := go1.16.10
 
+# Docker builds need to be run as the current user otherwise they will be run as root and leave files around that
+# can't be removed by normal users.
+CURRENT_UID := $(shell id -u)
+CURRENT_GID := $(shell id -g)
+
+export CURRENT_UID
+export CURRENT_GID
+
 GO_FILES?=$$(find . -name '*.go' |grep -v vendor)
 TAG?=latest
 
