@@ -66,6 +66,10 @@ type CustomizationsNetworking struct {
 		SecondaryServers  string `yaml:"secondary_servers" valid:"required,host"`
 		NotifyZones       string `yaml:"notify_zones" valid:"required,host"`
 	}
+	MetalLB struct {
+		Peers        []PeerDetail        `yaml:"peers"`
+		AddressPools []AddressPoolDetail `yaml:"address-pools"`
+	}
 }
 
 // CustomizationsYaml is the golang representation of the customizations.yaml stanza we generate
@@ -87,12 +91,14 @@ func (c *CustomizationsYaml) IsValid() bool {
 }
 
 // GenCustomizationsYaml generates our configurations.yaml nested struct
-func GenCustomizationsYaml(ncns []csi.LogicalNCN, shastaNetworks map[string]*csi.IPV4Network) CustomizationsYaml {
+func GenCustomizationsYaml(ncns []csi.LogicalNCN, shastaNetworks map[string]*csi.IPV4Network, switches []*csi.ManagementSwitch) CustomizationsYaml {
 	v := viper.GetViper()
 	systemName := v.GetString("system-name")
 	siteDomain := v.GetString("site-domain")
 
 	var output CustomizationsYaml
+	var metallb MetalLBConfigMap
+
 	// nmnMacvlanSubnet, _ := shastaNetworks["NMN"].LookUpSubnet("uai_macvlan")
 	var masters []net.IP
 	var storage []net.IP
@@ -104,6 +110,9 @@ func GenCustomizationsYaml(ncns []csi.LogicalNCN, shastaNetworks map[string]*csi
 			masters = append(masters, ncn.GetIP("NMN"))
 		}
 	}
+
+	metallb = GetMetalLBConfig(v, shastaNetworks, switches)
+
 	nmnLBs, _ := shastaNetworks["NMNLB"].LookUpSubnet("nmn_metallb_address_pool")
 	hmnLBs, _ := shastaNetworks["HMNLB"].LookUpSubnet("hmn_metallb_address_pool")
 	uaiNet, _ := shastaNetworks["NMN"].LookUpSubnet("uai_macvlan")
@@ -159,6 +168,13 @@ func GenCustomizationsYaml(ncns []csi.LogicalNCN, shastaNetworks map[string]*csi
 			PrimaryServerName: v.GetString("primary-server-name"),
 			SecondaryServers:  v.GetString("secondary-servers"),
 			NotifyZones:       v.GetString("notify-zones"),
+		},
+		MetalLB: struct {
+			Peers        []PeerDetail        "yaml:\"peers\""
+			AddressPools []AddressPoolDetail "yaml:\"address-pools\""
+		}{
+			Peers:        metallb.PeerSwitches,
+			AddressPools: metallb.Networks,
 		},
 	}
 	output.Networking = customizationsNetworks
