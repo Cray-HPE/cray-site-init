@@ -203,7 +203,7 @@ func (iNet IPV4Network) SubnetbyName(name string) IPV4Subnet {
 }
 
 // ReserveNetMgmtIPs reserves (n) IP addresses for management networking equipment
-func (iSubnet *IPV4Subnet) ReserveNetMgmtIPs(spines []string, aggs []string, leafs []string, cdus []string, additional int) {
+func (iSubnet *IPV4Subnet) ReserveNetMgmtIPs(spines []string, aggs []string, leafs []string, cdus []string) {
 	for i := 0; i < len(spines); i++ {
 		name := fmt.Sprintf("sw-spine-%03d", i+1)
 		iSubnet.AddReservation(name, spines[i])
@@ -219,10 +219,6 @@ func (iSubnet *IPV4Subnet) ReserveNetMgmtIPs(spines []string, aggs []string, lea
 	for i := 0; i < len(cdus); i++ {
 		name := fmt.Sprintf("sw-cdu-%03d", i+1)
 		iSubnet.AddReservation(name, cdus[i])
-	}
-	for i := 0; i < additional; i++ {
-		name := fmt.Sprintf("mgmt-net-stub-%03d", i+1)
-		iSubnet.AddReservation(name, "")
 	}
 }
 

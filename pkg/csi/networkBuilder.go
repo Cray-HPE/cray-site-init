@@ -267,7 +267,7 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 		}
 		// populate it with base information
 		hardwareSubnet.FullName = fmt.Sprintf("%v Management Network Infrastructure", tempNet.Name)
-		hardwareSubnet.ReserveNetMgmtIPs(spineSwitches, aggSwitches, leafSwitches, cduSwitches, conf.AdditionalNetworkingSpace)
+		hardwareSubnet.ReserveNetMgmtIPs(spineSwitches, aggSwitches, leafSwitches, cduSwitches)
 	}
 
 	// Set up the Boostrap DHCP subnet(s)
@@ -298,7 +298,7 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 					subnet.AddReservation("chn-switch-1", "")
 					subnet.AddReservation("chn-switch-2", "")
 				} else {
-					subnet.ReserveNetMgmtIPs([]string{}, []string{}, []string{}, []string{}, conf.AdditionalNetworkingSpace)
+					subnet.ReserveNetMgmtIPs([]string{}, []string{}, []string{}, []string{})
 				}
 				subnet.AddReservation("kubeapi-vip", "k8s-virtual-ip")
 				if tempNet.Name == "NMN" {
