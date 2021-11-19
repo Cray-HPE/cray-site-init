@@ -7,7 +7,7 @@ require (
 	github.com/Cray-HPE/hms-bss v1.9.5
 	github.com/Cray-HPE/hms-s3 v1.10.0
 	github.com/Cray-HPE/hms-shcd-parser v1.6.2
-	github.com/Cray-HPE/hms-sls v1.10.4
+	github.com/Cray-HPE/hms-sls v1.12.0
 	github.com/Cray-HPE/hms-smd v1.30.9
 	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef
 	github.com/aws/aws-sdk-go v1.40.14

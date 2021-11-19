@@ -228,17 +228,23 @@ func convertIPV4NetworkToSLS(n *csi.IPV4Network) sls_common.Network {
 		subnets[i] = convertIPV4SubnetToSLS(subnet)
 	}
 
+	route := ""
+	if n.Name == "BICAN" {
+		route = csi.DefaultBICANNetwork
+	}
+
 	return sls_common.Network{
 		Name:     n.Name,
 		FullName: n.FullName,
 		Type:     n.NetType,
 		IPRanges: []string{n.CIDR},
 		ExtraPropertiesRaw: sls_common.NetworkExtraProperties{
-			Comment:   n.Comment,
-			CIDR:      n.CIDR,
-			MTU:       n.MTU,
-			VlanRange: n.VlanRange,
-			Subnets:   subnets,
+			Comment:            n.Comment,
+			CIDR:               n.CIDR,
+			MTU:                n.MTU,
+			VlanRange:          n.VlanRange,
+			Subnets:            subnets,
+			SystemDefaultRoute: route,
 		},
 	}
 }
