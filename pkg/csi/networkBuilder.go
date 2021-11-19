@@ -285,8 +285,6 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 				if tempNet.Name == "CMN" {
 					subnet.CIDR = *cmnCIDR
 					subnet.Gateway = net.ParseIP(v.GetString("cmn-gateway"))
-					subnet.AddReservation("cmn-switch-1", "")
-					subnet.AddReservation("cmn-switch-2", "")
 				} else if tempNet.Name == "CAN" {
 					subnet.CIDR = *canCIDR
 					subnet.Gateway = net.ParseIP(v.GetString("can-gateway"))
