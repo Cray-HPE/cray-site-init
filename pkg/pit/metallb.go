@@ -42,8 +42,8 @@ data:
 // PeerDetail holds information about each of the BGP routers that we peer with in MetalLB
 type PeerDetail struct {
 	IPAddress string `yaml:"peer-address" valid:"_,required"`
-	PeerASN   string `yaml:"peer-asn" valid:"_,required"`
-	MyASN     string `yaml:"my-asn" valid:"_,required"`
+	PeerASN   int    `yaml:"peer-asn" valid:"_,required"`
+	MyASN     int    `yaml:"my-asn" valid:"_,required"`
 }
 
 // AddressPoolDetail holds information about each of the MetalLB address pools
@@ -92,8 +92,8 @@ func GetMetalLBConfig(v *viper.Viper, networks map[string]*csi.IPV4Network, swit
 				var tmpPeer PeerDetail
 				for _, reservation := range subnet.IPReservations {
 					tmpPeer = PeerDetail{}
-					tmpPeer.PeerASN = v.GetString("bgp-asn")
-					tmpPeer.MyASN = v.GetString("bgp-asn")
+					tmpPeer.PeerASN = v.GetInt("bgp-asn")
+					tmpPeer.MyASN = v.GetInt("bgp-asn")
 					tmpPeer.IPAddress = reservation.IPAddress.String()
 					for _, switchXname := range spineSwitchXnames {
 						if reservation.Comment == switchXname {
@@ -112,8 +112,8 @@ func GetMetalLBConfig(v *viper.Viper, networks map[string]*csi.IPV4Network, swit
 				for _, reservation := range subnet.IPReservations {
 					if strings.Contains(reservation.Name, "cmn-switch") {
 						tmpPeer = PeerDetail{}
-						tmpPeer.PeerASN = v.GetString("bgp-asn")
-						tmpPeer.MyASN = v.GetString("bgp-cmn-asn")
+						tmpPeer.PeerASN = v.GetInt("bgp-asn")
+						tmpPeer.MyASN = v.GetInt("bgp-cmn-asn")
 						tmpPeer.IPAddress = reservation.IPAddress.String()
 						if bgpPeers == "spine" {
 							configStruct.SpineSwitches = append(configStruct.SpineSwitches, tmpPeer)
