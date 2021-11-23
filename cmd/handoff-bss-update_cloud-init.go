@@ -38,9 +38,6 @@ var handoffBSSUpdateCloudInitCmd = &cobra.Command{
 			if err != nil {
 				log.Fatalln("Couldn't parse user-data file: ", err)
 			}
-			if ciData.UserData == nil {
-				log.Fatalf("Could not find \"user-data\" key in %s\n", userDataJSON)
-			}
 			updateNCNCloudInitParamsFromFile()
 		} else {
 			// process data provided directly via cli
@@ -115,13 +112,30 @@ func updateNCNCloudInitParamsFromFile() {
 		// Get the BSS bootparamaters for this NCN.
 		bssEntry := getBSSBootparametersForXname(ncn.Xname)
 
-		for key, val := range ciData.UserData {
-			object := bssEntry.CloudInit.UserData
-			// key is user-data[key]
-			object[key] = val
+		if ciData.UserData != nil {
+
+			for key, val := range ciData.UserData {
+				log.Printf("Updating %s on %s\n", key, ncn.Xname)
+
+				object := bssEntry.CloudInit.UserData
+				// key is user-data[key]
+				object[key] = val
+			}
+		}
+
+		if ciData.MetaData != nil {
+
+			for key, val := range ciData.MetaData {
+				log.Printf("Updating %s on %s\n", key, ncn.Xname)
+
+				object := bssEntry.CloudInit.MetaData
+				// key is user-data[key]
+				object[key] = val
+			}
 		}
 
 		// Now write it back to BSS.
+		log.Printf("Writing back to BSS: %s\n", ncn.Xname)
 		uploadEntryToBSS(bssEntry, http.MethodPut)
 	}
 }
