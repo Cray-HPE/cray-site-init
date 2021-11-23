@@ -27,6 +27,8 @@ GOARCH="%{GOARCH}"
 GO111MODULE=on
 export CGO_ENABLED GOOS GOARCH GO111MODULE
 
+go version
+
 make build
 
 %install

@@ -5,18 +5,25 @@ Copyright 2021 Hewlett Packard Enterprise Development LP
 package cmd
 
 import (
-	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"github.com/Cray-HPE/cray-site-init/pkg/bss"
+	"github.com/Cray-HPE/hms-bss/pkg/bssTypes"
+	hms_s3 "github.com/Cray-HPE/hms-s3"
 	"io/ioutil"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
-	"github.com/Cray-HPE/hms-bss/pkg/bssTypes"
 	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 	"github.com/spf13/cobra"
 )
@@ -30,7 +37,6 @@ type paramTuple struct {
 
 var (
 	managementNCNs []sls_common.GenericHardware
-	httpClient     *http.Client
 
 	paramsToUpdate []string
 	paramsToDelete []string
@@ -40,14 +46,20 @@ var (
 	desiredKubernetesVersion string
 	desiredCEPHVersion       string
 
-	gatewayHostname string
-	verboseLogging  bool
+	bssClient *bss.UtilsClient
+
+	verboseLogging bool
+
+	s3Client *hms_s3.S3Client
+
+	s3SecretName string
+	s3BucketName string
 )
 
 // handoffCmd represents the handoff command
 var handoffCmd = &cobra.Command{
 	Use:   "handoff",
-	Short: "runs migration steps to transition from LiveCD",
+	Short: "Runs migration steps to transition from LiveCD",
 	Long: "A series of subcommands that facilitate the migration of assets/configuration/etc from the LiveCD to the " +
 		"production version inside the Kubernetes cluster.",
 }
@@ -56,29 +68,19 @@ func init() {
 	rootCmd.AddCommand(handoffCmd)
 	handoffCmd.DisableAutoGenTag = true
 
-	gatewayHostname = os.Getenv("GATEWAY_HOSTNAME")
-	if gatewayHostname == "" {
-		gatewayHostname = "api-gw-service-nmn.local"
-	}
-
 	verboseLogging = false
 	verboseLogging, _ = strconv.ParseBool(os.Getenv("VERBOSE"))
 }
 
+// setupCommon - These are steps that every handoff function have in common.
 func setupCommon() {
 	var err error
 
-	// These are steps that every handoff function have in common.
-	token = os.Getenv("TOKEN")
-	if token == "" {
-		log.Panicln("Environment variable TOKEN can NOT be blank!")
-	}
+	setupEnvs()
 
-	transport := http.DefaultTransport.(*http.Transport).Clone()
-	transport.TLSClientConfig = &tls.Config{
-		InsecureSkipVerify: true,
-	}
-	httpClient = &http.Client{Transport: transport}
+	setupHTTPClient()
+
+	bssClient = bss.NewBSSClient(bssBaseURL, httpClient, token)
 
 	log.Println("Getting management NCNs from SLS...")
 	managementNCNs, err = getManagementNCNsFromSLS()
@@ -89,11 +91,11 @@ func setupCommon() {
 }
 
 func getManagementNCNsFromSLS() (managementNCNs []sls_common.GenericHardware, err error) {
-	url := fmt.Sprintf("https://%s/apis/sls/v1/search/hardware?extra_properties.Role=Management",
-		gatewayHostname)
+	url := fmt.Sprintf("%s/v1/search/hardware?extra_properties.Role=Management",
+		slsBaseURL)
 	req, err := http.NewRequest("GET", url, nil)
 
-	// indicates whether or not to close the connection after sending the request
+	// Indicates whether to close the connection after sending the request
 	req.Close = true
 
 	if err != nil {
@@ -120,72 +122,25 @@ func getManagementNCNsFromSLS() (managementNCNs []sls_common.GenericHardware, er
 }
 
 func uploadEntryToBSS(bssEntry bssTypes.BootParams, method string) {
-	url := fmt.Sprintf("https://%s/apis/bss/boot/v1/bootparameters", gatewayHostname)
-
-	jsonBytes, err := json.Marshal(bssEntry)
+	uploadedBSSEntry, err := bssClient.UploadEntryToBSS(bssEntry, method)
 	if err != nil {
-		log.Panicln(err)
+		log.Panicf("Failed to upload entry to BSS: %s", err)
 	}
-
-	req, err := http.NewRequest(method, url, bytes.NewBuffer(jsonBytes))
-	if err != nil {
-		log.Panicf("Failed to create new request: %s", err)
-	}
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		log.Panicf("Failed to %s BSS entry: %s", method, err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		bodyBytes, _ := ioutil.ReadAll(resp.Body)
-		log.Panicf("Failed to %s BSS entry: %s", method, string(bodyBytes))
-	}
-
-	jsonPrettyBytes, _ := json.MarshalIndent(bssEntry, "", "  ")
 
 	if verboseLogging {
-		log.Printf("Sucessfuly %s BSS entry for %s:\n%s", method, bssEntry.Hosts[0], string(jsonPrettyBytes))
+		log.Printf("Sucessfuly PUT BSS entry for %s:\n%s", bssEntry.Hosts[0], uploadedBSSEntry)
 	} else {
-		log.Printf("Sucessfuly %s BSS entry for %s", method, bssEntry.Hosts[0])
+		log.Printf("Sucessfuly PUT BSS entry for %s", bssEntry.Hosts[0])
 	}
 }
 
 func getBSSBootparametersForXname(xname string) bssTypes.BootParams {
-	url := fmt.Sprintf("https://%s/apis/bss/boot/v1/bootparameters?name=%s", gatewayHostname, xname)
-
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	bootParams, err := bssClient.GetBSSBootparametersForXname(xname)
 	if err != nil {
-		log.Panicf("Failed to create new request: %s", err)
-	}
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
-
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		log.Panicf("Failed to get BSS entry: %s", err)
+		log.Panicf("Failed to get BSS bootparameters for %s: %s", xname, err)
 	}
 
-	bodyBytes, _ := ioutil.ReadAll(resp.Body)
-
-	if resp.StatusCode != http.StatusOK {
-		log.Panicf("Failed to put BSS entry: %s", string(bodyBytes))
-	}
-
-	// BSS gives back an array.
-	var bssEntries []bssTypes.BootParams
-	err = json.Unmarshal(bodyBytes, &bssEntries)
-	if err != nil {
-		log.Panicf("Failed to unmarshal BSS entries: %s", err)
-	}
-
-	// We should only ever get one entry for a given xname.
-	if len(bssEntries) != 1 {
-		log.Panicf("Unexpected number of BSS entries: %+v", bssEntries)
-	}
-
-	return bssEntries[0]
+	return *bootParams
 }
 
 func setupHandoffCommon() (limitManagementNCNs []sls_common.GenericHardware, setParams []paramTuple) {
@@ -239,4 +194,48 @@ func setupHandoffCommon() (limitManagementNCNs []sls_common.GenericHardware, set
 	}
 
 	return
+}
+
+func setupS3() {
+	// Built kubeconfig.
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	// Create the clientset.
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	// Get the secret from Kubernetes.
+	s3Secret, err := clientset.CoreV1().Secrets("services").Get(context.TODO(), s3SecretName, v1.GetOptions{})
+	if err != nil {
+		log.Panic(err)
+	}
+
+	// Normally the HMS S3 library uses environment variables but since the vast majority are just arguments to this
+	// program manually create the object for connection info.
+	s3Connection := hms_s3.ConnectionInfo{
+		AccessKey: string(s3Secret.Data["access_key"]),
+		SecretKey: string(s3Secret.Data["secret_key"]),
+		Endpoint:  string(s3Secret.Data["s3_endpoint"]),
+		Bucket:    s3BucketName,
+		Region:    "default",
+	}
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		DialContext: (&net.Dialer{
+			// If the image is sufficiently large it's possible for the connection to go stale.
+			KeepAlive: 10 * time.Second,
+		}).DialContext,
+	}
+	httpClient := &http.Client{Transport: tr}
+
+	s3Client, err = hms_s3.NewS3Client(s3Connection, httpClient)
+	if err != nil {
+		log.Panic(err)
+	}
 }

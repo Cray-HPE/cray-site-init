@@ -112,7 +112,7 @@ func updateNCNKernelParams() {
 			}
 		}
 
-		// Create a whole new structure to PATCH this entry with so as to not touch other pieces of the structure.
+		// Create a whole new structure to PATCH this entry with to not touch other pieces of the structure.
 		newBSSEntry := bssTypes.BootParams{
 			Hosts:  []string{ncn.Xname},
 			Params: strings.Join(finalParts, " "),

@@ -55,9 +55,9 @@ func init() {
 	handoffBSSUpdateCloudInitCmd.DisableAutoGenTag = true
 
 	handoffBSSUpdateCloudInitCmd.Flags().StringArrayVar(&paramsToUpdate, "set", []string{},
-		"For each kernel parameter you wish to update or add list it in the format of key=value")
+		"For each cloud-init object you wish to update or add list it in the format of key=value")
 	handoffBSSUpdateCloudInitCmd.Flags().StringArrayVar(&paramsToDelete, "delete", []string{},
-		"For each kernel parameter you wish to remove provide just the key and it will be removed "+
+		"For each cloud-init object you wish to remove provide just the key and it will be removed "+
 			"regardless of value")
 	handoffBSSUpdateCloudInitCmd.Flags().StringArrayVar(&limitToXnames, "limit", []string{},
 		"Limit updates to just the xnames specified")

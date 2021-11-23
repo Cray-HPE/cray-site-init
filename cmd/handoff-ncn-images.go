@@ -5,25 +5,15 @@ Copyright 2021 Hewlett Packard Enterprise Development LP
 package cmd
 
 import (
-	"context"
-	"crypto/tls"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/spf13/cobra"
+	"k8s.io/client-go/util/homedir"
 	"log"
-	"net"
-	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
-	"time"
-
-	hms_s3 "github.com/Cray-HPE/hms-s3"
-	"github.com/spf13/cobra"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/util/homedir"
 )
 
 const s3ACL = "public-read"
@@ -37,13 +27,6 @@ const initrdName = "initrd"
 const squashFSName = "filesystem.squashfs"
 
 var (
-	s3Client *hms_s3.S3Client
-
-	kubeconfig string
-
-	s3SecretName string
-	s3BucketName string
-
 	k8sKernelPath   string
 	k8sInitrdPath   string
 	k8sSquashFSPath string
@@ -60,6 +43,8 @@ var handoffNCNImagesCmd = &cobra.Command{
 	Long: "A series of subcommands that facilitate the migration of assets/configuration/etc from the LiveCD to the " +
 		"production version inside the Kubernetes cluster.",
 	Run: func(cmd *cobra.Command, args []string) {
+		setupS3()
+
 		fmt.Println("Uploading NCN images into S3.")
 		uploadNCNImagesS3()
 	},
@@ -73,7 +58,7 @@ func init() {
 	handoffNCNImagesCmd.Flags().StringVar(&kubeconfig, "kubeconfig", filepath.Join(home, ".kube", "config"),
 		"Absolute path to the kubeconfig file")
 	if home == "" {
-		_ = handoffCmd.MarkFlagRequired("kubeconfig")
+		_ = handoffNCNImagesCmd.MarkFlagRequired("kubeconfig")
 	}
 
 	handoffNCNImagesCmd.Flags().StringVar(&s3SecretName, "s3-secret", "sts-s3-credentials",
@@ -114,50 +99,8 @@ func uploadFile(filePath string, s3KeyName string) {
 }
 
 func uploadNCNImagesS3() {
-	// Built kubeconfig.
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	// Create the clientset.
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	// Get the secret from Kubernetes.
-	s3Secret, err := clientset.CoreV1().Secrets("services").Get(context.TODO(), s3SecretName, v1.GetOptions{})
-	if err != nil {
-		log.Panic(err)
-	}
-
-	// Normally the HMS S3 library uses environment variables but since the vast majority are just arguments to this
-	// program manually create the object for connection info.
-	s3Connection := hms_s3.ConnectionInfo{
-		AccessKey: string(s3Secret.Data["access_key"]),
-		SecretKey: string(s3Secret.Data["secret_key"]),
-		Endpoint:  string(s3Secret.Data["s3_endpoint"]),
-		Bucket:    s3BucketName,
-		Region:    "default",
-	}
-
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		DialContext: (&net.Dialer{
-			// If the image is sufficiently large it's possible for the connection to go stale.
-			KeepAlive: 10 * time.Second,
-		}).DialContext,
-	}
-	httpClient := &http.Client{Transport: tr}
-
-	s3Client, err = hms_s3.NewS3Client(s3Connection, httpClient)
-	if err != nil {
-		log.Panic(err)
-	}
-
 	// Create public-read bucket.
-	_, err = s3Client.CreateBucketWithACL(s3BucketName, s3ACL)
+	_, err := s3Client.CreateBucketWithACL(s3BucketName, s3ACL)
 	if err != nil {
 		awsErr := err.(awserr.Error)
 
