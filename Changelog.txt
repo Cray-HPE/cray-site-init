@@ -1,5 +1,7 @@
 v1.6.0
 -----------------------
+- CASMNET-832 Add switches to CMN
+- CASMNET-692 BICAN Toggle
 - dnsmasq CMN.conf uses pit.can as an interface
 - CASMINST-3335 VLAN 0 breaks Kea
 - CASMINST-2120 Remove gateway bypass

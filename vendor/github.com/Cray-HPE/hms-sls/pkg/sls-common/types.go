@@ -345,6 +345,7 @@ type NetworkExtraProperties struct {
 	Comment   string  `json:"Comment,omitempty"`
 
 	Subnets []IPV4Subnet `json:"Subnets"`
+	SystemDefaultRoute string `json:"SystemDefaultRoute,omitempty"`
 }
 
 // IPReservation is a type for managing IP Reservations

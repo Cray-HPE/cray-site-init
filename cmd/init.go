@@ -95,8 +95,9 @@ var initCmd = &cobra.Command{
 
 		// Prepare the network layout configs for generating the networks
 		var internalNetConfigs = make(map[string]csi.NetworkLayoutConfiguration)
+		internalNetConfigs["BICAN"] = csi.GenDefaultBICANConfig()
 		internalNetConfigs["HMN"] = csi.GenDefaultHMNConfig()
-		internalNetConfigs["CMN"] = csi.GenDefaultCMNConfig()
+		internalNetConfigs["CMN"] = csi.GenDefaultCMNConfig(len(logicalNcns), len(switches))
 		internalNetConfigs["CAN"] = csi.GenDefaultCANConfig()
 		internalNetConfigs["CHN"] = csi.GenDefaultCHNConfig()
 		internalNetConfigs["NMN"] = csi.GenDefaultNMNConfig()
@@ -171,7 +172,9 @@ var initCmd = &cobra.Command{
 				myLayout.BaseVlan = layout.Template.VlanRange[0]
 			}
 
-			myLayout.Template.CIDR = v.GetString(fmt.Sprintf("%v-cidr", normalizedName))
+			if v.IsSet(fmt.Sprintf("%v-cidr", normalizedName)) {
+				myLayout.Template.CIDR = v.GetString(fmt.Sprintf("%v-cidr", normalizedName))
+			}
 
 			myLayout.AdditionalNetworkingSpace = v.GetInt("management-net-ips")
 			internalNetConfigs[name] = myLayout
@@ -650,7 +653,7 @@ func writeOutput(v *viper.Viper, shastaNetworks map[string]*csi.IPV4Network, sls
 	v.Set("VersionInfo", version.Get())
 	v.WriteConfigAs(filepath.Join(basepath, "system_config.yaml"))
 
-	csiFiles.WriteYAMLConfig(filepath.Join(basepath, "customizations.yaml"), pit.GenCustomizationsYaml(logicalNCNs, shastaNetworks))
+	csiFiles.WriteYAMLConfig(filepath.Join(basepath, "customizations.yaml"), pit.GenCustomizationsYaml(logicalNCNs, shastaNetworks, switches))
 
 	for _, ncn := range logicalNCNs {
 		// log.Println("Checking to see if we need PIT files for ", ncn.Hostname)
