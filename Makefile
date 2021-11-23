@@ -9,9 +9,6 @@ GO_VERSION := go1.16.10
 CURRENT_UID := $(shell id -u)
 CURRENT_GID := $(shell id -g)
 
-export CURRENT_UID
-export CURRENT_GID
-
 GO_FILES?=$$(find . -name '*.go' |grep -v vendor)
 TAG?=latest
 
@@ -61,7 +58,7 @@ endif
 
 all: fmt lint reset build
 
-rpm: rpm_package_source rpm_build_source rpm_build
+rpm: prepare rpm_package_source rpm_build_source rpm_build
 
 help:
 	@echo 'Usage: make <OPTIONS> ... <TARGETS>'
@@ -176,7 +173,9 @@ update-version: build
 	echo ${CHANGELOG_VERSION} > .version
 
 docker-build-image:
-	docker build --build-arg GO_VERSION=$(GO_VERSION) -t cray/go-rpm-builder .
+	docker build --build-arg GO_VERSION=$(GO_VERSION) \
+	-t cray/csi-rpm-builder .
 
 docker-rpm: docker-build-image
-	docker run --env GIT_REPO_NAME=cray-site-init --rm -v $(CURDIR):/build cray/go-rpm-builder make rpm
+	docker run --user $(CURRENT_UID):$(CURRENT_GID) --env GIT_REPO_NAME=cray-site-init --rm -v $(CURDIR):/build \
+  	cray/csi-rpm-builder make rpm

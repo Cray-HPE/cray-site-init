@@ -52,8 +52,7 @@ var (
 	cloudInitData map[string]bssTypes.CloudInit
 	sshConfig     *ssh.ClientConfig
 
-	// TODO: SET THIS BACK
-	vlansToGather = []string{"vlan002"}
+	vlansToGather = []string{"bond0.nmn0"}
 )
 
 var handoffBSSMetadataCmd = &cobra.Command{

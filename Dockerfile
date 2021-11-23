@@ -9,6 +9,7 @@ FROM build-base AS go-base
 
 ARG GO_VERSION=""
 ENV GO_VERSION_ENV="$GO_VERSION"
+ENV GOCACHE=/tmp
 
 RUN set -ex \
     && if [ -z "${GO_VERSION_ENV}" ]; then export GO_VERSION_ENV="$(curl https://golang.org/VERSION?m=text)"; fi \
@@ -16,7 +17,5 @@ RUN set -ex \
     && tar -C /usr/local -xzf $GO_VERSION_ENV.linux-amd64.tar.gz
 
 ENV PATH="$PATH:/usr/local/go/bin"
-
-FROM go-base
 
 WORKDIR /build
