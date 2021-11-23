@@ -88,12 +88,15 @@ func GetMetalLBConfig(v *viper.Viper, networks map[string]*csi.IPV4Network, swit
 	for name, network := range networks {
 		for _, subnet := range network.Subnets {
 			// This is a v1.4 HACK related to the supernet.
-			if name == "NMN" && subnet.Name == "network_hardware" {
+			if (name == "NMN" || name == "CMN") && subnet.Name == "network_hardware" {
 				var tmpPeer PeerDetail
 				for _, reservation := range subnet.IPReservations {
 					tmpPeer = PeerDetail{}
 					tmpPeer.PeerASN = v.GetInt("bgp-asn")
 					tmpPeer.MyASN = v.GetInt("bgp-asn")
+					if name == "CMN" {
+						tmpPeer.MyASN = v.GetInt("bgp-cmn-asn")
+					}
 					tmpPeer.IPAddress = reservation.IPAddress.String()
 					for _, switchXname := range spineSwitchXnames {
 						if reservation.Comment == switchXname {
@@ -107,28 +110,9 @@ func GetMetalLBConfig(v *viper.Viper, networks map[string]*csi.IPV4Network, swit
 					}
 				}
 			}
-			if name == "CMN" && subnet.Name == "bootstrap_dhcp" {
-				var tmpPeer PeerDetail
-				for _, reservation := range subnet.IPReservations {
-					if strings.Contains(reservation.Name, "cmn-switch") {
-						tmpPeer = PeerDetail{}
-						tmpPeer.PeerASN = v.GetInt("bgp-asn")
-						tmpPeer.MyASN = v.GetInt("bgp-cmn-asn")
-						tmpPeer.IPAddress = reservation.IPAddress.String()
-						if bgpPeers == "spine" {
-							configStruct.SpineSwitches = append(configStruct.SpineSwitches, tmpPeer)
-						} else if bgpPeers == "aggregation" {
-							configStruct.AggSwitches = append(configStruct.AggSwitches, tmpPeer)
-						} else {
-							log.Fatalf("bgp-peers: unrecognized option: %s\n", bgpPeers)
-						}
-					}
-				}
-			}
 			if strings.Contains(subnet.Name, "metallb") {
 				if val, ok := metalLBLookupTable[subnet.Name]; ok {
-					var tmpAddPool AddressPoolDetail
-					tmpAddPool = AddressPoolDetail{}
+					tmpAddPool := AddressPoolDetail{}
 					tmpAddPool.Name = val
 					tmpAddPool.Protocol = "bgp"
 					tmpAddPool.Addresses = append(tmpAddPool.Addresses, subnet.CIDR.String())

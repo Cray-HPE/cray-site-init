@@ -5,8 +5,11 @@ Copyright 2021 Hewlett Packard Enterprise Development LP
 package csi
 
 import (
+	"log"
 	"net"
 	"strings"
+
+	"github.com/Cray-HPE/cray-site-init/pkg/ipam"
 )
 
 /*
@@ -310,16 +313,31 @@ func GenDefaultHSNConfig() NetworkLayoutConfiguration {
 }
 
 // GenDefaultCMNConfig returns the set of defaults for mapping the CMN
-func GenDefaultCMNConfig() NetworkLayoutConfiguration {
+func GenDefaultCMNConfig(ncns int, switches int) NetworkLayoutConfiguration {
+	log.Println("CMN CIDR: ", DefaultCMN.CIDR)
+	_, cmnNet, _ := net.ParseCIDR(DefaultCMN.CIDR)
+
+	// Dynamically calculate the bootstrap_dhcp netmask based on number of NCNs.
+	bootstrapSubnet, err := ipam.SubnetWithin(*cmnNet, ncns)
+	if err != nil {
+		log.Fatalf("Failed to find a suitable subnet mask for %d NCNs within %v\n", ncns, DefaultCMN.Name)
+	}
+
+	// Dynamically calculate the network_hardware netmask based on number of NCNs.
+	networkSubnet, err := ipam.SubnetWithin(*cmnNet, switches)
+	if err != nil {
+		log.Fatalf("Failed to find a suitable subnet mask for %d switches within %v\n", switches, DefaultCMN.Name)
+	}
 
 	return NetworkLayoutConfiguration{
 		Template:                        DefaultCMN,
 		SubdivideByCabinet:              false,
-		SuperNetHack:                    false,
+		SuperNetHack:                    true,
 		IncludeBootstrapDHCP:            true,
-		IncludeNetworkingHardwareSubnet: false,
+		IncludeNetworkingHardwareSubnet: true,
 		IncludeUAISubnet:                false,
-		DesiredBootstrapDHCPMask:        net.CIDRMask(24, 32),
+		NetworkingHardwareNetmask:       networkSubnet.Mask,
+		DesiredBootstrapDHCPMask:        bootstrapSubnet.Mask,
 	}
 }
 
