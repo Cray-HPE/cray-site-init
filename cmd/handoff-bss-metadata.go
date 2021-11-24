@@ -8,15 +8,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	csiFiles "github.com/Cray-HPE/cray-site-init/internal/files"
-	base "github.com/Cray-HPE/hms-base"
-	"github.com/Cray-HPE/hms-bss/pkg/bssTypes"
-	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
-	"github.com/Cray-HPE/hms-smd/pkg/sm"
-	"github.com/mitchellh/mapstructure"
-	"github.com/spf13/cobra"
-	"golang.org/x/crypto/ssh"
-	"golang.org/x/crypto/ssh/terminal"
 	"io/ioutil"
 	"log"
 	"net"
@@ -26,6 +17,16 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+
+	csiFiles "github.com/Cray-HPE/cray-site-init/internal/files"
+	base "github.com/Cray-HPE/hms-base"
+	"github.com/Cray-HPE/hms-bss/pkg/bssTypes"
+	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
+	"github.com/Cray-HPE/hms-smd/pkg/sm"
+	"github.com/mitchellh/mapstructure"
+	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 const hwAddrPrefix = "Permanent HW addr: "
@@ -48,10 +49,10 @@ type ipJSONStruct struct {
 type ipJSONStructArray []ipJSONStruct
 
 var (
-	dataFile      string
-	cloudInitData map[string]bssTypes.CloudInit
-	sshConfig     *ssh.ClientConfig
-
+	dataFile, csmVer string
+	cloudInitData    map[string]bssTypes.CloudInit
+	sshConfig        *ssh.ClientConfig
+	// default to the new interface name
 	vlansToGather = []string{"bond0.nmn0"}
 )
 
@@ -60,6 +61,14 @@ var handoffBSSMetadataCmd = &cobra.Command{
 	Short: "runs migration steps to build BSS entries for all NCNs",
 	Long:  "Using PIT configuration builds kernel command line arguments and cloud-init metadata for each NCN",
 	Run: func(cmd *cobra.Command, args []string) {
+
+		// 1.x uses vlan names, 1.2.x uses new names
+		if csmVer == "1.0" || csmVer == "1.0.1" {
+			vlansToGather = []string{"vlan002"}
+		} else {
+			vlansToGather = []string{"bond0.nmn0"}
+		}
+
 		setupCommon()
 
 		desiredKubernetesVersion = os.Getenv("KUBERNETES_VERSION")
@@ -94,6 +103,8 @@ func init() {
 
 	handoffBSSMetadataCmd.Flags().StringVar(&dataFile, "data-file",
 		"", "data.json file with cloud-init configuration for each node and global")
+	handoffBSSMetadataCmd.Flags().StringVar(&csmVer, "csm-version",
+		"", "version of CSM that is currently running")
 	_ = handoffBSSMetadataCmd.MarkFlagRequired("data-file")
 }
 
