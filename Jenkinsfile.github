@@ -3,11 +3,7 @@
 def isStable = env.TAG_NAME != null || env.BRANCH_NAME == 'main' ? true : false
 pipeline {
   agent {
-    docker {
-      label "metal-gcp-builder"
-      image "artifactory.algol60.net/csm-docker/stable/sle15sp3_build_environment_golang:1.16"
-      args "-u root -v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker --group-add 999"
-    }
+    label "metal-gcp-builder"
   }
 
   options {
@@ -18,6 +14,7 @@ pipeline {
   environment {
     BUILD_METADATA = getRpmRevision(isStable: isStable)
     GIT_REPO_NAME = getRepoName()
+    GO_VERSION = sh(returnStdout: true, script: 'grep -Eo "^go .*" go.mod | cut -d " " -f2').trim()
   }
 
   stages {
@@ -28,6 +25,17 @@ pipeline {
     }
 
     stage('Build: RPM') {
+      agent {
+        docker {
+          label 'docker'
+          image "artifactory.algol60.net/csm-docker/stable/sle15sp3_build_environment_golang:${env.GO_VERSION}"
+          registryUrl 'https://artifactory.algol60.net/'
+          registryCredentialsId 'artifactory-algol60'
+          reuseNode true
+          // Run as root
+          args "-u root"
+        }
+      }
       steps {
         sh "make rpm"
       }
