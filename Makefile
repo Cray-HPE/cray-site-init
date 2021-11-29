@@ -2,13 +2,6 @@ SHELL := /bin/bash
 VERSION := $(shell cat .version)
 SPEC_VERSION ?= $(shell cat .version)
 
-GO_VERSION := go1.16.10
-
-# Docker builds need to be run as the current user otherwise they will be run as root and leave files around that
-# can't be removed by normal users.
-CURRENT_UID := $(shell id -u)
-CURRENT_GID := $(shell id -g)
-
 GO_FILES?=$$(find . -name '*.go' |grep -v vendor)
 TAG?=latest
 
@@ -20,7 +13,7 @@ TAG?=latest
 .BUILDTIME=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 CHANGELOG_VERSION_ORIG=$(grep -m1 \## CHANGELOG.MD | sed -e "s/\].*\$//" |sed -e "s/^.*\[//")
 CHANGELOG_VERSION=$(shell grep -m1 \ \[[0-9]*.[0-9]*.[0-9]*\] CHANGELOG.MD | sed -e "s/\].*$$//" |sed -e "s/^.*\[//")
-BUILD_DIR ?= $(CURDIR)/dist/rpmbuild
+BUILD_DIR ?= $(PWD)/dist/rpmbuild
 SPEC_NAME ?= ${GIT_REPO_NAME}
 SPEC_FILE ?= ${SPEC_NAME}.spec
 SOURCE_NAME ?= ${SPEC_NAME}-${SPEC_VERSION}
@@ -171,11 +164,3 @@ version:
 update-version: build
 	@echo 'Version = ${CHANGELOG_VERSION}'
 	echo ${CHANGELOG_VERSION} > .version
-
-docker-build-image:
-	docker build --build-arg GO_VERSION=$(GO_VERSION) \
-	-t cray/csi-rpm-builder .
-
-docker-rpm: docker-build-image
-	docker run --user $(CURRENT_UID):$(CURRENT_GID) --env GIT_REPO_NAME=cray-site-init --rm -v $(CURDIR):/build \
-  	cray/csi-rpm-builder make rpm
