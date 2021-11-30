@@ -32,8 +32,6 @@ pipeline {
           registryUrl 'https://artifactory.algol60.net/'
           registryCredentialsId 'artifactory-algol60'
           reuseNode true
-          // Run as root
-          args "-u root"
         }
       }
       steps {
@@ -42,7 +40,7 @@ pipeline {
     }
 
     stage('Publish') {
-      steps {   
+      steps {
         script {
           publishCsmRpms(component: env.GIT_REPO_NAME, pattern: "dist/rpmbuild/RPMS/x86_64/*.rpm", arch: "x86_64", isStable: isStable)
           publishCsmRpms(component: env.GIT_REPO_NAME, pattern: "dist/rpmbuild/SRPMS/*.rpm", arch: "src", isStable: isStable)
