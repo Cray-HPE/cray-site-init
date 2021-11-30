@@ -44,7 +44,7 @@ var automateNCNPreflight = &cobra.Command{
 			}
 
 			fmt.Print(strings.Join(standardizeHostnames, ","))
-		} else{
+		} else {
 			log.Fatalf("Invalid action: %s!\n", action)
 		}
 	},

@@ -87,25 +87,11 @@ func BuildCSMNetworks(internalNetConfigs map[string]NetworkLayoutConfiguration, 
 	pool, _ = tempHMNLoadBalancer.AddSubnet(net.CIDRMask(24, 32), "hmn_metallb_address_pool", int16(v.GetInt("hmn-bootstrap-vlan")))
 	pool.FullName = "HMN MetalLB"
 	for nme, rsrv := range PinnedMetalLBReservations {
-		// Because of the hack to pin ip addresses, we've got an overloaded datastructure in defaults.
-		// We need to prune it here before we write it out.  It's pretty ugly, but we plan to throw all of this code away when ip pinning is no longer necessary
-		if nme == "istio-ingressgateway" {
-			var hmnAliases []string
-			for _, alias := range rsrv.Aliases {
-				if !strings.HasSuffix(alias, ".local") {
-					if !stringInSlice(alias, []string{"packages", "registry", "spire", "api-gw", "api_gw"}) {
-						hmnAliases = append(hmnAliases, alias)
-
-					}
-				}
-			}
-			pool.AddReservationWithPin(nme, strings.Join(hmnAliases, ","), rsrv.IPByte)
-
-		} else {
-
+		// // Because of the hack to pin ip addresses, we've got an overloaded datastructure in defaults.
+		// // We need to prune it here before we write it out.  It's pretty ugly, but we plan to throw all of this code away when ip pinning is no longer necessary
+		if nme != "istio-ingressgateway" && nme != "istio-ingressgateway-local" {
 			pool.AddReservationWithPin(nme, strings.Join(rsrv.Aliases, ","), rsrv.IPByte)
 		}
-
 	}
 	networkMap["HMNLB"] = &tempHMNLoadBalancer
 
