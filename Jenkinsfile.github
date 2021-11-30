@@ -1,5 +1,6 @@
 @Library('csm-shared-library') _
 
+def promotionToken = ~"(master|main|release\\/.*)"
 def isStable = env.TAG_NAME != null || env.BRANCH_NAME == 'main' ? true : false
 pipeline {
   agent {
