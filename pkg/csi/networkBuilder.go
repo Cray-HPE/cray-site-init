@@ -268,10 +268,7 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 			}
 			subnet.FullName = fmt.Sprintf("%v Bootstrap DHCP Subnet", tempNet.Name)
 			if tempNet.Name == "NMN" || tempNet.Name == "HMN" || tempNet.Name == "CMN" || tempNet.Name == "CAN" || tempNet.Name == "CHN" {
-				if tempNet.Name == "CMN" {
-					subnet.CIDR = *cmnCIDR
-					subnet.Gateway = net.ParseIP(v.GetString("cmn-gateway"))
-				} else if tempNet.Name == "CAN" {
+				if tempNet.Name == "CAN" {
 					subnet.CIDR = *canCIDR
 					subnet.Gateway = net.ParseIP(v.GetString("can-gateway"))
 					subnet.AddReservation("can-switch-1", "")

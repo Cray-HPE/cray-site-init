@@ -314,7 +314,6 @@ func GenDefaultHSNConfig() NetworkLayoutConfiguration {
 
 // GenDefaultCMNConfig returns the set of defaults for mapping the CMN
 func GenDefaultCMNConfig(ncns int, switches int) NetworkLayoutConfiguration {
-	log.Println("CMN CIDR: ", DefaultCMN.CIDR)
 	_, cmnNet, _ := net.ParseCIDR(DefaultCMN.CIDR)
 
 	// Dynamically calculate the bootstrap_dhcp netmask based on number of NCNs.
