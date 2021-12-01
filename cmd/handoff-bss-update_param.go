@@ -93,7 +93,7 @@ func updateNCNKernelParams() {
 
 				potentialParamSplit := strings.Split(*thisParam, "=")
 
-				if len(potentialParamSplit) != 2 {
+				if len(potentialParamSplit) < 2 {
 					// Ignore any params that don't have key=value format.
 					continue
 				}
