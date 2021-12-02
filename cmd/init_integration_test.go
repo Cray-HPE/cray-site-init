@@ -31,7 +31,7 @@ func ConfigInitTest(system string) {
 	// Runs 'config init' without any arguments (this requires system_config.yaml to be present in the dir)
 	// csi.ExecuteCommandC(rootCmd, []string{"config", "init"})
 	conf := confdir + "/system_config.yaml"
-	csi.ExecuteCommandC(rootCmd, []string{"--config", conf, "config", "init", "--cmn-gateway", "10.99.0.1"})
+	csi.ExecuteCommandC(rootCmd, []string{"--config", conf, "config", "init"})
 
 	// pseudo-popd
 	os.Chdir(filepath.Join(".."))

@@ -232,7 +232,6 @@ func MakeBasecampGlobals(v *viper.Viper, logicalNcns []csi.LogicalNCN, shastaNet
 	// First loop through and see if there's a viper flag
 	// We register a few aliases because flags don't necessarily match data.json keys
 	v.RegisterAlias("can-gw", "can-gateway")
-	v.RegisterAlias("cmn-gw", "cmn-gateway")
 	for key := range global {
 		if v.IsSet(key) {
 			global[key] = v.GetString(key)
