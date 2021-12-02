@@ -213,6 +213,9 @@ func writeConfig(name, path string, tpl template.Template, networks map[string]*
 	if tempNet.Name == "CAN" {
 		bootstrapSubnet.Gateway = net.ParseIP(v.GetString("can-gateway"))
 	}
+	if tempNet.Name == "CMN" {
+		bootstrapSubnet.Gateway = net.ParseIP(v.GetString("cmn-gateway"))
+	}
 	// Normalize the CIDR before using it
 	_, superNet, _ := net.ParseCIDR(bootstrapSubnet.CIDR.String())
 	bootstrapSubnet.SupernetRouter = genPinnedIP(superNet.IP, uint8(1))

@@ -1,5 +1,6 @@
 v1.6.0
 -----------------------
+- CASMINST-3633 Resolve CMN IP overlap
 - CASMNET-832 Add switches to CMN
 - CASMNET-692 BICAN Toggle
 - dnsmasq CMN.conf uses pit.can as an interface

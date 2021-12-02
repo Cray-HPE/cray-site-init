@@ -51,6 +51,7 @@ csi config init [flags]
       --v2-registry string                    URL for default v2 registry used for both helm and containers (default "https://registry.nmn/")
       --rpm-repository string                 URL for default rpm repository (default "https://packages.nmn/repository/shasta-master")
       --can-gateway string                    Gateway for NCNs on the CAN
+      --cmn-gateway string                    Gateway for NCNs on the CMN
       --ceph-cephfs-image string              The container image for the cephfs provisioner (default "dtr.dev.cray.com/cray/cray-cephfs-provisioner:0.1.0-nautilus-1.3")
       --ceph-rbd-image string                 The container image for the ceph rbd provisioner (default "dtr.dev.cray.com/cray/cray-rbd-provisioner:0.1.0-nautilus-1.3")
       --docker-image-registry string          Upstream docker registry for use during the install (default "dtr.dev.cray.com")
