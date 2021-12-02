@@ -141,20 +141,20 @@ func GetMetalLBConfig(v *viper.Viper, networks map[string]*csi.IPV4Network, swit
 	configStruct.Networks = append(configStruct.Networks, tmpAddPool)
 
 	// CAN - static
-	if v.GetString("can-static-pool") != "" {
+	if v.GetString("ucan-static-pool") != "" {
 		tmpAddPool = AddressPoolDetail{}
 		tmpAddPool.Name = "customer-access-static"
 		tmpAddPool.Protocol = "bgp"
-		tmpAddPool.Addresses = append(tmpAddPool.Addresses, v.GetString("can-static-pool"))
+		tmpAddPool.Addresses = append(tmpAddPool.Addresses, v.GetString("ucan-static-pool"))
 		configStruct.Networks = append(configStruct.Networks, tmpAddPool)
 	}
 
 	// CAN - dynamic
-	if v.GetString("can-dynamic-pool") != "" {
+	if v.GetString("ucan-dynamic-pool") != "" {
 		tmpAddPool = AddressPoolDetail{}
 		tmpAddPool.Name = "customer-access"
 		tmpAddPool.Protocol = "bgp"
-		tmpAddPool.Addresses = append(tmpAddPool.Addresses, v.GetString("can-dynamic-pool"))
+		tmpAddPool.Addresses = append(tmpAddPool.Addresses, v.GetString("ucan-dynamic-pool"))
 		configStruct.Networks = append(configStruct.Networks, tmpAddPool)
 	}
 

@@ -80,7 +80,6 @@ type BaseCampGlobals struct {
 	// Commenting out several that I think we don't need
 	// Domain string `json:domain`        // dnsmasq should provide this
 	DNSServer string `json:"dns-server"`
-	// CanGateway  string `json:can-gw`   // dnsmasq should provide this
 
 	// Kubernetes Installation Globals
 	KubernetesVIP          string `json:"kubernetes-virtual-ip"`
@@ -231,8 +230,6 @@ func MakeBasecampGlobals(v *viper.Viper, logicalNcns []csi.LogicalNCN, shastaNet
 
 	// First loop through and see if there's a viper flag
 	// We register a few aliases because flags don't necessarily match data.json keys
-	v.RegisterAlias("can-gw", "can-gateway")
-	v.RegisterAlias("cmn-gw", "cmn-gateway")
 	for key := range global {
 		if v.IsSet(key) {
 			global[key] = v.GetString(key)

@@ -211,7 +211,7 @@ func writeConfig(name, path string, tpl template.Template, networks map[string]*
 		}
 	}
 	if tempNet.Name == "CAN" {
-		bootstrapSubnet.Gateway = net.ParseIP(v.GetString("can-gateway"))
+		bootstrapSubnet.Gateway = net.ParseIP(v.GetString("ucan-gateway"))
 	}
 	if tempNet.Name == "CMN" {
 		bootstrapSubnet.Gateway = net.ParseIP(v.GetString("cmn-gateway"))

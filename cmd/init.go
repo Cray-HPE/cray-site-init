@@ -164,6 +164,10 @@ var initCmd = &cobra.Command{
 			// Update with flags
 			normalizedName := strings.ReplaceAll(strings.ToLower(name), "_", "-")
 
+			if normalizedName == "can" {
+				normalizedName = "ucan"	
+			}
+
 			// Use CLI values if available, otherwise defaults
 			if v.IsSet(fmt.Sprintf("%v-bootstrap-vlan", normalizedName)) {
 				myLayout.BaseVlan = int16(v.GetInt(fmt.Sprintf("%v-bootstrap-vlan", normalizedName)))
@@ -326,7 +330,7 @@ var initCmd = &cobra.Command{
 		fmt.Printf("\n===== %v Installation Summary =====\n\n", v.GetString("system-name"))
 		fmt.Printf("Installation Node: %v\n", v.GetString("install-ncn"))
 		fmt.Printf("Customer Management: %v GW: %v\n", v.GetString("cmn-cidr"), v.GetString("cmn-gateway"))
-		fmt.Printf("Customer Access: %v GW: %v\n", v.GetString("can-cidr"), v.GetString("can-gateway"))
+		fmt.Printf("Customer Access: %v GW: %v\n", v.GetString("ucan-cidr"), v.GetString("ucan-gateway"))
 		fmt.Printf("\tUpstream DNS: %v\n", v.GetString("ipv4-resolvers"))
 		fmt.Printf("\tMetalLB Peers: %v\n", v.GetString("bgp-peers"))
 		fmt.Println("Networking")
@@ -365,7 +369,7 @@ func init() {
 	initCmd.Flags().String("v2-registry", "https://registry.nmn/", "URL for default v2 registry used for both helm and containers")
 	initCmd.Flags().String("rpm-repository", "https://packages.nmn/repository/shasta-master", "URL for default rpm repository")
 	initCmd.Flags().String("cmn-gateway", "", "Gateway for NCNs on the CMN (Management)")
-	initCmd.Flags().String("can-gateway", "", "Gateway for NCNs on the CAN (User)")
+	initCmd.Flags().String("ucan-gateway", "", "Gateway for NCNs on the CAN (User)")
 	initCmd.Flags().String("chn-gateway", "", "Gateway for NCNs on the CHN (User)")
 	initCmd.Flags().String("ceph-cephfs-image", "dtr.dev.cray.com/cray/cray-cephfs-provisioner:0.1.0-nautilus-1.3", "The container image for the cephfs provisioner")
 	initCmd.Flags().String("ceph-rbd-image", "dtr.dev.cray.com/cray/cray-rbd-provisioner:0.1.0-nautilus-1.3", "The container image for the ceph rbd provisioner")
@@ -392,9 +396,9 @@ func init() {
 	initCmd.Flags().String("cmn-static-pool", "", "Overall IPv4 CIDR for static Customer Management load balancer addresses")
 	initCmd.Flags().String("cmn-dynamic-pool", "", "Overall IPv4 CIDR for dynamic Customer Management load balancer addresses")
 	initCmd.Flags().String("cmn-external-dns", "", "IP Address in the cmn-static-pool for the external dns service \"site-to-system lookups\"")
-	initCmd.Flags().String("can-cidr", csi.DefaultCANString, "Overall IPv4 CIDR for all Customer Access subnets")
-	initCmd.Flags().String("can-static-pool", "", "Overall IPv4 CIDR for static Customer Access load balancer addresses")
-	initCmd.Flags().String("can-dynamic-pool", "", "Overall IPv4 CIDR for dynamic Customer Access load balancer addresses")
+	initCmd.Flags().String("ucan-cidr", csi.DefaultCANString, "Overall IPv4 CIDR for all Customer Access subnets")
+	initCmd.Flags().String("ucan-static-pool", "", "Overall IPv4 CIDR for static Customer Access load balancer addresses")
+	initCmd.Flags().String("ucan-dynamic-pool", "", "Overall IPv4 CIDR for dynamic Customer Access load balancer addresses")
 	initCmd.Flags().String("chn-cidr", "", "Overall IPv4 CIDR for all Customer High-Speed subnets")
 	initCmd.Flags().String("chn-static-pool", "", "Overall IPv4 CIDR for static Customer High-Speed load balancer addresses")
 	initCmd.Flags().String("chn-dynamic-pool", "", "Overall IPv4 CIDR for dynamic Customer High-Speed load balancer addresses")
@@ -408,7 +412,7 @@ func init() {
 	initCmd.Flags().Int("nmn-bootstrap-vlan", csi.DefaultNMNVlan, "Bootstrap VLAN for the NMN")
 	initCmd.Flags().Int("hmn-bootstrap-vlan", csi.DefaultHMNVlan, "Bootstrap VLAN for the HMN")
 	initCmd.Flags().Int("cmn-bootstrap-vlan", csi.DefaultCMNVlan, "Bootstrap VLAN for the CMN")
-	initCmd.Flags().Int("can-bootstrap-vlan", csi.DefaultCANVlan, "Bootstrap VLAN for the CAN")
+	initCmd.Flags().Int("ucan-bootstrap-vlan", csi.DefaultCANVlan, "Bootstrap VLAN for the CAN")
 	initCmd.Flags().Int("macvlan-bootstrap-vlan", csi.DefaultMacVlanVlan, "Bootstrap VLAN for MacVlan")
 
 	// Hardware Details
@@ -677,7 +681,6 @@ func validateFlags() []string {
 	v := viper.GetViper()
 	var requiredFlags = []string{
 		"system-name",
-		"can-gateway",
 		"cmn-gateway",
 		"site-ip",
 		"site-gw",
@@ -697,7 +700,7 @@ func validateFlags() []string {
 	var ipv4Flags = []string{
 		"site-dns",
 		"cmn-gateway",
-		"can-gateway",
+		"ucan-gateway",
 		"site-gw",
 	}
 	for _, flagName := range ipv4Flags {
@@ -712,9 +715,9 @@ func validateFlags() []string {
 		"cmn-cidr",
 		"cmn-static-pool",
 		"cmn-dynamic-pool",
-		"can-cidr",
-		"can-static-pool",
-		"can-dynamic-pool",
+		"ucan-cidr",
+		"ucan-static-pool",
+		"ucan-dynamic-pool",
 		"nmn-cidr",
 		"hmn-cidr",
 		"site-ip",

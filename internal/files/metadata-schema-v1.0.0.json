@@ -310,9 +310,6 @@
         "meta-data": {
           "type": "object",
           "properties": {
-            "can-gw": {
-              "type": "string"
-            },
             "ceph-cephfs-image": {
               "type": "string"
             },
@@ -393,7 +390,6 @@
             }
           },
           "required": [
-            "can-gw",
             "ceph-cephfs-image",
             "ceph-rbd-image",
             "dns-server",

@@ -151,37 +151,37 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 
 	// Do all the special assembly for the CAN
 	if tempNet.Name == "CAN" {
-		if v.GetString("can-cidr") != "" {
-			_, canCIDR, _ = net.ParseCIDR(v.GetString("can-cidr"))
+		if v.GetString("ucan-cidr") != "" {
+			_, canCIDR, _ = net.ParseCIDR(v.GetString("ucan-cidr"))
 			conf.DesiredBootstrapDHCPMask = canCIDR.Mask
 
-			if v.GetString("can-static-pool") != "" {
-				_, canStaticPool, err := net.ParseCIDR(v.GetString("can-static-pool"))
+			if v.GetString("ucan-static-pool") != "" {
+				_, canStaticPool, err := net.ParseCIDR(v.GetString("ucan-static-pool"))
 				if err != nil {
-					log.Printf("IP Addressing Failure\nInvalid can-static-pool.  Cowardly refusing to create it.")
+					log.Printf("IP Addressing Failure\nInvalid ucan-static-pool.  Cowardly refusing to create it.")
 				} else {
-					static, err := tempNet.AddSubnetbyCIDR(*canStaticPool, "can_metallb_static_pool", int16(v.GetInt("can-bootstrap-vlan")))
+					static, err := tempNet.AddSubnetbyCIDR(*canStaticPool, "can_metallb_static_pool", int16(v.GetInt("ucan-bootstrap-vlan")))
 					if err != nil {
 						log.Fatalf("IP Addressing Failure\n"+
 							"Couldn't add MetalLB Static pool of %v to net %v: %v\n"+
-							"Possible missing or mismatched can-static-pool input value.",
-							v.GetString("can-static-pool"), tempNet.CIDR, err)
+							"Possible missing or mismatched ucan-static-pool input value.",
+							v.GetString("ucan-static-pool"), tempNet.CIDR, err)
 					}
 					static.FullName = "CAN Static Pool MetalLB"
 				}
 			}
-			if v.GetString("can-dynamic-pool") != "" {
-				_, canDynamicPool, err := net.ParseCIDR(v.GetString("can-dynamic-pool"))
+			if v.GetString("ucan-dynamic-pool") != "" {
+				_, canDynamicPool, err := net.ParseCIDR(v.GetString("ucan-dynamic-pool"))
 				if err != nil {
-					log.Printf("IP Addressing Failure\nInvalid can-dynamic-pool.  Cowardly refusing to create it.")
+					log.Printf("IP Addressing Failure\nInvalid ucan-dynamic-pool.  Cowardly refusing to create it.")
 				} else {
-					pool, err := tempNet.AddSubnetbyCIDR(*canDynamicPool, "can_metallb_address_pool", int16(v.GetInt("can-bootstrap-vlan")))
+					pool, err := tempNet.AddSubnetbyCIDR(*canDynamicPool, "can_metallb_address_pool", int16(v.GetInt("ucan-bootstrap-vlan")))
 					if err != nil {
 						log.Fatalf("IP Addressing Failure\n"+
 							"Couldn't add MetalLB Dynamic pool of %v to net %v: %v\n"+
-							"Possible missing or mismatched can-dynamic-pool value.",
-							v.GetString("can-dynamic-pool"), tempNet.CIDR, err)
-						log.Fatalf("Possible missing or mismatched can-dynamic-pool value.")
+							"Possible missing or mismatched ucan-dynamic-pool value.",
+							v.GetString("ucan-dynamic-pool"), tempNet.CIDR, err)
+						log.Fatalf("Possible missing or mismatched ucan-dynamic-pool value.")
 					}
 					pool.FullName = "CAN Dynamic MetalLB"
 				}
@@ -273,7 +273,7 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 					subnet.Gateway = net.ParseIP(v.GetString("cmn-gateway"))
 				} else if tempNet.Name == "CAN" {
 					subnet.CIDR = *canCIDR
-					subnet.Gateway = net.ParseIP(v.GetString("can-gateway"))
+					subnet.Gateway = net.ParseIP(v.GetString("ucan-gateway"))
 					subnet.AddReservation("can-switch-1", "")
 					subnet.AddReservation("can-switch-2", "")
 				} else if tempNet.Name == "CHN" {
