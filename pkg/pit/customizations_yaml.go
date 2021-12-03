@@ -205,7 +205,7 @@ func GenCustomizationsYaml(ncns []csi.LogicalNCN, shastaNetworks map[string]*csi
 			NMNSubnetCIDR:              uaiNetCIDR.String(),
 			NMNSupernetGateway:         uaiNet.Gateway,
 			NMNSupernetCIDR:            shastaNetworks["NMN"].CIDR,
-			NMNVlanInterface:           fmt.Sprintf("vlan%03d", uaiNet.VlanID),
+			NMNVlanInterface:           "bond0.nmn0",
 			NMNMacVlanReservationStart: uaiNet.ReservationStart,
 			NMNMacVlanReservationEnd:   uaiNet.ReservationEnd,
 		},

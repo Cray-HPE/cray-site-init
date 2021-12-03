@@ -291,7 +291,8 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 
 	// Add the macvlan/uai subnet(s)
 	if conf.IncludeUAISubnet {
-		uaisubnet, err := tempNet.AddSubnet(net.CIDRMask(23, 32), "uai_macvlan", int16(v.GetInt("macvlan-bootstrap-vlan")))
+		// Use the NMN vlan for uai_macvlan
+		uaisubnet, err := tempNet.AddSubnet(net.CIDRMask(23, 32), "uai_macvlan", int16(v.GetInt("nmn-bootstrap-vlan")))
 		_, supernetNet, _ := net.ParseCIDR(tempNet.CIDR)
 		uaisubnet.Gateway = ipam.Add(supernetNet.IP, 1)
 		if err != nil {

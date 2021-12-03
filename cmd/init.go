@@ -409,7 +409,6 @@ func init() {
 	initCmd.Flags().Int("hmn-bootstrap-vlan", csi.DefaultHMNVlan, "Bootstrap VLAN for the HMN")
 	initCmd.Flags().Int("cmn-bootstrap-vlan", csi.DefaultCMNVlan, "Bootstrap VLAN for the CMN")
 	initCmd.Flags().Int("can-bootstrap-vlan", csi.DefaultCANVlan, "Bootstrap VLAN for the CAN")
-	initCmd.Flags().Int("macvlan-bootstrap-vlan", csi.DefaultMacVlanVlan, "Bootstrap VLAN for MacVlan")
 
 	// Hardware Details
 	initCmd.Flags().Int("mountain-cabinets", 4, "Number of Mountain Cabinets") // 4 mountain cabinets per CDU
