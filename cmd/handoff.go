@@ -53,7 +53,6 @@ var (
 	s3Client *hms_s3.S3Client
 
 	s3SecretName string
-	s3BucketName string
 )
 
 // handoffCmd represents the handoff command
@@ -196,7 +195,7 @@ func setupHandoffCommon() (limitManagementNCNs []sls_common.GenericHardware, set
 	return
 }
 
-func setupS3() {
+func setupS3(s3BucketName string) {
 	// Built kubeconfig.
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
