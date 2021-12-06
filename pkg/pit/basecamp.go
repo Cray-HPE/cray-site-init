@@ -210,7 +210,7 @@ func unique(arr []string) []string {
 	result := []string{}
 
 	for e := range arr {
-		if occured[arr[e]] != true {
+		if !occured[arr[e]] {
 			occured[arr[e]] = true
 			result = append(result, arr[e])
 		}
@@ -337,13 +337,13 @@ func getNCNStaticRoutes(v *viper.Viper, shastaNetworks map[string]*csi.IPV4Netwo
 		{
 			Content:     ifrouteNMN.String(),
 			Owner:       "root:root",
-			Path:        fmt.Sprintf("/etc/sysconfig/network/ifroute-bond0.nmn0"),
+			Path:        "/etc/sysconfig/network/ifroute-bond0.nmn0",
 			Permissions: "0644",
 		},
 		{
 			Content:     ifrouteHMN.String(),
 			Owner:       "root:root",
-			Path:        fmt.Sprintf("/etc/sysconfig/network/ifroute-bond0.hmn0"),
+			Path:        "/etc/sysconfig/network/ifroute-bond0.hmn0",
 			Permissions: "0644",
 		},
 	}

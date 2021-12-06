@@ -200,25 +200,30 @@ func WriteDNSMasqConfig(path string, v *viper.Viper, bootstrap []csi.LogicalNCN,
 }
 
 func writeConfig(name, path string, tpl template.Template, networks map[string]*csi.IPV4Network) {
-	// get a pointer to the IPV4Network
+	// Pointer to the IPV4Network
 	tempNet := networks[name]
-	// get a pointer to the subnet
+
 	v := viper.GetViper()
+
+	// Pointer to the subnet
 	bootstrapSubnet, _ := tempNet.LookUpSubnet("bootstrap_dhcp")
+	// Create a subnet copy (avoid modifying the base data with dnsmasq overrides)
+	tempSubnet := *bootstrapSubnet
 
 	// Look up the PIT IP for the network
-	for _, reservation := range bootstrapSubnet.IPReservations {
+	for _, reservation := range tempSubnet.IPReservations {
 		if reservation.Name == v.GetString("install-ncn") {
-			bootstrapSubnet.PITServer = reservation.IPAddress
+			tempSubnet.PITServer = reservation.IPAddress
 		}
 	}
 	if tempNet.Name == "CAN" {
-		bootstrapSubnet.Gateway = net.ParseIP(v.GetString("can-gateway"))
+		tempSubnet.Gateway = net.ParseIP(v.GetString("can-gateway"))
 	}
 	if tempNet.Name == "CMN" {
-		bootstrapSubnet.Gateway = net.ParseIP(v.GetString("cmn-gateway"))
+		tempSubnet.Gateway = net.ParseIP(v.GetString("cmn-gateway"))
 	}
+
 	nmnLBSubnet, _ := networks["NMNLB"].LookUpSubnet("nmn_metallb_address_pool")
-	bootstrapSubnet.DNSServer = nmnLBSubnet.LookupReservation("unbound").IPAddress
-	csiFiles.WriteTemplate(filepath.Join(path, fmt.Sprintf("dnsmasq.d/%v.conf", name)), &tpl, bootstrapSubnet)
+	tempSubnet.DNSServer = nmnLBSubnet.LookupReservation("unbound").IPAddress
+	csiFiles.WriteTemplate(filepath.Join(path, fmt.Sprintf("dnsmasq.d/%v.conf", name)), &tpl, tempSubnet)
 }
