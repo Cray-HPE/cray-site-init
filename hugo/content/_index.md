@@ -22,7 +22,7 @@ The Site Survey CSM Questionnaire outlines information needed to begin an instal
 
 `csi` relies on several "seed" files:
 
-- `hmn_connections.json`: maps which switch ports on the Leaf switches are cabled to what the River node BMCs, PDUs, or other hardware[307-HMN-CONNECTIONS](#)
+- `hmn_connections.json`: maps which switch ports on the LeafBMC switches are cabled to what the River node BMCs, PDUs, or other hardware[307-HMN-CONNECTIONS](#)
 - `ncn_metadata.csv`: maps the MACs of the Management NCNs to their xnames and is used to initialize the management cluster ([301-NCN-METADATA-BMC](#) and [302-NCN-METADATA-BONDX](#))
 - `switch_metdata.csv`: maps the switch xname, brand, type, and model for the management switches in the system ([305-SWITCH-METADATA](#))
 

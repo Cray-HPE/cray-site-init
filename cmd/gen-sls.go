@@ -98,7 +98,7 @@ func genCabinetMap(cd []csi.CabinetGroupDetail, shastaNetworks map[string]*csi.I
 
 func convertManagementSwitchToSLS(s *csi.ManagementSwitch) (sls_common.GenericHardware, error) {
 	switch s.SwitchType {
-	case csi.ManagementSwitchTypeLeaf:
+	case csi.ManagementSwitchTypeLeafBMC:
 		return sls_common.GenericHardware{
 			Parent:     base.GetHMSCompParent(s.Xname),
 			Xname:      s.Xname,
@@ -189,11 +189,11 @@ func extractSwitchesfromReservations(subnet *csi.IPV4Subnet) ([]csi.ManagementSw
 				ManagementInterface: reservation.IPAddress,
 			})
 		}
-		if strings.HasPrefix(reservation.Name, "sw-leaf") {
+		if strings.HasPrefix(reservation.Name, "sw-leaf-bmc") {
 			switches = append(switches, csi.ManagementSwitch{
 				Xname:               reservation.Comment,
 				Name:                reservation.Name,
-				SwitchType:          csi.ManagementSwitchTypeLeaf,
+				SwitchType:          csi.ManagementSwitchTypeLeafBMC,
 				ManagementInterface: reservation.IPAddress,
 			})
 		}

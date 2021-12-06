@@ -179,7 +179,7 @@ func TestConfigShcd_GenerateSeeds(t *testing.T) {
 
 			// If there is a match, run 'canu' and 'csi config shcd'
 			if re.MatchString(shcds[s]) {
-				// Get the mac addresses from the leaf switch of the system
+				// Get the mac addresses from the leaf-bmc switch of the system
 				log.Println("Running canu for " + test.systemName + "...")
 
 				// Run canu against the shcd.xlsx file to generate the shcd.json

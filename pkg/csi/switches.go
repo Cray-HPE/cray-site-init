@@ -29,14 +29,14 @@ const ManagementSwitchBrandDell ManagementSwitchBrand = "Dell"
 // ManagementSwitchBrandMellanox for Mellanox Management switches
 const ManagementSwitchBrandMellanox ManagementSwitchBrand = "Mellanox"
 
-// ManagementSwitchType the type of management switch CDU/Leaf/Spine/Aggregation
+// ManagementSwitchType the type of management switch CDU/LeafBMC/Spine/Aggregation
 type ManagementSwitchType string
 
 // ManagementSwitchTypeCDU is the type for CDU Management switches
 const ManagementSwitchTypeCDU ManagementSwitchType = "CDU"
 
-// ManagementSwitchTypeLeaf is the type for Leaf Management switches
-const ManagementSwitchTypeLeaf ManagementSwitchType = "Leaf"
+// ManagementSwitchTypeLeafBMC is the type for Leaf Management switches
+const ManagementSwitchTypeLeafBMC ManagementSwitchType = "LeafBMC"
 
 // ManagementSwitchTypeSpine is the type for Spine Management switches
 const ManagementSwitchTypeSpine ManagementSwitchType = "Spine"
@@ -55,7 +55,7 @@ func IsManagementSwitchTypeValid(mst ManagementSwitchType) bool {
 		fallthrough
 	case ManagementSwitchTypeCDU:
 		fallthrough
-	case ManagementSwitchTypeLeaf:
+	case ManagementSwitchTypeLeafBMC:
 		fallthrough
 	case ManagementSwitchTypeSpine:
 		return true
@@ -72,7 +72,7 @@ type ManagementSwitch struct {
 	Model               string                `json:"model" mapstructure:"model" csv:"Model"`
 	Os                  string                `json:"operating-system" mapstructure:"operating-system" csv:"-"`
 	Firmware            string                `json:"firmware" mapstructure:"firmware" csv:"-"`
-	SwitchType          ManagementSwitchType  `json:"type" mapstructure:"type" csv:"Type"` //"CDU/Leaf/Spine/Aggregation"
+	SwitchType          ManagementSwitchType  `json:"type" mapstructure:"type" csv:"Type"` //"CDU/LeafBMC/Spine/Aggregation"
 	ManagementInterface net.IP                `json:"ip" mapstructure:"ip" csv:"-"`        // SNMP/REST interface IP (not a distinct BMC)  // Required for SLS
 }
 
@@ -98,9 +98,9 @@ func (mySwitch *ManagementSwitch) Validate() error {
 	// types of management switches.
 	hmsType := base.GetHMSType(xname)
 	switch mySwitch.SwitchType {
-	case ManagementSwitchTypeLeaf:
+	case ManagementSwitchTypeLeafBMC:
 		if hmsType != base.MgmtSwitch {
-			return fmt.Errorf("invalid xname used for Leaf switch: %s,  should use xXcCwW format", xname)
+			return fmt.Errorf("invalid xname used for LeafBMC switch: %s,  should use xXcCwW format", xname)
 		}
 	case ManagementSwitchTypeSpine:
 		fallthrough

@@ -22,7 +22,7 @@ func (suite *NetworkingTestSuite) TestIsManagementSwitchTypeValid() {
 	switchTypes := []ManagementSwitchType{
 		ManagementSwitchTypeAggregation,
 		ManagementSwitchTypeCDU,
-		ManagementSwitchTypeLeaf,
+		ManagementSwitchTypeLeafBMC,
 		ManagementSwitchTypeSpine,
 	}
 

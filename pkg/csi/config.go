@@ -10,7 +10,7 @@ import (
 
 // BootstrapSwitchMetadata is a type that matches the switch_metadata.csv file as
 // Switch Xname, Type
-// The type can be CDU, Spine, Aggregation, or Leaf
+// The type can be CDU, Spine, Aggregation, or LeafBMC
 type BootstrapSwitchMetadata struct {
 	Xname string `json:"xname" csv:"Switch Xname"`
 	Type  string `json:"type" csv:"Type"`
