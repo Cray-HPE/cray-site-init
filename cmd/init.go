@@ -364,7 +364,7 @@ func init() {
 	initCmd.Flags().String("ipv4-resolvers", "8.8.8.8, 9.9.9.9", "List of IP Addresses for DNS")
 	initCmd.Flags().String("v2-registry", "https://registry.nmn/", "URL for default v2 registry used for both helm and containers")
 	initCmd.Flags().String("rpm-repository", "https://packages.nmn/repository/shasta-master", "URL for default rpm repository")
-	initCmd.Flags().String("cmn-gateway", "", "Gateway for NCNs on the CMN (Management)")
+	initCmd.Flags().String("cmn-gateway", "", "Gateway for NCNs on the CMN (Administrative/Management)")
 	initCmd.Flags().String("can-gateway", "", "Gateway for NCNs on the CAN (User)")
 	initCmd.Flags().String("chn-gateway", "", "Gateway for NCNs on the CHN (User)")
 	initCmd.Flags().String("ceph-cephfs-image", "dtr.dev.cray.com/cray/cray-cephfs-provisioner:0.1.0-nautilus-1.3", "The container image for the cephfs provisioner")
@@ -502,7 +502,6 @@ func setupDirectories(systemName string, v *viper.Viper) (string, error) {
 	// These Directories make up the overall structure for the Configuration Payload
 	// TODO: Refactor this out of the function and into defaults or some other config
 	dirs := []string{
-		filepath.Join(basepath, "networks"),
 		filepath.Join(basepath, "manufacturing"),
 		filepath.Join(basepath, "dnsmasq.d"),
 		filepath.Join(basepath, "pit-files"),
