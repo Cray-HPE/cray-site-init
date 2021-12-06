@@ -37,7 +37,6 @@ type IPV4Subnet struct {
 	VlanID           int16           `yaml:"vlan_id" form:"vlan_id" mapstructure:"vlan_id"`
 	Comment          string          `yaml:"comment"`
 	Gateway          net.IP          `yaml:"gateway"`
-	SupernetRouter   net.IP          `yaml:"_"`
 	PITServer        net.IP          `yaml:"_"`
 	DNSServer        net.IP          `yaml:"dns_server"`
 	DHCPStart        net.IP          `yaml:"iprange-start"`
