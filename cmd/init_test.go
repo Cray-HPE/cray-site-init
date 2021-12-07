@@ -22,8 +22,8 @@ type InitCmdTestSuite struct {
 func (suite *InitCmdTestSuite) TestValidateSwitchInput_HappyPath() {
 	switches := []*csi.ManagementSwitch{
 		{
-			// Leaf switch
-			Xname: "x3000c0w14", SwitchType: csi.ManagementSwitchTypeLeaf,
+			// LeafBMC
+			Xname: "x3000c0w14", SwitchType: csi.ManagementSwitchTypeLeafBMC,
 			Brand: csi.ManagementSwitchBrandAruba,
 		}, {
 			// Spine Switch
@@ -31,9 +31,9 @@ func (suite *InitCmdTestSuite) TestValidateSwitchInput_HappyPath() {
 			SwitchType: csi.ManagementSwitchTypeSpine,
 			Brand:      csi.ManagementSwitchBrandAruba,
 		}, {
-			// Aggregation Switch
+			// Leaf Switch
 			Xname:      "x3000c0h12s1",
-			SwitchType: csi.ManagementSwitchTypeAggregation,
+			SwitchType: csi.ManagementSwitchTypeLeaf,
 			Brand:      csi.ManagementSwitchBrandAruba,
 		}, {
 			// CDU Switch located in a CDU
@@ -55,7 +55,7 @@ func (suite *InitCmdTestSuite) TestValidateSwitchInput_HappyPath() {
 func (suite *InitCmdTestSuite) TestValidateSwitchInput_InvalidXname() {
 	switches := []*csi.ManagementSwitch{
 		{ // Valid Xname
-			Xname: "x3000c0w14", SwitchType: csi.ManagementSwitchTypeLeaf,
+			Xname: "x3000c0w14", SwitchType: csi.ManagementSwitchTypeLeafBMC,
 			Brand: csi.ManagementSwitchBrandAruba,
 		}, { // Invalid Xname
 			Xname:      "x3000c0w15L",
@@ -94,18 +94,18 @@ func (suite *InitCmdTestSuite) TestValidateSwitchInput_WrongXNameTypes() {
 		},
 		expectedError: errors.New("switch_metadata.csv contains invalid switch data"),
 	}, {
-		// Aggregation using MgmtSwitch, should be using MgmtHLSwitch
+		// Leaf using MgmtSwitch, should be using MgmtHLSwitch
 		mySwitch: csi.ManagementSwitch{
 			Xname:      "x20c0w14",
-			SwitchType: csi.ManagementSwitchTypeAggregation,
+			SwitchType: csi.ManagementSwitchTypeLeaf,
 			Brand:      csi.ManagementSwitchBrandAruba,
 		},
 		expectedError: errors.New("switch_metadata.csv contains invalid switch data"),
 	}, {
-		// Aggregation using CDUMgmtSwitch, should be using MgmtHLSwitch
+		// Leaf using CDUMgmtSwitch, should be using MgmtHLSwitch
 		mySwitch: csi.ManagementSwitch{
 			Xname:      "d20w14",
-			SwitchType: csi.ManagementSwitchTypeAggregation,
+			SwitchType: csi.ManagementSwitchTypeLeaf,
 			Brand:      csi.ManagementSwitchBrandAruba,
 		},
 		expectedError: errors.New("switch_metadata.csv contains invalid switch data"),

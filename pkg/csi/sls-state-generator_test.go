@@ -283,10 +283,10 @@ var TestSLSInputState = SLSGeneratorInputState{
 	},
 
 	ManagementSwitches: map[string]sls_common.GenericHardware{
-		"x3000c0w22": buildMgmtSwitch("x3000c0", "x3000c0w22", "sw-leaf01", "10.254.0.2", ManagementSwitchBrandDell),
-		"x3000c0w38": buildMgmtSwitch("x3000c0", "x3000c0w38", "sw-leaf02", "10.254.0.3", ManagementSwitchBrandDell),
-		"x3001c0w21": buildMgmtSwitch("x3001c0", "x3001c0w21", "sw-leaf03", "10.254.0.4", ManagementSwitchBrandDell),
-		"x3001c0w42": buildMgmtSwitch("x3001c0", "x3001c0w42", "sw-leaf04", "10.254.0.42", ManagementSwitchBrandAruba),
+		"x3000c0w22": buildMgmtSwitch("x3000c0", "x3000c0w22", "sw-leaf-bmc-01", "10.254.0.2", ManagementSwitchBrandDell),
+		"x3000c0w38": buildMgmtSwitch("x3000c0", "x3000c0w38", "sw-leaf-bmc-02", "10.254.0.3", ManagementSwitchBrandDell),
+		"x3001c0w21": buildMgmtSwitch("x3001c0", "x3001c0w21", "sw-leaf-bmc-03", "10.254.0.4", ManagementSwitchBrandDell),
+		"x3001c0w42": buildMgmtSwitch("x3001c0", "x3001c0w42", "sw-leaf-bmc-04", "10.254.0.42", ManagementSwitchBrandAruba),
 	},
 
 	RiverCabinets: map[string]sls_common.GenericHardware{

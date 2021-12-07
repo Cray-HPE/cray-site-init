@@ -29,9 +29,9 @@ func (suite *GenSLSTestSuite) TestConvertManagementSwitchToSLS_HappyPath() {
 		// Leaf Switch
 		csiSwitch: csi.ManagementSwitch{
 			Xname:               "x3000c0w14",
-			Name:                "sw-leaf-001",
+			Name:                "sw-leaf-bmc-001",
 			ManagementInterface: net.ParseIP("10.254.0.2"),
-			SwitchType:          csi.ManagementSwitchTypeLeaf,
+			SwitchType:          csi.ManagementSwitchTypeLeafBMC,
 			Brand:               csi.ManagementSwitchBrandAruba,
 			Model:               "6300M",
 		},
@@ -50,7 +50,7 @@ func (suite *GenSLSTestSuite) TestConvertManagementSwitchToSLS_HappyPath() {
 				SNMPPrivPassword: "vault://hms-creds/x3000c0w14",
 				SNMPPrivProtocol: "DES",
 				SNMPUsername:     "testuser",
-				Aliases:          []string{"sw-leaf-001"},
+				Aliases:          []string{"sw-leaf-bmc-001"},
 			},
 		},
 	}, {
@@ -77,12 +77,12 @@ func (suite *GenSLSTestSuite) TestConvertManagementSwitchToSLS_HappyPath() {
 			},
 		},
 	}, {
-		// Aggergation Switch
+		// Leaf Switch
 		csiSwitch: csi.ManagementSwitch{
 			Xname:               "x3000c0h13s1",
-			Name:                "sw-agg-001",
+			Name:                "sw-leaf-001",
 			ManagementInterface: net.ParseIP("10.254.0.2"),
-			SwitchType:          csi.ManagementSwitchTypeAggregation,
+			SwitchType:          csi.ManagementSwitchTypeLeaf,
 			Brand:               csi.ManagementSwitchBrandAruba,
 			Model:               "8325",
 		},
@@ -96,7 +96,7 @@ func (suite *GenSLSTestSuite) TestConvertManagementSwitchToSLS_HappyPath() {
 				IP4Addr: "10.254.0.2",
 				Brand:   "Aruba",
 				Model:   "8325",
-				Aliases: []string{"sw-agg-001"},
+				Aliases: []string{"sw-leaf-001"},
 			},
 		},
 	}, {
@@ -161,7 +161,7 @@ func (suite *GenSLSTestSuite) TestConvertManagementSwitchToSLS_InvalidSwitchType
 		// Missing Switch Type
 		csiSwitch: csi.ManagementSwitch{
 			Xname:               "x3000c0w14",
-			Name:                "sw-leaf-001",
+			Name:                "sw-leaf-bmc-001",
 			ManagementInterface: net.ParseIP("10.254.0.2"),
 			Brand:               csi.ManagementSwitchBrandAruba,
 			Model:               "6300M",
@@ -171,7 +171,7 @@ func (suite *GenSLSTestSuite) TestConvertManagementSwitchToSLS_InvalidSwitchType
 		// Invalid switch type
 		csiSwitch: csi.ManagementSwitch{
 			Xname:               "x3000c0w14",
-			Name:                "sw-leaf-001",
+			Name:                "sw-leaf-bmc-001",
 			ManagementInterface: net.ParseIP("10.254.0.2"),
 			SwitchType:          csi.ManagementSwitchType("foobar"),
 			Brand:               csi.ManagementSwitchBrandAruba,
@@ -190,7 +190,7 @@ func (suite *GenSLSTestSuite) TestExtractSwitchesfromReservations() {
 	subnet := &csi.IPV4Subnet{
 		IPReservations: []csi.IPReservation{{
 			Comment:   "x3000c0w14",
-			Name:      "sw-leaf-001",
+			Name:      "sw-leaf-bmc-001",
 			IPAddress: net.ParseIP("10.254.0.2"),
 		}, {
 			Comment:   "x3000c0h13s1",
@@ -198,7 +198,7 @@ func (suite *GenSLSTestSuite) TestExtractSwitchesfromReservations() {
 			IPAddress: net.ParseIP("10.254.0.3"),
 		}, {
 			Comment:   "x3000c0h12s1",
-			Name:      "sw-agg-001",
+			Name:      "sw-leaf-001",
 			IPAddress: net.ParseIP("10.254.0.4"),
 		}, {
 			Comment:   "d10w10",
@@ -209,8 +209,8 @@ func (suite *GenSLSTestSuite) TestExtractSwitchesfromReservations() {
 
 	expectedOutput := []csi.ManagementSwitch{{
 		Xname:               "x3000c0w14",
-		Name:                "sw-leaf-001",
-		SwitchType:          "Leaf",
+		Name:                "sw-leaf-bmc-001",
+		SwitchType:          "LeafBMC",
 		ManagementInterface: net.ParseIP("10.254.0.2"),
 	}, {
 		Xname:               "x3000c0h13s1",
@@ -219,8 +219,8 @@ func (suite *GenSLSTestSuite) TestExtractSwitchesfromReservations() {
 		ManagementInterface: net.ParseIP("10.254.0.3"),
 	}, {
 		Xname:               "x3000c0h12s1",
-		Name:                "sw-agg-001",
-		SwitchType:          "Aggregation",
+		Name:                "sw-leaf-001",
+		SwitchType:          "Leaf",
 		ManagementInterface: net.ParseIP("10.254.0.4"),
 	}, {
 		Xname:               "d10w10",
