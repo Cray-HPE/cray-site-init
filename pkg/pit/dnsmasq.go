@@ -56,8 +56,8 @@ interface=bond0.hmn0
 cname=packages.hmn,pit.hmn
 cname=registry.hmn,pit.hmn
 # This needs to point to the liveCD IP for provisioning in bare-metal environments.
-dhcp-option=interface:bond0.hmn0,option:dns-server,{{.Gateway}}
-dhcp-option=interface:bond0.hmn0,option:ntp-server,{{.Gateway}}
+dhcp-option=interface:bond0.hmn0,option:dns-server,{{.PITServer}}
+dhcp-option=interface:bond0.hmn0,option:ntp-server,{{.PITServer}}
 dhcp-option=interface:bond0.hmn0,option:router,{{.Gateway}}
 dhcp-range=interface:bond0.hmn0,{{.DHCPStart}},{{.DHCPEnd}},10m
 `)
@@ -72,10 +72,10 @@ dhcp-option=interface:bond0,option:domain-search,mtl
 interface=bond0
 interface-name=pit.mtl,bond0
 # This needs to point to the liveCD IP for provisioning in bare-metal environments.
-dhcp-option=interface:bond0,option:dns-server,{{.Gateway}}
-dhcp-option=interface:bond0,option:ntp-server,{{.Gateway}}
+dhcp-option=interface:bond0,option:dns-server,{{.PITServer}}
+dhcp-option=interface:bond0,option:ntp-server,{{.PITServer}}
 # This must point at the router for the network; the L3/IP for the VLAN.
-dhcp-option=interface:bond0,option:router,{{.SupernetRouter}}
+dhcp-option=interface:bond0,option:router,{{.Gateway}}
 dhcp-range=interface:bond0,{{.DHCPStart}},{{.DHCPEnd}},10m
 `)
 
@@ -91,9 +91,9 @@ interface=bond0.nmn0
 cname=packages.nmn,pit.nmn
 cname=registry.nmn,pit.nmn
 # This needs to point to the liveCD IP for provisioning in bare-metal environments.
-dhcp-option=interface:bond0.nmn0,option:dns-server,{{.Gateway}}
-dhcp-option=interface:bond0.nmn0,option:ntp-server,{{.Gateway}}
-dhcp-option=interface:bond0.nmn0,option:router,{{.SupernetRouter}}
+dhcp-option=interface:bond0.nmn0,option:dns-server,{{.PITServer}}
+dhcp-option=interface:bond0.nmn0,option:ntp-server,{{.PITServer}}
+dhcp-option=interface:bond0.nmn0,option:router,{{.Gateway}}
 dhcp-range=interface:bond0.nmn0,{{.DHCPStart}},{{.DHCPEnd}},10m
 `)
 
@@ -200,43 +200,30 @@ func WriteDNSMasqConfig(path string, v *viper.Viper, bootstrap []csi.LogicalNCN,
 }
 
 func writeConfig(name, path string, tpl template.Template, networks map[string]*csi.IPV4Network) {
-	// get a pointer to the IPV4Network
+	// Pointer to the IPV4Network
 	tempNet := networks[name]
-	// get a pointer to the subnet
+
 	v := viper.GetViper()
+
+	// Pointer to the subnet
 	bootstrapSubnet, _ := tempNet.LookUpSubnet("bootstrap_dhcp")
-	for _, reservation := range bootstrapSubnet.IPReservations {
+	// Create a subnet copy (avoid modifying the base data with dnsmasq overrides)
+	tempSubnet := *bootstrapSubnet
+
+	// Look up the PIT IP for the network
+	for _, reservation := range tempSubnet.IPReservations {
 		if reservation.Name == v.GetString("install-ncn") {
-			bootstrapSubnet.Gateway = reservation.IPAddress
+			tempSubnet.PITServer = reservation.IPAddress
 		}
 	}
 	if tempNet.Name == "CAN" {
-		bootstrapSubnet.Gateway = net.ParseIP(v.GetString("can-gateway"))
+		tempSubnet.Gateway = net.ParseIP(v.GetString("can-gateway"))
 	}
 	if tempNet.Name == "CMN" {
-		bootstrapSubnet.Gateway = net.ParseIP(v.GetString("cmn-gateway"))
+		tempSubnet.Gateway = net.ParseIP(v.GetString("cmn-gateway"))
 	}
-	// Normalize the CIDR before using it
-	_, superNet, _ := net.ParseCIDR(bootstrapSubnet.CIDR.String())
-	bootstrapSubnet.SupernetRouter = genPinnedIP(superNet.IP, uint8(1))
-	nmnLBSubnet, _ := networks["NMNLB"].LookUpSubnet("nmn_metallb_address_pool")
-	bootstrapSubnet.DNSServer = nmnLBSubnet.LookupReservation("unbound").IPAddress
-	csiFiles.WriteTemplate(filepath.Join(path, fmt.Sprintf("dnsmasq.d/%v.conf", name)), &tpl, bootstrapSubnet)
-}
 
-func genPinnedIP(ip net.IP, pin uint8) net.IP {
-	newIP := make(net.IP, 4)
-	if len(ip) == 4 {
-		newIP[0] = ip[0]
-		newIP[1] = ip[1]
-		newIP[2] = ip[2]
-		newIP[3] = pin
-	}
-	if len(ip) == 16 {
-		newIP[0] = ip[12]
-		newIP[1] = ip[13]
-		newIP[2] = ip[14]
-		newIP[3] = pin
-	}
-	return newIP
+	nmnLBSubnet, _ := networks["NMNLB"].LookUpSubnet("nmn_metallb_address_pool")
+	tempSubnet.DNSServer = nmnLBSubnet.LookupReservation("unbound").IPAddress
+	csiFiles.WriteTemplate(filepath.Join(path, fmt.Sprintf("dnsmasq.d/%v.conf", name)), &tpl, tempSubnet)
 }
