@@ -34,6 +34,8 @@ var (
 	cephKernelPath   string
 	cephInitrdPath   string
 	cephSquashFSPath string
+
+	imagesS3BucketName string
 )
 
 // handoffCmd represents the handoff command
@@ -43,7 +45,7 @@ var handoffNCNImagesCmd = &cobra.Command{
 	Long: "A series of subcommands that facilitate the migration of assets/configuration/etc from the LiveCD to the " +
 		"production version inside the Kubernetes cluster.",
 	Run: func(cmd *cobra.Command, args []string) {
-		setupS3()
+		setupS3(imagesS3BucketName)
 
 		fmt.Println("Uploading NCN images into S3.")
 		uploadNCNImagesS3()
@@ -63,7 +65,7 @@ func init() {
 
 	handoffNCNImagesCmd.Flags().StringVar(&s3SecretName, "s3-secret", "sts-s3-credentials",
 		"Secret to use for connecting to S3")
-	handoffNCNImagesCmd.Flags().StringVar(&s3BucketName, "s3-bucket", "ncn-images",
+	handoffNCNImagesCmd.Flags().StringVar(&imagesS3BucketName, "s3-bucket", "ncn-images",
 		"Bucket to create and upload NCN images to")
 
 	handoffNCNImagesCmd.Flags().StringVar(&k8sKernelPath, "k8s-kernel-path", "",
@@ -100,17 +102,17 @@ func uploadFile(filePath string, s3KeyName string) {
 
 func uploadNCNImagesS3() {
 	// Create public-read bucket.
-	_, err := s3Client.CreateBucketWithACL(s3BucketName, s3ACL)
+	_, err := s3Client.CreateBucketWithACL(imagesS3BucketName, s3ACL)
 	if err != nil {
 		awsErr := err.(awserr.Error)
 
 		if awsErr.Code() == s3.ErrCodeBucketAlreadyExists {
-			log.Printf("Bucket already exists.\n")
+			log.Printf("Bucket %s already exists.\n", imagesS3BucketName)
 		} else {
 			log.Panic(err)
 		}
 	} else {
-		fmt.Printf("Sucessfully created %s bucket.\n", s3BucketName)
+		fmt.Printf("Sucessfully created %s bucket.\n", imagesS3BucketName)
 	}
 
 	// Need to figure out the versions of these images.
