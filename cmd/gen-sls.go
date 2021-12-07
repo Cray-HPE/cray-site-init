@@ -118,7 +118,7 @@ func convertManagementSwitchToSLS(s *csi.ManagementSwitch) (sls_common.GenericHa
 				Aliases: []string{s.Name},
 			},
 		}, nil
-	case csi.ManagementSwitchTypeAggregation:
+	case csi.ManagementSwitchTypeLeaf:
 		fallthrough
 	case csi.ManagementSwitchTypeSpine:
 		return sls_common.GenericHardware{
@@ -181,11 +181,11 @@ func extractSwitchesfromReservations(subnet *csi.IPV4Subnet) ([]csi.ManagementSw
 				ManagementInterface: reservation.IPAddress,
 			})
 		}
-		if strings.HasPrefix(reservation.Name, "sw-agg") {
+		if strings.HasPrefix(reservation.Name, "sw-leaf") && !strings.HasPrefix(reservation.Name, "sw-leaf-bmc") {
 			switches = append(switches, csi.ManagementSwitch{
 				Xname:               reservation.Comment,
 				Name:                reservation.Name,
-				SwitchType:          csi.ManagementSwitchTypeAggregation,
+				SwitchType:          csi.ManagementSwitchTypeLeaf,
 				ManagementInterface: reservation.IPAddress,
 			})
 		}

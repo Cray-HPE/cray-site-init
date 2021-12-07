@@ -237,7 +237,7 @@ func (id Id) GenerateXname() (xn string) {
 		// Convert it to a string
 		xn = x.String()
 
-		// Leaf switches have their own needs
+		// LeafBMC switches have their own needs
 	} else if strings.HasPrefix(id.CommonName, "sw-leaf-bmc-") {
 
 		// Get the just number of the elevation
@@ -424,7 +424,7 @@ func (id Id) GenerateSwitchType() (st string) {
 	// These conditionals just adjust for the names we expect in that file
 	if strings.Contains(id.Architecture, "bmc") {
 
-		st = "Leaf"
+		st = "LeafBMC"
 
 	} else if strings.Contains(id.Architecture, "spine") {
 
@@ -432,7 +432,7 @@ func (id Id) GenerateSwitchType() (st string) {
 
 	} else if strings.Contains(id.Architecture, "river_ncn_leaf") {
 
-		st = "Aggregation"
+		st = "Leaf"
 
 	} else if strings.Contains(id.CommonName, "cdu") {
 

@@ -20,7 +20,7 @@ type NetworkingTestSuite struct {
 
 func (suite *NetworkingTestSuite) TestIsManagementSwitchTypeValid() {
 	switchTypes := []ManagementSwitchType{
-		ManagementSwitchTypeAggregation,
+		ManagementSwitchTypeLeaf,
 		ManagementSwitchTypeCDU,
 		ManagementSwitchTypeLeafBMC,
 		ManagementSwitchTypeSpine,
@@ -64,7 +64,7 @@ func (suite *NetworkingTestSuite) TestValidateSwitch_WrongXnameTypes() {
 			SwitchType: ManagementSwitchTypeSpine,
 			Brand:      ManagementSwitchBrandAruba,
 		},
-		expectedError: errors.New("invalid xname used for Spine/Aggregation switch: x10c0w14, should use xXcChHsS format"),
+		expectedError: errors.New("invalid xname used for Spine/Leaf switch: x10c0w14, should use xXcChHsS format"),
 	}, {
 		// Spine using CDUMgmtSwitch, should be using MgmtHLSwitch
 		mySwitch: ManagementSwitch{
@@ -72,23 +72,23 @@ func (suite *NetworkingTestSuite) TestValidateSwitch_WrongXnameTypes() {
 			SwitchType: ManagementSwitchTypeSpine,
 			Brand:      ManagementSwitchBrandAruba,
 		},
-		expectedError: errors.New("invalid xname used for Spine/Aggregation switch: d10w14, should use xXcChHsS format"),
+		expectedError: errors.New("invalid xname used for Spine/Leaf switch: d10w14, should use xXcChHsS format"),
 	}, {
-		// Aggregation using MgmtSwitch, should be using MgmtHLSwitch
+		// Leaf using MgmtSwitch, should be using MgmtHLSwitch
 		mySwitch: ManagementSwitch{
 			Xname:      "x20c0w14",
-			SwitchType: ManagementSwitchTypeAggregation,
+			SwitchType: ManagementSwitchTypeLeaf,
 			Brand:      ManagementSwitchBrandAruba,
 		},
-		expectedError: errors.New("invalid xname used for Spine/Aggregation switch: x20c0w14, should use xXcChHsS format"),
+		expectedError: errors.New("invalid xname used for Spine/Leaf switch: x20c0w14, should use xXcChHsS format"),
 	}, {
-		// Aggregation using CDUMgmtSwitch, should be using MgmtHLSwitch
+		// Leaf using CDUMgmtSwitch, should be using MgmtHLSwitch
 		mySwitch: ManagementSwitch{
 			Xname:      "d20w14",
-			SwitchType: ManagementSwitchTypeAggregation,
+			SwitchType: ManagementSwitchTypeLeaf,
 			Brand:      ManagementSwitchBrandAruba,
 		},
-		expectedError: errors.New("invalid xname used for Spine/Aggregation switch: d20w14, should use xXcChHsS format"),
+		expectedError: errors.New("invalid xname used for Spine/Leaf switch: d20w14, should use xXcChHsS format"),
 	}, {
 		// CDU using MgmtHLSwitch, should be using CDUMgmtSwitch
 		mySwitch: ManagementSwitch{

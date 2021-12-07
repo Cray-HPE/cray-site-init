@@ -55,7 +55,7 @@ type AddressPoolDetail struct {
 
 // MetalLBConfigMap holds information needed by the MetalLBConfigMapTemplate
 type MetalLBConfigMap struct {
-	AggSwitches   []PeerDetail
+	LeafSwitches  []PeerDetail
 	PeerSwitches  []PeerDetail
 	SpineSwitches []PeerDetail
 	Networks      []AddressPoolDetail
@@ -72,16 +72,16 @@ func GetMetalLBConfig(v *viper.Viper, networks map[string]*csi.IPV4Network, swit
 
 	var configStruct MetalLBConfigMap
 
-	var spineSwitchXnames, aggSwitchXnames []string
+	var spineSwitchXnames, leafSwitchXnames []string
 	var bgpPeers = v.GetString("bgp-peers")
 
-	// Split out switches into spine and aggregation lists
+	// Split out switches into spine and leaf lists
 	for _, mgmtswitch := range switches {
 		if mgmtswitch.SwitchType == "Spine" {
 			spineSwitchXnames = append(spineSwitchXnames, mgmtswitch.Xname)
 		}
-		if mgmtswitch.SwitchType == "Aggregation" {
-			aggSwitchXnames = append(aggSwitchXnames, mgmtswitch.Xname)
+		if mgmtswitch.SwitchType == "Leaf" {
+			leafSwitchXnames = append(leafSwitchXnames, mgmtswitch.Xname)
 		}
 	}
 
@@ -103,9 +103,9 @@ func GetMetalLBConfig(v *viper.Viper, networks map[string]*csi.IPV4Network, swit
 							configStruct.SpineSwitches = append(configStruct.SpineSwitches, tmpPeer)
 						}
 					}
-					for _, switchXname := range aggSwitchXnames {
+					for _, switchXname := range leafSwitchXnames {
 						if reservation.Comment == switchXname {
-							configStruct.AggSwitches = append(configStruct.AggSwitches, tmpPeer)
+							configStruct.LeafSwitches = append(configStruct.LeafSwitches, tmpPeer)
 						}
 					}
 				}
@@ -186,9 +186,8 @@ func WriteMetalLBConfigMap(path string, v *viper.Viper, networks map[string]*csi
 	if err != nil {
 		log.Printf("The template failed to render because: %v \n", err)
 	}
-	var configStruct MetalLBConfigMap
 
-	configStruct = GetMetalLBConfig(v, networks, switches)
+	configStruct := GetMetalLBConfig(v, networks, switches)
 
 	csiFiles.WriteTemplate(filepath.Join(path, "metallb.yaml"), tpl, configStruct)
 }
@@ -197,17 +196,15 @@ func WriteMetalLBConfigMap(path string, v *viper.Viper, networks map[string]*csi
 func getMetalLBPeerSwitches(bgpPeers string, configStruct MetalLBConfigMap) []PeerDetail {
 
 	switchTypeMap := map[string][]PeerDetail{
-		"spine":       configStruct.SpineSwitches,
-		"aggregation": configStruct.AggSwitches,
+		"spine": configStruct.SpineSwitches,
+		"leaf":  configStruct.LeafSwitches,
 	}
 
 	if peerSwitches, ok := switchTypeMap[bgpPeers]; ok {
 		if len(peerSwitches) == 0 {
 			log.Fatalf("bgp-peers: %s specified but none defined in switch_metadata.csv\n", bgpPeers)
 		}
-		for _, switchDetail := range peerSwitches {
-			configStruct.PeerSwitches = append(configStruct.PeerSwitches, switchDetail)
-		}
+		configStruct.PeerSwitches = append(configStruct.PeerSwitches, peerSwitches...)
 	} else {
 		log.Fatalf("bgp-peers: unrecognized option: %s\n", bgpPeers)
 	}

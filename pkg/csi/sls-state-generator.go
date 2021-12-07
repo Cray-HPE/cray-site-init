@@ -28,7 +28,7 @@ var (
 	pduuRegex        = regexp.MustCompile(`(x\d+p|pdu)(\d+)`) // Match on x3000p0 and pdu0
 )
 
-// SLSGeneratorInputState is given to the SLS config generator in order to generator the SLS config file
+// SLSGeneratorInputState is given to the SLS config generator in order to generate the SLS config file
 type SLSGeneratorInputState struct {
 	ApplicationNodeConfig SLSGeneratorApplicationNodeConfig `json:"ApplicationNodeConfig"`
 
@@ -378,10 +378,13 @@ func (g *SLSStateGenerator) getRiverHardwareFromRow(row shcd_parser.HMNRow) (har
 	}
 
 	// Management switches
-	if strings.HasPrefix(sourceLowerCase, "sw-agg") || strings.HasPrefix(sourceLowerCase, "sw-25g") || strings.HasPrefix(sourceLowerCase, "sw-40g") || strings.HasPrefix(sourceLowerCase, "sw-smn") {
+	if strings.HasPrefix(sourceLowerCase, "sw-leaf") || strings.HasPrefix(sourceLowerCase, "sw-25g") || strings.HasPrefix(sourceLowerCase, "sw-40g") || strings.HasPrefix(sourceLowerCase, "sw-leaf-bmc") {
 		return g.getManagementSwitchHardwareFrom(row)
 	}
-
+	// Management switches deprecated naming
+	if strings.HasPrefix(sourceLowerCase, "sw-agg") || strings.HasPrefix(sourceLowerCase, "sw-smn") {
+		return g.getManagementSwitchHardwareFrom(row)
+	}
 	// Default to node.
 	return g.getNodeHardwareFromRow(row)
 }
@@ -472,7 +475,7 @@ func (g *SLSStateGenerator) getManagementSwitchHardwareFrom(row shcd_parser.HMNR
 	// Not all SHCDs have the management switch connection information in the HMN connections tables,
 	// and we are provided switch information via switch_metadata
 	// The HMN connection information is not required for discovery.
-	// sw-agg, sw-25g, sw-40g, sw-smn
+	// sw-leaf, sw-25g, sw-40g, sw-leafbmc, or deprecated sw-agg, sw-smn
 	g.logger.Warn("Ignoring management Switch found in hmn_connections, management switch information is solely from from switch_metadata.csv", zap.Any("row", row))
 
 	return
@@ -774,7 +777,7 @@ func (g *SLSStateGenerator) getConnectionForNode(node sls_common.GenericHardware
 		vendorName = fmt.Sprintf("1/1/%s", destinationJackString)
 	case ManagementSwitchBrandMellanox.String():
 		// This should only occur when the HMN connections says that a BMC is connected to the
-		// spine/aggregation switch. Which should not happen.
+		// spine/leaf switch. Which should not happen.
 		g.logger.Fatal("Currently do no support MgmtSwitchConnector for Mellanox switches",
 			zap.Any("switchBrand", switchBrand),
 			zap.String("switchName", switchName),

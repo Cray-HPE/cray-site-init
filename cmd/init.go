@@ -34,7 +34,7 @@ var initCmd = &cobra.Command{
 	1. The hmn_connections.json which describes the cabling for the BMCs on the NCNs
 	2. The ncn_metadata.csv file documents the MAC addresses of the NCNs to be used in this installation
 	   NCN xname,NCN Role,NCN Subrole,BMC MAC,BMC Switch Port,NMN MAC,NMN Switch Port
-	3. The switch_metadata.csv file which documents the Xname, Brand, Type, and Model of each switch.  Types are CDU, Leaf, Aggregation, and Spine
+	3. The switch_metadata.csv file which documents the Xname, Brand, Type, and Model of each switch.  Types are CDU, LeafBMC, Leaf, and Spine
 	   Switch Xname,Type,Brand,Model
 
 	** NB **
@@ -426,7 +426,7 @@ func init() {
 	// Use these flags to prepare the basecamp metadata json
 	initCmd.Flags().String("bgp-asn", "65533", "The autonomous system number for BGP conversations")
 	initCmd.Flags().String("bgp-cmn-asn", "65536", "The autonomous system number for CMN BGP clients")
-	initCmd.Flags().String("bgp-peers", "spine", "Which set of switches to use as metallb peers, spine (default) or aggregation")
+	initCmd.Flags().String("bgp-peers", "spine", "Which set of switches to use as metallb peers, spine (default) or leaf")
 	initCmd.Flags().Int("management-net-ips", 0, "Additional number of ip addresses to reserve in each vlan for network equipment")
 	initCmd.Flags().Bool("k8s-api-auditing-enabled", false, "Enable the kubernetes auditing API")
 	initCmd.Flags().Bool("ncn-mgmt-node-auditing-enabled", false, "Enable management node auditing")

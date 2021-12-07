@@ -110,7 +110,7 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 	// figure out what switches we have
 	leafbmcSwitches := switchXnamesByType(conf.ManagementSwitches, "LeafBMC")
 	spineSwitches := switchXnamesByType(conf.ManagementSwitches, "Spine")
-	aggSwitches := switchXnamesByType(conf.ManagementSwitches, "Aggregation")
+	leafSwitches := switchXnamesByType(conf.ManagementSwitches, "Leaf")
 	cduSwitches := switchXnamesByType(conf.ManagementSwitches, "CDU")
 
 	// Do all the special assembly for the CMN
@@ -253,7 +253,7 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 		}
 		// populate it with base information
 		hardwareSubnet.FullName = fmt.Sprintf("%v Management Network Infrastructure", tempNet.Name)
-		hardwareSubnet.ReserveNetMgmtIPs(spineSwitches, aggSwitches, leafbmcSwitches, cduSwitches)
+		hardwareSubnet.ReserveNetMgmtIPs(spineSwitches, leafSwitches, leafbmcSwitches, cduSwitches)
 	}
 
 	// Set up the Boostrap DHCP subnet(s)

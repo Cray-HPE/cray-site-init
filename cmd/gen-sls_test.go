@@ -77,12 +77,12 @@ func (suite *GenSLSTestSuite) TestConvertManagementSwitchToSLS_HappyPath() {
 			},
 		},
 	}, {
-		// Aggergation Switch
+		// Leaf Switch
 		csiSwitch: csi.ManagementSwitch{
 			Xname:               "x3000c0h13s1",
-			Name:                "sw-agg-001",
+			Name:                "sw-leaf-001",
 			ManagementInterface: net.ParseIP("10.254.0.2"),
-			SwitchType:          csi.ManagementSwitchTypeAggregation,
+			SwitchType:          csi.ManagementSwitchTypeLeaf,
 			Brand:               csi.ManagementSwitchBrandAruba,
 			Model:               "8325",
 		},
@@ -96,7 +96,7 @@ func (suite *GenSLSTestSuite) TestConvertManagementSwitchToSLS_HappyPath() {
 				IP4Addr: "10.254.0.2",
 				Brand:   "Aruba",
 				Model:   "8325",
-				Aliases: []string{"sw-agg-001"},
+				Aliases: []string{"sw-leaf-001"},
 			},
 		},
 	}, {
@@ -198,7 +198,7 @@ func (suite *GenSLSTestSuite) TestExtractSwitchesfromReservations() {
 			IPAddress: net.ParseIP("10.254.0.3"),
 		}, {
 			Comment:   "x3000c0h12s1",
-			Name:      "sw-agg-001",
+			Name:      "sw-leaf-001",
 			IPAddress: net.ParseIP("10.254.0.4"),
 		}, {
 			Comment:   "d10w10",
@@ -219,8 +219,8 @@ func (suite *GenSLSTestSuite) TestExtractSwitchesfromReservations() {
 		ManagementInterface: net.ParseIP("10.254.0.3"),
 	}, {
 		Xname:               "x3000c0h12s1",
-		Name:                "sw-agg-001",
-		SwitchType:          "Aggregation",
+		Name:                "sw-leaf-001",
+		SwitchType:          "Leaf",
 		ManagementInterface: net.ParseIP("10.254.0.4"),
 	}, {
 		Xname:               "d10w10",

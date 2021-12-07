@@ -29,7 +29,7 @@ const ManagementSwitchBrandDell ManagementSwitchBrand = "Dell"
 // ManagementSwitchBrandMellanox for Mellanox Management switches
 const ManagementSwitchBrandMellanox ManagementSwitchBrand = "Mellanox"
 
-// ManagementSwitchType the type of management switch CDU/LeafBMC/Spine/Aggregation
+// ManagementSwitchType the type of management switch CDU/LeafBMC/Spine/Leaf
 type ManagementSwitchType string
 
 // ManagementSwitchTypeCDU is the type for CDU Management switches
@@ -41,8 +41,8 @@ const ManagementSwitchTypeLeafBMC ManagementSwitchType = "LeafBMC"
 // ManagementSwitchTypeSpine is the type for Spine Management switches
 const ManagementSwitchTypeSpine ManagementSwitchType = "Spine"
 
-// ManagementSwitchTypeAggregation is the type for Aggregation Management switches
-const ManagementSwitchTypeAggregation ManagementSwitchType = "Aggregation"
+// ManagementSwitchTypeLeaf is the type for Leaf Management switches
+const ManagementSwitchTypeLeaf ManagementSwitchType = "Leaf"
 
 func (mst ManagementSwitchType) String() string {
 	return string(mst)
@@ -51,7 +51,7 @@ func (mst ManagementSwitchType) String() string {
 // IsManagementSwitchTypeValid validates the given ManagementSwitchType
 func IsManagementSwitchTypeValid(mst ManagementSwitchType) bool {
 	switch mst {
-	case ManagementSwitchTypeAggregation:
+	case ManagementSwitchTypeLeaf:
 		fallthrough
 	case ManagementSwitchTypeCDU:
 		fallthrough
@@ -72,7 +72,7 @@ type ManagementSwitch struct {
 	Model               string                `json:"model" mapstructure:"model" csv:"Model"`
 	Os                  string                `json:"operating-system" mapstructure:"operating-system" csv:"-"`
 	Firmware            string                `json:"firmware" mapstructure:"firmware" csv:"-"`
-	SwitchType          ManagementSwitchType  `json:"type" mapstructure:"type" csv:"Type"` //"CDU/LeafBMC/Spine/Aggregation"
+	SwitchType          ManagementSwitchType  `json:"type" mapstructure:"type" csv:"Type"` //"CDU/LeafBMC/Spine/Leaf"
 	ManagementInterface net.IP                `json:"ip" mapstructure:"ip" csv:"-"`        // SNMP/REST interface IP (not a distinct BMC)  // Required for SLS
 }
 
@@ -91,7 +91,7 @@ func (mySwitch *ManagementSwitch) Validate() error {
 
 	// Verify that the specify management switch type is one of the known values
 	if !IsManagementSwitchTypeValid(mySwitch.SwitchType) {
-		return fmt.Errorf("invalid management switch type: %s %s", xname, mySwitch.SwitchType)
+		return fmt.Errorf("invalid management switch type (valid types: LeafBMC, Leaf, Spine): %s %s", xname, mySwitch.SwitchType)
 	}
 
 	// Now we need to verify that the correct switch xname format was used for the different
@@ -104,16 +104,16 @@ func (mySwitch *ManagementSwitch) Validate() error {
 		}
 	case ManagementSwitchTypeSpine:
 		fallthrough
-	case ManagementSwitchTypeAggregation:
+	case ManagementSwitchTypeLeaf:
 		if hmsType != base.MgmtHLSwitch {
-			return fmt.Errorf("invalid xname used for Spine/Aggregation switch: %s, should use xXcChHsS format", xname)
+			return fmt.Errorf("invalid xname used for Spine/Leaf switch: %s, should use xXcChHsS format", xname)
 		}
 	case ManagementSwitchTypeCDU:
 		// CDU Management switches can be under different switch types
 		// dDwW - This is normally used for mountain systems, and Hill systems that have CDU switches getting
 		// power from the Hill cabinet.
 		//
-		// xXcChHsS - This is normally for Aggregation and Spine switches, but some Hill cabinets have the
+		// xXcChHsS - This is normally for Leaf and Spine switches, but some Hill cabinets have the
 		// CDU switches powered/racked into the adjacent river cabinet.
 
 		if hmsType != base.CDUMgmtSwitch && hmsType != base.MgmtHLSwitch {

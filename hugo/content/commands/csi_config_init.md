@@ -13,7 +13,7 @@ init generates a scaffolding the Shasta configuration payload.  It is based on s
 	1. The hmn_connections.json which describes the cabling for the BMCs on the NCNs
 	2. The ncn_metadata.csv file documents the MAC addresses of the NCNs to be used in this installation
 	   NCN xname,NCN Role,NCN Subrole,BMC MAC,BMC Switch Port,NMN MAC,NMN Switch Port
-	3. The switch_metadata.csv file which documents the Xname, Brand, Type, and Model of each switch.  Types are CDU, LeafBMC, Aggregation, and Spine
+	3. The switch_metadata.csv file which documents the Xname, Brand, Type, and Model of each switch.  Types are CDU, LeafBMC, Leaf, and Spine
 	   Switch Xname,Type,Brand,Model
 
 	** NB **
@@ -90,7 +90,7 @@ csi config init [flags]
       --starting-river-NID int                Starting NID for Compute Nodes (default 1)
       --starting-mountain-NID int             Starting NID for Compute Nodes (default 1000)
       --bgp-asn string                        The autonomous system number for BGP conversations (default "65533")
-      --bgp-peers string                      Which set of switches to use as metallb peers, spine (default) or aggregation (default "spine")
+      --bgp-peers string                      Which set of switches to use as metallb peers, spine (default) or leaf (default "spine")
       --management-net-ips int                Additional number of ip addresses to reserve in each vlan for network equipment
       --k8s-api-auditing-enabled              Enable the kubernetes auditing API
       --ncn-mgmt-node-auditing-enabled        Enable management node auditing
