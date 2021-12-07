@@ -1,5 +1,6 @@
 v1.6.0
 -----------------------
+- CASMINST-3647 Rename management switches:  leaf to leaf-bmc and agg to leaf
 - CASMINST-3657 Do not overwrite main networks data with PIT data
 - CASMINST-3633 Resolve CMN IP overlap
 - CASMNET-832 Add switches to CMN
