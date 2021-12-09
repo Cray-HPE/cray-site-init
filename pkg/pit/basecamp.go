@@ -374,6 +374,11 @@ func MakeBaseCampfromNCNs(v *viper.Viper, ncns []csi.LogicalNCN, shastaNetworks 
 
 			// get interface configs
 			for _, subnet := range shastaNetworks[ncnNetwork.NetworkName].Subnets {
+				// Kea doesn't support multiple networks with vlan=0 so we need to special case CHN to not include in the ipam output
+				if strings.ToLower(ncnNetwork.NetworkName) == "chn" {
+					continue
+				}
+
 				// FIXME: Support multiple interfaces, nmn0-nmn1-nmn2 for each VLANID.
 				ncnNICSubnet := make(map[string]interface{})
 				ncnNICSubnet["gateway"] = subnet.Gateway

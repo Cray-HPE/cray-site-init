@@ -57,6 +57,13 @@ func BuildCSMNetworks(internalNetConfigs map[string]NetworkLayoutConfiguration, 
 		// log.Println("Building Network for ", name)
 		myLayout := layout
 
+		if name == "CHN" {
+			if v.GetString("chn-cidr") == "" {
+				log.Println("No CHN Network definition provided")
+				continue
+			}
+		}
+
 		// Update with computed fields
 		myLayout.CabinetDetails = internalCabinetDetails
 		myLayout.ManagementSwitches = switches
