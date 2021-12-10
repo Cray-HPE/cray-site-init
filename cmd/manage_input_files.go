@@ -99,7 +99,7 @@ func collectApplicationNodeConfig(v *viper.Viper) csi.SLSGeneratorApplicationNod
 
 func collectCabinets(v *viper.Viper) []csi.CabinetGroupDetail {
 	var cabDetailFile csi.CabinetDetailFile
-	if v.IsSet("cabinets-yaml") {
+	if v.IsSet("cabinets-yaml") && (v.GetString("cabinets-yaml") != "") {
 		seedFileCabinets := filepath.Dir(viper.ConfigFileUsed()) + "/" + v.GetString("cabinets-yaml")
 		err := files.ReadYAMLConfig(seedFileCabinets, &cabDetailFile)
 		if err != nil {

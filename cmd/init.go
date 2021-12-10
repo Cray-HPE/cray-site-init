@@ -313,7 +313,7 @@ var initCmd = &cobra.Command{
 		slsHillCabinets := csi.GetSLSCabinets(slsState, sls_common.ClassHill)
 		slsRiverCabinets := csi.GetSLSCabinets(slsState, sls_common.ClassRiver)
 
-		if v.IsSet("cabinets-yaml") && (v.IsSet("mountain-cabinets") ||
+		if v.IsSet("cabinets-yaml") && (v.GetString("cabinets-yaml") != "") && (v.IsSet("mountain-cabinets") ||
 			v.IsSet("starting-mountain-cabinet") ||
 			v.IsSet("river-cabinets") ||
 			v.IsSet("starting-river-cabinet") ||
@@ -388,11 +388,11 @@ func init() {
 	initCmd.Flags().String("hmn-mtn-cidr", csi.DefaultHMNMTNString, "IPv4 CIDR for grouped Mountain Hardware Management subnets")
 	initCmd.Flags().String("hmn-rvr-cidr", csi.DefaultHMNRVRString, "IPv4 CIDR for grouped River Hardware Management subnets")
 
-	initCmd.Flags().String("cmn-cidr", csi.DefaultCMNString, "Overall IPv4 CIDR for all Customer Management subnets")
+	initCmd.Flags().String("cmn-cidr", "", "Overall IPv4 CIDR for all Customer Management subnets")
 	initCmd.Flags().String("cmn-static-pool", "", "Overall IPv4 CIDR for static Customer Management load balancer addresses")
 	initCmd.Flags().String("cmn-dynamic-pool", "", "Overall IPv4 CIDR for dynamic Customer Management load balancer addresses")
 	initCmd.Flags().String("cmn-external-dns", "", "IP Address in the cmn-static-pool for the external dns service \"site-to-system lookups\"")
-	initCmd.Flags().String("can-cidr", csi.DefaultCANString, "Overall IPv4 CIDR for all Customer Access subnets")
+	initCmd.Flags().String("can-cidr", "", "Overall IPv4 CIDR for all Customer Access subnets")
 	initCmd.Flags().String("can-static-pool", "", "Overall IPv4 CIDR for static Customer Access load balancer addresses")
 	initCmd.Flags().String("can-dynamic-pool", "", "Overall IPv4 CIDR for dynamic Customer Access load balancer addresses")
 	initCmd.Flags().String("chn-cidr", "", "Overall IPv4 CIDR for all Customer High-Speed subnets")
@@ -677,6 +677,7 @@ func validateFlags() []string {
 		"system-name",
 		"can-gateway",
 		"cmn-gateway",
+		"cmn-cidr",
 		"site-ip",
 		"site-gw",
 		"cmn-external-dns",
@@ -687,7 +688,7 @@ func validateFlags() []string {
 	}
 
 	for _, flagName := range requiredFlags {
-		if !v.IsSet(flagName) {
+		if !v.IsSet(flagName) || (v.GetString(flagName) == "") {
 			errors = append(errors, fmt.Sprintf("%v is required and not set through flag or config file (%s)", flagName, v.ConfigFileUsed()))
 		}
 	}
@@ -713,13 +714,16 @@ func validateFlags() []string {
 		"can-cidr",
 		"can-static-pool",
 		"can-dynamic-pool",
+		"chn-cidr",
+		"chn-static-pool",
+		"chn-dynamic-pool",
 		"nmn-cidr",
 		"hmn-cidr",
 		"site-ip",
 	}
 
 	for _, flagName := range cidrFlags {
-		if v.IsSet(flagName) {
+		if v.IsSet(flagName) && (v.GetString(flagName) != "") {
 			_, _, err := net.ParseCIDR(v.GetString(flagName))
 			if err != nil {
 				errors = append(errors, fmt.Sprintf("%v should be a CIDR in the form 192.168.0.1/24 and is not set correctly through flag or config file (.%s)", flagName, v.ConfigFileUsed()))

@@ -62,21 +62,13 @@ const (
 	DefaultHSNString = "10.253.0.0/16"
 	// DefaultCMNString is the Default CMN String (bond0.cmn0)
 	DefaultCMNString = "10.103.6.0/24"
-	// DefaultCMNPoolString is the default pool for CMN addresses
-	DefaultCMNPoolString = "10.103.6.128/25"
-	// DefaultCMNStaticString is the default pool for Static CMN addresses
-	DefaultCMNStaticString = "10.103.6.112/28"
 	// DefaultCMNVlan is the default CMN Bootstrap Vlan
 	DefaultCMNVlan = 6
 	// DefaultCANString is the Default CAN String (bond0.can0)
 	DefaultCANString = "10.102.11.0/24"
-	// DefaultCANPoolString is the default pool for CAN addresses
-	DefaultCANPoolString = "10.102.11.128/25"
-	// DefaultCANStaticString is the default pool for Static CAN addresses
-	DefaultCANStaticString = "10.102.11.112/28"
 	// DefaultCANVlan is the default CAN Bootstrap Vlan
 	DefaultCANVlan = 7
-	// DefaultCHNString is the Default CMN String (bond0.cmn0)
+	// DefaultCHNString is the Default CHN String
 	DefaultCHNString = "10.104.7.0/24"
 	// DefaultCHNVlan is the default CHN Bootstrap Vlan
 	DefaultCHNVlan = 5
