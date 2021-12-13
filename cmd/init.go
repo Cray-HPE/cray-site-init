@@ -352,6 +352,8 @@ func init() {
 
 	// System Configuration Flags based on previous system_config.yml and networks_derived.yml
 	initCmd.Flags().String("system-name", "sn-2024", "Name of the System")
+	initCmd.Flags().String("csm-version", "1.0", "Version of CSM being installed")
+
 	initCmd.Flags().String("site-domain", "dev.cray.com", "Site Domain Name")
 	initCmd.Flags().String("first-master-hostname", "ncn-m002", "Hostname of the first master node")
 	// initCmd.Flags().String("internal-domain", "unicos.shasta", "Internal Domain Name")
@@ -673,8 +675,11 @@ func writeOutput(v *viper.Viper, shastaNetworks map[string]*csi.IPV4Network, sls
 func validateFlags() []string {
 	var errors []string
 	v := viper.GetViper()
+	expectedCSMVersion := "1.2"
+
 	var requiredFlags = []string{
 		"system-name",
+		"csm-version",
 		"can-gateway",
 		"cmn-gateway",
 		"cmn-cidr",
@@ -691,6 +696,10 @@ func validateFlags() []string {
 		if !v.IsSet(flagName) || (v.GetString(flagName) == "") {
 			errors = append(errors, fmt.Sprintf("%v is required and not set through flag or config file (%s)", flagName, v.ConfigFileUsed()))
 		}
+	}
+
+	if v.GetString("csm-version") != expectedCSMVersion {
+		errors = append(errors, fmt.Sprintf("CSI inputs must be for csm-version %s", expectedCSMVersion))
 	}
 
 	var ipv4Flags = []string{
