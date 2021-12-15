@@ -11,8 +11,7 @@ import (
 var upgradeCmd = &cobra.Command{
 	Use:   "upgrade",
 	Short: "Upgrades components of a CSM installation",
-	Long: `
-	Upgrades components of a CSM installation`,
+	Long:  "Upgrades components of a CSM installation",
 	Run: func(cmd *cobra.Command, args []string) {
 
 	},

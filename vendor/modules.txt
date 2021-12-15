@@ -205,7 +205,7 @@ github.com/mailru/easyjson/jwriter
 github.com/mitchellh/go-homedir
 # github.com/mitchellh/go-wordwrap v1.0.0
 github.com/mitchellh/go-wordwrap
-# github.com/mitchellh/mapstructure v1.3.0
+# github.com/mitchellh/mapstructure v1.4.3
 ## explicit
 github.com/mitchellh/mapstructure
 # github.com/moby/spdystream v0.2.0

@@ -35,8 +35,7 @@ var automateNCNPreflight = &cobra.Command{
 		if action == "verify-loss-acceptable" {
 			verifyLossAcceptable()
 		} else if action == "standardize-hostname" {
-			setupEnvs()
-			setupHTTPClient()
+			setupClients()
 
 			standardizeHostnames, err := standardizeHostnames(hostnames)
 			if err != nil {
