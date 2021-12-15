@@ -33,6 +33,7 @@ func NewSLSClient(baseURL string, httpClient *http.Client, token string) *UtilsC
 	}
 }
 
+// GetManagementNCNs - Returns all the management NCNs from SLS.
 func (utilsClient *UtilsClient) GetManagementNCNs() (managementNCNs []sls_common.GenericHardware, err error) {
 	url := fmt.Sprintf("%s/v1/search/hardware?extra_properties.Role=Management",
 		utilsClient.baseURL)
@@ -66,6 +67,7 @@ func (utilsClient *UtilsClient) GetManagementNCNs() (managementNCNs []sls_common
 	return
 }
 
+// GetNetworks - Returns all the networks from SLS.
 func (utilsClient *UtilsClient) GetNetworks() (networks sls_common.NetworkArray, err error) {
 	url := fmt.Sprintf("%s/v1/networks", utilsClient.baseURL)
 	req, err := http.NewRequest("GET", url, nil)
