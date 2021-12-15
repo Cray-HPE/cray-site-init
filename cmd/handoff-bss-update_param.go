@@ -48,6 +48,65 @@ func init() {
 		"Limit updates to just the xnames specified")
 }
 
+func updateParams(params []string, setParams []paramTuple, deleteParams []string) []string {
+	// If we were told to delete any, do that first so that a subsequent set can be truly fresh.
+	for _, deleteParam := range deleteParams {
+		for i := range params {
+			thisParam := &params[i]
+
+			potentialParamSplit := strings.Split(*thisParam, "=")
+
+			if len(potentialParamSplit) < 2 {
+				// Ignore any params that don't have key=value format.
+				continue
+			}
+
+			if potentialParamSplit[0] == deleteParam {
+				*thisParam = ""
+			}
+		}
+	}
+
+	// For each of the given set parameters check to see if the value is already set. If it is, overwrite it.
+	// If it is not however then add it to the parameters.
+	for _, setParam := range setParams {
+		found := false
+		setParamString := fmt.Sprintf("%s=%s", setParam.key, setParam.value)
+
+		for i := range params {
+			thisParam := &params[i]
+
+			potentialParamSplit := strings.Split(*thisParam, "=")
+
+			if len(potentialParamSplit) != 2 {
+				// Ignore any params that don't have key=value format.
+				continue
+			}
+
+			if potentialParamSplit[0] == setParam.key {
+				found = true
+
+				*thisParam = setParamString
+			}
+		}
+
+		// If we didn't find it, append it.
+		if !found {
+			params = append(params, setParamString)
+		}
+	}
+
+	// Just to get rid of the whitespace.
+	var finalParts []string
+	for _, part := range params {
+		if part != "" {
+			finalParts = append(finalParts, part)
+		}
+	}
+
+	return finalParts
+}
+
 func updateNCNKernelParams() {
 	limitManagementNCNs, setParams := setupHandoffCommon()
 
@@ -57,60 +116,7 @@ func updateNCNKernelParams() {
 
 		params := strings.Split(bssEntry.Params, " ")
 
-		// For each of the given set parameters check to see if the value is already set. If it is, overwrite it.
-		// If it is not however then add it to the parameters.
-		for _, setParam := range setParams {
-			found := false
-			setParamString := fmt.Sprintf("%s=%s", setParam.key, setParam.value)
-
-			for i := range params {
-				thisParam := &params[i]
-
-				potentialParamSplit := strings.Split(*thisParam, "=")
-
-				if len(potentialParamSplit) != 2 {
-					// Ignore any params that don't have key=value format.
-					continue
-				}
-
-				if potentialParamSplit[0] == setParam.key {
-					found = true
-
-					*thisParam = setParamString
-				}
-			}
-
-			// If we didn't find it, append it.
-			if !found {
-				params = append(params, setParamString)
-			}
-		}
-
-		// If we were told to delete any, do that now.
-		for _, deleteParam := range paramsToDelete {
-			for i := range params {
-				thisParam := &params[i]
-
-				potentialParamSplit := strings.Split(*thisParam, "=")
-
-				if len(potentialParamSplit) < 2 {
-					// Ignore any params that don't have key=value format.
-					continue
-				}
-
-				if potentialParamSplit[0] == deleteParam {
-					*thisParam = ""
-				}
-			}
-		}
-
-		// Just to get rid of the whitespace.
-		var finalParts []string
-		for _, part := range params {
-			if part != "" {
-				finalParts = append(finalParts, part)
-			}
-		}
+		finalParts := updateParams(params, setParams, paramsToDelete)
 
 		// Create a whole new structure to PATCH this entry with to not touch other pieces of the structure.
 		newBSSEntry := bssTypes.BootParams{

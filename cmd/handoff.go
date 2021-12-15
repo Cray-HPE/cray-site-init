@@ -7,12 +7,10 @@ package cmd
 import (
 	"context"
 	"crypto/tls"
-	"encoding/json"
-	"fmt"
 	"github.com/Cray-HPE/cray-site-init/pkg/bss"
+	"github.com/Cray-HPE/cray-site-init/pkg/sls"
 	"github.com/Cray-HPE/hms-bss/pkg/bssTypes"
 	hms_s3 "github.com/Cray-HPE/hms-s3"
-	"io/ioutil"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -47,6 +45,7 @@ var (
 	desiredCEPHVersion       string
 
 	bssClient *bss.UtilsClient
+	slsClient *sls.UtilsClient
 
 	verboseLogging bool
 
@@ -71,53 +70,32 @@ func init() {
 	verboseLogging, _ = strconv.ParseBool(os.Getenv("VERBOSE"))
 }
 
+// setupClients - Preps clients for various services to abstract interactions with their APIs
+// via packages in this project.
+func setupClients() {
+	setupEnvs()
+	setupHTTPClient()
+
+	bssClient = bss.NewBSSClient(bssBaseURL, httpClient, token)
+	slsClient = sls.NewSLSClient(slsBaseURL, httpClient, token)
+}
+
 // setupCommon - These are steps that every handoff function have in common.
 func setupCommon() {
 	var err error
 
-	setupEnvs()
-
-	setupHTTPClient()
-
-	bssClient = bss.NewBSSClient(bssBaseURL, httpClient, token)
+	setupClients()
 
 	log.Println("Getting management NCNs from SLS...")
 	managementNCNs, err = getManagementNCNsFromSLS()
 	if err != nil {
-		log.Panicln(err)
+		log.Fatalln(err)
 	}
 	log.Println("Done getting management NCNs from SLS.")
 }
 
 func getManagementNCNsFromSLS() (managementNCNs []sls_common.GenericHardware, err error) {
-	url := fmt.Sprintf("%s/v1/search/hardware?extra_properties.Role=Management",
-		slsBaseURL)
-	req, err := http.NewRequest("GET", url, nil)
-
-	// Indicates whether to close the connection after sending the request
-	req.Close = true
-
-	if err != nil {
-		err = fmt.Errorf("failed to create new request: %w", err)
-		return
-	}
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
-
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		err = fmt.Errorf("failed to do request: %w", err)
-		return
-	}
-
-	defer resp.Body.Close()
-
-	body, _ := ioutil.ReadAll(resp.Body)
-	err = json.Unmarshal(body, &managementNCNs)
-	if err != nil {
-		err = fmt.Errorf("failed to unmarshal body: %w", err)
-	}
-
-	return
+	return slsClient.GetManagementNCNs()
 }
 
 func uploadEntryToBSS(bssEntry bssTypes.BootParams, method string) {
