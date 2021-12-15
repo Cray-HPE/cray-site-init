@@ -108,8 +108,9 @@ var initCmd = &cobra.Command{
 			if mountainCabinetCount > 0 || hillCabinetCount > 0 {
 				tmpHmnMtn := csi.GenDefaultHMNConfig()
 				tmpHmnMtn.Template.Name = "HMN_MTN"
-				tmpHmnMtn.Template.FullName = "Mountain Hardware Management Network"
+				tmpHmnMtn.Template.FullName = "Mountain Compute Hardware Management Network"
 				tmpHmnMtn.Template.VlanRange = []int16{3000, 3999}
+				tmpHmnMtn.Template.CIDR = csi.DefaultHMNMTNString
 				tmpHmnMtn.SubdivideByCabinet = true
 				tmpHmnMtn.IncludeBootstrapDHCP = false
 				tmpHmnMtn.SuperNetHack = false
@@ -119,8 +120,9 @@ var initCmd = &cobra.Command{
 			if riverCabinetCount > 0 {
 				tmpHmnRvr := csi.GenDefaultHMNConfig()
 				tmpHmnRvr.Template.Name = "HMN_RVR"
-				tmpHmnRvr.Template.FullName = "River Hardware Management Network"
+				tmpHmnRvr.Template.FullName = "River Compute Hardware Management Network"
 				tmpHmnRvr.Template.VlanRange = []int16{1513, 1769}
+				tmpHmnRvr.Template.CIDR = csi.DefaultHMNRVRString
 				tmpHmnRvr.SubdivideByCabinet = true
 				tmpHmnRvr.IncludeBootstrapDHCP = false
 				tmpHmnRvr.SuperNetHack = false
@@ -134,8 +136,9 @@ var initCmd = &cobra.Command{
 			if mountainCabinetCount > 0 || hillCabinetCount > 0 {
 				tmpNmnMtn := csi.GenDefaultNMNConfig()
 				tmpNmnMtn.Template.Name = "NMN_MTN"
-				tmpNmnMtn.Template.FullName = "Mountain Node Management Network"
+				tmpNmnMtn.Template.FullName = "Mountain Compute Node Management Network"
 				tmpNmnMtn.Template.VlanRange = []int16{2000, 2999}
+				tmpNmnMtn.Template.CIDR = csi.DefaultNMNMTNString
 				tmpNmnMtn.SubdivideByCabinet = true
 				tmpNmnMtn.IncludeBootstrapDHCP = false
 				tmpNmnMtn.SuperNetHack = false
@@ -146,8 +149,9 @@ var initCmd = &cobra.Command{
 			if riverCabinetCount > 0 {
 				tmpNmnRvr := csi.GenDefaultNMNConfig()
 				tmpNmnRvr.Template.Name = "NMN_RVR"
-				tmpNmnRvr.Template.FullName = "River Node Management Network"
+				tmpNmnRvr.Template.FullName = "River Compute Node Management Network"
 				tmpNmnRvr.Template.VlanRange = []int16{1770, 1999}
+				tmpNmnRvr.Template.CIDR = csi.DefaultNMNRVRString
 				tmpNmnRvr.SubdivideByCabinet = true
 				tmpNmnRvr.IncludeBootstrapDHCP = false
 				tmpNmnRvr.SuperNetHack = false
