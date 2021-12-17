@@ -34,7 +34,7 @@ dev_size=0
 
 # URL or path for ISO. Defaults to latest ISO build on master branch
 
-iso_uri="http://$car/artifactory/csm/MTL/sle15_sp2_ncn/x86_64/dev/master/metal-team/cray-pre-install-toolkit-latest.iso"
+iso_uri="https://artifactory.algol60.net/ui/native/csm-images/stable/cray-pre-install-toolkit/latest/cray-pre-install-toolkit-latest.iso"
 
 # Initial empty values for usb device and iso file
 usb=""
