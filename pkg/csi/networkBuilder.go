@@ -96,8 +96,12 @@ func BuildCSMNetworks(internalNetConfigs map[string]NetworkLayoutConfiguration, 
 	for nme, rsrv := range PinnedMetalLBReservations {
 		// // Because of the hack to pin ip addresses, we've got an overloaded datastructure in defaults.
 		// // We need to prune it here before we write it out.  It's pretty ugly, but we plan to throw all of this code away when ip pinning is no longer necessary
-		if nme != "istio-ingressgateway" && nme != "istio-ingressgateway-local" {
-			pool.AddReservationWithPin(nme, strings.Join(rsrv.Aliases, ","), rsrv.IPByte)
+		if nme != "istio-ingressgateway-local" {
+			if nme == "istio-ingressgateway" {
+				pool.AddReservationWithPin(nme, "", rsrv.IPByte)
+			} else {
+				pool.AddReservationWithPin(nme, strings.Join(rsrv.Aliases, ","), rsrv.IPByte)
+			}
 		}
 	}
 	networkMap["HMNLB"] = &tempHMNLoadBalancer
