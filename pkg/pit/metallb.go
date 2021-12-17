@@ -64,12 +64,6 @@ type MetalLBConfigMap struct {
 // GetMetalLBConfig gathers the information for the metallb config map
 func GetMetalLBConfig(v *viper.Viper, networks map[string]*csi.IPV4Network, switches []*csi.ManagementSwitch) MetalLBConfigMap {
 
-	var metalLBLookupTable = map[string]string{
-		"nmn_metallb_address_pool": "node-management",
-		"hmn_metallb_address_pool": "hardware-management",
-		"hsn_metallb_address_pool": "high-speed",
-	}
-
 	var configStruct MetalLBConfigMap
 
 	var spineSwitchXnames, leafSwitchXnames []string
@@ -92,11 +86,8 @@ func GetMetalLBConfig(v *viper.Viper, networks map[string]*csi.IPV4Network, swit
 				var tmpPeer PeerDetail
 				for _, reservation := range subnet.IPReservations {
 					tmpPeer = PeerDetail{}
-					tmpPeer.PeerASN = v.GetInt("bgp-asn")
-					tmpPeer.MyASN = v.GetInt("bgp-asn")
-					if name == "CMN" {
-						tmpPeer.MyASN = v.GetInt("bgp-cmn-asn")
-					}
+					tmpPeer.PeerASN = network.PeerASN
+					tmpPeer.MyASN = network.MyASN
 					tmpPeer.IPAddress = reservation.IPAddress.String()
 					for _, switchXname := range spineSwitchXnames {
 						if reservation.Comment == switchXname {
@@ -111,70 +102,16 @@ func GetMetalLBConfig(v *viper.Viper, networks map[string]*csi.IPV4Network, swit
 				}
 			}
 			if strings.Contains(subnet.Name, "metallb") {
-				if val, ok := metalLBLookupTable[subnet.Name]; ok {
-					tmpAddPool := AddressPoolDetail{}
-					tmpAddPool.Name = val
-					tmpAddPool.Protocol = "bgp"
-					tmpAddPool.Addresses = append(tmpAddPool.Addresses, subnet.CIDR.String())
-					configStruct.Networks = append(configStruct.Networks, tmpAddPool)
-				}
+				tmpAddPool := AddressPoolDetail{}
+				tmpAddPool.Name = subnet.MetalLBPoolName
+				tmpAddPool.Protocol = "bgp"
+				tmpAddPool.Addresses = append(tmpAddPool.Addresses, subnet.CIDR.String())
+				configStruct.Networks = append(configStruct.Networks, tmpAddPool)
 			}
 		}
 	}
 
 	configStruct.PeerSwitches = getMetalLBPeerSwitches(bgpPeers, configStruct)
-
-	var tmpAddPool AddressPoolDetail
-
-	// CMN - static
-	tmpAddPool = AddressPoolDetail{}
-	tmpAddPool.Name = "customer-management-static"
-	tmpAddPool.Protocol = "bgp"
-	tmpAddPool.Addresses = append(tmpAddPool.Addresses, v.GetString("cmn-static-pool"))
-	configStruct.Networks = append(configStruct.Networks, tmpAddPool)
-
-	// CMN - dynamic
-	tmpAddPool = AddressPoolDetail{}
-	tmpAddPool.Name = "customer-management"
-	tmpAddPool.Protocol = "bgp"
-	tmpAddPool.Addresses = append(tmpAddPool.Addresses, v.GetString("cmn-dynamic-pool"))
-	configStruct.Networks = append(configStruct.Networks, tmpAddPool)
-
-	// CAN - static
-	if v.GetString("can-static-pool") != "" {
-		tmpAddPool = AddressPoolDetail{}
-		tmpAddPool.Name = "customer-access-static"
-		tmpAddPool.Protocol = "bgp"
-		tmpAddPool.Addresses = append(tmpAddPool.Addresses, v.GetString("can-static-pool"))
-		configStruct.Networks = append(configStruct.Networks, tmpAddPool)
-	}
-
-	// CAN - dynamic
-	if v.GetString("can-dynamic-pool") != "" {
-		tmpAddPool = AddressPoolDetail{}
-		tmpAddPool.Name = "customer-access"
-		tmpAddPool.Protocol = "bgp"
-		tmpAddPool.Addresses = append(tmpAddPool.Addresses, v.GetString("can-dynamic-pool"))
-		configStruct.Networks = append(configStruct.Networks, tmpAddPool)
-	}
-
-	// CHN - static
-	if v.GetString("chn-static-pool") != "" {
-		tmpAddPool = AddressPoolDetail{}
-		tmpAddPool.Name = "customer-high-speed-static"
-		tmpAddPool.Protocol = "bgp"
-		tmpAddPool.Addresses = append(tmpAddPool.Addresses, v.GetString("chn-static-pool"))
-		configStruct.Networks = append(configStruct.Networks, tmpAddPool)
-	}
-
-	// CHN - dynamic
-	if v.GetString("chn-dynamic-pool") != "" {
-		tmpAddPool = AddressPoolDetail{}
-		tmpAddPool.Name = "customer-high-speed"
-		tmpAddPool.Protocol = "bgp"
-		tmpAddPool.Addresses = append(tmpAddPool.Addresses, v.GetString("chn-dynamic-pool"))
-		configStruct.Networks = append(configStruct.Networks, tmpAddPool)
-	}
 
 	return configStruct
 }

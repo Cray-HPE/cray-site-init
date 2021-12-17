@@ -11,6 +11,8 @@ type NetworkExtraProperties struct {
 	VlanRange []int16 `json:"VlanRange"`
 	MTU       int16   `json:"MTU,omitempty"`
 	Comment   string  `json:"Comment,omitempty"`
+	PeerASN   int     `json:"PeerASN,omitempty"`
+	MyASN     int     `json:"MyASN,omitempty"`
 
 	Subnets []IPV4Subnet `json:"Subnets"`
 }
@@ -26,13 +28,14 @@ type IPReservation struct {
 
 // IPV4Subnet is a type for managing IPv4 Subnets
 type IPV4Subnet struct {
-	FullName       string          `json:"FullName"`
-	CIDR           string          `json:"CIDR"`
-	IPReservations []IPReservation `json:"IPReservations,omitempty"`
-	Name           string          `json:"Name"`
-	VlanID         int16           `json:"VlanID"`
-	Gateway        string          `json:"Gateway"`
-	DHCPStart      string          `json:"DHCPStart,omitempty"`
-	DHCPEnd        string          `json:"DHCPEnd,omitempty"`
-	Comment        string          `json:"Comment,omitempty"`
+	FullName        string          `json:"FullName"`
+	CIDR            string          `json:"CIDR"`
+	IPReservations  []IPReservation `json:"IPReservations,omitempty"`
+	Name            string          `json:"Name"`
+	VlanID          int16           `json:"VlanID"`
+	Gateway         string          `json:"Gateway"`
+	DHCPStart       string          `json:"DHCPStart,omitempty"`
+	DHCPEnd         string          `json:"DHCPEnd,omitempty"`
+	Comment         string          `json:"Comment,omitempty"`
+	MetalLBPoolName string          `json:"MetalLBPoolName,omitempty"`
 }

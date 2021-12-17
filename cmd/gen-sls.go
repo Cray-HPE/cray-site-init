@@ -243,6 +243,8 @@ func convertIPV4NetworkToSLS(n *csi.IPV4Network) sls_common.Network {
 			CIDR:               n.CIDR,
 			MTU:                n.MTU,
 			VlanRange:          n.VlanRange,
+			PeerASN:            n.PeerASN,
+			MyASN:              n.MyASN,
 			Subnets:            subnets,
 			SystemDefaultRoute: route,
 		},
@@ -267,6 +269,7 @@ func convertIPV4SubnetToSLS(s *csi.IPV4Subnet) sls_common.IPV4Subnet {
 		ReservationStart: s.ReservationStart,
 		ReservationEnd:   s.ReservationEnd,
 		IPReservations:   ipReservations,
+		MetalLBPoolName:  s.MetalLBPoolName,
 	}
 }
 
