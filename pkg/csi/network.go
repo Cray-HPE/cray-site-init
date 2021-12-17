@@ -329,12 +329,19 @@ func (iSubnet *IPV4Subnet) AddReservationWithPin(name, comment string, pin uint8
 		newIP[2] = iSubnet.CIDR.IP[14]
 		newIP[3] = pin
 	}
-	iSubnet.IPReservations = append(iSubnet.IPReservations, IPReservation{
-		IPAddress: newIP,
-		Name:      name,
-		Comment:   comment,
-		Aliases:   strings.Split(comment, ","),
-	})
+	if comment != "" {
+		iSubnet.IPReservations = append(iSubnet.IPReservations, IPReservation{
+			IPAddress: newIP,
+			Name:      name,
+			Comment:   comment,
+			Aliases:   strings.Split(comment, ","),
+		})
+	} else {
+		iSubnet.IPReservations = append(iSubnet.IPReservations, IPReservation{
+			IPAddress: newIP,
+			Name:      name,
+		})
+	}
 	return &iSubnet.IPReservations[len(iSubnet.IPReservations)-1]
 }
 
