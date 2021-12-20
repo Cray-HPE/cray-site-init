@@ -387,10 +387,14 @@ func init() {
 
 	// Default IPv4 Networks
 	initCmd.Flags().String("nmn-cidr", csi.DefaultNMNString, "Overall IPv4 CIDR for all Node Management subnets")
+	initCmd.Flags().String("nmn-static-pool", "", "Overall IPv4 CIDR for static Node Management load balancer addresses")
+	initCmd.Flags().String("nmn-dynamic-pool", csi.DefaultNMNLBString, "Overall IPv4 CIDR for dynamic Node Management load balancer addresses")
 	initCmd.Flags().String("nmn-mtn-cidr", csi.DefaultNMNMTNString, "IPv4 CIDR for grouped Mountain Node Management subnets")
 	initCmd.Flags().String("nmn-rvr-cidr", csi.DefaultNMNRVRString, "IPv4 CIDR for grouped River Node Management subnets")
 
 	initCmd.Flags().String("hmn-cidr", csi.DefaultHMNString, "Overall IPv4 CIDR for all Hardware Management subnets")
+	initCmd.Flags().String("hmn-static-pool", "", "Overall IPv4 CIDR for static Hardware Management load balancer addresses")
+	initCmd.Flags().String("hmn-dynamic-pool", csi.DefaultHMNLBString, "Overall IPv4 CIDR for dynamic Hardware Management load balancer addresses")
 	initCmd.Flags().String("hmn-mtn-cidr", csi.DefaultHMNMTNString, "IPv4 CIDR for grouped Mountain Hardware Management subnets")
 	initCmd.Flags().String("hmn-rvr-cidr", csi.DefaultHMNRVRString, "IPv4 CIDR for grouped River Hardware Management subnets")
 
@@ -407,6 +411,8 @@ func init() {
 
 	initCmd.Flags().String("mtl-cidr", csi.DefaultMTLString, "Overall IPv4 CIDR for all Provisioning subnets")
 	initCmd.Flags().String("hsn-cidr", csi.DefaultHSNString, "Overall IPv4 CIDR for all HSN subnets")
+	initCmd.Flags().String("hsn-static-pool", "", "Overall IPv4 CIDR for static High Speed load balancer addresses")
+	initCmd.Flags().String("hsn-dynamic-pool", "", "Overall IPv4 CIDR for dynamic High Speed load balancer addresses")
 
 	initCmd.Flags().Bool("supernet", true, "Use the supernet mask and gateway for NCNs and Switches")
 
@@ -430,8 +436,9 @@ func init() {
 	initCmd.Flags().Int("starting-mountain-NID", 1000, "Starting NID for Compute Nodes")
 
 	// Use these flags to prepare the basecamp metadata json
-	initCmd.Flags().String("bgp-asn", "65533", "The autonomous system number for BGP conversations")
+	initCmd.Flags().String("bgp-asn", "65533", "The autonomous system number for BGP router")
 	initCmd.Flags().String("bgp-cmn-asn", "65536", "The autonomous system number for CMN BGP clients")
+	initCmd.Flags().String("bgp-nmn-asn", "65533", "The autonomous system number for NMN BGP clients")
 	initCmd.Flags().String("bgp-peers", "spine", "Which set of switches to use as metallb peers, spine (default) or leaf")
 	initCmd.Flags().Int("management-net-ips", 0, "Additional number of ip addresses to reserve in each vlan for network equipment")
 	initCmd.Flags().Bool("k8s-api-auditing-enabled", false, "Enable the kubernetes auditing API")

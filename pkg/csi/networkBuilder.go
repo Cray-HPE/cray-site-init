@@ -82,6 +82,7 @@ func BuildCSMNetworks(internalNetConfigs map[string]NetworkLayoutConfiguration, 
 	// Add a /24 for the Load Balancers
 	pool, _ := tempNMNLoadBalancer.AddSubnet(net.CIDRMask(24, 32), "nmn_metallb_address_pool", int16(v.GetInt("nmn-bootstrap-vlan")))
 	pool.FullName = "NMN MetalLB"
+	pool.MetalLBPoolName = "node-management"
 	for nme, rsrv := range PinnedMetalLBReservations {
 		pool.AddReservationWithPin(nme, strings.Join(rsrv.Aliases, ","), rsrv.IPByte)
 	}
@@ -93,6 +94,7 @@ func BuildCSMNetworks(internalNetConfigs map[string]NetworkLayoutConfiguration, 
 	tempHMNLoadBalancer := DefaultLoadBalancerHMN
 	pool, _ = tempHMNLoadBalancer.AddSubnet(net.CIDRMask(24, 32), "hmn_metallb_address_pool", int16(v.GetInt("hmn-bootstrap-vlan")))
 	pool.FullName = "HMN MetalLB"
+	pool.MetalLBPoolName = "hardware-management"
 	for nme, rsrv := range PinnedMetalLBReservations {
 		// // Because of the hack to pin ip addresses, we've got an overloaded datastructure in defaults.
 		// // We need to prune it here before we write it out.  It's pretty ugly, but we plan to throw all of this code away when ip pinning is no longer necessary
@@ -118,6 +120,8 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 	v := viper.GetViper()
 	// start with the defaults
 	tempNet := conf.Template
+	netNameLower := strings.ToLower(tempNet.Name)
+
 	// figure out what switches we have
 	leafbmcSwitches := switchXnamesByType(conf.ManagementSwitches, "LeafBMC")
 	spineSwitches := switchXnamesByType(conf.ManagementSwitches, "Spine")
@@ -140,6 +144,8 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 					v.GetString("cmn-static-pool"), tempNet.CIDR, err)
 			}
 			static.FullName = "CMN Static Pool MetalLB"
+			static.MetalLBPoolName = "customer-management-static"
+
 			_, err = static.AddReservationWithIP("external-dns", v.GetString("cmn-external-dns"), "site to system lookups")
 			if err != nil {
 				log.Fatal(err)
@@ -157,6 +163,8 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 					v.GetString("cmn-dynamic-pool"), tempNet.CIDR, err)
 			}
 			pool.FullName = "CMN Dynamic MetalLB"
+			pool.MetalLBPoolName = "customer-management"
+
 		}
 	}
 
@@ -179,6 +187,7 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 							v.GetString("can-static-pool"), tempNet.CIDR, err)
 					}
 					static.FullName = "CAN Static Pool MetalLB"
+					static.MetalLBPoolName = "customer-access-static"
 				}
 			}
 			if v.GetString("can-dynamic-pool") != "" {
@@ -195,6 +204,7 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 						log.Fatalf("Possible missing or mismatched can-dynamic-pool value.")
 					}
 					pool.FullName = "CAN Dynamic MetalLB"
+					pool.MetalLBPoolName = "customer-access"
 				}
 			}
 		}
@@ -219,6 +229,7 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 							v.GetString("chn-static-pool"), tempNet.CIDR, err)
 					}
 					static.FullName = "CHN Static Pool MetalLB"
+					static.MetalLBPoolName = "customer-high-speed-static"
 				}
 			}
 			if v.GetString("chn-dynamic-pool") != "" {
@@ -235,6 +246,7 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 						log.Fatalf("Possible missing or mismatched chn-dynamic-pool value.")
 					}
 					pool.FullName = "CHN Dynamic MetalLB"
+					pool.MetalLBPoolName = "customer-high-speed"
 				}
 			}
 		}
@@ -269,7 +281,6 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 
 	// Set up the Boostrap DHCP subnet(s)
 	if conf.IncludeBootstrapDHCP {
-		netNameLower := strings.ToLower(tempNet.Name)
 		myNet := fmt.Sprintf("%s-cidr", netNameLower)
 		if v.GetString(myNet) != "" {
 			var subnet *IPV4Subnet
@@ -298,6 +309,13 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 				}
 			}
 		}
+	}
+
+	// Set up the ASNs
+	myASN := fmt.Sprintf("bgp-%s-asn", netNameLower)
+	if v.GetString(myASN) != "" {
+		tempNet.PeerASN = v.GetInt("bgp-asn")
+		tempNet.MyASN = v.GetInt(myASN)
 	}
 
 	// Add the macvlan/uai subnet(s)

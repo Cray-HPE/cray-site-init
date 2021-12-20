@@ -343,6 +343,8 @@ type NetworkExtraProperties struct {
 	VlanRange []int16 `json:"VlanRange"`
 	MTU       int16   `json:"MTU,omitempty"`
 	Comment   string  `json:"Comment,omitempty"`
+	PeerASN   int     `json:"PeerASN,omitempty"`
+	MyASN     int     `json:"MyASN,omitempty"`
 
 	Subnets []IPV4Subnet `json:"Subnets"`
 	SystemDefaultRoute string `json:"SystemDefaultRoute,omitempty"`
@@ -370,6 +372,7 @@ type IPV4Subnet struct {
 	Comment          string          `json:"Comment,omitempty"`
 	ReservationStart net.IP          `json:"ReservationStart,omitempty"`
 	ReservationEnd   net.IP          `json:"ReservationEnd,omitempty"`
+	MetalLBPoolName  string          `json:"MetalLBPoolName,omitempty"`
 }
 
 type NetworkArray []Network

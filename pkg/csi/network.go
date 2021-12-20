@@ -25,6 +25,8 @@ type IPV4Network struct {
 	MTU       int16                  `yaml:"mtu"`
 	NetType   sls_common.NetworkType `yaml:"type"`
 	Comment   string                 `yaml:"comment"`
+	PeerASN   int                    `yaml:"peer-asn"`
+	MyASN     int                    `yaml:"my-asn"`
 }
 
 // IPV4Subnet is a type for managing IPv4 Subnets
@@ -43,6 +45,7 @@ type IPV4Subnet struct {
 	DHCPEnd          net.IP          `yaml:"iprange-end"`
 	ReservationStart net.IP          `yaml:"reservation-start"`
 	ReservationEnd   net.IP          `yaml:"reservation-end"`
+	MetalLBPoolName  string          `yaml:"metallb-pool-name"`
 }
 
 // IPReservation is a type for managing IP Reservations
