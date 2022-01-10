@@ -4,7 +4,6 @@ package cmd
 Copyright 2021 Hewlett Packard Enterprise Development LP
 */
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/Cray-HPE/cray-site-init/pkg/bss"
 	"github.com/Cray-HPE/cray-site-init/pkg/sls"
@@ -13,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"log"
 	"net"
+	"net/http"
 	"strings"
 	// sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 )
@@ -198,9 +198,6 @@ func updateBSS_oneToOneTwo() {
 	for _, managementNCN := range managementNCNs {
 		bootparameters := getBSSBootparametersForXname(managementNCN.Xname)
 
-		jsonData, _ := json.MarshalIndent(bootparameters, "", "\t")
-		fmt.Printf("%s\n%s\n\n", managementNCN.Xname, string(jsonData))
-
 		var ncnExtraProperties sls_common.ComptypeNode
 		err = mapstructure.Decode(managementNCN.ExtraPropertiesRaw, &ncnExtraProperties)
 		if err != nil {
@@ -236,10 +233,7 @@ func updateBSS_oneToOneTwo() {
 		// Write files
 		bootparameters.CloudInit.UserData["write_files"] = getWriteFiles(networks, ipamNetworks)
 
-		jsonData, _ = json.MarshalIndent(bootparameters, "", "\t")
-		fmt.Printf("%s\n%s\n\n", managementNCN.Xname, string(jsonData))
-
-		break
+		uploadEntryToBSS(bootparameters, http.MethodPatch)
 	}
 }
 
