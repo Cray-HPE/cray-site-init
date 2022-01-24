@@ -10,7 +10,7 @@ import (
 const MinMasters = 1
 
 // MinWorkers - Minimum number of workers nodes the cluster can survive with.
-const MinWorkers = 3
+const MinWorkers = 2
 
 // UtilsClient - Structure for kubernetes client.
 type UtilsClient struct {
