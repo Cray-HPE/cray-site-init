@@ -93,5 +93,5 @@ func init() {
 	validateCmd.Flags().BoolVarP(&ncnPreflight, "ncn-preflight", "n", false, "Run NCN pre-flight tests")
 	validateCmd.Flags().BoolVarP(&validateCeph, "ceph", "c", false, "Validate that Ceph is working")
 	validateCmd.Flags().BoolVarP(&validateK8s, "k8s", "k", false, "Validate that Kubernetes is working")
-	validateCmd.Flags().BoolVarP(&validatePg, "postgres", "p", false, "Validate that Postgres clusters are healthy")
+	validateCmd.Flags().BoolVar(&validatePg, "postgres", false, "Validate that Postgres clusters are healthy")
 }
