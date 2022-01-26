@@ -15,7 +15,6 @@ import (
 	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
-	// sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 )
 
 // Constants
@@ -201,6 +200,14 @@ func updateBSS_oneToOneTwo() {
 		log.Fatalln(err)
 	}
 
+	// Grab the Global BSS Metadata
+	globalBootParameters := getBSSBootparametersForXname("Global")
+	var globalHostRecords bss.HostRecords
+	err = mapstructure.Decode(globalBootParameters.CloudInit.MetaData["host_records"], &globalHostRecords)
+	if err != nil {
+		log.Fatalf("Failed to decode raw NCN extra properties to correct structure: %s", err)
+	}
+
 	// Now we can loop through all the NCNs and update their metadata in BSS.
 	for _, managementNCN := range managementNCNs {
 		bootparameters := getBSSBootparametersForXname(managementNCN.Xname)
@@ -209,6 +216,10 @@ func updateBSS_oneToOneTwo() {
 		err = mapstructure.Decode(managementNCN.ExtraPropertiesRaw, &ncnExtraProperties)
 		if err != nil {
 			log.Fatalf("Failed to decode raw NCN extra properties to correct structure: %s", err)
+		}
+
+		if len(ncnExtraProperties.Aliases) == 0 {
+			log.Fatalf("NCN has no aliases defined in SLS: %+v", managementNCN)
 		}
 
 		/*
@@ -253,7 +264,55 @@ func updateBSS_oneToOneTwo() {
 		bootparameters.CloudInit.UserData["write_files"] = getWriteFiles(networks, ipamNetworks)
 
 		uploadEntryToBSS(bootparameters, http.MethodPatch)
+
+		// Update global host records
+		for network, ipam := range ipamNetworks {
+			expectedNCNAlias := fmt.Sprintf("%s.%s", ncnExtraProperties.Aliases[0], network)
+
+			// Found a matching host record, time to update its IP address
+			ip, _, err := net.ParseCIDR(ipam.CIDR)
+			if err != nil {
+				log.Fatalf("Failed to parse BSS IPAM Network CIDR (%s): %s", ipam.CIDR, err)
+			}
+
+			// First check to see if an there is already an existing host record for this interface
+			updatedHostRecord := false
+			for i := range globalHostRecords {
+				if globalHostRecords[i].Aliases[0] != expectedNCNAlias {
+					continue
+				}
+
+				globalHostRecords[i].IP = ip.String()
+				updatedHostRecord = true
+				break
+			}
+
+			// Next, add a new host record for interfaces that are new for CSM 1.2, if they haven't been added already.
+			if !updatedHostRecord {
+				hostRecord := bss.HostRecord{
+					IP:      ip.String(),
+					Aliases: []string{expectedNCNAlias},
+				}
+				globalHostRecords = append(globalHostRecords, hostRecord)
+			}
+		}
 	}
+
+	// Find istio-ingressgateway IP reverstation
+	istioIngressGatewayReservation := sls.GetIPReservation(networks, "NMNLB", "nmn_metallb_address_pool", "istio-ingressgateway")
+	if !globalHostRecords.AliasExists("packages.local") {
+		globalHostRecords = append(globalHostRecords, bss.HostRecord{
+			IP: istioIngressGatewayReservation.IPAddress,
+			Aliases: []string{
+				"packages.local",
+				"registry.local",
+			},
+		})
+	}
+
+	// Update the Global BSS Metadata
+	globalBootParameters.CloudInit.MetaData["host_records"] = globalHostRecords
+	uploadEntryToBSS(globalBootParameters, http.MethodPatch)
 }
 
 // metadataCmd represents the upgrade command

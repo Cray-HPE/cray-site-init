@@ -1,7 +1,7 @@
 package bss
 
 // IPAMNetworks - The networks that need IPAM.
-var IPAMNetworks = [...]string{"can", "cmn", "hmn", "mtl", "nmn"}
+var IPAMNetworks = [...]string{"can", "chn", "cmn", "hmn", "mtl", "nmn"}
 
 // KubernetesNCNRunCMD - The run-cmd for Kubernetes nodes.
 var KubernetesNCNRunCMD = [...]string{
@@ -42,4 +42,25 @@ type WriteFile struct {
 	Owner       string `json:"owner"`
 	Path        string `json:"path"`
 	Permissions string `json:"permissions"`
+}
+
+// HostRecord - Structure that describes an element of host_records portion of cloud-init
+type HostRecord struct {
+	IP      string   `json:"ip"`
+	Aliases []string `json:"aliases"`
+}
+
+// HostRecords - Structure that describes the host_records portion of cloud-init
+type HostRecords []HostRecord
+
+func (hrs HostRecords) AliasExists(wantedAlias string) bool {
+	for _, hr := range hrs {
+		for _, alias := range hr.Aliases {
+			if alias == wantedAlias {
+				return true
+			}
+		}
+	}
+	
+	return false;
 }

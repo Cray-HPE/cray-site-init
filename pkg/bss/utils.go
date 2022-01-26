@@ -5,9 +5,10 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/Cray-HPE/hms-bss/pkg/bssTypes"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/Cray-HPE/hms-bss/pkg/bssTypes"
 )
 
 // UtilsClient - Structure for BSS client.
@@ -87,7 +88,7 @@ func (utilsClient *UtilsClient) GetBSSBootparametersForXname(xname string) (*bss
 	bodyBytes, _ := ioutil.ReadAll(resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to put BSS entry: %s", string(bodyBytes))
+		return nil, fmt.Errorf("failed to get BSS entry: %s", string(bodyBytes))
 	}
 
 	// BSS gives back an array.

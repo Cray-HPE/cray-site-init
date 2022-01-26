@@ -1,0 +1,189 @@
+[
+    {
+      "Parent": "x3000c0s11b0",
+      "Xname": "x3000c0s11b0n0",
+      "Type": "comptype_node",
+      "Class": "River",
+      "TypeString": "Node",
+      "LastUpdated": 1641973412,
+      "LastUpdatedTime": "2022-01-12 07:43:32.871186 +0000 +0000",
+      "ExtraProperties": {
+        "Aliases": [
+          "ncn-w003"
+        ],
+        "NID": 100006,
+        "Role": "Management",
+        "SubRole": "Worker"
+      }
+    },
+    {
+      "Parent": "x3000c0s1b0",
+      "Xname": "x3000c0s1b0n0",
+      "Type": "comptype_node",
+      "Class": "River",
+      "TypeString": "Node",
+      "LastUpdated": 1641973412,
+      "LastUpdatedTime": "2022-01-12 07:43:32.871186 +0000 +0000",
+      "ExtraProperties": {
+        "Aliases": [
+          "ncn-m001"
+        ],
+        "NID": 100001,
+        "Role": "Management",
+        "SubRole": "Master"
+      }
+    },
+    {
+      "Parent": "x3000c0s7b0",
+      "Xname": "x3000c0s7b0n0",
+      "Type": "comptype_node",
+      "Class": "River",
+      "TypeString": "Node",
+      "LastUpdated": 1641973412,
+      "LastUpdatedTime": "2022-01-12 07:43:32.871186 +0000 +0000",
+      "ExtraProperties": {
+        "Aliases": [
+          "ncn-w001"
+        ],
+        "NID": 100004,
+        "Role": "Management",
+        "SubRole": "Worker"
+      }
+    },
+    {
+      "Parent": "x3000c0s38b0",
+      "Xname": "x3000c0s38b0n0",
+      "Type": "comptype_node",
+      "Class": "River",
+      "TypeString": "Node",
+      "LastUpdated": 1641973412,
+      "LastUpdatedTime": "2022-01-12 07:43:32.871186 +0000 +0000",
+      "ExtraProperties": {
+        "Aliases": [
+          "ncn-w004"
+        ],
+        "NID": 100011,
+        "Role": "Management",
+        "SubRole": "Worker"
+      }
+    },
+    {
+      "Parent": "x3000c0s15b0",
+      "Xname": "x3000c0s15b0n0",
+      "Type": "comptype_node",
+      "Class": "River",
+      "TypeString": "Node",
+      "LastUpdated": 1641973412,
+      "LastUpdatedTime": "2022-01-12 07:43:32.871186 +0000 +0000",
+      "ExtraProperties": {
+        "Aliases": [
+          "ncn-s002"
+        ],
+        "NID": 100008,
+        "Role": "Management",
+        "SubRole": "Storage"
+      }
+    },
+    {
+      "Parent": "x3000c0s36b0",
+      "Xname": "x3000c0s36b0n0",
+      "Type": "comptype_node",
+      "Class": "River",
+      "TypeString": "Node",
+      "LastUpdated": 1641973412,
+      "LastUpdatedTime": "2022-01-12 07:43:32.871186 +0000 +0000",
+      "ExtraProperties": {
+        "Aliases": [
+          "ncn-s004"
+        ],
+        "NID": 100010,
+        "Role": "Management",
+        "SubRole": "Storage"
+      }
+    },
+    {
+      "Parent": "x3000c0s13b0",
+      "Xname": "x3000c0s13b0n0",
+      "Type": "comptype_node",
+      "Class": "River",
+      "TypeString": "Node",
+      "LastUpdated": 1641973412,
+      "LastUpdatedTime": "2022-01-12 07:43:32.871186 +0000 +0000",
+      "ExtraProperties": {
+        "Aliases": [
+          "ncn-s001"
+        ],
+        "NID": 100007,
+        "Role": "Management",
+        "SubRole": "Storage"
+      }
+    },
+    {
+      "Parent": "x3000c0s17b0",
+      "Xname": "x3000c0s17b0n0",
+      "Type": "comptype_node",
+      "Class": "River",
+      "TypeString": "Node",
+      "LastUpdated": 1641973412,
+      "LastUpdatedTime": "2022-01-12 07:43:32.871186 +0000 +0000",
+      "ExtraProperties": {
+        "Aliases": [
+          "ncn-s003"
+        ],
+        "NID": 100009,
+        "Role": "Management",
+        "SubRole": "Storage"
+      }
+    },
+    {
+      "Parent": "x3000c0s5b0",
+      "Xname": "x3000c0s5b0n0",
+      "Type": "comptype_node",
+      "Class": "River",
+      "TypeString": "Node",
+      "LastUpdated": 1641973412,
+      "LastUpdatedTime": "2022-01-12 07:43:32.871186 +0000 +0000",
+      "ExtraProperties": {
+        "Aliases": [
+          "ncn-m003"
+        ],
+        "NID": 100003,
+        "Role": "Management",
+        "SubRole": "Master"
+      }
+    },
+    {
+      "Parent": "x3000c0s3b0",
+      "Xname": "x3000c0s3b0n0",
+      "Type": "comptype_node",
+      "Class": "River",
+      "TypeString": "Node",
+      "LastUpdated": 1641973412,
+      "LastUpdatedTime": "2022-01-12 07:43:32.871186 +0000 +0000",
+      "ExtraProperties": {
+        "Aliases": [
+          "ncn-m002"
+        ],
+        "NID": 100002,
+        "Role": "Management",
+        "SubRole": "Master"
+      }
+    },
+    {
+      "Parent": "x3000c0s9b0",
+      "Xname": "x3000c0s9b0n0",
+      "Type": "comptype_node",
+      "Class": "River",
+      "TypeString": "Node",
+      "LastUpdated": 1641973412,
+      "LastUpdatedTime": "2022-01-12 07:43:32.871186 +0000 +0000",
+      "ExtraProperties": {
+        "Aliases": [
+          "ncn-w002"
+        ],
+        "NID": 100005,
+        "Role": "Management",
+        "SubRole": "Worker"
+      }
+    }
+  ]

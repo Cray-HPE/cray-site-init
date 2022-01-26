@@ -4,9 +4,13 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 	"io/ioutil"
+	"log"
 	"net/http"
+	"strings"
+
+	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
+	"github.com/mitchellh/mapstructure"
 )
 
 // UtilsClient - Structure for SLS client.
@@ -98,4 +102,53 @@ func (utilsClient *UtilsClient) GetNetworks() (networks sls_common.NetworkArray,
 	}
 
 	return
+}
+
+func GetIPReservation(networks sls_common.NetworkArray, networkName, subnetName, ipReservationName string) *IPReservation {
+	// Search SLS networks for this network.
+	var targetSLSNetwork *sls_common.Network
+	for _, slsNetwork := range networks {
+		if strings.ToLower(slsNetwork.Name) == strings.ToLower(networkName) {
+			targetSLSNetwork = &slsNetwork
+			break
+		}
+	}
+
+	if targetSLSNetwork == nil {
+		log.Fatalf("Failed to find required IPAM network %s in SLS networks!", networkName)
+	}
+
+	// Map this network to a usable structure.
+	var networkExtraProperties NetworkExtraProperties
+	err := mapstructure.Decode(targetSLSNetwork.ExtraPropertiesRaw, &networkExtraProperties)
+	if err != nil {
+		log.Fatalf("Failed to decode raw network extra properties to correct structure: %s", err)
+	}
+
+	// Find the subnet of intrest within SLS network
+	var targetSubnet *IPV4Subnet
+	for _, subnet := range networkExtraProperties.Subnets {
+		if strings.ToLower(subnet.Name) == strings.ToLower(subnetName) {
+			targetSubnet = &subnet
+			break
+		}
+	}
+
+	// Find the IP Reservation within the subnet
+	var targetReservation *IPReservation
+	for _, reservation := range targetSubnet.IPReservations {
+		// Yeah, this is as strange as it looks...convention is to put the xname in the comment
+		// field. ¯\_(ツ)_/¯
+		if reservation.Name == ipReservationName {
+			targetReservation = &reservation
+			break
+		}
+	}
+
+	if targetSubnet == nil || targetReservation == nil {
+		log.Fatalf("Failed to find subnet/reservation (%s) in subnet (%s) in the SLS Network (%s)!",
+			networkName, subnetName, networkName)
+	}
+
+	return targetReservation
 }
