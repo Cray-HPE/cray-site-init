@@ -192,20 +192,153 @@ func getWriteFiles(networks sls_common.NetworkArray, ipamNetworks bss.CloudInitI
 	return
 }
 
+// getBSSGlobalHostRecords is the BSS analog of the pit.MakeBasecampHostRecords that works with SLS data
+func getBSSGlobalHostRecords(managementNCNs []sls_common.GenericHardware, networks sls_common.NetworkArray) bss.HostRecords {
+	// Collase all of the Network ExtraProperties into single map for lookups
+	networkEPs := map[string]*sls.NetworkExtraProperties{}
+	for _, network := range networks {
+		// Map this network to a usable structure.
+		var networkExtraProperties sls.NetworkExtraProperties
+		err := mapstructure.Decode(network.ExtraPropertiesRaw, &networkExtraProperties)
+		if err != nil {
+			log.Fatalf("Failed to decode raw network extra properties to correct structure: %s", err)
+		}
+
+		networkEPs[network.Name] = &networkExtraProperties
+	}
+
+	var globalHostRecords bss.HostRecords
+	
+	// Add in the NCN Interfaces
+	for _, managementNCN := range managementNCNs {
+		var ncnExtraProperties sls_common.ComptypeNode
+		err := mapstructure.Decode(managementNCN.ExtraPropertiesRaw, &ncnExtraProperties)
+		if err != nil {
+			log.Fatalf("Failed to decode raw NCN extra properties to correct structure: %s", err)
+		}
+
+		if len(ncnExtraProperties.Aliases) == 0 {
+			log.Fatalf("NCN has no aliases defined in SLS: %+v", managementNCN)
+		}
+
+		ncnAlias := ncnExtraProperties.Aliases[0]
+		
+		// Add in the NCN interface host records
+		ipamNetworks := getIPAMForNCN(managementNCN, networks)
+		for network, ipam := range ipamNetworks {
+			// Get the IP of the NCN for this network.
+			ip, _, err := net.ParseCIDR(ipam.CIDR)
+			if err != nil {
+				log.Fatalf("Failed to parse BSS IPAM Network CIDR (%s): %s", ipam.CIDR, err)
+			}
+
+			hostRecord := bss.HostRecord{
+				IP:      ip.String(),
+				Aliases: []string{fmt.Sprintf("%s.%s", ncnAlias, network)},
+			}
+
+			// The NMN network gets the privledge of also containing the bare NCN Alias without network domain.
+			if strings.ToLower(network) == "nmn" {
+				hostRecord.Aliases = append(hostRecord.Aliases, ncnAlias)
+			}
+			globalHostRecords = append(globalHostRecords, hostRecord)
+		}
+
+		// Next add the NCN BMC host record
+		hmnBootstrapDHCPSubnet, err := networkEPs["HMN"].LookupSubnet("bootstrap_dhcp")
+		if err != nil {
+			log.Fatal("Unable to find bootstrap_dhcp in the HMN network")
+		}
+
+		bmcXname := managementNCN.GetParent()
+		bmcIPReservation, found := hmnBootstrapDHCPSubnet.ReservationsByName()[bmcXname]
+		if !found {
+			log.Fatalf("Failed to find IP reservation for %s in the HMN bootstrap_dhcp subnet", bmcXname)
+		}
+
+		globalHostRecords = append(globalHostRecords, bss.HostRecord{
+			IP: bmcIPReservation.IPAddress,
+			Aliases: []string{fmt.Sprintf("%s-mgmt", ncnAlias)},
+		})
+	}
+
+	// Add kubeapi-vip
+	nmnSubnet, err := networkEPs["NMN"].LookupSubnet("bootstrap_dhcp")
+	if err != nil {
+		log.Fatal("Unable to find bootstrap_dhcp in the NMN network")
+	}
+	kubeAPIIPReservation, found := nmnSubnet.ReservationsByName()["kubeapi-vip"]
+	if !found {
+		log.Fatalf("Failed to find IP reservation for kubeapi-vip in the NMN bootstrap_dhcp subnet")
+	}
+
+	globalHostRecords = append(globalHostRecords, bss.HostRecord{
+		IP: kubeAPIIPReservation.IPAddress,
+		Aliases: []string{"kubeapi-vip", "kubeapi-vip.nmn"},
+	})
+
+	// Add rgw-vip
+	rgwIPReservation, found := nmnSubnet.ReservationsByName()["rgw-vip"]
+	if !found {
+		log.Fatalf("Failed to find IP reservation for rgw-vip in the NMN bootstrap_dhcp subnet")
+	}
+
+	globalHostRecords = append(globalHostRecords, bss.HostRecord{
+		IP: rgwIPReservation.IPAddress,
+		Aliases: []string{"rgw-vip", "rgw-vip.nmn"},
+	})
+
+	// Using the original InstallNCN as the host for pit.nmn
+	// HACK, I'm assuming ncn-m001
+	pitIPReservation, found := nmnSubnet.ReservationsByName()["ncn-m001"]
+	if !found {
+		log.Fatalf("Failed to find IP reservation for rgw-vip in the NMN bootstrap_dhcp subnet")
+	}
+
+	globalHostRecords = append(globalHostRecords, bss.HostRecord{
+		IP: pitIPReservation.IPAddress,
+		Aliases: []string{"pit", "pit.nmn"},
+	})
+
+	// Add in packages.local and registry.local pointing toward the API Gateway
+	nmnLBSubnet, err := networkEPs["NMNLB"].LookupSubnet("nmn_metallb_address_pool")
+	if err != nil {
+		log.Fatal("Unable to find nmn_metallb_address_pool in the NMNLB network")
+	}
+	apiGatewayIPReservation, found := nmnLBSubnet.ReservationsByName()["istio-ingressgateway"]
+	if !found {
+		log.Fatalf("Failed to find IP reservation for istio-ingressgateway in the NMNLB nmn_metallb_address_pool subnet")
+	}
+
+	globalHostRecords = append(globalHostRecords, bss.HostRecord{
+		IP: apiGatewayIPReservation.IPAddress,
+		Aliases: []string{"packages.local", "registry.local"},
+	})
+
+	// Add entries for switches
+	nmnNetSubnet, err := networkEPs["NMN"].LookupSubnet("network_hardware")
+	if err != nil {
+		log.Fatal("Unable to find network_hardware in the NMN network")
+	}
+
+	for _, ipResveration := range nmnNetSubnet.IPReservations {
+		if strings.HasPrefix(ipResveration.Name, "sw-") {
+			globalHostRecords = append(globalHostRecords, bss.HostRecord{
+				IP: ipResveration.IPAddress,
+				Aliases: []string{ipResveration.Name},
+			})
+		}
+	}
+
+	return globalHostRecords
+}
+
 func updateBSS_oneToOneTwo() {
 	// Instead of hammering SLS some number of times for each NCN/network combination we just grab the entire
 	// network block and will later pull out the pieces we need.
 	networks, err := slsClient.GetNetworks()
 	if err != nil {
 		log.Fatalln(err)
-	}
-
-	// Grab the Global BSS Metadata
-	globalBootParameters := getBSSBootparametersForXname("Global")
-	var globalHostRecords bss.HostRecords
-	err = mapstructure.Decode(globalBootParameters.CloudInit.MetaData["host_records"], &globalHostRecords)
-	if err != nil {
-		log.Fatalf("Failed to decode raw NCN extra properties to correct structure: %s", err)
 	}
 
 	// Now we can loop through all the NCNs and update their metadata in BSS.
@@ -264,54 +397,16 @@ func updateBSS_oneToOneTwo() {
 		bootparameters.CloudInit.UserData["write_files"] = getWriteFiles(networks, ipamNetworks)
 
 		uploadEntryToBSS(bootparameters, http.MethodPatch)
-
-		// Update global host records
-		for network, ipam := range ipamNetworks {
-			expectedNCNAlias := fmt.Sprintf("%s.%s", ncnExtraProperties.Aliases[0], network)
-
-			// Found a matching host record, time to update its IP address
-			ip, _, err := net.ParseCIDR(ipam.CIDR)
-			if err != nil {
-				log.Fatalf("Failed to parse BSS IPAM Network CIDR (%s): %s", ipam.CIDR, err)
-			}
-
-			// First check to see if an there is already an existing host record for this interface
-			updatedHostRecord := false
-			for i := range globalHostRecords {
-				if globalHostRecords[i].Aliases[0] != expectedNCNAlias {
-					continue
-				}
-
-				globalHostRecords[i].IP = ip.String()
-				updatedHostRecord = true
-				break
-			}
-
-			// Next, add a new host record for interfaces that are new for CSM 1.2, if they haven't been added already.
-			if !updatedHostRecord {
-				hostRecord := bss.HostRecord{
-					IP:      ip.String(),
-					Aliases: []string{expectedNCNAlias},
-				}
-				globalHostRecords = append(globalHostRecords, hostRecord)
-			}
-		}
-	}
-
-	// Find istio-ingressgateway IP reverstation
-	istioIngressGatewayReservation := sls.GetIPReservation(networks, "NMNLB", "nmn_metallb_address_pool", "istio-ingressgateway")
-	if !globalHostRecords.AliasExists("packages.local") {
-		globalHostRecords = append(globalHostRecords, bss.HostRecord{
-			IP: istioIngressGatewayReservation.IPAddress,
-			Aliases: []string{
-				"packages.local",
-				"registry.local",
-			},
-		})
 	}
 
 	// Update the Global BSS Metadata
-	globalBootParameters.CloudInit.MetaData["host_records"] = globalHostRecords
+	globalBootParameters := getBSSBootparametersForXname("Global")
+	globalBootParameters.CloudInit.MetaData["host_records"] = getBSSGlobalHostRecords(managementNCNs, networks)
+
+	// Remove can-gw, and can-if
+	delete(globalBootParameters.CloudInit.MetaData, "can-gw")
+	delete(globalBootParameters.CloudInit.MetaData, "can-if")
+
 	uploadEntryToBSS(globalBootParameters, http.MethodPatch)
 }
 

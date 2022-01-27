@@ -105,25 +105,7 @@ func (utilsClient *UtilsClient) GetNetworks() (networks sls_common.NetworkArray,
 }
 
 func GetIPReservation(networks sls_common.NetworkArray, networkName, subnetName, ipReservationName string) *IPReservation {
-	// Search SLS networks for this network.
-	var targetSLSNetwork *sls_common.Network
-	for _, slsNetwork := range networks {
-		if strings.ToLower(slsNetwork.Name) == strings.ToLower(networkName) {
-			targetSLSNetwork = &slsNetwork
-			break
-		}
-	}
-
-	if targetSLSNetwork == nil {
-		log.Fatalf("Failed to find required IPAM network %s in SLS networks!", networkName)
-	}
-
-	// Map this network to a usable structure.
-	var networkExtraProperties NetworkExtraProperties
-	err := mapstructure.Decode(targetSLSNetwork.ExtraPropertiesRaw, &networkExtraProperties)
-	if err != nil {
-		log.Fatalf("Failed to decode raw network extra properties to correct structure: %s", err)
-	}
+	networkExtraProperties := GetNetworkExtraProperties(networks, networkName)
 
 	// Find the subnet of intrest within SLS network
 	var targetSubnet *IPV4Subnet
@@ -151,4 +133,28 @@ func GetIPReservation(networks sls_common.NetworkArray, networkName, subnetName,
 	}
 
 	return targetReservation
+}
+
+func GetNetworkExtraProperties(networks sls_common.NetworkArray, networkName string) *NetworkExtraProperties {
+	// Search SLS networks for this network.
+	var targetSLSNetwork *sls_common.Network
+	for _, slsNetwork := range networks {
+		if strings.ToLower(slsNetwork.Name) == strings.ToLower(networkName) {
+			targetSLSNetwork = &slsNetwork
+			break
+		}
+	}
+
+	if targetSLSNetwork == nil {
+		log.Fatalf("Failed to find required IPAM network %s in SLS networks!", networkName)
+	}
+
+	// Map this network to a usable structure.
+	var networkExtraProperties NetworkExtraProperties
+	err := mapstructure.Decode(targetSLSNetwork.ExtraPropertiesRaw, &networkExtraProperties)
+	if err != nil {
+		log.Fatalf("Failed to decode raw network extra properties to correct structure: %s", err)
+	}
+
+	return &networkExtraProperties
 }

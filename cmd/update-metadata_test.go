@@ -15,8 +15,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func getHostRecords(t *testing.T, globalBootParameters bssTypes.BootParams) []bss.HostRecord {
-	var globalHostRecords []bss.HostRecord
+func getHostRecords(t *testing.T, globalBootParameters bssTypes.BootParams) bss.HostRecords {
+	var globalHostRecords bss.HostRecords
 	err := mapstructure.Decode(globalBootParameters.CloudInit.MetaData["host_records"], &globalHostRecords)
 	assert.NoError(t, err)
 
@@ -138,17 +138,17 @@ func TestUpgradeBSSMetadata(t *testing.T) {
 
 	// Verify Global cloud-init data has updated host_records entries
 	globalHostRecords := getHostRecords(t, allBootParameters["Global"])
-	sortHostRecords(globalHostRecords)
-
+	
 	var expectedGlobalHostRecords bss.HostRecords
 	expectedGlobalHostRecordsRaw, err := ioutil.ReadFile("../testdata/upgrade-bss/expected_global_host_records.json")
 	assert.NoError(t, err)
 
 	err = json.Unmarshal(expectedGlobalHostRecordsRaw, &expectedGlobalHostRecords)
 	assert.NoError(t, err)
+	
+	// When comparing the host_records the ordering could be different, but are functionally equivalent.
+	sortHostRecords(globalHostRecords)
 	sortHostRecords(expectedGlobalHostRecords)
-
-
 	assert.Equal(t, expectedGlobalHostRecords, globalHostRecords)
 
 
