@@ -52,15 +52,3 @@ type HostRecord struct {
 
 // HostRecords - Structure that describes the host_records portion of cloud-init
 type HostRecords []HostRecord
-
-func (hrs HostRecords) AliasExists(wantedAlias string) bool {
-	for _, hr := range hrs {
-		for _, alias := range hr.Aliases {
-			if alias == wantedAlias {
-				return true
-			}
-		}
-	}
-	
-	return false;
-}
