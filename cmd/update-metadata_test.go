@@ -22,7 +22,7 @@ type UpgradeBSSMetadataSuite struct {
 	slsNetworks sls_common.NetworkArray
 
 	expectedGlobalBootparameters bssTypes.BootParams
-	expectedGlobalHostRecords bss.HostRecords
+	expectedGlobalHostRecords    bss.HostRecords
 }
 
 func (suite *UpgradeBSSMetadataSuite) getHostRecords(globalBootParameters bssTypes.BootParams) bss.HostRecords {
@@ -34,13 +34,13 @@ func (suite *UpgradeBSSMetadataSuite) getHostRecords(globalBootParameters bssTyp
 }
 
 func (suite *UpgradeBSSMetadataSuite) sortHostRecords(hostRecords []bss.HostRecord) {
-	sort.SliceStable(hostRecords, func(i, j int) bool{
+	sort.SliceStable(hostRecords, func(i, j int) bool {
 		return hostRecords[i].IP < hostRecords[j].IP
 	})
 }
 
 func (suite *UpgradeBSSMetadataSuite) SetupTest() {
-	// Load in management NCNs from SLS, into the global variable managementNCNs 
+	// Load in management NCNs from SLS, into the global variable managementNCNs
 	ncnsRaw, err := ioutil.ReadFile("../testdata/upgrade-bss/csm1.0-csm1.2/sls_management_ncns.json")
 	suite.NoError(err)
 	err = json.Unmarshal(ncnsRaw, &managementNCNs)
@@ -86,7 +86,7 @@ func (suite *UpgradeBSSMetadataSuite) TestUpdateBSS_oneToOneTwo() {
 		}
 		allBootParameters[bootParameters.Hosts[0]] = bootParameters
 	}
-	
+
 	// Verify the CSM 1.0 Global boot parameters contain the can-if and can-gw keys
 	suite.Contains(allBootParameters["Global"].CloudInit.MetaData, "can-if")
 	suite.Contains(allBootParameters["Global"].CloudInit.MetaData, "can-gw")
@@ -158,7 +158,7 @@ func (suite *UpgradeBSSMetadataSuite) TestUpdateBSS_oneToOneTwo() {
 	globalBootParameters := allBootParameters["Global"]
 	suite.NotContains(globalBootParameters.CloudInit.MetaData, "can-if")
 	suite.NotContains(globalBootParameters.CloudInit.MetaData, "can-gw")
-		
+
 	// Verify Global cloud-init data has updated host_records entries
 	// When comparing the host_records the ordering could be different, but are functionally equivalent.
 	globalHostRecords := suite.getHostRecords(globalBootParameters)

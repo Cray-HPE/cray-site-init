@@ -193,7 +193,7 @@ func getWriteFiles(networks sls_common.NetworkArray, ipamNetworks bss.CloudInitI
 	return
 }
 
-// buildBSSHostRecords will build a BSS HostRecords 
+// buildBSSHostRecords will build a BSS HostRecords
 func buildBSSHostRecords(networkEPs map[string]*sls.NetworkExtraProperties, networkName, subnetName, reservationName string, aliases []string) bss.HostRecord {
 	subnet, err := networkEPs[networkName].LookupSubnet(subnetName)
 	if err != nil {
@@ -205,7 +205,7 @@ func buildBSSHostRecords(networkEPs map[string]*sls.NetworkExtraProperties, netw
 	}
 
 	return bss.HostRecord{
-		IP: ipReservation.IPAddress,
+		IP:      ipReservation.IPAddress,
 		Aliases: aliases,
 	}
 }
@@ -226,7 +226,7 @@ func getBSSGlobalHostRecords(managementNCNs []sls_common.GenericHardware, networ
 	}
 
 	var globalHostRecords bss.HostRecords
-	
+
 	// Add in the NCN Interfaces
 	for _, managementNCN := range managementNCNs {
 		var ncnExtraProperties sls_common.ComptypeNode
@@ -240,7 +240,7 @@ func getBSSGlobalHostRecords(managementNCNs []sls_common.GenericHardware, networ
 		}
 
 		ncnAlias := ncnExtraProperties.Aliases[0]
-		
+
 		// Add in the NCN interface host records
 		ipamNetworks := getIPAMForNCN(managementNCN, networks)
 		for network, ipam := range ipamNetworks {
@@ -264,29 +264,29 @@ func getBSSGlobalHostRecords(managementNCNs []sls_common.GenericHardware, networ
 
 		// Next add the NCN BMC host record
 		bmcXname := base.GetHMSCompParent(managementNCN.Xname)
-		globalHostRecords = append(globalHostRecords, 
+		globalHostRecords = append(globalHostRecords,
 			buildBSSHostRecords(networkEPs, "HMN", "bootstrap_dhcp", bmcXname, []string{fmt.Sprintf("%s-mgmt", ncnAlias)}),
 		)
 	}
 
 	// Add kubeapi-vip
-	globalHostRecords = append(globalHostRecords, 
+	globalHostRecords = append(globalHostRecords,
 		buildBSSHostRecords(networkEPs, "NMN", "bootstrap_dhcp", "kubeapi-vip", []string{"kubeapi-vip", "kubeapi-vip.nmn"}),
 	)
 
 	// Add rgw-vip
-	globalHostRecords = append(globalHostRecords, 
+	globalHostRecords = append(globalHostRecords,
 		buildBSSHostRecords(networkEPs, "NMN", "bootstrap_dhcp", "rgw-vip", []string{"rgw-vip", "rgw-vip.nmn"}),
 	)
 
 	// Using the original InstallNCN as the host for pit.nmn
 	// HACK, I'm assuming ncn-m001
-	globalHostRecords = append(globalHostRecords, 
+	globalHostRecords = append(globalHostRecords,
 		buildBSSHostRecords(networkEPs, "NMN", "bootstrap_dhcp", "ncn-m001", []string{"pit", "pit.nmn"}),
 	)
 
 	// Add in packages.local and registry.local pointing toward the API Gateway
-	globalHostRecords = append(globalHostRecords, 
+	globalHostRecords = append(globalHostRecords,
 		buildBSSHostRecords(networkEPs, "NMNLB", "nmn_metallb_address_pool", "istio-ingressgateway", []string{"packages.local", "registry.local"}),
 	)
 
@@ -299,7 +299,7 @@ func getBSSGlobalHostRecords(managementNCNs []sls_common.GenericHardware, networ
 	for _, ipResveration := range nmnNetSubnet.IPReservations {
 		if strings.HasPrefix(ipResveration.Name, "sw-") {
 			globalHostRecords = append(globalHostRecords, bss.HostRecord{
-				IP: ipResveration.IPAddress,
+				IP:      ipResveration.IPAddress,
 				Aliases: []string{ipResveration.Name},
 			})
 		}

@@ -19,7 +19,7 @@ type NetworkExtraProperties struct {
 	Subnets []IPV4Subnet `json:"Subnets"`
 }
 
-// LookUpSubnet returns a subnet by name
+// LookupSubnet returns a subnet by name
 func (network *NetworkExtraProperties) LookupSubnet(name string) (IPV4Subnet, error) {
 	var found []IPV4Subnet
 	if len(network.Subnets) == 0 {
