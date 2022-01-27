@@ -11,48 +11,73 @@ import (
 	"github.com/Cray-HPE/cray-site-init/pkg/bss"
 	"github.com/Cray-HPE/cray-site-init/pkg/sls"
 	"github.com/Cray-HPE/hms-bss/pkg/bssTypes"
+	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 	"github.com/mitchellh/mapstructure"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
-func getHostRecords(t *testing.T, globalBootParameters bssTypes.BootParams) bss.HostRecords {
+type UpgradeBSSMetadataSuite struct {
+	suite.Suite
+
+	slsNetworks sls_common.NetworkArray
+
+	expectedGlobalBootparameters bssTypes.BootParams
+	expectedGlobalHostRecords bss.HostRecords
+}
+
+func (suite *UpgradeBSSMetadataSuite) getHostRecords(globalBootParameters bssTypes.BootParams) bss.HostRecords {
 	var globalHostRecords bss.HostRecords
 	err := mapstructure.Decode(globalBootParameters.CloudInit.MetaData["host_records"], &globalHostRecords)
-	assert.NoError(t, err)
+	suite.NoError(err)
 
 	return globalHostRecords
 }
 
-func findHostRecord(t *testing.T, hostRecords []bss.HostRecord, alias string) bss.HostRecord {
-	for _, hostRecord := range hostRecords {
-		for _, hostAlias := range hostRecord.Aliases {
-			if hostAlias == alias {
-				return hostRecord
-			} 
-		}
-	}
-
-	t.Errorf("Unable to find host record for %s", alias)
-	t.Fail()
-	return bss.HostRecord{} 
-}
-
-func sortHostRecords(hostRecords []bss.HostRecord) {
+func (suite *UpgradeBSSMetadataSuite) sortHostRecords(hostRecords []bss.HostRecord) {
 	sort.SliceStable(hostRecords, func(i, j int) bool{
 		return hostRecords[i].IP < hostRecords[j].IP
 	})
 }
 
-func TestUpgradeBSSMetadata(t *testing.T) {
+func (suite *UpgradeBSSMetadataSuite) SetupTest() {
+	// Load in management NCNs from SLS, into the global variable managementNCNs 
+	ncnsRaw, err := ioutil.ReadFile("../testdata/upgrade-bss/csm1.0-csm1.2/sls_management_ncns.json")
+	suite.NoError(err)
+	err = json.Unmarshal(ncnsRaw, &managementNCNs)
+	suite.NoError(err)
+	suite.NotEmpty(managementNCNs)
+
+	// The SLS Network data is expected to be already configured for CSM 1.2
+	networksRaw, err := ioutil.ReadFile("../testdata/upgrade-bss/csm1.0-csm1.2/csm1.2_sls_networks.json")
+	suite.NoError(err)
+	err = json.Unmarshal(networksRaw, &suite.slsNetworks)
+	suite.NoError(err)
+	suite.NotEmpty(suite.slsNetworks)
+
+	// Load in the expected global BSS boot parameters for CSM 1.2
+	expectedGlobalBootparametersRaw, err := ioutil.ReadFile("../testdata/upgrade-bss/csm1.0-csm1.2/csm1.2_expected_global_bootparameters.json")
+	suite.NoError(err)
+	err = json.Unmarshal(expectedGlobalBootparametersRaw, &suite.expectedGlobalBootparameters)
+	suite.NoError(err)
+	suite.NotEmpty(suite.expectedGlobalBootparameters)
+
+	// Extract the host_records from the global BSS boot parameters
+	suite.expectedGlobalHostRecords = bss.HostRecords{}
+	err = mapstructure.Decode(suite.expectedGlobalBootparameters.CloudInit.MetaData["host_records"], &suite.expectedGlobalHostRecords)
+	suite.NoError(err)
+	suite.NotEmpty(suite.expectedGlobalHostRecords)
+}
+
+func (suite *UpgradeBSSMetadataSuite) TestUpdateBSS_oneToOneTwo() {
 	//
 	// Load in BSS test data
 	//
-	allBootParametersRaw, err := ioutil.ReadFile("../testdata/upgrade-bss/bss_bootparameters_csm1.0.json")
-	assert.NoError(t, err)
+	allBootParametersRaw, err := ioutil.ReadFile("../testdata/upgrade-bss/csm1.0-csm1.2/csm1.0_bss_bootparameters.json")
+	suite.NoError(err)
 
 	var allBootParametersArray []bssTypes.BootParams
 	err = json.Unmarshal(allBootParametersRaw, &allBootParametersArray)
-	assert.NoError(t, err)
+	suite.NoError(err)
 
 	allBootParameters := map[string]bssTypes.BootParams{}
 	for _, bootParameters := range allBootParametersArray {
@@ -61,24 +86,22 @@ func TestUpgradeBSSMetadata(t *testing.T) {
 		}
 		allBootParameters[bootParameters.Hosts[0]] = bootParameters
 	}
-
-	// Load in management NCNs from SLS
-	ncnsRaw, err := ioutil.ReadFile("../testdata/upgrade-bss/sls_management_ncns.json")
-	assert.NoError(t, err)
-	err = json.Unmarshal(ncnsRaw, &managementNCNs)
-	assert.NoError(t, err)
+	
+	// Verify the CSM 1.0 Global boot parameters contain the can-if and can-gw keys
+	suite.Contains(allBootParameters["Global"].CloudInit.MetaData, "can-if")
+	suite.Contains(allBootParameters["Global"].CloudInit.MetaData, "can-gw")
 
 	//
 	// Setup test HTTP servers for BSS and SLS
 	//
 	bssTS := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		t.Logf("Received BSS request for %s", r.URL)
+		suite.T().Logf("Received BSS request for %s", r.URL)
 		if r.Method == http.MethodGet && r.URL.Path == "/boot/v1/bootparameters" {
 			host := r.URL.Query().Get("name")
 			bootParameters, ok := allBootParameters[host]
 			if !ok {
-				t.Logf("Unable to find host %s in BSS Bootparameters", host)
-				t.Fail()
+				suite.T().Logf("Unable to find host %s in BSS Bootparameters", host)
+				suite.T().Fail()
 				w.WriteHeader(http.StatusNotFound)
 				return
 			}
@@ -89,19 +112,19 @@ func TestUpgradeBSSMetadata(t *testing.T) {
 		} else if r.Method == http.MethodPatch && r.URL.Path == "/boot/v1/bootparameters" {
 			var bootParameters bssTypes.BootParams
 			err = json.NewDecoder(r.Body).Decode(&bootParameters)
-			assert.NoError(t, err)
+			suite.NoError(err)
 
 			if len(bootParameters.Hosts) != 1 {
 				// For this test case we expect for 1 host to be set.
-				t.Logf("Received unexpected BSS Put request with %d hosts specified", len(bootParameters.Hosts))
-				t.Fail()
+				suite.T().Logf("Received unexpected BSS Put request with %d hosts specified", len(bootParameters.Hosts))
+				suite.T().Fail()
 				w.WriteHeader(http.StatusBadRequest)
 			}
 
 			host := bootParameters.Hosts[0]
 			if _, present := allBootParameters[host]; !present {
-				t.Logf("Received unexpected BSS Put request for nonexistant host %s", host)
-				t.Fail()
+				suite.T().Logf("Received unexpected BSS Put request for nonexistant host %s", host)
+				suite.T().Fail()
 			}
 
 			allBootParameters[host] = bootParameters
@@ -113,15 +136,10 @@ func TestUpgradeBSSMetadata(t *testing.T) {
 	defer bssTS.Close()
 
 	slsTS := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		t.Logf("Received SLS request for %s", r.URL)
-		if r.Method == http.MethodGet && r.URL.Path == "/v1/search/hardware" && r.URL.Query().Get("extra_properties.Role") == "Management" {
-		} else if r.Method == http.MethodGet && r.URL.Path == "/v1/networks" {
-			// The SLS Network data is expected to be already configured for CSM 1.2
-			networks, err := ioutil.ReadFile("../testdata/upgrade-bss/sls_networks.json")
-			assert.NoError(t, err)
-
+		suite.T().Logf("Received SLS request for %s", r.URL)
+		if r.Method == http.MethodGet && r.URL.Path == "/v1/networks" {
 			w.WriteHeader(http.StatusOK)
-			w.Write(networks)
+			json.NewEncoder(w).Encode(suite.slsNetworks)
 			return
 		}
 
@@ -136,24 +154,28 @@ func TestUpgradeBSSMetadata(t *testing.T) {
 	// Function under test
 	updateBSS_oneToOneTwo()
 
+	// The global cloud-init meta-data should no longer contain the keys can-if and can-gw
+	globalBootParameters := allBootParameters["Global"]
+	suite.NotContains(globalBootParameters.CloudInit.MetaData, "can-if")
+	suite.NotContains(globalBootParameters.CloudInit.MetaData, "can-gw")
+		
 	// Verify Global cloud-init data has updated host_records entries
-	globalHostRecords := getHostRecords(t, allBootParameters["Global"])
-	
-	var expectedGlobalHostRecords bss.HostRecords
-	expectedGlobalHostRecordsRaw, err := ioutil.ReadFile("../testdata/upgrade-bss/expected_global_host_records.json")
-	assert.NoError(t, err)
-
-	err = json.Unmarshal(expectedGlobalHostRecordsRaw, &expectedGlobalHostRecords)
-	assert.NoError(t, err)
-	
 	// When comparing the host_records the ordering could be different, but are functionally equivalent.
-	sortHostRecords(globalHostRecords)
-	sortHostRecords(expectedGlobalHostRecords)
-	assert.Equal(t, expectedGlobalHostRecords, globalHostRecords)
+	globalHostRecords := suite.getHostRecords(globalBootParameters)
+	suite.sortHostRecords(globalHostRecords)
+	suite.sortHostRecords(suite.expectedGlobalHostRecords)
+	suite.Equal(suite.expectedGlobalHostRecords, globalHostRecords)
+}
 
+func (suite *UpgradeBSSMetadataSuite) TestGetBSSGlobalHostRecords() {
+	globalHostRecords := getBSSGlobalHostRecords(managementNCNs, suite.slsNetworks)
 
-	actualGlobalHostRecordsOut, _ := json.MarshalIndent(globalHostRecords, "", "  ")
-	expectedGlobalHostRecordsOut, _ := json.MarshalIndent(expectedGlobalHostRecords, "", "  ")
-	ioutil.WriteFile("actual_host_records.json", actualGlobalHostRecordsOut, 0644)
-	ioutil.WriteFile("expected_host_records.json", expectedGlobalHostRecordsOut, 0644)
+	// When comparing the host_records the ordering could be different, but are functionally equivalent.
+	suite.sortHostRecords(globalHostRecords)
+	suite.sortHostRecords(suite.expectedGlobalHostRecords)
+	suite.Equal(suite.expectedGlobalHostRecords, globalHostRecords)
+}
+
+func TestUpgradeBSSMetadataSuite(t *testing.T) {
+	suite.Run(t, new(UpgradeBSSMetadataSuite))
 }

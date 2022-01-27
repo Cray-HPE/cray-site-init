@@ -12,6 +12,7 @@ import (
 
 	"github.com/Cray-HPE/cray-site-init/pkg/bss"
 	"github.com/Cray-HPE/cray-site-init/pkg/sls"
+	base "github.com/Cray-HPE/hms-base"
 	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
@@ -192,6 +193,23 @@ func getWriteFiles(networks sls_common.NetworkArray, ipamNetworks bss.CloudInitI
 	return
 }
 
+// buildBSSHostRecords will build a BSS HostRecords 
+func buildBSSHostRecords(networkEPs map[string]*sls.NetworkExtraProperties, networkName, subnetName, reservationName string, aliases []string) bss.HostRecord {
+	subnet, err := networkEPs[networkName].LookupSubnet(subnetName)
+	if err != nil {
+		log.Fatalf("Unable to find %s in the %s network", subnetName, networkName)
+	}
+	ipReservation, found := subnet.ReservationsByName()[reservationName]
+	if !found {
+		log.Fatalf("Failed to find IP reservation for %s in the %s %s subnet", reservationName, networkName, subnetName)
+	}
+
+	return bss.HostRecord{
+		IP: ipReservation.IPAddress,
+		Aliases: aliases,
+	}
+}
+
 // getBSSGlobalHostRecords is the BSS analog of the pit.MakeBasecampHostRecords that works with SLS data
 func getBSSGlobalHostRecords(managementNCNs []sls_common.GenericHardware, networks sls_common.NetworkArray) bss.HostRecords {
 	// Collase all of the Network ExtraProperties into single map for lookups
@@ -245,75 +263,32 @@ func getBSSGlobalHostRecords(managementNCNs []sls_common.GenericHardware, networ
 		}
 
 		// Next add the NCN BMC host record
-		hmnBootstrapDHCPSubnet, err := networkEPs["HMN"].LookupSubnet("bootstrap_dhcp")
-		if err != nil {
-			log.Fatal("Unable to find bootstrap_dhcp in the HMN network")
-		}
-
-		bmcXname := managementNCN.GetParent()
-		bmcIPReservation, found := hmnBootstrapDHCPSubnet.ReservationsByName()[bmcXname]
-		if !found {
-			log.Fatalf("Failed to find IP reservation for %s in the HMN bootstrap_dhcp subnet", bmcXname)
-		}
-
-		globalHostRecords = append(globalHostRecords, bss.HostRecord{
-			IP: bmcIPReservation.IPAddress,
-			Aliases: []string{fmt.Sprintf("%s-mgmt", ncnAlias)},
-		})
+		bmcXname := base.GetHMSCompParent(managementNCN.Xname)
+		globalHostRecords = append(globalHostRecords, 
+			buildBSSHostRecords(networkEPs, "HMN", "bootstrap_dhcp", bmcXname, []string{fmt.Sprintf("%s-mgmt", ncnAlias)}),
+		)
 	}
 
 	// Add kubeapi-vip
-	nmnSubnet, err := networkEPs["NMN"].LookupSubnet("bootstrap_dhcp")
-	if err != nil {
-		log.Fatal("Unable to find bootstrap_dhcp in the NMN network")
-	}
-	kubeAPIIPReservation, found := nmnSubnet.ReservationsByName()["kubeapi-vip"]
-	if !found {
-		log.Fatalf("Failed to find IP reservation for kubeapi-vip in the NMN bootstrap_dhcp subnet")
-	}
-
-	globalHostRecords = append(globalHostRecords, bss.HostRecord{
-		IP: kubeAPIIPReservation.IPAddress,
-		Aliases: []string{"kubeapi-vip", "kubeapi-vip.nmn"},
-	})
+	globalHostRecords = append(globalHostRecords, 
+		buildBSSHostRecords(networkEPs, "NMN", "bootstrap_dhcp", "kubeapi-vip", []string{"kubeapi-vip", "kubeapi-vip.nmn"}),
+	)
 
 	// Add rgw-vip
-	rgwIPReservation, found := nmnSubnet.ReservationsByName()["rgw-vip"]
-	if !found {
-		log.Fatalf("Failed to find IP reservation for rgw-vip in the NMN bootstrap_dhcp subnet")
-	}
-
-	globalHostRecords = append(globalHostRecords, bss.HostRecord{
-		IP: rgwIPReservation.IPAddress,
-		Aliases: []string{"rgw-vip", "rgw-vip.nmn"},
-	})
+	globalHostRecords = append(globalHostRecords, 
+		buildBSSHostRecords(networkEPs, "NMN", "bootstrap_dhcp", "rgw-vip", []string{"rgw-vip", "rgw-vip.nmn"}),
+	)
 
 	// Using the original InstallNCN as the host for pit.nmn
 	// HACK, I'm assuming ncn-m001
-	pitIPReservation, found := nmnSubnet.ReservationsByName()["ncn-m001"]
-	if !found {
-		log.Fatalf("Failed to find IP reservation for rgw-vip in the NMN bootstrap_dhcp subnet")
-	}
-
-	globalHostRecords = append(globalHostRecords, bss.HostRecord{
-		IP: pitIPReservation.IPAddress,
-		Aliases: []string{"pit", "pit.nmn"},
-	})
+	globalHostRecords = append(globalHostRecords, 
+		buildBSSHostRecords(networkEPs, "NMN", "bootstrap_dhcp", "ncn-m001", []string{"pit", "pit.nmn"}),
+	)
 
 	// Add in packages.local and registry.local pointing toward the API Gateway
-	nmnLBSubnet, err := networkEPs["NMNLB"].LookupSubnet("nmn_metallb_address_pool")
-	if err != nil {
-		log.Fatal("Unable to find nmn_metallb_address_pool in the NMNLB network")
-	}
-	apiGatewayIPReservation, found := nmnLBSubnet.ReservationsByName()["istio-ingressgateway"]
-	if !found {
-		log.Fatalf("Failed to find IP reservation for istio-ingressgateway in the NMNLB nmn_metallb_address_pool subnet")
-	}
-
-	globalHostRecords = append(globalHostRecords, bss.HostRecord{
-		IP: apiGatewayIPReservation.IPAddress,
-		Aliases: []string{"packages.local", "registry.local"},
-	})
+	globalHostRecords = append(globalHostRecords, 
+		buildBSSHostRecords(networkEPs, "NMNLB", "nmn_metallb_address_pool", "istio-ingressgateway", []string{"packages.local", "registry.local"}),
+	)
 
 	// Add entries for switches
 	nmnNetSubnet, err := networkEPs["NMN"].LookupSubnet("network_hardware")
