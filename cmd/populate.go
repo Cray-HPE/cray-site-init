@@ -244,6 +244,9 @@ func CopyArtifactsToPart(src string, dest string, regex string) {
 	if artifacts == nil {
 		log.Fatalf("Error: unable to find %s in %s\n", regex, src)
 	}
+	if !Exists(dest) {
+		log.Fatalf("Error: target directory %s does not exist\n", dest)
+	}
 	for _, k := range artifacts {
 		fname := filepath.Base(k)
 		fmt.Printf("%s> %s", PadRight(fname, "-", 50), dest)
