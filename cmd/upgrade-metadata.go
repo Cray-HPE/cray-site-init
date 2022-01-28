@@ -296,11 +296,11 @@ func getBSSGlobalHostRecords(managementNCNs []sls_common.GenericHardware, networ
 		log.Fatal("Unable to find network_hardware in the NMN network")
 	}
 
-	for _, ipResveration := range nmnNetSubnet.IPReservations {
-		if strings.HasPrefix(ipResveration.Name, "sw-") {
+	for _, ipReservation := range nmnNetSubnet.IPReservations {
+		if strings.HasPrefix(ipReservation.Name, "sw-") {
 			globalHostRecords = append(globalHostRecords, bss.HostRecord{
-				IP:      ipResveration.IPAddress,
-				Aliases: []string{ipResveration.Name},
+				IP:      ipReservation.IPAddress,
+				Aliases: []string{ipReservation.Name},
 			})
 		}
 	}
