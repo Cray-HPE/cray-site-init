@@ -5,15 +5,16 @@ Copyright 2021 Hewlett Packard Enterprise Development LP
 */
 import (
 	"fmt"
+	"log"
+	"net"
+	"net/http"
+	"strings"
+
 	"github.com/Cray-HPE/cray-site-init/pkg/bss"
 	"github.com/Cray-HPE/cray-site-init/pkg/sls"
 	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
-	"log"
-	"net"
-	"net/http"
-	"strings"
 	// sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 )
 
@@ -30,6 +31,12 @@ const bondedInterfaceName = "bond0"
 
 var (
 	oneToOneTwo bool
+
+	k8sKernel string
+	k8sInitrd string
+
+	storageKernel string
+	storageInitrd string
 )
 
 func getIPAMForNCN(managementNCN sls_common.GenericHardware,
@@ -219,8 +226,12 @@ func updateBSS_oneToOneTwo() {
 		switch ncnExtraProperties.SubRole {
 		case "Storage":
 			bootparameters.CloudInit.UserData["runcmd"] = bss.StorageNCNRunCMD
+			bootparameters.Initrd = storageInitrd
+			bootparameters.Kernel = storageKernel
 		case "Master", "Worker":
 			bootparameters.CloudInit.UserData["runcmd"] = bss.KubernetesNCNRunCMD
+			bootparameters.Initrd = k8sInitrd
+			bootparameters.Kernel = k8sKernel
 		default:
 			log.Fatalf("NCN has invalid SubRole: %+v", managementNCN)
 		}
@@ -258,4 +269,14 @@ func init() {
 	metadataCmd.Flags().SortFlags = true
 	metadataCmd.Flags().BoolVarP(&oneToOneTwo, "1-0-to-1-2", "", false,
 		"Upgrade CSM 1.0 metadata to 1.2 metadata")
+
+	metadataCmd.Flags().StringVar(&k8sKernel, "k8s-kernel", "",
+		"Path to the kernel image to upload for K8s NCNs")
+	metadataCmd.Flags().StringVar(&k8sInitrd, "k8s-initrd", "",
+		"Path to the initrd image to upload for K8s NCNs")
+
+	metadataCmd.Flags().StringVar(&storageKernel, "storage-kernel", "",
+		"Path to the kernel image to upload for Storage NCNs")
+	metadataCmd.Flags().StringVar(&storageInitrd, "storage-initrd", "",
+		"Path to the initrd image to upload for Storage NCNs")
 }
