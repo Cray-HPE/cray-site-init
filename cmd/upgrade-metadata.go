@@ -226,12 +226,20 @@ func updateBSS_oneToOneTwo() {
 		switch ncnExtraProperties.SubRole {
 		case "Storage":
 			bootparameters.CloudInit.UserData["runcmd"] = bss.StorageNCNRunCMD
-			bootparameters.Initrd = storageInitrd
-			bootparameters.Kernel = storageKernel
+			if storageInitrd != "" {
+				bootparameters.Initrd = storageInitrd
+			}
+			if storageKernel != "" {
+				bootparameters.Kernel = storageKernel
+			}
 		case "Master", "Worker":
 			bootparameters.CloudInit.UserData["runcmd"] = bss.KubernetesNCNRunCMD
-			bootparameters.Initrd = k8sInitrd
-			bootparameters.Kernel = k8sKernel
+			if k8sInitrd != "" {
+				bootparameters.Initrd = k8sInitrd
+			}
+			if k8sKernel != "" {
+				bootparameters.Kernel = k8sKernel
+			}
 		default:
 			log.Fatalf("NCN has invalid SubRole: %+v", managementNCN)
 		}
