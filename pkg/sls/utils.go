@@ -4,9 +4,10 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 	"io/ioutil"
 	"net/http"
+
+	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 )
 
 // UtilsClient - Structure for SLS client.

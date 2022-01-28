@@ -1,8 +1,28 @@
+//
+//  MIT License
+//
+//  (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a
+//  copy of this software and associated documentation files (the "Software"),
+//  to deal in the Software without restriction, including without limitation
+//  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//  and/or sell copies of the Software, and to permit persons to whom the
+//  Software is furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included
+//  in all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//  THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+//  OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+//  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+//  OTHER DEALINGS IN THE SOFTWARE.
+
 package cmd
 
-/*
-Copyright 2021 Hewlett Packard Enterprise Development LP
-*/
 import (
 	"fmt"
 	"log"
@@ -12,10 +32,10 @@ import (
 
 	"github.com/Cray-HPE/cray-site-init/pkg/bss"
 	"github.com/Cray-HPE/cray-site-init/pkg/sls"
+	base "github.com/Cray-HPE/hms-base"
 	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
-	// sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 )
 
 // Constants
@@ -40,12 +60,12 @@ var (
 )
 
 func getIPAMForNCN(managementNCN sls_common.GenericHardware,
-	networks sls_common.NetworkArray) (ipamNetworks bss.CloudInitIPAM) {
+	networks sls_common.NetworkArray, extraSLSNetworks ...string) (ipamNetworks bss.CloudInitIPAM) {
 	ipamNetworks = make(bss.CloudInitIPAM)
 
 	// For each of the required networks, go build an IPAMNetwork object and add that to the ipamNetworks
 	// above.
-	for _, ipamNetwork := range bss.IPAMNetworks {
+	for _, ipamNetwork := range append(bss.IPAMNetworks[:], extraSLSNetworks...) {
 		// Search SLS networks for this network.
 		var targetSLSNetwork *sls_common.Network
 		for _, slsNetwork := range networks {
@@ -193,6 +213,121 @@ func getWriteFiles(networks sls_common.NetworkArray, ipamNetworks bss.CloudInitI
 	return
 }
 
+// buildBSSHostRecords will build a BSS HostRecords
+func buildBSSHostRecords(networkEPs map[string]*sls.NetworkExtraProperties, networkName, subnetName, reservationName string, aliases []string) bss.HostRecord {
+	subnet, err := networkEPs[networkName].LookupSubnet(subnetName)
+	if err != nil {
+		log.Fatalf("Unable to find %s in the %s network", subnetName, networkName)
+	}
+	ipReservation, found := subnet.ReservationsByName()[reservationName]
+	if !found {
+		log.Fatalf("Failed to find IP reservation for %s in the %s %s subnet", reservationName, networkName, subnetName)
+	}
+
+	return bss.HostRecord{
+		IP:      ipReservation.IPAddress,
+		Aliases: aliases,
+	}
+}
+
+// getBSSGlobalHostRecords is the BSS analog of the pit.MakeBasecampHostRecords that works with SLS data
+func getBSSGlobalHostRecords(managementNCNs []sls_common.GenericHardware, networks sls_common.NetworkArray) bss.HostRecords {
+	// Collase all of the Network ExtraProperties into single map for lookups
+	networkEPs := map[string]*sls.NetworkExtraProperties{}
+	for _, network := range networks {
+		// Map this network to a usable structure.
+		var networkExtraProperties sls.NetworkExtraProperties
+		err := mapstructure.Decode(network.ExtraPropertiesRaw, &networkExtraProperties)
+		if err != nil {
+			log.Fatalf("Failed to decode raw network extra properties to correct structure: %s", err)
+		}
+
+		networkEPs[network.Name] = &networkExtraProperties
+	}
+
+	var globalHostRecords bss.HostRecords
+
+	// Add in the NCN Interfaces
+	for _, managementNCN := range managementNCNs {
+		var ncnExtraProperties sls_common.ComptypeNode
+		err := mapstructure.Decode(managementNCN.ExtraPropertiesRaw, &ncnExtraProperties)
+		if err != nil {
+			log.Fatalf("Failed to decode raw NCN extra properties to correct structure: %s", err)
+		}
+
+		if len(ncnExtraProperties.Aliases) == 0 {
+			log.Fatalf("NCN has no aliases defined in SLS: %+v", managementNCN)
+		}
+
+		ncnAlias := ncnExtraProperties.Aliases[0]
+
+		// Add in the NCN interface host records
+		ipamNetworks := getIPAMForNCN(managementNCN, networks, "chn")
+		for network, ipam := range ipamNetworks {
+			// Get the IP of the NCN for this network.
+			ip, _, err := net.ParseCIDR(ipam.CIDR)
+			if err != nil {
+				log.Fatalf("Failed to parse BSS IPAM Network CIDR (%s): %s", ipam.CIDR, err)
+			}
+
+			hostRecord := bss.HostRecord{
+				IP:      ip.String(),
+				Aliases: []string{fmt.Sprintf("%s.%s", ncnAlias, network)},
+			}
+
+			// The NMN network gets the privledge of also containing the bare NCN Alias without network domain.
+			if strings.ToLower(network) == "nmn" {
+				hostRecord.Aliases = append(hostRecord.Aliases, ncnAlias)
+			}
+			globalHostRecords = append(globalHostRecords, hostRecord)
+		}
+
+		// Next add the NCN BMC host record
+		bmcXname := base.GetHMSCompParent(managementNCN.Xname)
+		globalHostRecords = append(globalHostRecords,
+			buildBSSHostRecords(networkEPs, "HMN", "bootstrap_dhcp", bmcXname, []string{fmt.Sprintf("%s-mgmt", ncnAlias)}),
+		)
+	}
+
+	// Add kubeapi-vip
+	globalHostRecords = append(globalHostRecords,
+		buildBSSHostRecords(networkEPs, "NMN", "bootstrap_dhcp", "kubeapi-vip", []string{"kubeapi-vip", "kubeapi-vip.nmn"}),
+	)
+
+	// Add rgw-vip
+	globalHostRecords = append(globalHostRecords,
+		buildBSSHostRecords(networkEPs, "NMN", "bootstrap_dhcp", "rgw-vip", []string{"rgw-vip", "rgw-vip.nmn"}),
+	)
+
+	// Using the original InstallNCN as the host for pit.nmn
+	// HACK, I'm assuming ncn-m001
+	globalHostRecords = append(globalHostRecords,
+		buildBSSHostRecords(networkEPs, "NMN", "bootstrap_dhcp", "ncn-m001", []string{"pit", "pit.nmn"}),
+	)
+
+	// Add in packages.local and registry.local pointing toward the API Gateway
+	globalHostRecords = append(globalHostRecords,
+		buildBSSHostRecords(networkEPs, "NMNLB", "nmn_metallb_address_pool", "istio-ingressgateway", []string{"packages.local", "registry.local"}),
+	)
+
+	// Add entries for switches
+	nmnNetSubnet, err := networkEPs["NMN"].LookupSubnet("network_hardware")
+	if err != nil {
+		log.Fatal("Unable to find network_hardware in the NMN network")
+	}
+
+	for _, ipReservation := range nmnNetSubnet.IPReservations {
+		if strings.HasPrefix(ipReservation.Name, "sw-") {
+			globalHostRecords = append(globalHostRecords, bss.HostRecord{
+				IP:      ipReservation.IPAddress,
+				Aliases: []string{ipReservation.Name},
+			})
+		}
+	}
+
+	return globalHostRecords
+}
+
 func updateBSS_oneToOneTwo() {
 	// Instead of hammering SLS some number of times for each NCN/network combination we just grab the entire
 	// network block and will later pull out the pieces we need.
@@ -209,6 +344,10 @@ func updateBSS_oneToOneTwo() {
 		err = mapstructure.Decode(managementNCN.ExtraPropertiesRaw, &ncnExtraProperties)
 		if err != nil {
 			log.Fatalf("Failed to decode raw NCN extra properties to correct structure: %s", err)
+		}
+
+		if len(ncnExtraProperties.Aliases) == 0 {
+			log.Fatalf("NCN has no aliases defined in SLS: %+v", managementNCN)
 		}
 
 		/*
@@ -254,6 +393,16 @@ func updateBSS_oneToOneTwo() {
 
 		uploadEntryToBSS(bootparameters, http.MethodPatch)
 	}
+
+	// Update the Global BSS Metadata
+	globalBootParameters := getBSSBootparametersForXname("Global")
+	globalBootParameters.CloudInit.MetaData["host_records"] = getBSSGlobalHostRecords(managementNCNs, networks)
+
+	// Remove can-gw, and can-if
+	delete(globalBootParameters.CloudInit.MetaData, "can-gw")
+	delete(globalBootParameters.CloudInit.MetaData, "can-if")
+
+	uploadEntryToBSS(globalBootParameters, http.MethodPatch)
 }
 
 // metadataCmd represents the upgrade command

@@ -1,0 +1,435 @@
+{
+  "meta-data": {
+    "ca-certs": {
+      "remove-defaults": false,
+      "trusted": [
+        "-----BEGIN CERTIFICATE-----\nMIIEuDCCAyCgAwIBAgIUC6dq8AfZ9WeMP96x8+hYcrYbWRwwDQYJKoZIhvcNAQEL\nBQAwYTEPMA0GA1UECgwGU2hhc3RhMREwDwYDVQQLDAhQbGF0Zm9ybTE7MDkGA1UE\nAwwyUGxhdGZvcm0gQ0EgKDAzMjQyMWMyLWMwNjctNDU3OC1iNWRjLTljMjU1MTVl\nZTMyNykwHhcNMjIwMTEyMDUzOTUyWhcNMzIwMTEwMDUzOTUyWjBmMQ8wDQYDVQQK\nDAZTaGFzdGExETAPBgNVBAsMCFBsYXRmb3JtMUAwPgYDVQQDDDdQbGF0Zm9ybSBD\nQSAtIEwxICgwMzI0MjFjMi1jMDY3LTQ1NzgtYjVkYy05YzI1NTE1ZWUzMjcpMIIB\nojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAwyMKwD6ub1YYGqbxibWRnuid\n65Kvtv5NtHCj79DJj4AtptBSnxB6hZVlj5EaTdkpRotD2b46e74b4zPsoJKJKegT\nJheUOLSwqj0u9xwPeqqO/enk60eY9gJHWIkq9W3Bif50elEKMeksxv94u8kcYJH/\nzeEAbOLeY/cV60bwpcKoQm1ztCmgeGWJxxYM85Mt0d+SmvsMvFm/dCsmdsXiZtca\nd6EqG8FhDmCKv/8o2xFRPjxj9OjssRfOFDE41IEe/GcklvJ4lxhcqlRsMhDXr8/e\nhpEoynKxRZIXo6bSatkm6K7IadDYNyIrDfbnt1CJxCtVLECLzo+Xht/hHQaHRk5F\nlesIbEUUBiHFWHHI51oL9GgDuRa5DpKqNn7xpTYPt4LZ0sZhX4E1C2QePoP8kfgQ\nc1s8ZqCY2iVH/rWv0EHsab9BoFH9dRMnep7J9EePSFoSqWACJKZ3f0gR4QIWrOei\nlMfxYZgG5Zr7Nt1nGbdl48n7CSrN6wxxSXVcVCW3AgMBAAGjYzBhMA8GA1UdEwEB\n/wQFMAMBAf8wDgYDVR0PAQH/BAQDAgEGMB0GA1UdDgQWBBSIiI1jVwVdQOKunZxx\ngW7ZJBfWGTAfBgNVHSMEGDAWgBROirlRRwKPQagW/95nmDFIrkFfojANBgkqhkiG\n9w0BAQsFAAOCAYEAe1YnegAPsP6pb1z9g7rjPfrlGhLoIDL5XDtpnjPh0/kdJnV+\nVh42emTgiI8X0oO6nzPbiJyLcnsSsfN1Lv/SMWrTOtDwNPBWz5dOXNQQoc43tWPP\nbSbNe/ncHZo8MdQNrHrN9+Q5wer3o9BXwSQ7Cl847DvN0z0UhxNK+HqO6MRJnlge\nUTkFm7lelg/auQsbH+GIkRtnWrrl2MKNxqFrUu+LTGsq3yGcjyCqlY7G9kGggVky\nbPEnOUedQIIX0PhEg2KAdAKNecKziCTDoyNzSX6Kyqb3CWDFzxAB7Or1FrDPqYF5\nu84L86N57qStGqQBRuPkA9b5YEM6ZyjrZXVv1Nu/s5r0mhiTOaqLuSpVy/d4H4Ly\n7ISQtXTQw3UmfRNPNl3UzEQKHoWbDArvIq9BBrhcRZyLV4aB/jX0X6gRsNmmWLnD\nmUYrj1nFKWEWw26zNImiz1nR2yJj40XSwId8L6njkJJEuQ+IPAWi3a1kduKx+Ty6\n+y5PjjZ0/3CEH9b6\n-----END CERTIFICATE-----\n",
+        "-----BEGIN CERTIFICATE-----\nMIIEkjCCAvqgAwIBAgIULXDChgvCqdBbevxsQneb7OztU6MwDQYJKoZIhvcNAQEL\nBQAwYTEPMA0GA1UECgwGU2hhc3RhMREwDwYDVQQLDAhQbGF0Zm9ybTE7MDkGA1UE\nAwwyUGxhdGZvcm0gQ0EgKDAzMjQyMWMyLWMwNjctNDU3OC1iNWRjLTljMjU1MTVl\nZTMyNykwHhcNMjIwMTEyMDUzOTUyWhcNMzIwMTExMDUzOTUyWjBhMQ8wDQYDVQQK\nDAZTaGFzdGExETAPBgNVBAsMCFBsYXRmb3JtMTswOQYDVQQDDDJQbGF0Zm9ybSBD\nQSAoMDMyNDIxYzItYzA2Ny00NTc4LWI1ZGMtOWMyNTUxNWVlMzI3KTCCAaIwDQYJ\nKoZIhvcNAQEBBQADggGPADCCAYoCggGBANBNe3J8SsoqWekfz05tkE4NE272E/vv\nQamvEyryRbtBZPTSfD9vUjIXZ32kMwvBB+DfpH0/qTs5FX5Ma6bOi0643WeZ3ue/\nJJp6/hIQLdoNFPVE4pMJIA7A1Yv1swP9oZt3vCB9goElQiYHWj+nDUMPwJUBhXy3\nBzZzTKWgfLVp0Aw4GUbVaECv/+K4AP8t5fX1FA24ICQnRMpaE0T/nnVqfAtaEUYN\nw7eX8cKrNyJw35XVkTJ9ToKOpEFQ9lu3dlIO+M0N3DXqIkFHcZjvEzdiIdYymF5X\nAkMBnA3derjrJmIocnP+KMMv3RGI+m6gViM7qzuXMuHRd63tjH2xSx4ItJP5mH8l\n5PNZrFUf0GE030uRyOtHZNSuGUx1cMtAawUPSj+XQtcvpg5AoajHWXYFt0DItVjE\n6NgOQlvEPC3oIenmaJF8A4+09I+f1KVWmEZsSuN8znS5TImt88sMkQ+lt1+JsOgz\nGDB06RdJxg28qE6a3JaYYBObFkFg2ZhnkQIDAQABo0IwQDAPBgNVHRMBAf8EBTAD\nAQH/MA4GA1UdDwEB/wQEAwIBBjAdBgNVHQ4EFgQUToq5UUcCj0GoFv/eZ5gxSK5B\nX6IwDQYJKoZIhvcNAQELBQADggGBAGHX/Ddky4n0cWHc8zYgu8D7FpAVn84fgu9p\noSKt1WRKb72Czwel5NOyP8rxoR6jkUY5SMBtONz9yQu/uqujJ4DRhQEaZqc/gIKU\nBbPu/VUntQVkZY/vNT/fbV1E6JvC8dn6gFwIsEJHTrZlroo6njIYP3b3lmNyBNl+\noAXFpkuSOkB5OczI+IcK2SvnxuWWd6DDN5KIMBt1jDQ9xqjXBtLLw0BQycIqqriD\nYaXvYwyiDwDUOZUMQUbx1fB819UPnF3hVUUo9NiaIdukDMAy6sW0gZBdm8Z6eW39\n5M8oDaVa+PoNqe6MVWN8OjWu1QDG7i1VqlATODA+p1Pqf3QW7jk5XE14IAm57C9N\nFN0CsEtQOpb/HHTp8zxzVzme9M5CiXo4pA41r3q1mKAqRmbeyeqfzmR5NOJNGUNI\nl868tqp2Z7Xdsk77puPnUbFlk3102EuAB1DsvBne3A7MB1fNLRyGL3opFAecpv1k\nmlaw3YIPzBQvu3TmYHHW6wRt1+gfGw==\n-----END CERTIFICATE-----\n"
+      ]
+    },
+    "can-gw": "10.102.4.1",
+    "can-if": "vlan007",
+    "ceph-cephfs-image": "dtr.dev.cray.com/cray/cray-cephfs-provisioner:0.1.0-nautilus-1.3",
+    "ceph-rbd-image": "dtr.dev.cray.com/cray/cray-rbd-provisioner:0.1.0-nautilus-1.3",
+    "cfs_public_key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDLpgxwAoRztlUoBUKwrHsXbMpWcg4bPLxZ2JfsJUFijJN7ai7vzEB08oHYyeoxJ2u2+9LUN7DgARu3C7Fj/Zc5NLvqOIBIvLE8zec5j0wT7qiaJKZgaSMaAlbOmVUcPGP6joQXIZ7q/YMJp4jBy0oZMZagxZu0vFeKKi8Y4RYgI9RqncY+rcrAqdFJBiHUdbuMGGFHLx7nhio08VccdN3BYseYsqRlRurpFJ5mUW+CLbXAjD/IfhdYAkjU5cvTNIIsH09ciQ3JBuxqguNNTCtF9wvXvYJiFSUwE1BU5Tz8iTwAiUpx72X0L+52f+YXs3BGKzXW+HrXfzEX8dmkl1Kxyrm9hUorcohuKh4h6MTXFMuerD9NGHCpkLCy02fGEqEBS23uH1CZm+dsAGEtKHgrf5MDfEnmYIypHNNgk2VQJfwAbUNqS8SqBU1S3YJDHNX0N4D3K48LcZhRU02KPzkNNuTkclix8JIdaBs/QFPCSNL8OL1A5mQ9A+P2e6lI3inuFrqIjvqXvRpM6h/QVuipYFuZN7N7mEvR68b/uWIUotTSZNPixJjcLIaG8vDU+B5kJ+6rWXUiawCIHOGHzdkRTZgEqPVdq4qUafWhWdX9SrfQfdOehdFKo9hyXTAORW9+eKrsJmMeAsKzXQZ6zeYQrmPuV5CuEq1E8vKmfZ3QkQ==\n",
+    "dns-server": "10.92.100.225",
+    "docker-image-registry": "dtr.dev.cray.com",
+    "domain": "nmn mtl hmn",
+    "first-master-hostname": "ncn-m002",
+    "host_records": [
+      {
+        "aliases": [
+          "ncn-s004.hmn"
+        ],
+        "ip": "10.254.1.4"
+      },
+      {
+        "aliases": [
+          "ncn-s004-mgmt"
+        ],
+        "ip": "10.254.1.3"
+      },
+      {
+        "aliases": [
+          "ncn-s004.mtl"
+        ],
+        "ip": "10.1.1.2"
+      },
+      {
+        "aliases": [
+          "ncn-s004.can"
+        ],
+        "ip": "10.102.4.5"
+      },
+      {
+        "aliases": [
+          "ncn-s004.nmn",
+          "ncn-s004"
+        ],
+        "ip": "10.252.1.4"
+      },
+      {
+        "aliases": [
+          "ncn-s003.hmn"
+        ],
+        "ip": "10.254.1.6"
+      },
+      {
+        "aliases": [
+          "ncn-s003-mgmt"
+        ],
+        "ip": "10.254.1.5"
+      },
+      {
+        "aliases": [
+          "ncn-s003.mtl"
+        ],
+        "ip": "10.1.1.3"
+      },
+      {
+        "aliases": [
+          "ncn-s003.can"
+        ],
+        "ip": "10.102.4.6"
+      },
+      {
+        "aliases": [
+          "ncn-s003.nmn",
+          "ncn-s003"
+        ],
+        "ip": "10.252.1.5"
+      },
+      {
+        "aliases": [
+          "ncn-s002.hmn"
+        ],
+        "ip": "10.254.1.8"
+      },
+      {
+        "aliases": [
+          "ncn-s002-mgmt"
+        ],
+        "ip": "10.254.1.7"
+      },
+      {
+        "aliases": [
+          "ncn-s002.mtl"
+        ],
+        "ip": "10.1.1.4"
+      },
+      {
+        "aliases": [
+          "ncn-s002.can"
+        ],
+        "ip": "10.102.4.7"
+      },
+      {
+        "aliases": [
+          "ncn-s002.nmn",
+          "ncn-s002"
+        ],
+        "ip": "10.252.1.6"
+      },
+      {
+        "aliases": [
+          "ncn-s001.hmn"
+        ],
+        "ip": "10.254.1.10"
+      },
+      {
+        "aliases": [
+          "ncn-s001-mgmt"
+        ],
+        "ip": "10.254.1.9"
+      },
+      {
+        "aliases": [
+          "ncn-s001.mtl"
+        ],
+        "ip": "10.1.1.5"
+      },
+      {
+        "aliases": [
+          "ncn-s001.can"
+        ],
+        "ip": "10.102.4.8"
+      },
+      {
+        "aliases": [
+          "ncn-s001.nmn",
+          "ncn-s001"
+        ],
+        "ip": "10.252.1.7"
+      },
+      {
+        "aliases": [
+          "ncn-m003.hmn"
+        ],
+        "ip": "10.254.1.12"
+      },
+      {
+        "aliases": [
+          "ncn-m003-mgmt"
+        ],
+        "ip": "10.254.1.11"
+      },
+      {
+        "aliases": [
+          "ncn-m003.mtl"
+        ],
+        "ip": "10.1.1.6"
+      },
+      {
+        "aliases": [
+          "ncn-m003.can"
+        ],
+        "ip": "10.102.4.9"
+      },
+      {
+        "aliases": [
+          "ncn-m003.nmn",
+          "ncn-m003"
+        ],
+        "ip": "10.252.1.8"
+      },
+      {
+        "aliases": [
+          "ncn-m002.can"
+        ],
+        "ip": "10.102.4.10"
+      },
+      {
+        "aliases": [
+          "ncn-m002.nmn",
+          "ncn-m002"
+        ],
+        "ip": "10.252.1.9"
+      },
+      {
+        "aliases": [
+          "ncn-m002.hmn"
+        ],
+        "ip": "10.254.1.14"
+      },
+      {
+        "aliases": [
+          "ncn-m002-mgmt"
+        ],
+        "ip": "10.254.1.13"
+      },
+      {
+        "aliases": [
+          "ncn-m002.mtl"
+        ],
+        "ip": "10.1.1.7"
+      },
+      {
+        "aliases": [
+          "ncn-m001.hmn"
+        ],
+        "ip": "10.254.1.16"
+      },
+      {
+        "aliases": [
+          "ncn-m001-mgmt"
+        ],
+        "ip": "10.254.1.15"
+      },
+      {
+        "aliases": [
+          "ncn-m001.mtl"
+        ],
+        "ip": "10.1.1.8"
+      },
+      {
+        "aliases": [
+          "ncn-m001.can"
+        ],
+        "ip": "10.102.4.11"
+      },
+      {
+        "aliases": [
+          "ncn-m001.nmn",
+          "ncn-m001"
+        ],
+        "ip": "10.252.1.10"
+      },
+      {
+        "aliases": [
+          "ncn-w004.hmn"
+        ],
+        "ip": "10.254.1.18"
+      },
+      {
+        "aliases": [
+          "ncn-w004-mgmt"
+        ],
+        "ip": "10.254.1.17"
+      },
+      {
+        "aliases": [
+          "ncn-w004.mtl"
+        ],
+        "ip": "10.1.1.9"
+      },
+      {
+        "aliases": [
+          "ncn-w004.can"
+        ],
+        "ip": "10.102.4.12"
+      },
+      {
+        "aliases": [
+          "ncn-w004.nmn",
+          "ncn-w004"
+        ],
+        "ip": "10.252.1.11"
+      },
+      {
+        "aliases": [
+          "ncn-w003.hmn"
+        ],
+        "ip": "10.254.1.20"
+      },
+      {
+        "aliases": [
+          "ncn-w003-mgmt"
+        ],
+        "ip": "10.254.1.19"
+      },
+      {
+        "aliases": [
+          "ncn-w003.mtl"
+        ],
+        "ip": "10.1.1.10"
+      },
+      {
+        "aliases": [
+          "ncn-w003.can"
+        ],
+        "ip": "10.102.4.13"
+      },
+      {
+        "aliases": [
+          "ncn-w003.nmn",
+          "ncn-w003"
+        ],
+        "ip": "10.252.1.12"
+      },
+      {
+        "aliases": [
+          "ncn-w002.can"
+        ],
+        "ip": "10.102.4.14"
+      },
+      {
+        "aliases": [
+          "ncn-w002.nmn",
+          "ncn-w002"
+        ],
+        "ip": "10.252.1.13"
+      },
+      {
+        "aliases": [
+          "ncn-w002.hmn"
+        ],
+        "ip": "10.254.1.22"
+      },
+      {
+        "aliases": [
+          "ncn-w002-mgmt"
+        ],
+        "ip": "10.254.1.21"
+      },
+      {
+        "aliases": [
+          "ncn-w002.mtl"
+        ],
+        "ip": "10.1.1.11"
+      },
+      {
+        "aliases": [
+          "ncn-w001.can"
+        ],
+        "ip": "10.102.4.15"
+      },
+      {
+        "aliases": [
+          "ncn-w001.nmn",
+          "ncn-w001"
+        ],
+        "ip": "10.252.1.14"
+      },
+      {
+        "aliases": [
+          "ncn-w001.hmn"
+        ],
+        "ip": "10.254.1.24"
+      },
+      {
+        "aliases": [
+          "ncn-w001-mgmt"
+        ],
+        "ip": "10.254.1.23"
+      },
+      {
+        "aliases": [
+          "ncn-w001.mtl"
+        ],
+        "ip": "10.1.1.12"
+      },
+      {
+        "aliases": [
+          "kubeapi-vip",
+          "kubeapi-vip.nmn"
+        ],
+        "ip": "10.252.1.2"
+      },
+      {
+        "aliases": [
+          "rgw-vip",
+          "rgw-vip.nmn"
+        ],
+        "ip": "10.252.1.3"
+      },
+      {
+        "aliases": [
+          "pit",
+          "pit.nmn"
+        ],
+        "ip": "10.252.1.10"
+      },
+      {
+        "aliases": [
+          "packages.local",
+          "registry.local"
+        ],
+        "ip": "10.92.100.71"
+      },
+      {
+        "aliases": [
+          "sw-spine-001"
+        ],
+        "ip": "10.252.0.2"
+      },
+      {
+        "aliases": [
+          "sw-spine-002"
+        ],
+        "ip": "10.252.0.3"
+      },
+      {
+        "aliases": [
+          "sw-leaf-001"
+        ],
+        "ip": "10.252.0.4"
+      }
+    ],
+    "internal-domain": "~FIXME~",
+    "k8s-api-auditing-enabled": false,
+    "k8s-virtual-ip": "10.252.1.2",
+    "kubernetes-max-pods-per-node": "200",
+    "kubernetes-pods-cidr": "10.32.0.0/12",
+    "kubernetes-services-cidr": "10.16.0.0/12",
+    "kubernetes-weave-mtu": "1376",
+    "ncn-mgmt-node-auditing-enabled": false,
+    "num_storage_nodes": 4,
+    "rgw-virtual-ip": "10.252.1.3",
+    "site-domain": "dev.cray.com",
+    "spire": {
+      "fqdn": "10.92.100.82",
+      "trustdomain": "shasta"
+    },
+    "system-name": "fanta",
+    "wipe-ceph-osds": "yes"
+  },
+  "user-data": null,
+  "phone-home": {
+    "pub_key_dsa": "",
+    "pub_key_rsa": "",
+    "pub_key_ecdsa": "",
+    "instance_id": "",
+    "hostname": "",
+    "fqdn": ""
+  }
+}
