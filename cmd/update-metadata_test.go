@@ -1,5 +1,8 @@
 package cmd
 
+/*
+Copyright 2021 Hewlett Packard Enterprise Development LP
+*/
 import (
 	"encoding/json"
 	"io/ioutil"
