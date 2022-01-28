@@ -168,6 +168,27 @@ func (suite *UpgradeBSSMetadataSuite) TestUpdateBSS_oneToOneTwo() {
 	suite.sortHostRecords(globalHostRecords)
 	suite.sortHostRecords(suite.expectedGlobalHostRecords)
 	suite.Equal(suite.expectedGlobalHostRecords, globalHostRecords)
+
+	// Verify IPAM data for a single node:
+	worker3BootParameters := allBootParameters["x3000c0s11b0n0"]
+	var worker3IPAM bss.CloudInitIPAM
+	err = mapstructure.Decode(worker3BootParameters.CloudInit.MetaData["ipam"], &worker3IPAM)
+	suite.NoError(err)
+
+	suite.Contains(worker3IPAM, "can")
+	suite.Contains(worker3IPAM, "cmn")
+	suite.Contains(worker3IPAM, "hmn")
+	suite.Contains(worker3IPAM, "mtl")
+	suite.Contains(worker3IPAM, "nmn")
+
+	suite.Equal(bss.IPAMNetwork{Gateway: "10.102.4.129", CIDR: "10.102.4.141/26", ParentDevice: "bond0", VlanID: 6}, worker3IPAM["can"])
+	suite.Equal(bss.IPAMNetwork{Gateway: "10.102.4.1", CIDR: "10.102.4.27/25", ParentDevice: "bond0", VlanID: 7}, worker3IPAM["cmn"])
+	suite.Equal(bss.IPAMNetwork{Gateway: "10.254.0.1", CIDR: "10.254.1.20/17", ParentDevice: "bond0", VlanID: 4}, worker3IPAM["hmn"])
+	suite.Equal(bss.IPAMNetwork{Gateway: "10.1.0.1", CIDR: "10.1.1.10/16", ParentDevice: "bond0", VlanID: 0}, worker3IPAM["mtl"])
+	suite.Equal(bss.IPAMNetwork{Gateway: "10.252.0.1", CIDR: "10.252.1.12/17", ParentDevice: "bond0", VlanID: 2}, worker3IPAM["nmn"])
+
+	// The CHN should not be present in the BSS IPAM structure, as that network is managed differently
+	suite.NotContains(worker3IPAM, "chn")
 }
 
 func (suite *UpgradeBSSMetadataSuite) TestGetBSSGlobalHostRecords() {

@@ -40,12 +40,12 @@ var (
 )
 
 func getIPAMForNCN(managementNCN sls_common.GenericHardware,
-	networks sls_common.NetworkArray) (ipamNetworks bss.CloudInitIPAM) {
+	networks sls_common.NetworkArray, extraSLSNetworks ...string) (ipamNetworks bss.CloudInitIPAM) {
 	ipamNetworks = make(bss.CloudInitIPAM)
 
 	// For each of the required networks, go build an IPAMNetwork object and add that to the ipamNetworks
 	// above.
-	for _, ipamNetwork := range bss.IPAMNetworks {
+	for _, ipamNetwork := range append(bss.IPAMNetworks[:], extraSLSNetworks...) {
 		// Search SLS networks for this network.
 		var targetSLSNetwork *sls_common.Network
 		for _, slsNetwork := range networks {
@@ -242,7 +242,7 @@ func getBSSGlobalHostRecords(managementNCNs []sls_common.GenericHardware, networ
 		ncnAlias := ncnExtraProperties.Aliases[0]
 
 		// Add in the NCN interface host records
-		ipamNetworks := getIPAMForNCN(managementNCN, networks)
+		ipamNetworks := getIPAMForNCN(managementNCN, networks, "chn")
 		for network, ipam := range ipamNetworks {
 			// Get the IP of the NCN for this network.
 			ip, _, err := net.ParseCIDR(ipam.CIDR)

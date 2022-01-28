@@ -1,7 +1,7 @@
 package bss
 
 // IPAMNetworks - The networks that need IPAM.
-var IPAMNetworks = [...]string{"can", "chn", "cmn", "hmn", "mtl", "nmn"}
+var IPAMNetworks = [...]string{"can", "cmn", "hmn", "mtl", "nmn"}
 
 // KubernetesNCNRunCMD - The run-cmd for Kubernetes nodes.
 var KubernetesNCNRunCMD = [...]string{
@@ -30,10 +30,10 @@ type CloudInitIPAM map[string]IPAMNetwork
 
 // IPAMNetwork - Structure that describes the IPAM portion of cloud-init.
 type IPAMNetwork struct {
-	Gateway      string `json:"gateway"`
-	CIDR         string `json:"ip"`
-	ParentDevice string `json:"parent_device"`
-	VlanID       int16  `json:"vlanid"`
+	Gateway      string `json:"gateway" mapstructure:"gateway"`
+	CIDR         string `json:"ip" mapstructure:"ip"`
+	ParentDevice string `json:"parent_device" mapstructure:"parent_device"`
+	VlanID       int16  `json:"vlanid" mapstructure:"vlanid"`
 }
 
 // WriteFile - Structure that describes the write-files portion of cloud-init.
