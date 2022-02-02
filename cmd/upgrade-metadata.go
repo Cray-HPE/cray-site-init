@@ -52,11 +52,9 @@ const bondedInterfaceName = "bond0"
 var (
 	oneToOneTwo bool
 
-	k8sKernel string
-	k8sInitrd string
+	k8sVersion string
 
-	storageKernel string
-	storageInitrd string
+	cephVersion string
 )
 
 func getIPAMForNCN(managementNCN sls_common.GenericHardware,
@@ -365,19 +363,26 @@ func updateBSS_oneToOneTwo() {
 		switch ncnExtraProperties.SubRole {
 		case "Storage":
 			bootparameters.CloudInit.UserData["runcmd"] = bss.StorageNCNRunCMD
-			if storageInitrd != "" {
-				bootparameters.Initrd = storageInitrd
-			}
-			if storageKernel != "" {
-				bootparameters.Kernel = storageKernel
+			if cephVersion != "" {
+				bootparameters.Initrd = fmt.Sprintf("s3://ncn-images/ceph/%s/initrd", cephVersion)
+				bootparameters.Kernel = fmt.Sprintf("s3://ncn-images/ceph/%s/kernel", cephVersion)
+				setMetalServerParam := paramTuple{
+					key:   "metal.server",
+					value: fmt.Sprintf("http://rgw-vip.nmn/ncn-images/ceph/%s", cephVersion),
+				}
+				OneToOneTwo_ParamsToSet = append(OneToOneTwo_ParamsToSet, setMetalServerParam)
+
 			}
 		case "Master", "Worker":
 			bootparameters.CloudInit.UserData["runcmd"] = bss.KubernetesNCNRunCMD
-			if k8sInitrd != "" {
-				bootparameters.Initrd = k8sInitrd
-			}
-			if k8sKernel != "" {
-				bootparameters.Kernel = k8sKernel
+			if k8sVersion != "" {
+				bootparameters.Initrd = fmt.Sprintf("s3://ncn-images/k8s/%s/initrd", k8sVersion)
+				bootparameters.Kernel = fmt.Sprintf("s3://ncn-images/k8s/%s/kernel", k8sVersion)
+				setMetalServerParam := paramTuple{
+					key:   "metal.server",
+					value: fmt.Sprintf("http://rgw-vip.nmn/ncn-images/k8s/%s", k8sVersion),
+				}
+				OneToOneTwo_ParamsToSet = append(OneToOneTwo_ParamsToSet, setMetalServerParam)
 			}
 		default:
 			log.Fatalf("NCN has invalid SubRole: %+v", managementNCN)
@@ -427,13 +432,8 @@ func init() {
 	metadataCmd.Flags().BoolVarP(&oneToOneTwo, "1-0-to-1-2", "", false,
 		"Upgrade CSM 1.0 metadata to 1.2 metadata")
 
-	metadataCmd.Flags().StringVar(&k8sKernel, "k8s-kernel", "",
-		"Path to the kernel image to upload for K8s NCNs")
-	metadataCmd.Flags().StringVar(&k8sInitrd, "k8s-initrd", "",
-		"Path to the initrd image to upload for K8s NCNs")
-
-	metadataCmd.Flags().StringVar(&storageKernel, "storage-kernel", "",
-		"Path to the kernel image to upload for Storage NCNs")
-	metadataCmd.Flags().StringVar(&storageInitrd, "storage-initrd", "",
-		"Path to the initrd image to upload for Storage NCNs")
+	metadataCmd.Flags().StringVar(&k8sVersion, "k8s-version", "",
+		"K8s nodes imager version")
+	metadataCmd.Flags().StringVar(&cephVersion, "ceph-version", "",
+		"Storage nodes imager version")
 }
