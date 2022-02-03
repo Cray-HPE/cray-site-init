@@ -28,10 +28,10 @@ import (
 )
 
 const schema = "shcd-schema.json"
-const hmn_connections = "hmn_connections.json"
-const switch_metadata = "switch_metadata.csv"
-const application_node_config = "application_node_config.yaml"
-const ncn_metadata = "ncn_metadata.csv"
+const hmnConnections = "hmn_connections.json"
+const switchMetadata = "switch_metadata.csv"
+const applicationNodeConfig = "application_node_config.yaml"
+const ncnMetadata = "ncn_metadata.csv"
 
 var createHMN, createSM, createANC, createNCN bool
 
@@ -86,25 +86,25 @@ var shcdCmd = &cobra.Command{
 
 			if v.IsSet("hmn-connections") {
 
-				createHMNSeed(s, hmn_connections)
+				createHMNSeed(s, hmnConnections)
 
 			}
 
 			if v.IsSet("switch-metadata") {
 
-				createSwitchSeed(s, switch_metadata)
+				createSwitchSeed(s, switchMetadata)
 
 			}
 
 			if v.IsSet("application-node-config") {
 
-				createANCSeed(s, application_node_config)
+				createANCSeed(s, applicationNodeConfig)
 
 			}
 
 			if v.IsSet("ncn-metadata") {
 
-				createNCNSeed(s, ncn_metadata)
+				createNCNSeed(s, ncnMetadata)
 
 			}
 
@@ -132,10 +132,10 @@ func init() {
 }
 
 // The Shcd type represents the entire machine-readable SHCD inside a go struct
-type Shcd []Id
+type Shcd []ID
 
-// The Id type represents all of the information needed for
-type Id struct {
+// The ID type represents all of the information needed for
+type ID struct {
 	Architecture string   `json:"architecture"`
 	CommonName   string   `json:"common_name"`
 	ID           int      `json:"id"`
@@ -156,6 +156,7 @@ type Port struct {
 	Speed      int    `json:"speed"`
 }
 
+// The Location type defines where the server physically exists in the datacenter.
 type Location struct {
 	Elevation string `json:"elevation"`
 	Rack      string `json:"rack"`
@@ -200,8 +201,8 @@ type Switch struct {
 	Brand string
 }
 
-// Crafts and prints the xname of a give Id type in the SHCD
-func (id Id) GenerateXname() (xn string) {
+// GenerateXname crafts and prints the xname of a give ID type in the SHCD
+func (id ID) GenerateXname() (xn string) {
 	// Schema decoder ring:
 	// 		cabinet = rack
 	// 		chassis = defaults to 0  River: c0, Mountain/Hill: this is the CMM number
@@ -395,7 +396,7 @@ func (id Id) GenerateXname() (xn string) {
 }
 
 // GenerateNCNRoleSubrole generates the appropriate role and subrole based on the ncn-* name
-func (id Id) GenerateNCNRoleSubrole() (r string, sr string) {
+func (id ID) GenerateNCNRoleSubrole() (r string, sr string) {
 
 	if strings.HasPrefix(id.CommonName, "ncn-s") {
 		r = "Management"
@@ -417,8 +418,8 @@ func (id Id) GenerateNCNRoleSubrole() (r string, sr string) {
 	return r, sr
 }
 
-// Crafts and prints the switch types that switch_metadata.csv expects
-func (id Id) GenerateSwitchType() (st string) {
+// GenerateSwitchType crafts and prints the switch types that switch_metadata.csv expects
+func (id ID) GenerateSwitchType() (st string) {
 
 	// The switch type in switch_metadata.csv differs from the types in the SHCD
 	// These conditionals just adjust for the names we expect in that file
@@ -443,8 +444,8 @@ func (id Id) GenerateSwitchType() (st string) {
 	return st
 }
 
-// Crafts and prints the switch types that switch_metadata.csv expects
-func (id Id) GenerateHMNSourceName() (src string) {
+// GenerateHMNSourceName crafts and prints the switch types that switch_metadata.csv expects
+func (id ID) GenerateHMNSourceName() (src string) {
 
 	// var prefix string
 
@@ -559,7 +560,7 @@ func createNCNSeed(shcd Shcd, f string) {
 	}
 
 	// Create the file object
-	ncnmeta, err := os.Create(ncn_metadata)
+	ncnmeta, err := os.Create(ncnMetadata)
 
 	if err != nil {
 		log.Fatalln(err)
@@ -593,7 +594,7 @@ func createNCNSeed(shcd Shcd, f string) {
 	}
 
 	// Let the user know the file was created
-	log.Printf("Created %v from SHCD data\n", ncn_metadata)
+	log.Printf("Created %v from SHCD data\n", ncnMetadata)
 }
 
 // createSwitchSeed creates switch_metadata.csv using information from the shcd
@@ -651,7 +652,7 @@ func createSwitchSeed(shcd Shcd, f string) {
 	}
 
 	// Create the file object
-	sm, err := os.Create(switch_metadata)
+	sm, err := os.Create(switchMetadata)
 
 	if err != nil {
 		log.Fatalln(err)
@@ -685,7 +686,7 @@ func createSwitchSeed(shcd Shcd, f string) {
 	}
 
 	// Let the user know the file was created
-	log.Printf("Created %v from SHCD data\n", switch_metadata)
+	log.Printf("Created %v from SHCD data\n", switchMetadata)
 }
 
 // createHMNSeed creates hmn_connections.json using information from the shcd
@@ -714,7 +715,7 @@ func createHMNSeed(shcd Shcd, f string) {
 		// to find the destination info
 		for p := range shcd[i].Ports {
 			// get the id of the destination node, so it can be easily used an an index
-			destId := shcd[i].Ports[p].DestNodeID
+			destID := shcd[i].Ports[p].DestNodeID
 			// Special to this hmn_connections.json file, we need this SubRack/dense node stuff
 			// if the node is a dense compute node--indiciated by L or R in the location,
 			// we need to add the SourceSubLocation and SourceParent
@@ -724,12 +725,12 @@ func createHMNSeed(shcd Shcd, f string) {
 				// hmnConnection.SourceSubLocation = shcd[i].Location.Rack
 				hmnConnection.SourceParent = "FIXME INSERT SUBRACK HERE"
 				// FIXME: remove above and uncomment below when we have a way to get the subrack name
-				// hmnConnection.SourceParent = fmt.Sprint(shcd[destId].CommonName)
+				// hmnConnection.SourceParent = fmt.Sprint(shcd[destID].CommonName)
 			}
 
-			// Now use the destId again to set the destination info
-			hmnConnection.DestinationRack = shcd[destId].Location.Rack
-			hmnConnection.DestinationLocation = shcd[destId].Location.Elevation
+			// Now use the destID again to set the destination info
+			hmnConnection.DestinationRack = shcd[destID].Location.Rack
+			hmnConnection.DestinationLocation = shcd[destID].Location.Elevation
 			hmnConnection.DestinationPort = fmt.Sprint("j", shcd[i].Ports[p].DestPort)
 		}
 
@@ -742,9 +743,9 @@ func createHMNSeed(shcd Shcd, f string) {
 	file, _ := json.MarshalIndent(hmn, "", " ")
 
 	// Write the file to disk
-	_ = ioutil.WriteFile(hmn_connections, file, 0644)
+	_ = ioutil.WriteFile(hmnConnections, file, 0644)
 
-	log.Printf("Created %v from SHCD data\n", hmn_connections)
+	log.Printf("Created %v from SHCD data\n", hmnConnections)
 
 }
 
@@ -828,7 +829,7 @@ func createANCSeed(shcd Shcd, f string) error {
 		anc.PrefixHSMSubroles[prefix] = subrole
 		// Warn the admin if there are any prefixes that have no subrole
 		if subrole == csi.SubrolePlaceHolder {
-			log.Printf("WARNING: Prefix '%s' has no subrole mapping. Replace `%s` placeholder with a valid subrole in the resulting %s.\n", prefix, csi.SubrolePlaceHolder, application_node_config)
+			log.Printf("WARNING: Prefix '%s' has no subrole mapping. Replace `%s` placeholder with a valid subrole in the resulting %s.\n", prefix, csi.SubrolePlaceHolder, applicationNodeConfig)
 		}
 	}
 
@@ -852,7 +853,7 @@ func createANCSeed(shcd Shcd, f string) error {
 
 	aliasNodes := []*yaml.Node{}
 	aliasArray := make([]string, 0, 1)
-	for xname, _ := range anc.Aliases {
+	for xname := range anc.Aliases {
 		aliasArray = append(aliasArray, xname)
 	}
 	sort.Strings(aliasArray)
@@ -872,7 +873,7 @@ func createANCSeed(shcd Shcd, f string) error {
 
 	ancYaml := yaml.Node{Kind: yaml.MappingNode, Content: []*yaml.Node{&prefixesTitle, &prefixes, &prefixHSMSubrolesTitle, &prefixHSMSubroles, &aliasesTitle, &aliases}}
 
-	ancFile, err := os.Create(application_node_config)
+	ancFile, err := os.Create(applicationNodeConfig)
 
 	if err != nil {
 		log.Fatalln(err)
@@ -883,7 +884,7 @@ func createANCSeed(shcd Shcd, f string) error {
 	defer e.Close()
 	e.SetIndent(2)
 	err = e.Encode(ancYaml)
-	log.Printf("Created %v from SHCD data\n", application_node_config)
+	log.Printf("Created %v from SHCD data\n", applicationNodeConfig)
 	return err
 }
 

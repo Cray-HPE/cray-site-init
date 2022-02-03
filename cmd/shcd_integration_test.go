@@ -199,7 +199,7 @@ func TestConfigShcd_GenerateSeeds(t *testing.T) {
 					"-j", _schemaFile})
 
 				// Move the files into the folder for the system so everything is together at the end of the test
-				filesToMove := []string{hmn_connections, switch_metadata, application_node_config, ncn_metadata}
+				filesToMove := []string{hmnConnections, switchMetadata, applicationNodeConfig, ncnMetadata}
 
 				for _, f := range filesToMove {
 					err := os.Rename(f, filepath.Join(_testdataShcds, test.systemName, f))

@@ -175,7 +175,7 @@ func (suite *UpgradeBSSMetadataSuite) TestUpdateBSS_oneToOneTwo() {
 	slsClient = sls.NewSLSClient(slsTS.URL, slsTS.Client(), "")
 
 	// Function under test
-	updateBSS_oneToOneTwo()
+	updateBSS()
 
 	// The global cloud-init meta-data should no longer contain the keys can-if and can-gw
 	globalBootParameters := allBootParameters["Global"]
