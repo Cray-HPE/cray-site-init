@@ -38,27 +38,82 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// OnetoonetwoParamstodelete are parameters for deletion.
-var OnetoonetwoParamstodelete = []string{"bond", "bootdev", "hwprobe", "ip", "vlan"}
+/*
+UpgradeParamsToDelete Linux Kernel Parameters to-remove for upgrades to 1.2.
+	1. bond
 
-// OnetoonetwoParamstoset are parameters that need to be set.
-var OnetoonetwoParamstoset = []paramTuple{{
+		Remove any bond settings; a more simple bond config is passed-in with UpgradeParamsToAdd.
+
+	2. bootdev
+
+		This is not necessary to have anymore, it has no effect.
+
+	3. hwprobe
+
+		Previously thought to ensure the bond comes up, this actually has no effect.
+
+	4. ip
+
+		We do need one of these to exist, so we set it in UpgradeParamsToAdd. This ensures we purge all undesirables and start fresh.
+
+	5. rd.peerdns
+
+		Cease and desist any unofficial DNS from "peers" and use what the DHCP Authority has given us.
+
+	6. vlan
+
+		VLANs are now entirely driven by CSI and cloud-init, thus they no longer exist as hardcodes in kernel parameters. These must be removed to prevent
+		conflicts with any dynamic VLAN changes. These also provide incorrect interface names, relative to CSM 1.2 the VLAN interface names have
+		changed.
+
+*/
+var UpgradeParamsToDelete = []string{
+	"bond",
+	"bootdev",
+	"hwprobe",
+	"ip",
+	"rd.peerdns",
+	"rd.net.dhcp.retry",
+	"vlan",
+}
+
+/*
+UpgradeParamsToAdd Linux Kernel Parameters to-set for upgrades to 1.2.
+
+	1. ip=bond0:dhcp
+
+		DHCP must be setup. This ensures we do it over all potential links by using the parent interface for our VLANs.
+
+	2. rd.peerdns=0
+
+		Set to prevent inconsistent DNS resolution (e.g. always use the actual Domain Name Server and not each other).
+
+	3. rd.net.dhcp.retry=5
+
+		Set to ensure we wait out STP blocks, at least giving them more chances than 3 (from 1.0).
+
+	4. bond=bond0:mgmt0,mgmt1:mode=802.3ad,xmit_hash_policy=layer2+3
+
+		bond0 in 1.2 is always mgmt0 and mgmt1; the mapping of 1.0 <-> 1.2 is below:
+			 1.0 --|-- 1.2
+			mgmt0 <-> mgmt0
+		    mgmt1 <-> sun0 (or mgmt1, if the system is a two-port system).
+			mgmt2 <-> mgmt1
+			mgmt3 <-> sun1
+*/
+var UpgradeParamsToAdd = []paramTuple{{
 	key:   "ip",
-	value: "mgmt0:dhcp",
+	value: "bond0:dhcp",
+}, {
+	key:   "rd.peerdns",
+	value: "0",
+}, {
+	key:   "rd.net.dhcp.retry",
+	value: "5",
+}, {
+	key:   "bond",
+	value: "bond0:mgmt0,mgmt1:mode=802.3ad,xmit_hash_policy=layer2+3",
 }}
-
-// OnetoonetwoRoutesfilestowrite are if{route,cfg} we need to write.
-var OnetoonetwoRoutesfilestowrite = []string{"cmn", "hmn", "nmn"}
-
-const bondedInterfaceName = "bond0"
-
-var (
-	oneToOneTwo bool
-
-	k8sVersion string
-
-	cephVersion string
-)
 
 func getIPAMForNCN(managementNCN sls_common.GenericHardware,
 	networks sls_common.NetworkArray, extraSLSNetworks ...string) (ipamNetworks bss.CloudInitIPAM) {
@@ -77,7 +132,7 @@ func getIPAMForNCN(managementNCN sls_common.GenericHardware,
 		}
 
 		if targetSLSNetwork == nil {
-			log.Fatalf("Failed to find required IPAM network %s in SLS networks!", ipamNetwork)
+			log.Fatalf("Failed to find required IPAM network [%s] in SLS networks!", ipamNetwork)
 		}
 
 		// Map this network to a usable structure.
@@ -87,15 +142,12 @@ func getIPAMForNCN(managementNCN sls_common.GenericHardware,
 			log.Fatalf("Failed to decode raw network extra properties to correct structure: %s", err)
 		}
 
-		// Now that we have the target SLS network we just need to find the right reservation and pull the
-		// details we need out of that.
+		// The target SLS network is determined, now we need the right reservation.
 		var targetSubnet *sls.IPV4Subnet
 		var targetReservation *sls.IPReservation
 
 		for _, subnet := range networkExtraProperties.Subnets {
 			for _, reservation := range subnet.IPReservations {
-				// Yeah, this is as strange as it looks...convention is to put the xname in the comment
-				// field. ¯\_(ツ)_/¯
 				if reservation.Comment == managementNCN.Xname {
 					targetSubnet = &subnet
 					targetReservation = &reservation
@@ -117,14 +169,14 @@ func getIPAMForNCN(managementNCN sls_common.GenericHardware,
 		// Finally, we have all the pieces, wrangle the data! Speaking of, here's an example of what this
 		// should look like after we're done:
 		//  "can": {
-		//   "gateway": "10.103.0.129",
-		//   "ip": "10.103.0.142/26",
+		//   "gateway": "10.10.0.1",
+		//   "ip": "10.10.0.1/26",
 		//   "parent_device": "bond0",
-		//   "vlanid": 6
+		//   "vlanid": 999
 		//  }
 		// Few things to note, the `ip` field is a bit of a misnomer as it also must include the mask bits.
 		// Which is our first step, figure out just the mask bits from the subnet's CIDR. One might be
-		// tempted to just use string splits and take the 1th element, but we get validation for free this
+		// tempted to just use string splits and take the 1st element, but we get validation for free this
 		// way.
 
 		_, ipv4Net, err := net.ParseCIDR(targetSubnet.CIDR)
@@ -138,11 +190,9 @@ func getIPAMForNCN(managementNCN sls_common.GenericHardware,
 		thisIPAMNetwork := bss.IPAMNetwork{
 			Gateway:      targetSubnet.Gateway,
 			CIDR:         fmt.Sprintf("%s/%d", targetReservation.IPAddress, maskBits),
-			ParentDevice: bondedInterfaceName,
+			ParentDevice: "bond0", // FIXME: Remove bond0 hardcode.
 			VlanID:       targetSubnet.VlanID,
 		}
-
-		// ...and finally add it to the main returned object.
 		ipamNetworks[ipamNetwork] = thisIPAMNetwork
 	}
 
@@ -153,13 +203,9 @@ func getWriteFiles(networks sls_common.NetworkArray, ipamNetworks bss.CloudInitI
 	// In the case of 1.0 -> 1.2 we need to add route files for a few of the networks.
 	// The process is simple, get the CIDR and gateway for those networks and then format them as an ifroute file.
 	// Here's an example:
-	//  10.100.0.0/22 10.252.0.1 - bond0.nmn0
-	//  10.106.0.0/22 10.252.0.1 - bond0.nmn0
-	//  10.1.0.0/16 10.252.0.1 - bond0.nmn0
-	//  10.92.100.0/24 10.252.0.1 - bond0.nmn0
 	routeFiles := make(map[string][]string)
 
-	for _, neededNetwork := range OnetoonetwoRoutesfilestowrite {
+	for _, neededNetwork := range []string{"cmn", "hmn", "nmn"} {
 		ipamNetwork := ipamNetworks[neededNetwork]
 
 		for _, network := range networks {
@@ -190,7 +236,7 @@ func getWriteFiles(networks sls_common.NetworkArray, ipamNetworks bss.CloudInitI
 					}
 
 					route := fmt.Sprintf("%s %s - %s.%s0",
-						ipv4Net.String(), gatewayIP.String(), bondedInterfaceName, neededNetwork)
+						ipv4Net.String(), gatewayIP.String(), "bond0", neededNetwork)
 
 					thisRouteFile = append(thisRouteFile, route)
 				}
@@ -233,6 +279,7 @@ func buildBSSHostRecords(networkEPs map[string]*sls.NetworkExtraProperties, netw
 
 // getBSSGlobalHostRecords is the BSS analog of the pit.MakeBasecampHostRecords that works with SLS data
 func getBSSGlobalHostRecords(managementNCNs []sls_common.GenericHardware, networks sls_common.NetworkArray) bss.HostRecords {
+
 	// Collase all of the Network ExtraProperties into single map for lookups
 	networkEPs := map[string]*sls.NetworkExtraProperties{}
 	for _, network := range networks {
@@ -248,7 +295,7 @@ func getBSSGlobalHostRecords(managementNCNs []sls_common.GenericHardware, networ
 
 	var globalHostRecords bss.HostRecords
 
-	// Add in the NCN Interfaces
+	// Add the NCN Interfaces.
 	for _, managementNCN := range managementNCNs {
 		var ncnExtraProperties sls_common.ComptypeNode
 		err := mapstructure.Decode(managementNCN.ExtraPropertiesRaw, &ncnExtraProperties)
@@ -262,7 +309,7 @@ func getBSSGlobalHostRecords(managementNCNs []sls_common.GenericHardware, networ
 
 		ncnAlias := ncnExtraProperties.Aliases[0]
 
-		// Add in the NCN interface host records
+		// Add the NCN interface host records.
 		ipamNetworks := getIPAMForNCN(managementNCN, networks, "chn")
 		for network, ipam := range ipamNetworks {
 			// Get the IP of the NCN for this network.
@@ -329,8 +376,15 @@ func getBSSGlobalHostRecords(managementNCNs []sls_common.GenericHardware, networ
 	return globalHostRecords
 }
 
-// updatebssOnetoonetwo updates BSS with the new 1.2 metadata.
-func updatebssOnetoonetwo() {
+var (
+	oneToOneTwo bool
+
+	k8sVersion     string
+	storageVersion string
+)
+
+// updateBSS pushes the changes to BSS.
+func updateBSS() {
 	// Instead of hammering SLS some number of times for each NCN/network combination we just grab the entire
 	// network block and will later pull out the pieces we need.
 	networks, err := slsClient.GetNetworks()
@@ -367,14 +421,14 @@ func updatebssOnetoonetwo() {
 		switch ncnExtraProperties.SubRole {
 		case "Storage":
 			bootparameters.CloudInit.UserData["runcmd"] = bss.StorageNCNRunCMD
-			if cephVersion != "" {
-				bootparameters.Initrd = fmt.Sprintf("s3://ncn-images/ceph/%s/initrd", cephVersion)
-				bootparameters.Kernel = fmt.Sprintf("s3://ncn-images/ceph/%s/kernel", cephVersion)
+			if storageVersion != "" {
+				bootparameters.Initrd = fmt.Sprintf("s3://ncn-images/ceph/%s/initrd", storageVersion)
+				bootparameters.Kernel = fmt.Sprintf("s3://ncn-images/ceph/%s/kernel", storageVersion)
 				setMetalServerParam := paramTuple{
 					key:   "metal.server",
-					value: fmt.Sprintf("http://rgw-vip.nmn/ncn-images/ceph/%s", cephVersion),
+					value: fmt.Sprintf("http://rgw-vip.nmn/ncn-images/ceph/%s", storageVersion),
 				}
-				OneToOneTwo_ParamsToSet = append(OneToOneTwo_ParamsToSet, setMetalServerParam)
+				UpgradeParamsToAdd = append(UpgradeParamsToAdd, setMetalServerParam)
 
 			}
 		case "Master", "Worker":
@@ -386,7 +440,7 @@ func updatebssOnetoonetwo() {
 					key:   "metal.server",
 					value: fmt.Sprintf("http://rgw-vip.nmn/ncn-images/k8s/%s", k8sVersion),
 				}
-				OneToOneTwo_ParamsToSet = append(OneToOneTwo_ParamsToSet, setMetalServerParam)
+				UpgradeParamsToAdd = append(UpgradeParamsToAdd, setMetalServerParam)
 			}
 		default:
 			log.Fatalf("NCN has invalid SubRole: %+v", managementNCN)
@@ -394,7 +448,7 @@ func updatebssOnetoonetwo() {
 
 		// Params
 		params := strings.Split(bootparameters.Params, " ")
-		finalParams := updateParams(params, OnetoonetwoParamstoset, OnetoonetwoParamstodelete)
+		finalParams := updateParams(params, UpgradeParamsToAdd, UpgradeParamsToDelete)
 		bootparameters.Params = strings.Join(finalParams, " ")
 
 		// Write files
@@ -414,7 +468,7 @@ func updatebssOnetoonetwo() {
 	uploadEntryToBSS(globalBootParameters, http.MethodPatch)
 }
 
-// metadataCmd represents the upgrade command
+// metadataCmd represents the upgrade command.
 var metadataCmd = &cobra.Command{
 	Use:   "metadata",
 	Short: "Upgrades metadata",
@@ -423,7 +477,7 @@ var metadataCmd = &cobra.Command{
 		if oneToOneTwo {
 			setupCommon()
 
-			updatebssOnetoonetwo()
+			updateBSS()
 		}
 	},
 }
@@ -437,7 +491,7 @@ func init() {
 		"Upgrade CSM 1.0 metadata to 1.2 metadata")
 
 	metadataCmd.Flags().StringVar(&k8sVersion, "k8s-version", "",
-		"K8s nodes imager version")
-	metadataCmd.Flags().StringVar(&cephVersion, "ceph-version", "",
-		"Storage nodes imager version")
+		"K8s nodes image version")
+	metadataCmd.Flags().StringVar(&storageVersion, "storage-version", "",
+		"Storage nodes image version")
 }
