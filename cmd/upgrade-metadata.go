@@ -38,14 +38,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Constants
+// OnetoonetwoParamstodelete are parameters for deletion.
+var OnetoonetwoParamstodelete = []string{"bond", "bootdev", "hwprobe", "ip", "vlan"}
 
-var OneToOneTwo_ParamsToDelete = []string{"bond", "bootdev", "hwprobe", "ip", "vlan"}
-var OneToOneTwo_ParamsToSet = []paramTuple{{
+// OnetoonetwoParamstoset are parameters that need to be set.
+var OnetoonetwoParamstoset = []paramTuple{{
 	key:   "ip",
 	value: "mgmt0:dhcp",
 }}
-var OneToOneTwo_RoutesFilesToWrite = []string{"cmn", "hmn", "nmn"}
+
+// OnetoonetwoRoutesfilestowrite are if{route,cfg} we need to write.
+var OnetoonetwoRoutesfilestowrite = []string{"cmn", "hmn", "nmn"}
 
 const bondedInterfaceName = "bond0"
 
@@ -156,7 +159,7 @@ func getWriteFiles(networks sls_common.NetworkArray, ipamNetworks bss.CloudInitI
 	//  10.92.100.0/24 10.252.0.1 - bond0.nmn0
 	routeFiles := make(map[string][]string)
 
-	for _, neededNetwork := range OneToOneTwo_RoutesFilesToWrite {
+	for _, neededNetwork := range OnetoonetwoRoutesfilestowrite {
 		ipamNetwork := ipamNetworks[neededNetwork]
 
 		for _, network := range networks {
@@ -326,7 +329,8 @@ func getBSSGlobalHostRecords(managementNCNs []sls_common.GenericHardware, networ
 	return globalHostRecords
 }
 
-func updateBSS_oneToOneTwo() {
+// updatebssOnetoonetwo updates BSS with the new 1.2 metadata.
+func updatebssOnetoonetwo() {
 	// Instead of hammering SLS some number of times for each NCN/network combination we just grab the entire
 	// network block and will later pull out the pieces we need.
 	networks, err := slsClient.GetNetworks()
@@ -390,7 +394,7 @@ func updateBSS_oneToOneTwo() {
 
 		// Params
 		params := strings.Split(bootparameters.Params, " ")
-		finalParams := updateParams(params, OneToOneTwo_ParamsToSet, OneToOneTwo_ParamsToDelete)
+		finalParams := updateParams(params, OnetoonetwoParamstoset, OnetoonetwoParamstodelete)
 		bootparameters.Params = strings.Join(finalParams, " ")
 
 		// Write files
@@ -419,7 +423,7 @@ var metadataCmd = &cobra.Command{
 		if oneToOneTwo {
 			setupCommon()
 
-			updateBSS_oneToOneTwo()
+			updatebssOnetoonetwo()
 		}
 	},
 }
