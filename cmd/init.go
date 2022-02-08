@@ -437,8 +437,8 @@ func init() {
 
 	// Use these flags to prepare the basecamp metadata json
 	initCmd.Flags().String("bgp-asn", "65533", "The autonomous system number for BGP router")
-	initCmd.Flags().String("bgp-cmn-asn", "65536", "The autonomous system number for CMN BGP clients")
-	initCmd.Flags().String("bgp-nmn-asn", "65533", "The autonomous system number for NMN BGP clients")
+	initCmd.Flags().String("bgp-cmn-asn", "65532", "The autonomous system number for CMN BGP clients")
+	initCmd.Flags().String("bgp-nmn-asn", "65531", "The autonomous system number for NMN BGP clients")
 	initCmd.Flags().String("bgp-peers", "spine", "Which set of switches to use as metallb peers, spine (default) or leaf")
 	initCmd.Flags().Int("management-net-ips", 0, "Additional number of ip addresses to reserve in each vlan for network equipment")
 	initCmd.Flags().Bool("k8s-api-auditing-enabled", false, "Enable the kubernetes auditing API")
