@@ -1,6 +1,25 @@
-/*
-Copyright 2021 Hewlett Packard Enterprise Development LP
-*/
+//
+//  MIT License
+//
+//  (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a
+//  copy of this software and associated documentation files (the "Software"),
+//  to deal in the Software without restriction, including without limitation
+//  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//  and/or sell copies of the Software, and to permit persons to whom the
+//  Software is furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included
+//  in all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//  THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+//  OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+//  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+//  OTHER DEALINGS IN THE SOFTWARE.
 
 package cmd
 
@@ -437,8 +456,8 @@ func init() {
 
 	// Use these flags to prepare the basecamp metadata json
 	initCmd.Flags().String("bgp-asn", "65533", "The autonomous system number for BGP router")
-	initCmd.Flags().String("bgp-cmn-asn", "65536", "The autonomous system number for CMN BGP clients")
-	initCmd.Flags().String("bgp-nmn-asn", "65533", "The autonomous system number for NMN BGP clients")
+	initCmd.Flags().String("bgp-cmn-asn", "65532", "The autonomous system number for CMN BGP clients")
+	initCmd.Flags().String("bgp-nmn-asn", "65531", "The autonomous system number for NMN BGP clients")
 	initCmd.Flags().String("bgp-peers", "spine", "Which set of switches to use as metallb peers, spine (default) or leaf")
 	initCmd.Flags().Int("management-net-ips", 0, "Additional number of ip addresses to reserve in each vlan for network equipment")
 	initCmd.Flags().Bool("k8s-api-auditing-enabled", false, "Enable the kubernetes auditing API")
