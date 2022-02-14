@@ -209,10 +209,12 @@ func getWriteFiles(networks sls_common.NetworkArray, ipamNetworks bss.CloudInitI
 		ipamNetwork := ipamNetworks[neededNetwork]
 
 		for _, network := range networks {
-			// We have to check the prefix of the network because some networks like the CMN or HMN also have LB
+			// We have to check the prefix of the network because some networks like the NMN or HMN also have LB
 			// networks associated with them. Debatable whether that actually make them a separate network
 			// or not but the important point here is they have to be added to the correct file.
-			if strings.HasPrefix(strings.ToLower(network.Name), neededNetwork) {
+                        // We also need to add a route for the MTL network to the NMN gateway
+			if strings.HasPrefix(strings.ToLower(network.Name), neededNetwork) ||
+                           (neededNetwork == "nmn" && strings.ToLower(network.Name) == "mtl") {
 				// Map this network to a usable structure.
 				var networkExtraProperties sls.NetworkExtraProperties
 				err := mapstructure.Decode(network.ExtraPropertiesRaw, &networkExtraProperties)
@@ -238,13 +240,25 @@ func getWriteFiles(networks sls_common.NetworkArray, ipamNetworks bss.CloudInitI
 					route := fmt.Sprintf("%s %s - %s.%s0",
 						ipv4Net.String(), gatewayIP.String(), "bond0", neededNetwork)
 
-					thisRouteFile = append(thisRouteFile, route)
+					// Don't add the route if we already have it
+					found := false
+					for _, a := range thisRouteFile {
+						if a == route {
+							found = true
+							break
+						}
+					}
+
+					if !found { 
+						thisRouteFile = append(thisRouteFile, route)
+					}
 				}
 
 				routeFiles[neededNetwork] = thisRouteFile
 			}
 		}
 	}
+
 
 	// We now have all the write files, let's make objects for them.
 	for networkName, routeFile := range routeFiles {
