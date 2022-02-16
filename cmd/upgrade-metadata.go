@@ -80,9 +80,9 @@ var UpgradeParamsToDelete = []string{
 /*
 UpgradeParamsToAdd Linux Kernel Parameters to-set for upgrades to 1.2.
 
-	1. ip=bond0:dhcp
+	1. ip=mgmt0:dhcp
 
-		DHCP must be setup. This ensures we do it over all potential links by using the parent interface for our VLANs.
+		DHCP must be setup. The bond will be formed during cloud-init
 
 	2. rd.peerdns=0
 
@@ -91,28 +91,16 @@ UpgradeParamsToAdd Linux Kernel Parameters to-set for upgrades to 1.2.
 	3. rd.net.dhcp.retry=5
 
 		Set to ensure we wait out STP blocks, at least giving them more chances than 3 (from 1.0).
-
-	4. bond=bond0:mgmt0,mgmt1:mode=802.3ad,xmit_hash_policy=layer2+3
-
-		bond0 in 1.2 is always mgmt0 and mgmt1; the mapping of 1.0 <-> 1.2 is below:
-			 1.0 --|-- 1.2
-			mgmt0 <-> mgmt0
-		    mgmt1 <-> sun0 (or mgmt1, if the system is a two-port system).
-			mgmt2 <-> mgmt1
-			mgmt3 <-> sun1
 */
 var UpgradeParamsToAdd = []paramTuple{{
 	key:   "ip",
-	value: "bond0:dhcp",
+	value: "mgmt0:dhcp",
 }, {
 	key:   "rd.peerdns",
 	value: "0",
 }, {
 	key:   "rd.net.dhcp.retry",
 	value: "5",
-}, {
-	key:   "bond",
-	value: "bond0:mgmt0,mgmt1:mode=802.3ad,xmit_hash_policy=layer2+3",
 }}
 
 func getIPAMForNCN(managementNCN sls_common.GenericHardware,
