@@ -1,9 +1,28 @@
+//
+//  MIT License
+//
+//  (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a
+//  copy of this software and associated documentation files (the "Software"),
+//  to deal in the Software without restriction, including without limitation
+//  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//  and/or sell copies of the Software, and to permit persons to whom the
+//  Software is furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included
+//  in all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//  THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+//  OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+//  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+//  OTHER DEALINGS IN THE SOFTWARE.
+
 // +build !integration
 // +build !shcd
-
-/*
-Copyright 2021 Hewlett Packard Enterprise Development LP
-*/
 
 package csi
 
@@ -64,7 +83,7 @@ func (suite *NetworkingTestSuite) TestValidateSwitch_WrongXnameTypes() {
 			SwitchType: ManagementSwitchTypeSpine,
 			Brand:      ManagementSwitchBrandAruba,
 		},
-		expectedError: errors.New("invalid xname used for Spine/Leaf switch: x10c0w14, should use xXcChHsS format"),
+		expectedError: errors.New("invalid xname used for Spine/Leaf/Edge switch: x10c0w14, should use xXcChHsS format"),
 	}, {
 		// Spine using CDUMgmtSwitch, should be using MgmtHLSwitch
 		mySwitch: ManagementSwitch{
@@ -72,7 +91,7 @@ func (suite *NetworkingTestSuite) TestValidateSwitch_WrongXnameTypes() {
 			SwitchType: ManagementSwitchTypeSpine,
 			Brand:      ManagementSwitchBrandAruba,
 		},
-		expectedError: errors.New("invalid xname used for Spine/Leaf switch: d10w14, should use xXcChHsS format"),
+		expectedError: errors.New("invalid xname used for Spine/Leaf/Edge switch: d10w14, should use xXcChHsS format"),
 	}, {
 		// Leaf using MgmtSwitch, should be using MgmtHLSwitch
 		mySwitch: ManagementSwitch{
@@ -80,7 +99,7 @@ func (suite *NetworkingTestSuite) TestValidateSwitch_WrongXnameTypes() {
 			SwitchType: ManagementSwitchTypeLeaf,
 			Brand:      ManagementSwitchBrandAruba,
 		},
-		expectedError: errors.New("invalid xname used for Spine/Leaf switch: x20c0w14, should use xXcChHsS format"),
+		expectedError: errors.New("invalid xname used for Spine/Leaf/Edge switch: x20c0w14, should use xXcChHsS format"),
 	}, {
 		// Leaf using CDUMgmtSwitch, should be using MgmtHLSwitch
 		mySwitch: ManagementSwitch{
@@ -88,7 +107,7 @@ func (suite *NetworkingTestSuite) TestValidateSwitch_WrongXnameTypes() {
 			SwitchType: ManagementSwitchTypeLeaf,
 			Brand:      ManagementSwitchBrandAruba,
 		},
-		expectedError: errors.New("invalid xname used for Spine/Leaf switch: d20w14, should use xXcChHsS format"),
+		expectedError: errors.New("invalid xname used for Spine/Leaf/Edge switch: d20w14, should use xXcChHsS format"),
 	}, {
 		// CDU using MgmtHLSwitch, should be using CDUMgmtSwitch
 		mySwitch: ManagementSwitch{
