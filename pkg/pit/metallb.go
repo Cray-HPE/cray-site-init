@@ -1,6 +1,25 @@
-/*
-Copyright 2021 Hewlett Packard Enterprise Development LP
-*/
+//
+//  MIT License
+//
+//  (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a
+//  copy of this software and associated documentation files (the "Software"),
+//  to deal in the Software without restriction, including without limitation
+//  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//  and/or sell copies of the Software, and to permit persons to whom the
+//  Software is furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included
+//  in all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//  THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+//  OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+//  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+//  OTHER DEALINGS IN THE SOFTWARE.
 
 package pit
 
@@ -58,6 +77,7 @@ type MetalLBConfigMap struct {
 	LeafSwitches  []PeerDetail
 	PeerSwitches  []PeerDetail
 	SpineSwitches []PeerDetail
+	EdgeSwitches  []PeerDetail
 	Networks      []AddressPoolDetail
 }
 
@@ -66,16 +86,19 @@ func GetMetalLBConfig(v *viper.Viper, networks map[string]*csi.IPV4Network, swit
 
 	var configStruct MetalLBConfigMap
 
-	var spineSwitchXnames, leafSwitchXnames []string
-	var bgpPeers = v.GetString("bgp-peers")
+	var spineSwitchXnames, leafSwitchXnames, edgeSwitchXnames []string
+	var bgpPeers = v.GetStringSlice("bgp-peer-types")
 
-	// Split out switches into spine and leaf lists
+	// Split out switches into spine, leaf, and edge lists
 	for _, mgmtswitch := range switches {
 		if mgmtswitch.SwitchType == "Spine" {
 			spineSwitchXnames = append(spineSwitchXnames, mgmtswitch.Xname)
 		}
 		if mgmtswitch.SwitchType == "Leaf" {
 			leafSwitchXnames = append(leafSwitchXnames, mgmtswitch.Xname)
+		}
+		if mgmtswitch.SwitchType == "Edge" {
+			edgeSwitchXnames = append(edgeSwitchXnames, mgmtswitch.Xname)
 		}
 	}
 
@@ -97,6 +120,19 @@ func GetMetalLBConfig(v *viper.Viper, networks map[string]*csi.IPV4Network, swit
 					for _, switchXname := range leafSwitchXnames {
 						if reservation.Comment == switchXname {
 							configStruct.LeafSwitches = append(configStruct.LeafSwitches, tmpPeer)
+						}
+					}
+				}
+			} else if name == "CHN" && subnet.Name == "bootstrap_dhcp" {
+				var tmpPeer PeerDetail
+				for _, reservation := range subnet.IPReservations {
+					tmpPeer = PeerDetail{}
+					tmpPeer.PeerASN = network.PeerASN
+					tmpPeer.MyASN = network.MyASN
+					tmpPeer.IPAddress = reservation.IPAddress.String()
+					for _, switchXname := range edgeSwitchXnames {
+						if reservation.Comment == switchXname {
+							configStruct.EdgeSwitches = append(configStruct.EdgeSwitches, tmpPeer)
 						}
 					}
 				}
@@ -130,20 +166,23 @@ func WriteMetalLBConfigMap(path string, v *viper.Viper, networks map[string]*csi
 }
 
 // getMetalLBPeerSwitches returns a list of switches  that should be used as metallb peers
-func getMetalLBPeerSwitches(bgpPeers string, configStruct MetalLBConfigMap) []PeerDetail {
+func getMetalLBPeerSwitches(bgpPeers []string, configStruct MetalLBConfigMap) []PeerDetail {
 
 	switchTypeMap := map[string][]PeerDetail{
 		"spine": configStruct.SpineSwitches,
 		"leaf":  configStruct.LeafSwitches,
+		"edge":  configStruct.EdgeSwitches,
 	}
 
-	if peerSwitches, ok := switchTypeMap[bgpPeers]; ok {
-		if len(peerSwitches) == 0 {
-			log.Fatalf("bgp-peers: %s specified but none defined in switch_metadata.csv\n", bgpPeers)
+	for _, peerType := range bgpPeers {
+		if peerSwitches, ok := switchTypeMap[peerType]; ok {
+			if len(peerSwitches) == 0 {
+				log.Fatalf("bgp-peer-types: %s specified but none defined in switch_metadata.csv\n", peerType)
+			}
+			configStruct.PeerSwitches = append(configStruct.PeerSwitches, peerSwitches...)
+		} else {
+			log.Fatalf("bgp-peer-types: unrecognized option: %s\n", peerType)
 		}
-		configStruct.PeerSwitches = append(configStruct.PeerSwitches, peerSwitches...)
-	} else {
-		log.Fatalf("bgp-peers: unrecognized option: %s\n", bgpPeers)
 	}
 
 	return configStruct.PeerSwitches
