@@ -311,7 +311,21 @@ func getBSSGlobalHostRecords(managementNCNs []sls_common.GenericHardware, networ
 		ncnAlias := ncnExtraProperties.Aliases[0]
 
 		// Add the NCN interface host records.
-		ipamNetworks := getIPAMForNCN(managementNCN, networks, "chn")
+		var ipamNetworks bss.CloudInitIPAM
+		extraNets := []string{}
+
+		if _, ok := networkEPs["CHN"]; ok {
+			extraNets = append(extraNets, "chn")
+		}
+		if _, ok := networkEPs["CAN"]; ok {
+			extraNets = append(extraNets, "can")
+		}
+
+		if len(extraNets) == 0 {
+			log.Fatalf("SLS must have either CAN or CHN defined")
+		}
+		ipamNetworks = getIPAMForNCN(managementNCN, networks, extraNets...)
+
 		for network, ipam := range ipamNetworks {
 			// Get the IP of the NCN for this network.
 			ip, _, err := net.ParseCIDR(ipam.CIDR)
@@ -385,7 +399,7 @@ var (
 )
 
 // updateBSS pushes the changes to BSS.
-func updateBSS() {
+func updateBSS() (err error) {
 	// Instead of hammering SLS some number of times for each NCN/network combination we just grab the entire
 	// network block and will later pull out the pieces we need.
 	networks, err := slsClient.GetNetworks()
@@ -404,6 +418,7 @@ func updateBSS() {
 		}
 
 		if len(ncnExtraProperties.Aliases) == 0 {
+			err = fmt.Errorf("NCN has no aliases defined in SLS: %+v", managementNCN)
 			log.Fatalf("NCN has no aliases defined in SLS: %+v", managementNCN)
 		}
 
@@ -414,8 +429,26 @@ func updateBSS() {
 		 * main structure to have that fresh data.
 		 */
 
+		extraNets := []string{}
+		var foundCAN = false
+		var foundCHN = false
+
+		for _, net := range networks {
+			if strings.ToLower(net.Name) == "can" {
+				extraNets = append(extraNets, "can")
+				foundCAN = true
+			}
+			if strings.ToLower(net.Name) == "chn" {
+				foundCHN = true
+			}
+		}
+		if !foundCAN && !foundCHN {
+			err = fmt.Errorf("No CAN or CHN network defined in SLS")
+			return
+		}
+
 		// IPAM
-		ipamNetworks := getIPAMForNCN(managementNCN, networks)
+		ipamNetworks := getIPAMForNCN(managementNCN, networks, extraNets...)
 		bootparameters.CloudInit.MetaData["ipam"] = ipamNetworks
 
 		// Run-cmd
@@ -444,6 +477,7 @@ func updateBSS() {
 				UpgradeParamsToAdd = append(UpgradeParamsToAdd, setMetalServerParam)
 			}
 		default:
+			err = fmt.Errorf("NCN has invalid SubRole: %+v", managementNCN)
 			log.Fatalf("NCN has invalid SubRole: %+v", managementNCN)
 		}
 
@@ -467,6 +501,8 @@ func updateBSS() {
 	delete(globalBootParameters.CloudInit.MetaData, "can-if")
 
 	uploadEntryToBSS(globalBootParameters, http.MethodPatch)
+
+	return
 }
 
 // metadataCmd represents the upgrade command.

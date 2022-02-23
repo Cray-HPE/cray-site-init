@@ -24,7 +24,7 @@
 package bss
 
 // IPAMNetworks - The networks that need IPAM.
-var IPAMNetworks = [...]string{"can", "cmn", "hmn", "mtl", "nmn"}
+var IPAMNetworks = [...]string{"cmn", "hmn", "mtl", "nmn"}
 
 // KubernetesNCNRunCMD - The run-cmd for Kubernetes nodes.
 var KubernetesNCNRunCMD = [...]string{
