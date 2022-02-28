@@ -1,0 +1,1280 @@
+[
+  {
+    "Name": "BICAN",
+    "FullName": "SystemDefaultRoute points the network name of the default route",
+    "IPRanges": [
+      "0.0.0.0/0"
+    ],
+    "Type": "ethernet",
+    "ExtraProperties": {
+      "CIDR": "0.0.0.0/0",
+      "VlanRange": [
+        0
+      ],
+      "MTU": 9000,
+      "Subnets": [],
+      "SystemDefaultRoute": "CMN"
+    }
+  },
+  {
+    "Name": "CAN",
+    "FullName": "Customer Access Network",
+    "IPRanges": [
+      "10.102.4.128/26"
+    ],
+    "Type": "ethernet",
+    "ExtraProperties": {
+      "CIDR": "10.102.4.128/26",
+      "VlanRange": [
+        6
+      ],
+      "MTU": 9000,
+      "Subnets": [
+        {
+          "FullName": "CAN Dynamic MetalLB",
+          "CIDR": "10.102.4.160/27",
+          "Name": "can_metallb_address_pool",
+          "VlanID": 6,
+          "Gateway": "10.102.4.161",
+          "MetalLBPoolName": "customer-access"
+        },
+        {
+          "FullName": "CAN Bootstrap DHCP Subnet",
+          "CIDR": "10.102.4.128/27",
+          "IPReservations": [
+            {
+              "Name": "can-switch-1",
+              "IPAddress": "10.102.4.130"
+            },
+            {
+              "Name": "can-switch-2",
+              "IPAddress": "10.102.4.131"
+            },
+            {
+              "Name": "kubeapi-vip",
+              "IPAddress": "10.102.4.132",
+              "Comment": "k8s-virtual-ip"
+            },
+            {
+              "Name": "ncn-s004",
+              "IPAddress": "10.102.4.133",
+              "Aliases": [
+                "ncn-s004-can",
+                "time-can",
+                "time-can.local"
+              ],
+              "Comment": "x3000c0s36b0n0"
+            },
+            {
+              "Name": "ncn-s003",
+              "IPAddress": "10.102.4.134",
+              "Aliases": [
+                "ncn-s003-can",
+                "time-can",
+                "time-can.local"
+              ],
+              "Comment": "x3000c0s17b0n0"
+            },
+            {
+              "Name": "ncn-s002",
+              "IPAddress": "10.102.4.135",
+              "Aliases": [
+                "ncn-s002-can",
+                "time-can",
+                "time-can.local"
+              ],
+              "Comment": "x3000c0s15b0n0"
+            },
+            {
+              "Name": "ncn-s001",
+              "IPAddress": "10.102.4.136",
+              "Aliases": [
+                "ncn-s001-can",
+                "time-can",
+                "time-can.local"
+              ],
+              "Comment": "x3000c0s13b0n0"
+            },
+            {
+              "Name": "ncn-m003",
+              "IPAddress": "10.102.4.137",
+              "Aliases": [
+                "ncn-m003-can",
+                "time-can",
+                "time-can.local"
+              ],
+              "Comment": "x3000c0s5b0n0"
+            },
+            {
+              "Name": "ncn-m002",
+              "IPAddress": "10.102.4.138",
+              "Aliases": [
+                "ncn-m002-can",
+                "time-can",
+                "time-can.local"
+              ],
+              "Comment": "x3000c0s3b0n0"
+            },
+            {
+              "Name": "ncn-m001",
+              "IPAddress": "10.102.4.139",
+              "Aliases": [
+                "ncn-m001-can",
+                "time-can",
+                "time-can.local"
+              ],
+              "Comment": "x3000c0s1b0n0"
+            },
+            {
+              "Name": "ncn-w004",
+              "IPAddress": "10.102.4.140",
+              "Aliases": [
+                "ncn-w004-can",
+                "time-can",
+                "time-can.local"
+              ],
+              "Comment": "x3000c0s38b0n0"
+            },
+            {
+              "Name": "ncn-w003",
+              "IPAddress": "10.102.4.141",
+              "Aliases": [
+                "ncn-w003-can",
+                "time-can",
+                "time-can.local"
+              ],
+              "Comment": "x3000c0s11b0n0"
+            },
+            {
+              "Name": "ncn-w002",
+              "IPAddress": "10.102.4.142",
+              "Aliases": [
+                "ncn-w002-can",
+                "time-can",
+                "time-can.local"
+              ],
+              "Comment": "x3000c0s9b0n0"
+            },
+            {
+              "Name": "ncn-w001",
+              "IPAddress": "10.102.4.143",
+              "Aliases": [
+                "ncn-w001-can",
+                "time-can",
+                "time-can.local"
+              ],
+              "Comment": "x3000c0s7b0n0"
+            },
+            {
+              "Name": "uan01",
+              "IPAddress": "10.102.4.144",
+              "Comment": "x3000c0s19b0n0"
+            }
+          ],
+          "Name": "bootstrap_dhcp",
+          "VlanID": 6,
+          "Gateway": "10.102.4.129",
+          "DHCPStart": "10.102.4.145",
+          "DHCPEnd": "10.102.4.159"
+        }
+      ]
+    }
+  },
+  {
+    "Name": "CMN",
+    "FullName": "Customer Management Network",
+    "IPRanges": [
+      "10.102.4.0/25"
+    ],
+    "Type": "ethernet",
+    "ExtraProperties": {
+      "CIDR": "10.102.4.0/25",
+      "VlanRange": [
+        7
+      ],
+      "MTU": 9000,
+      "PeerASN": 65533,
+      "MyASN": 65536,
+      "Subnets": [
+        {
+          "FullName": "CMN Static Pool MetalLB",
+          "CIDR": "10.102.4.60/30",
+          "IPReservations": [
+            {
+              "Name": "external-dns",
+              "IPAddress": "10.102.4.61",
+              "Comment": "site to system lookups"
+            }
+          ],
+          "Name": "cmn_metallb_static_pool",
+          "VlanID": 7,
+          "Gateway": "10.102.4.61",
+          "MetalLBPoolName": "customer-management-static"
+        },
+        {
+          "FullName": "CMN Dynamic MetalLB",
+          "CIDR": "10.102.4.64/26",
+          "Name": "cmn_metallb_address_pool",
+          "VlanID": 7,
+          "Gateway": "10.102.4.65",
+          "MetalLBPoolName": "customer-management"
+        },
+        {
+          "FullName": "CMN Management Network Infrastructure",
+          "CIDR": "10.102.4.32/28",
+          "IPReservations": [
+            {
+              "Name": "sw-spine-001",
+              "IPAddress": "10.102.4.33",
+              "Comment": "x3000c0h24s1"
+            },
+            {
+              "Name": "sw-spine-002",
+              "IPAddress": "10.102.4.34",
+              "Comment": "x3000c0h24s2"
+            },
+            {
+              "Name": "sw-leaf-bmc-001",
+              "IPAddress": "10.102.4.35",
+              "Comment": "x3000c0w25"
+            }
+          ],
+          "Name": "network_hardware",
+          "VlanID": 7,
+          "Gateway": "10.102.4.1"
+        },
+        {
+          "FullName": "CMN Bootstrap DHCP Subnet",
+          "CIDR": "10.102.4.0/27",
+          "IPReservations": [
+            {
+              "Name": "kubeapi-vip",
+              "IPAddress": "10.102.4.3",
+              "Comment": "k8s-virtual-ip"
+            },
+            {
+              "Name": "ncn-s004",
+              "IPAddress": "10.102.4.4",
+              "Aliases": [
+                "ncn-s004-cmn",
+                "time-cmn",
+                "time-cmn.local"
+              ],
+              "Comment": "x3000c0s36b0n0"
+            },
+            {
+              "Name": "ncn-s003",
+              "IPAddress": "10.102.4.5",
+              "Aliases": [
+                "ncn-s003-cmn",
+                "time-cmn",
+                "time-cmn.local"
+              ],
+              "Comment": "x3000c0s17b0n0"
+            },
+            {
+              "Name": "ncn-s002",
+              "IPAddress": "10.102.4.6",
+              "Aliases": [
+                "ncn-s002-cmn",
+                "time-cmn",
+                "time-cmn.local"
+              ],
+              "Comment": "x3000c0s15b0n0"
+            },
+            {
+              "Name": "ncn-s001",
+              "IPAddress": "10.102.4.7",
+              "Aliases": [
+                "ncn-s001-cmn",
+                "time-cmn",
+                "time-cmn.local"
+              ],
+              "Comment": "x3000c0s13b0n0"
+            },
+            {
+              "Name": "ncn-m003",
+              "IPAddress": "10.102.4.8",
+              "Aliases": [
+                "ncn-m003-cmn",
+                "time-cmn",
+                "time-cmn.local"
+              ],
+              "Comment": "x3000c0s5b0n0"
+            },
+            {
+              "Name": "ncn-m002",
+              "IPAddress": "10.102.4.9",
+              "Aliases": [
+                "ncn-m002-cmn",
+                "time-cmn",
+                "time-cmn.local"
+              ],
+              "Comment": "x3000c0s3b0n0"
+            },
+            {
+              "Name": "ncn-m001",
+              "IPAddress": "10.102.4.10",
+              "Aliases": [
+                "ncn-m001-cmn",
+                "time-cmn",
+                "time-cmn.local"
+              ],
+              "Comment": "x3000c0s1b0n0"
+            },
+            {
+              "Name": "ncn-w004",
+              "IPAddress": "10.102.4.11",
+              "Aliases": [
+                "ncn-w004-cmn",
+                "time-cmn",
+                "time-cmn.local"
+              ],
+              "Comment": "x3000c0s38b0n0"
+            },
+            {
+              "Name": "ncn-w003",
+              "IPAddress": "10.102.4.12",
+              "Aliases": [
+                "ncn-w003-cmn",
+                "time-cmn",
+                "time-cmn.local"
+              ],
+              "Comment": "x3000c0s11b0n0"
+            },
+            {
+              "Name": "ncn-w002",
+              "IPAddress": "10.102.4.13",
+              "Aliases": [
+                "ncn-w002-cmn",
+                "time-cmn",
+                "time-cmn.local"
+              ],
+              "Comment": "x3000c0s9b0n0"
+            },
+            {
+              "Name": "ncn-w001",
+              "IPAddress": "10.102.4.14",
+              "Aliases": [
+                "ncn-w001-cmn",
+                "time-cmn",
+                "time-cmn.local"
+              ],
+              "Comment": "x3000c0s7b0n0"
+            }
+          ],
+          "Name": "bootstrap_dhcp",
+          "VlanID": 7,
+          "Gateway": "10.102.4.1",
+          "DHCPStart": "10.102.4.15",
+          "DHCPEnd": "10.102.4.30"
+        }
+      ]
+    }
+  }, {
+    "Name": "HMN",
+    "FullName": "Hardware Management Network",
+    "IPRanges": [
+      "10.254.0.0/17"
+    ],
+    "Type": "ethernet",
+    "ExtraProperties": {
+      "CIDR": "10.254.0.0/17",
+      "VlanRange": [
+        4
+      ],
+      "MTU": 9000,
+      "Subnets": [
+        {
+          "FullName": "HMN Management Network Infrastructure",
+          "CIDR": "10.254.0.0/17",
+          "IPReservations": [
+            {
+              "Name": "sw-spine-001",
+              "IPAddress": "10.254.0.2",
+              "Comment": "x3000c0h24s1"
+            },
+            {
+              "Name": "sw-spine-002",
+              "IPAddress": "10.254.0.3",
+              "Comment": "x3000c0h24s2"
+            },
+            {
+              "Name": "sw-leaf-bmc-001",
+              "IPAddress": "10.254.0.4",
+              "Comment": "x3000c0w25"
+            }
+          ],
+          "Name": "network_hardware",
+          "VlanID": 4,
+          "Gateway": "10.254.0.1"
+        },
+        {
+          "FullName": "HMN Bootstrap DHCP Subnet",
+          "CIDR": "10.254.1.0/17",
+          "IPReservations": [
+            {
+              "Name": "kubeapi-vip",
+              "IPAddress": "10.254.1.2",
+              "Comment": "k8s-virtual-ip"
+            },
+            {
+              "Name": "x3000c0s36b0",
+              "IPAddress": "10.254.1.3",
+              "Aliases": [
+                "ncn-s004-mgmt"
+              ],
+              "Comment": "x3000c0s36b0"
+            },
+            {
+              "Name": "ncn-s004",
+              "IPAddress": "10.254.1.4",
+              "Aliases": [
+                "ncn-s004-hmn",
+                "time-hmn",
+                "time-hmn.local",
+                "rgw-vip.hmn"
+              ],
+              "Comment": "x3000c0s36b0n0"
+            },
+            {
+              "Name": "x3000c0s17b0",
+              "IPAddress": "10.254.1.5",
+              "Aliases": [
+                "ncn-s003-mgmt"
+              ],
+              "Comment": "x3000c0s17b0"
+            },
+            {
+              "Name": "ncn-s003",
+              "IPAddress": "10.254.1.6",
+              "Aliases": [
+                "ncn-s003-hmn",
+                "time-hmn",
+                "time-hmn.local",
+                "rgw-vip.hmn"
+              ],
+              "Comment": "x3000c0s17b0n0"
+            },
+            {
+              "Name": "x3000c0s15b0",
+              "IPAddress": "10.254.1.7",
+              "Aliases": [
+                "ncn-s002-mgmt"
+              ],
+              "Comment": "x3000c0s15b0"
+            },
+            {
+              "Name": "ncn-s002",
+              "IPAddress": "10.254.1.8",
+              "Aliases": [
+                "ncn-s002-hmn",
+                "time-hmn",
+                "time-hmn.local",
+                "rgw-vip.hmn"
+              ],
+              "Comment": "x3000c0s15b0n0"
+            },
+            {
+              "Name": "x3000c0s13b0",
+              "IPAddress": "10.254.1.9",
+              "Aliases": [
+                "ncn-s001-mgmt"
+              ],
+              "Comment": "x3000c0s13b0"
+            },
+            {
+              "Name": "ncn-s001",
+              "IPAddress": "10.254.1.10",
+              "Aliases": [
+                "ncn-s001-hmn",
+                "time-hmn",
+                "time-hmn.local",
+                "rgw-vip.hmn"
+              ],
+              "Comment": "x3000c0s13b0n0"
+            },
+            {
+              "Name": "x3000c0s5b0",
+              "IPAddress": "10.254.1.11",
+              "Aliases": [
+                "ncn-m003-mgmt"
+              ],
+              "Comment": "x3000c0s5b0"
+            },
+            {
+              "Name": "ncn-m003",
+              "IPAddress": "10.254.1.12",
+              "Aliases": [
+                "ncn-m003-hmn",
+                "time-hmn",
+                "time-hmn.local"
+              ],
+              "Comment": "x3000c0s5b0n0"
+            },
+            {
+              "Name": "x3000c0s3b0",
+              "IPAddress": "10.254.1.13",
+              "Aliases": [
+                "ncn-m002-mgmt"
+              ],
+              "Comment": "x3000c0s3b0"
+            },
+            {
+              "Name": "ncn-m002",
+              "IPAddress": "10.254.1.14",
+              "Aliases": [
+                "ncn-m002-hmn",
+                "time-hmn",
+                "time-hmn.local"
+              ],
+              "Comment": "x3000c0s3b0n0"
+            },
+            {
+              "Name": "x3000c0s1b0",
+              "IPAddress": "10.254.1.15",
+              "Aliases": [
+                "ncn-m001-mgmt"
+              ],
+              "Comment": "x3000c0s1b0"
+            },
+            {
+              "Name": "ncn-m001",
+              "IPAddress": "10.254.1.16",
+              "Aliases": [
+                "ncn-m001-hmn",
+                "time-hmn",
+                "time-hmn.local"
+              ],
+              "Comment": "x3000c0s1b0n0"
+            },
+            {
+              "Name": "x3000c0s38b0",
+              "IPAddress": "10.254.1.17",
+              "Aliases": [
+                "ncn-w004-mgmt"
+              ],
+              "Comment": "x3000c0s38b0"
+            },
+            {
+              "Name": "ncn-w004",
+              "IPAddress": "10.254.1.18",
+              "Aliases": [
+                "ncn-w004-hmn",
+                "time-hmn",
+                "time-hmn.local"
+              ],
+              "Comment": "x3000c0s38b0n0"
+            },
+            {
+              "Name": "x3000c0s11b0",
+              "IPAddress": "10.254.1.19",
+              "Aliases": [
+                "ncn-w003-mgmt"
+              ],
+              "Comment": "x3000c0s11b0"
+            },
+            {
+              "Name": "ncn-w003",
+              "IPAddress": "10.254.1.20",
+              "Aliases": [
+                "ncn-w003-hmn",
+                "time-hmn",
+                "time-hmn.local"
+              ],
+              "Comment": "x3000c0s11b0n0"
+            },
+            {
+              "Name": "x3000c0s9b0",
+              "IPAddress": "10.254.1.21",
+              "Aliases": [
+                "ncn-w002-mgmt"
+              ],
+              "Comment": "x3000c0s9b0"
+            },
+            {
+              "Name": "ncn-w002",
+              "IPAddress": "10.254.1.22",
+              "Aliases": [
+                "ncn-w002-hmn",
+                "time-hmn",
+                "time-hmn.local"
+              ],
+              "Comment": "x3000c0s9b0n0"
+            },
+            {
+              "Name": "x3000c0s7b0",
+              "IPAddress": "10.254.1.23",
+              "Aliases": [
+                "ncn-w001-mgmt"
+              ],
+              "Comment": "x3000c0s7b0"
+            },
+            {
+              "Name": "ncn-w001",
+              "IPAddress": "10.254.1.24",
+              "Aliases": [
+                "ncn-w001-hmn",
+                "time-hmn",
+                "time-hmn.local"
+              ],
+              "Comment": "x3000c0s7b0n0"
+            }
+          ],
+          "Name": "bootstrap_dhcp",
+          "VlanID": 4,
+          "Gateway": "10.254.0.1",
+          "DHCPStart": "10.254.1.25",
+          "DHCPEnd": "10.254.1.225"
+        }
+      ]
+    }
+  },
+  {
+    "Name": "HMNLB",
+    "FullName": "Hardware Management Network LoadBalancers",
+    "IPRanges": [
+      "10.94.100.0/24"
+    ],
+    "Type": "ethernet",
+    "ExtraProperties": {
+      "CIDR": "10.94.100.0/24",
+      "VlanRange": null,
+      "MTU": 9000,
+      "Subnets": [
+        {
+          "FullName": "HMN MetalLB",
+          "CIDR": "10.94.100.0/24",
+          "IPReservations": [
+            {
+              "Name": "rsyslog-aggregator",
+              "IPAddress": "10.94.100.72",
+              "Aliases": [
+                "rsyslog-agg-service"
+              ],
+              "Comment": "rsyslog-agg-service"
+            },
+            {
+              "Name": "cray-tftp",
+              "IPAddress": "10.94.100.60",
+              "Aliases": [
+                "tftp-service"
+              ],
+              "Comment": "tftp-service"
+            },
+            {
+              "Name": "unbound",
+              "IPAddress": "10.94.100.225",
+              "Aliases": [
+                "unbound"
+              ],
+              "Comment": "unbound"
+            },
+            {
+              "Name": "docker-registry",
+              "IPAddress": "10.94.100.73",
+              "Aliases": [
+                "docker_registry_service"
+              ],
+              "Comment": "docker_registry_service"
+            },
+            {
+              "Name": "istio-ingressgateway",
+              "IPAddress": "10.94.100.71"
+            }
+          ],
+          "Name": "hmn_metallb_address_pool",
+          "VlanID": 4,
+          "Gateway": "10.94.100.1",
+          "MetalLBPoolName": "hardware-management"
+        }
+      ]
+    }
+  },
+  {
+    "Name": "HMN_RVR",
+    "FullName": "River Compute Hardware Management Network",
+    "IPRanges": [
+      "10.107.0.0/17"
+    ],
+    "Type": "ethernet",
+    "ExtraProperties": {
+      "CIDR": "10.107.0.0/17",
+      "VlanRange": [
+        1513,
+        1513
+      ],
+      "MTU": 9000,
+      "Subnets": [
+        {
+          "FullName": "",
+          "CIDR": "10.107.0.0/22",
+          "Name": "cabinet_3000",
+          "VlanID": 1513,
+          "Gateway": "10.107.0.1",
+          "DHCPStart": "10.107.0.10",
+          "DHCPEnd": "10.107.3.254"
+        }
+      ]
+    }
+  },
+  {
+    "Name": "HSN",
+    "FullName": "High Speed Network",
+    "IPRanges": [
+      "10.253.0.0/16"
+    ],
+    "Type": "slingshot10",
+    "ExtraProperties": {
+      "CIDR": "10.253.0.0/16",
+      "VlanRange": [
+        613,
+        868
+      ],
+      "MTU": 9000,
+      "Subnets": [
+        {
+          "FullName": "HSN Base Subnet",
+          "CIDR": "10.253.0.0/16",
+          "Name": "hsn_base_subnet",
+          "VlanID": 613,
+          "Gateway": "10.253.0.1"
+        }
+      ]
+    }
+  },
+  {
+    "Name": "MTL",
+    "FullName": "Provisioning Network (untagged)",
+    "IPRanges": [
+      "10.1.1.0/16"
+    ],
+    "Type": "ethernet",
+    "ExtraProperties": {
+      "CIDR": "10.1.1.0/16",
+      "VlanRange": [
+        0
+      ],
+      "MTU": 9000,
+      "Comment": "This network is only valid for the NCNs",
+      "Subnets": [
+        {
+          "FullName": "MTL Management Network Infrastructure",
+          "CIDR": "10.1.0.0/16",
+          "IPReservations": [
+            {
+              "Name": "sw-spine-001",
+              "IPAddress": "10.1.0.2",
+              "Comment": "x3000c0h24s1"
+            },
+            {
+              "Name": "sw-spine-002",
+              "IPAddress": "10.1.0.3",
+              "Comment": "x3000c0h24s2"
+            },
+            {
+              "Name": "sw-leaf-bmc-001",
+              "IPAddress": "10.1.0.4",
+              "Comment": "x3000c0w25"
+            }
+          ],
+          "Name": "network_hardware",
+          "VlanID": 0,
+          "Gateway": "10.1.0.1"
+        },
+        {
+          "FullName": "MTL Bootstrap DHCP Subnet",
+          "CIDR": "10.1.1.0/16",
+          "IPReservations": [
+            {
+              "Name": "ncn-s004",
+              "IPAddress": "10.1.1.2",
+              "Aliases": [
+                "ncn-s004-mtl",
+                "time-mtl",
+                "time-mtl.local"
+              ],
+              "Comment": "x3000c0s36b0n0"
+            },
+            {
+              "Name": "ncn-s003",
+              "IPAddress": "10.1.1.3",
+              "Aliases": [
+                "ncn-s003-mtl",
+                "time-mtl",
+                "time-mtl.local"
+              ],
+              "Comment": "x3000c0s17b0n0"
+            },
+            {
+              "Name": "ncn-s002",
+              "IPAddress": "10.1.1.4",
+              "Aliases": [
+                "ncn-s002-mtl",
+                "time-mtl",
+                "time-mtl.local"
+              ],
+              "Comment": "x3000c0s15b0n0"
+            },
+            {
+              "Name": "ncn-s001",
+              "IPAddress": "10.1.1.5",
+              "Aliases": [
+                "ncn-s001-mtl",
+                "time-mtl",
+                "time-mtl.local"
+              ],
+              "Comment": "x3000c0s13b0n0"
+            },
+            {
+              "Name": "ncn-m003",
+              "IPAddress": "10.1.1.6",
+              "Aliases": [
+                "ncn-m003-mtl",
+                "time-mtl",
+                "time-mtl.local"
+              ],
+              "Comment": "x3000c0s5b0n0"
+            },
+            {
+              "Name": "ncn-m002",
+              "IPAddress": "10.1.1.7",
+              "Aliases": [
+                "ncn-m002-mtl",
+                "time-mtl",
+                "time-mtl.local"
+              ],
+              "Comment": "x3000c0s3b0n0"
+            },
+            {
+              "Name": "ncn-m001",
+              "IPAddress": "10.1.1.8",
+              "Aliases": [
+                "ncn-m001-mtl",
+                "time-mtl",
+                "time-mtl.local"
+              ],
+              "Comment": "x3000c0s1b0n0"
+            },
+            {
+              "Name": "ncn-w004",
+              "IPAddress": "10.1.1.9",
+              "Aliases": [
+                "ncn-w004-mtl",
+                "time-mtl",
+                "time-mtl.local"
+              ],
+              "Comment": "x3000c0s38b0n0"
+            },
+            {
+              "Name": "ncn-w003",
+              "IPAddress": "10.1.1.10",
+              "Aliases": [
+                "ncn-w003-mtl",
+                "time-mtl",
+                "time-mtl.local"
+              ],
+              "Comment": "x3000c0s11b0n0"
+            },
+            {
+              "Name": "ncn-w002",
+              "IPAddress": "10.1.1.11",
+              "Aliases": [
+                "ncn-w002-mtl",
+                "time-mtl",
+                "time-mtl.local"
+              ],
+              "Comment": "x3000c0s9b0n0"
+            },
+            {
+              "Name": "ncn-w001",
+              "IPAddress": "10.1.1.12",
+              "Aliases": [
+                "ncn-w001-mtl",
+                "time-mtl",
+                "time-mtl.local"
+              ],
+              "Comment": "x3000c0s7b0n0"
+            }
+          ],
+          "Name": "bootstrap_dhcp",
+          "VlanID": 0,
+          "Gateway": "10.1.0.1",
+          "DHCPStart": "10.1.1.13",
+          "DHCPEnd": "10.1.1.213"
+        }
+      ]
+    }
+  },
+  {
+    "Name": "NMN",
+    "FullName": "Node Management Network",
+    "IPRanges": [
+      "10.252.0.0/17"
+    ],
+    "Type": "ethernet",
+    "ExtraProperties": {
+      "CIDR": "10.252.0.0/17",
+      "VlanRange": [
+        2
+      ],
+      "MTU": 9000,
+      "PeerASN": 65533,
+      "MyASN": 65533,
+      "Subnets": [
+        {
+          "FullName": "NMN Management Network Infrastructure",
+          "CIDR": "10.252.0.0/17",
+          "IPReservations": [
+            {
+              "Name": "sw-spine-001",
+              "IPAddress": "10.252.0.2",
+              "Comment": "x3000c0h24s1"
+            },
+            {
+              "Name": "sw-spine-002",
+              "IPAddress": "10.252.0.3",
+              "Comment": "x3000c0h24s2"
+            },
+            {
+              "Name": "sw-leaf-bmc-001",
+              "IPAddress": "10.252.0.4",
+              "Comment": "x3000c0w25"
+            }
+          ],
+          "Name": "network_hardware",
+          "VlanID": 2,
+          "Gateway": "10.252.0.1"
+        },
+        {
+          "FullName": "NMN Bootstrap DHCP Subnet",
+          "CIDR": "10.252.1.0/17",
+          "IPReservations": [
+            {
+              "Name": "kubeapi-vip",
+              "IPAddress": "10.252.1.2",
+              "Aliases": [
+                "kubeapi-vip.local"
+              ],
+              "Comment": "k8s-virtual-ip"
+            },
+            {
+              "Name": "rgw-vip",
+              "IPAddress": "10.252.1.3",
+              "Aliases": [
+                "rgw-vip.local"
+              ],
+              "Comment": "rgw-virtual-ip"
+            },
+            {
+              "Name": "ncn-s004",
+              "IPAddress": "10.252.1.4",
+              "Aliases": [
+                "ncn-s004-nmn",
+                "time-nmn",
+                "time-nmn.local",
+                "x3000c0s36b0n0",
+                "ncn-s004.local"
+              ],
+              "Comment": "x3000c0s36b0n0"
+            },
+            {
+              "Name": "ncn-s003",
+              "IPAddress": "10.252.1.5",
+              "Aliases": [
+                "ncn-s003-nmn",
+                "time-nmn",
+                "time-nmn.local",
+                "x3000c0s17b0n0",
+                "ncn-s003.local"
+              ],
+              "Comment": "x3000c0s17b0n0"
+            },
+            {
+              "Name": "ncn-s002",
+              "IPAddress": "10.252.1.6",
+              "Aliases": [
+                "ncn-s002-nmn",
+                "time-nmn",
+                "time-nmn.local",
+                "x3000c0s15b0n0",
+                "ncn-s002.local"
+              ],
+              "Comment": "x3000c0s15b0n0"
+            },
+            {
+              "Name": "ncn-s001",
+              "IPAddress": "10.252.1.7",
+              "Aliases": [
+                "ncn-s001-nmn",
+                "time-nmn",
+                "time-nmn.local",
+                "x3000c0s13b0n0",
+                "ncn-s001.local"
+              ],
+              "Comment": "x3000c0s13b0n0"
+            },
+            {
+              "Name": "ncn-m003",
+              "IPAddress": "10.252.1.8",
+              "Aliases": [
+                "ncn-m003-nmn",
+                "time-nmn",
+                "time-nmn.local",
+                "x3000c0s5b0n0",
+                "ncn-m003.local"
+              ],
+              "Comment": "x3000c0s5b0n0"
+            },
+            {
+              "Name": "ncn-m002",
+              "IPAddress": "10.252.1.9",
+              "Aliases": [
+                "ncn-m002-nmn",
+                "time-nmn",
+                "time-nmn.local",
+                "x3000c0s3b0n0",
+                "ncn-m002.local"
+              ],
+              "Comment": "x3000c0s3b0n0"
+            },
+            {
+              "Name": "ncn-m001",
+              "IPAddress": "10.252.1.10",
+              "Aliases": [
+                "ncn-m001-nmn",
+                "time-nmn",
+                "time-nmn.local",
+                "x3000c0s1b0n0",
+                "ncn-m001.local"
+              ],
+              "Comment": "x3000c0s1b0n0"
+            },
+            {
+              "Name": "ncn-w004",
+              "IPAddress": "10.252.1.11",
+              "Aliases": [
+                "ncn-w004-nmn",
+                "time-nmn",
+                "time-nmn.local",
+                "x3000c0s38b0n0",
+                "ncn-w004.local"
+              ],
+              "Comment": "x3000c0s38b0n0"
+            },
+            {
+              "Name": "ncn-w003",
+              "IPAddress": "10.252.1.12",
+              "Aliases": [
+                "ncn-w003-nmn",
+                "time-nmn",
+                "time-nmn.local",
+                "x3000c0s11b0n0",
+                "ncn-w003.local"
+              ],
+              "Comment": "x3000c0s11b0n0"
+            },
+            {
+              "Name": "ncn-w002",
+              "IPAddress": "10.252.1.13",
+              "Aliases": [
+                "ncn-w002-nmn",
+                "time-nmn",
+                "time-nmn.local",
+                "x3000c0s9b0n0",
+                "ncn-w002.local"
+              ],
+              "Comment": "x3000c0s9b0n0"
+            },
+            {
+              "Name": "ncn-w001",
+              "IPAddress": "10.252.1.14",
+              "Aliases": [
+                "ncn-w001-nmn",
+                "time-nmn",
+                "time-nmn.local",
+                "x3000c0s7b0n0",
+                "ncn-w001.local"
+              ],
+              "Comment": "x3000c0s7b0n0"
+            }
+          ],
+          "Name": "bootstrap_dhcp",
+          "VlanID": 2,
+          "Gateway": "10.252.0.1",
+          "DHCPStart": "10.252.1.15",
+          "DHCPEnd": "10.252.1.215"
+        },
+        {
+          "FullName": "NMN UAIs",
+          "CIDR": "10.252.2.0/23",
+          "IPReservations": [
+            {
+              "Name": "pbs_comm_service",
+              "IPAddress": "10.252.2.2",
+              "Aliases": [
+                "pbs-comm-service",
+                "pbs-comm-service-nmn",
+                "pbs_comm_service.local"
+              ],
+              "Comment": "pbs-comm-service,pbs-comm-service-nmn"
+            },
+            {
+              "Name": "uai_macvlan_bridge",
+              "IPAddress": "10.252.2.3",
+              "Aliases": [
+                "uai-macvlan-bridge",
+                "uai_macvlan_bridge.local"
+              ],
+              "Comment": "uai-macvlan-bridge"
+            },
+            {
+              "Name": "slurmctld_service",
+              "IPAddress": "10.252.2.4",
+              "Aliases": [
+                "slurmctld-service",
+                "slurmctld-service-nmn",
+                "slurmctld_service.local"
+              ],
+              "Comment": "slurmctld-service,slurmctld-service-nmn"
+            },
+            {
+              "Name": "slurmdbd_service",
+              "IPAddress": "10.252.2.5",
+              "Aliases": [
+                "slurmdbd-service",
+                "slurmdbd-service-nmn",
+                "slurmdbd_service.local"
+              ],
+              "Comment": "slurmdbd-service,slurmdbd-service-nmn"
+            },
+            {
+              "Name": "pbs_service",
+              "IPAddress": "10.252.2.6",
+              "Aliases": [
+                "pbs-service",
+                "pbs-service-nmn",
+                "pbs_service.local"
+              ],
+              "Comment": "pbs-service,pbs-service-nmn"
+            }
+          ],
+          "Name": "uai_macvlan",
+          "VlanID": 2,
+          "Gateway": "10.252.0.1",
+          "ReservationStart": "10.252.2.10",
+          "ReservationEnd": "10.252.3.254"
+        }
+      ]
+    }
+  },
+  {
+    "Name": "NMNLB",
+    "FullName": "Node Management Network LoadBalancers",
+    "IPRanges": [
+      "10.92.100.0/24"
+    ],
+    "Type": "ethernet",
+    "ExtraProperties": {
+      "CIDR": "10.92.100.0/24",
+      "VlanRange": null,
+      "MTU": 9000,
+      "Subnets": [
+        {
+          "FullName": "NMN MetalLB",
+          "CIDR": "10.92.100.0/24",
+          "IPReservations": [
+            {
+              "Name": "istio-ingressgateway-local",
+              "IPAddress": "10.92.100.81",
+              "Aliases": [
+                "api-gw-service.local"
+              ],
+              "Comment": "api-gw-service.local"
+            },
+            {
+              "Name": "rsyslog-aggregator",
+              "IPAddress": "10.92.100.72",
+              "Aliases": [
+                "rsyslog-agg-service"
+              ],
+              "Comment": "rsyslog-agg-service"
+            },
+            {
+              "Name": "cray-tftp",
+              "IPAddress": "10.92.100.60",
+              "Aliases": [
+                "tftp-service"
+              ],
+              "Comment": "tftp-service"
+            },
+            {
+              "Name": "unbound",
+              "IPAddress": "10.92.100.225",
+              "Aliases": [
+                "unbound"
+              ],
+              "Comment": "unbound"
+            },
+            {
+              "Name": "docker-registry",
+              "IPAddress": "10.92.100.73",
+              "Aliases": [
+                "docker_registry_service"
+              ],
+              "Comment": "docker_registry_service"
+            },
+            {
+              "Name": "istio-ingressgateway",
+              "IPAddress": "10.92.100.71",
+              "Aliases": [
+                "api-gw-service",
+                "api-gw-service-nmn.local",
+                "packages",
+                "registry",
+                "spire.local",
+                "api_gw_service",
+                "registry.local",
+                "packages",
+                "packages.local",
+                "spire"
+              ],
+              "Comment": "api-gw-service,api-gw-service-nmn.local,packages,registry,spire.local,api_gw_service,registry.local,packages,packages.local,spire"
+            }
+          ],
+          "Name": "nmn_metallb_address_pool",
+          "VlanID": 2,
+          "Gateway": "10.92.100.1",
+          "MetalLBPoolName": "node-management"
+        }
+      ]
+    }
+  },
+  {
+    "Name": "NMN_RVR",
+    "FullName": "River Compute Node Management Network",
+    "IPRanges": [
+      "10.106.0.0/17"
+    ],
+    "Type": "ethernet",
+    "ExtraProperties": {
+      "CIDR": "10.106.0.0/17",
+      "VlanRange": [
+        1770,
+        1770
+      ],
+      "MTU": 9000,
+      "Subnets": [
+        {
+          "FullName": "",
+          "CIDR": "10.106.0.0/22",
+          "Name": "cabinet_3000",
+          "VlanID": 1770,
+          "Gateway": "10.106.0.1",
+          "DHCPStart": "10.106.0.10",
+          "DHCPEnd": "10.106.3.254"
+        }
+      ]
+    }
+  }
+]

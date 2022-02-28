@@ -1,3 +1,4 @@
+//go:build !integration || shcd
 // +build !integration shcd
 
 /*
@@ -61,7 +62,7 @@ var tests = []struct {
 	{
 		fixture:                "../testdata/fixtures/invalid_data_types_shcd.json",
 		expectedError:          true,
-		expectedErrorMsg:       "json: cannot unmarshal string into Go struct field Id.id of type int",
+		expectedErrorMsg:       "json: cannot unmarshal string into Go struct field ID.id of type int",
 		expectedSchemaErrorMsg: "SHCD schema error: 0.id: Invalid type. Expected: integer, given: string",
 		name:                   "InvalidDataTypeFile",
 	},
