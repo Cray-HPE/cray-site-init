@@ -40,7 +40,7 @@
         },
         {
           "FullName": "CAN Bootstrap DHCP Subnet",
-          "CIDR": "10.102.4.128/26",
+          "CIDR": "10.102.4.128/27",
           "IPReservations": [
             {
               "Name": "can-switch-1",
@@ -221,21 +221,21 @@
         },
         {
           "FullName": "CMN Management Network Infrastructure",
-          "CIDR": "10.102.4.0/25",
+          "CIDR": "10.102.4.32/28",
           "IPReservations": [
             {
               "Name": "sw-spine-001",
-              "IPAddress": "10.102.4.2",
+              "IPAddress": "10.102.4.33",
               "Comment": "x3000c0h24s1"
             },
             {
               "Name": "sw-spine-002",
-              "IPAddress": "10.102.4.3",
+              "IPAddress": "10.102.4.34",
               "Comment": "x3000c0h24s2"
             },
             {
               "Name": "sw-leaf-bmc-001",
-              "IPAddress": "10.102.4.4",
+              "IPAddress": "10.102.4.35",
               "Comment": "x3000c0w25"
             }
           ],
@@ -245,16 +245,16 @@
         },
         {
           "FullName": "CMN Bootstrap DHCP Subnet",
-          "CIDR": "10.102.4.16/25",
+          "CIDR": "10.102.4.0/27",
           "IPReservations": [
             {
               "Name": "kubeapi-vip",
-              "IPAddress": "10.102.4.18",
+              "IPAddress": "10.102.4.3",
               "Comment": "k8s-virtual-ip"
             },
             {
               "Name": "ncn-s004",
-              "IPAddress": "10.102.4.19",
+              "IPAddress": "10.102.4.4",
               "Aliases": [
                 "ncn-s004-cmn",
                 "time-cmn",
@@ -264,7 +264,7 @@
             },
             {
               "Name": "ncn-s003",
-              "IPAddress": "10.102.4.20",
+              "IPAddress": "10.102.4.5",
               "Aliases": [
                 "ncn-s003-cmn",
                 "time-cmn",
@@ -274,7 +274,7 @@
             },
             {
               "Name": "ncn-s002",
-              "IPAddress": "10.102.4.21",
+              "IPAddress": "10.102.4.6",
               "Aliases": [
                 "ncn-s002-cmn",
                 "time-cmn",
@@ -284,7 +284,7 @@
             },
             {
               "Name": "ncn-s001",
-              "IPAddress": "10.102.4.22",
+              "IPAddress": "10.102.4.7",
               "Aliases": [
                 "ncn-s001-cmn",
                 "time-cmn",
@@ -294,7 +294,7 @@
             },
             {
               "Name": "ncn-m003",
-              "IPAddress": "10.102.4.23",
+              "IPAddress": "10.102.4.8",
               "Aliases": [
                 "ncn-m003-cmn",
                 "time-cmn",
@@ -304,7 +304,7 @@
             },
             {
               "Name": "ncn-m002",
-              "IPAddress": "10.102.4.24",
+              "IPAddress": "10.102.4.9",
               "Aliases": [
                 "ncn-m002-cmn",
                 "time-cmn",
@@ -314,7 +314,7 @@
             },
             {
               "Name": "ncn-m001",
-              "IPAddress": "10.102.4.25",
+              "IPAddress": "10.102.4.10",
               "Aliases": [
                 "ncn-m001-cmn",
                 "time-cmn",
@@ -324,7 +324,7 @@
             },
             {
               "Name": "ncn-w004",
-              "IPAddress": "10.102.4.26",
+              "IPAddress": "10.102.4.11",
               "Aliases": [
                 "ncn-w004-cmn",
                 "time-cmn",
@@ -334,7 +334,7 @@
             },
             {
               "Name": "ncn-w003",
-              "IPAddress": "10.102.4.27",
+              "IPAddress": "10.102.4.12",
               "Aliases": [
                 "ncn-w003-cmn",
                 "time-cmn",
@@ -344,7 +344,7 @@
             },
             {
               "Name": "ncn-w002",
-              "IPAddress": "10.102.4.28",
+              "IPAddress": "10.102.4.13",
               "Aliases": [
                 "ncn-w002-cmn",
                 "time-cmn",
@@ -354,7 +354,7 @@
             },
             {
               "Name": "ncn-w001",
-              "IPAddress": "10.102.4.29",
+              "IPAddress": "10.102.4.14",
               "Aliases": [
                 "ncn-w001-cmn",
                 "time-cmn",
@@ -366,13 +366,12 @@
           "Name": "bootstrap_dhcp",
           "VlanID": 7,
           "Gateway": "10.102.4.1",
-          "DHCPStart": "10.102.4.30",
-          "DHCPEnd": "10.102.4.59"
+          "DHCPStart": "10.102.4.15",
+          "DHCPEnd": "10.102.4.30"
         }
       ]
     }
-  },
-  {
+  }, {
     "Name": "HMN",
     "FullName": "Hardware Management Network",
     "IPRanges": [

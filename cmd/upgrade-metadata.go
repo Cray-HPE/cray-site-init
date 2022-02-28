@@ -134,6 +134,11 @@ func getIPAMForNCN(managementNCN sls_common.GenericHardware,
 		var targetSubnet *sls.IPV4Subnet
 		var targetReservation *sls.IPReservation
 
+		_, targetNet, err := net.ParseCIDR(networkExtraProperties.CIDR)
+		if err != nil {
+			log.Fatalf("Failed to parse SLS network CIDR (%s): %s", networkExtraProperties.CIDR, err)
+		}
+
 		for _, subnet := range networkExtraProperties.Subnets {
 			for _, reservation := range subnet.IPReservations {
 				if reservation.Comment == managementNCN.Xname {
@@ -172,7 +177,12 @@ func getIPAMForNCN(managementNCN sls_common.GenericHardware,
 			log.Fatalf("Failed to parse SLS network CIDR (%s): %s", targetSubnet.CIDR, err)
 		}
 
-		maskBits, _ := ipv4Net.Mask.Size()
+		var maskBits int
+		if ipamNetwork == "cmn" || ipamNetwork == "can" {
+			maskBits, _ = targetNet.Mask.Size()
+		} else {
+			maskBits, _ = ipv4Net.Mask.Size()
+		}
 
 		// Now we can build an IPAM object.
 		thisIPAMNetwork := bss.IPAMNetwork{
