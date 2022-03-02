@@ -211,6 +211,80 @@ func (suite *UpgradeBSSMetadataSuite) TestUpdateBSS_oneToOneTwo_CANOnly() {
 	// The CHN should not be present in the BSS IPAM structure, as that network is managed differently
 	suite.NotContains(worker3IPAM, "chn")
 
+	// Kernel parameters are the same regardless of CAN/CHN so they will only be tested in this test
+	// Verify kernel params for worker node
+	worker3Params := allBootParameters["x3000c0s11b0n0"].Params
+	suite.Contains(worker3Params, "ifname=mgmt0:50:6b:4b:08:d0:4a")
+	suite.Contains(worker3Params, "ifname=mgmt1:50:6b:4b:08:d0:4b")
+	suite.Contains(worker3Params, "ifname=hsn")
+	suite.NotContains(worker3Params, "ifname=sun")
+	suite.NotContains(worker3Params, "bond0")
+	suite.Contains(worker3Params, "rd.net.dhcp.retry=5")
+	suite.Contains(worker3Params, "rd.peerdns=0")
+	suite.Contains(worker3Params, "ip=mgmt0:dhcp")
+	suite.NotContains(worker3Params, "auto6")
+	suite.NotContains(worker3Params, "vlan")
+	suite.NotContains(worker3Params, "bootdev")
+	suite.NotContains(worker3Params, "hwprobe")
+
+	// Verify kernel params for master node with 1 NIC
+	master2Params := allBootParameters["x3000c0s3b0n0"].Params
+	suite.Contains(master2Params, "ifname=mgmt0:b8:59:9f:2b:31:02")
+	suite.Contains(master2Params, "ifname=mgmt1:b8:59:9f:2b:31:03")
+	suite.NotContains(master2Params, "ifname=sun")
+	suite.NotContains(master2Params, "bond0")
+	suite.Contains(master2Params, "rd.net.dhcp.retry=5")
+	suite.Contains(master2Params, "rd.peerdns=0")
+	suite.Contains(master2Params, "ip=mgmt0:dhcp")
+	suite.NotContains(master2Params, "auto6")
+	suite.NotContains(master2Params, "vlan")
+	suite.NotContains(master2Params, "bootdev")
+	suite.NotContains(master2Params, "hwprobe")
+
+	// Verify kernel params for master node with 2 NICs
+	master3Params := allBootParameters["x3000c0s5b0n0"].Params
+	suite.Contains(master3Params, "ifname=mgmt0:14:02:ec:d5:fa:38")
+	suite.Contains(master3Params, "ifname=sun0:14:02:ec:d5:fa:39")
+	suite.Contains(master3Params, "ifname=mgmt1:94:40:c9:5c:86:86")
+	suite.Contains(master3Params, "ifname=sun1:94:40:c9:5c:86:87")
+	suite.NotContains(master3Params, "bond0")
+	suite.Contains(master3Params, "rd.net.dhcp.retry=5")
+	suite.Contains(master3Params, "rd.peerdns=0")
+	suite.Contains(master3Params, "ip=mgmt0:dhcp")
+	suite.NotContains(master3Params, "auto6")
+	suite.NotContains(master3Params, "vlan")
+	suite.NotContains(master3Params, "bootdev")
+	suite.NotContains(master3Params, "hwprobe")
+
+	// Verify kernel params for storage node with 1 NIC
+	storage2Params := allBootParameters["x3000c0s15b0n0"].Params
+	suite.Contains(storage2Params, "ifname=mgmt0:b8:59:9f:34:88:9e")
+	suite.Contains(storage2Params, "ifname=mgmt1:b8:59:9f:34:88:9f")
+	suite.NotContains(storage2Params, "ifname=sun")
+	suite.NotContains(storage2Params, "bond0")
+	suite.Contains(storage2Params, "rd.net.dhcp.retry=5")
+	suite.Contains(storage2Params, "rd.peerdns=0")
+	suite.Contains(storage2Params, "ip=mgmt0:dhcp")
+	suite.NotContains(storage2Params, "auto6")
+	suite.NotContains(storage2Params, "vlan")
+	suite.NotContains(storage2Params, "bootdev")
+	suite.NotContains(storage2Params, "hwprobe")
+
+	// Verify kernel params for storage node with 2 NICs
+	storage3Params := allBootParameters["x3000c0s17b0n0"].Params
+	suite.Contains(storage3Params, "ifname=mgmt0:14:02:ec:d9:3e:90")
+	suite.Contains(storage3Params, "ifname=sun0:14:02:ec:d9:3e:91")
+	suite.Contains(storage3Params, "ifname=mgmt1:94:40:c9:5b:e5:70")
+	suite.Contains(storage3Params, "ifname=sun1:94:40:c9:5b:e5:71")
+	suite.NotContains(storage3Params, "bond0")
+	suite.Contains(storage3Params, "rd.net.dhcp.retry=5")
+	suite.Contains(storage3Params, "rd.peerdns=0")
+	suite.Contains(storage3Params, "ip=mgmt0:dhcp")
+	suite.NotContains(storage3Params, "auto6")
+	suite.NotContains(storage3Params, "vlan")
+	suite.NotContains(storage3Params, "bootdev")
+	suite.NotContains(storage3Params, "hwprobe")
+
 	bssGlobalHostRecords := getBSSGlobalHostRecords(managementNCNs, suite.slsNetworks)
 
 	// When comparing the host_records the ordering could be different, but are functionally equivalent.

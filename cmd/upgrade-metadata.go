@@ -42,7 +42,7 @@ import (
 UpgradeParamsToDelete Linux Kernel Parameters to-remove for upgrades to 1.2.
 	1. bond
 
-		Remove any bond settings; a more simple bond config is passed-in with UpgradeParamsToAdd.
+		Remove any bond settings; a more simple bond config is passed-in with UpgradeParamsToSet.
 
 	2. bootdev
 
@@ -54,7 +54,7 @@ UpgradeParamsToDelete Linux Kernel Parameters to-remove for upgrades to 1.2.
 
 	4. ip
 
-		We do need one of these to exist, so we set it in UpgradeParamsToAdd. This ensures we purge all undesirables and start fresh.
+		We do need one of these to exist, so we set it in UpgradeParamsToSet. This ensures we purge all undesirables and start fresh.
 
 	5. rd.peerdns
 
@@ -78,7 +78,7 @@ var UpgradeParamsToDelete = []string{
 }
 
 /*
-UpgradeParamsToAdd Linux Kernel Parameters to-set for upgrades to 1.2.
+UpgradeParamsToSet Linux Kernel Parameters to-set for upgrades to 1.2.
 
 	1. ip=mgmt0:dhcp
 
@@ -91,8 +91,9 @@ UpgradeParamsToAdd Linux Kernel Parameters to-set for upgrades to 1.2.
 	3. rd.net.dhcp.retry=5
 
 		Set to ensure we wait out STP blocks, at least giving them more chances than 3 (from 1.0).
+
 */
-var UpgradeParamsToAdd = []paramTuple{{
+var UpgradeParamsToSet = []paramTuple{{
 	key:   "ip",
 	value: "mgmt0:dhcp",
 }, {
@@ -102,6 +103,25 @@ var UpgradeParamsToAdd = []paramTuple{{
 	key:   "rd.net.dhcp.retry",
 	value: "5",
 }}
+
+/*
+UpgradeParamsToAdd Linux Kernel Parameters to-add for upgrades to 1.2.
+This is for multiple parameters that need to be added with the same key.
+e.g. ifname=mgmt0:01:02:03:04:05:06
+
+
+        1. ifnames
+		Ifnames have changed on nodes that have two NICs.
+
+				1.0	-->	1.2
+		-----------------------------------
+		OCP port1	mgmt0		mgmt0
+		OCP port2	mgmt1		sun0
+		PCIe port1	mgmt2		mgmt1
+		PCIe port2	mgmt3		sun1
+
+*/
+var UpgradeParamsToAdd = []paramTuple{}
 
 func getIPAMForNCN(managementNCN sls_common.GenericHardware,
 	networks sls_common.NetworkArray, extraSLSNetworks ...string) (ipamNetworks bss.CloudInitIPAM) {
@@ -461,6 +481,15 @@ func updateBSS() (err error) {
 		ipamNetworks := getIPAMForNCN(managementNCN, networks, extraNets...)
 		bootparameters.CloudInit.MetaData["ipam"] = ipamNetworks
 
+		// Params
+		params := strings.Split(bootparameters.Params, " ")
+
+		var ifnameMaps = make(map[string]string)
+		ifnameMaps["mgmt0"] = "mgmt0"
+		ifnameMaps["mgmt1"] = "sun0"
+		ifnameMaps["mgmt2"] = "mgmt1"
+		ifnameMaps["mgmt3"] = "sun1"
+
 		// Run-cmd
 		switch ncnExtraProperties.SubRole {
 		case "Storage":
@@ -472,8 +501,25 @@ func updateBSS() (err error) {
 					key:   "metal.server",
 					value: fmt.Sprintf("http://rgw-vip.nmn/ncn-images/ceph/%s", storageVersion),
 				}
-				UpgradeParamsToAdd = append(UpgradeParamsToAdd, setMetalServerParam)
+				UpgradeParamsToSet = append(UpgradeParamsToSet, setMetalServerParam)
+			}
+			if strings.Contains(bootparameters.Params, "mgmt3") {
+				// This is a storage node with 2 NICs.  Change the ifnames.
+				UpgradeParamsToDelete = append(UpgradeParamsToDelete, "ifname")
 
+				for _, param := range params {
+					paramSplit := strings.Split(param, "=")
+					for oldifname, newifname := range ifnameMaps {
+						if strings.Contains(param, fmt.Sprintf("ifname=%s", oldifname)) {
+							newVal := strings.Replace(paramSplit[1], oldifname, newifname, 1)
+							addParam := paramTuple{
+								key:   paramSplit[0],
+								value: newVal,
+							}
+							UpgradeParamsToAdd = append(UpgradeParamsToAdd, addParam)
+						}
+					}
+				}
 			}
 		case "Master", "Worker":
 			bootparameters.CloudInit.UserData["runcmd"] = bss.KubernetesNCNRunCMD
@@ -484,17 +530,42 @@ func updateBSS() (err error) {
 					key:   "metal.server",
 					value: fmt.Sprintf("http://rgw-vip.nmn/ncn-images/k8s/%s", k8sVersion),
 				}
-				UpgradeParamsToAdd = append(UpgradeParamsToAdd, setMetalServerParam)
+				UpgradeParamsToSet = append(UpgradeParamsToSet, setMetalServerParam)
+			}
+			if strings.Contains(bootparameters.Params, "mgmt3") {
+				// This is a master node with 2 NICs.  Change the ifnames.
+				UpgradeParamsToDelete = append(UpgradeParamsToDelete, "ifname")
+
+				for _, param := range params {
+					paramSplit := strings.Split(param, "=")
+					for oldifname, newifname := range ifnameMaps {
+						if strings.Contains(param, fmt.Sprintf("ifname=%s", oldifname)) {
+							newVal := strings.Replace(paramSplit[1], oldifname, newifname, 1)
+							addParam := paramTuple{
+								key:   paramSplit[0],
+								value: newVal,
+							}
+							UpgradeParamsToAdd = append(UpgradeParamsToAdd, addParam)
+						}
+					}
+				}
 			}
 		default:
 			err = fmt.Errorf("NCN has invalid SubRole: %+v", managementNCN)
 			log.Fatalf("NCN has invalid SubRole: %+v", managementNCN)
 		}
 
-		// Params
-		params := strings.Split(bootparameters.Params, " ")
-		finalParams := updateParams(params, UpgradeParamsToAdd, UpgradeParamsToDelete)
+		finalParams := updateParams(params, UpgradeParamsToSet, UpgradeParamsToAdd, UpgradeParamsToDelete)
 		bootparameters.Params = strings.Join(finalParams, " ")
+
+		// Reset UpgradeParamsToAdd and UpgradeParamsToDelete
+		UpgradeParamsToAdd = []paramTuple{}
+		for k, v := range UpgradeParamsToDelete {
+			if v == "ifname" {
+				UpgradeParamsToDelete = append(UpgradeParamsToDelete[:k], UpgradeParamsToDelete[k+1:]...)
+				break
+			}
+		}
 
 		// Write files
 		bootparameters.CloudInit.UserData["write_files"] = getWriteFiles(networks, ipamNetworks)
