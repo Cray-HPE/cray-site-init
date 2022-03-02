@@ -1,6 +1,25 @@
-/*
-Copyright 2020 Hewlett Packard Enterprise Development LP
-*/
+//
+//  MIT License
+//
+//  (C) Copyright 2020-2022 Hewlett Packard Enterprise Development LP
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a
+//  copy of this software and associated documentation files (the "Software"),
+//  to deal in the Software without restriction, including without limitation
+//  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//  and/or sell copies of the Software, and to permit persons to whom the
+//  Software is furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included
+//  in all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//  THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+//  OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+//  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+//  OTHER DEALINGS IN THE SOFTWARE.
 
 package cmd
 
@@ -48,7 +67,7 @@ func init() {
 		"Limit updates to just the xnames specified")
 }
 
-func updateParams(params []string, setParams []paramTuple, deleteParams []string) []string {
+func updateParams(params []string, setParams []paramTuple, addParams []paramTuple, deleteParams []string) []string {
 	// If we were told to delete any, do that first so that a subsequent set can be truly fresh.
 	for _, deleteParam := range deleteParams {
 		for i := range params {
@@ -96,6 +115,15 @@ func updateParams(params []string, setParams []paramTuple, deleteParams []string
 		}
 	}
 
+	// For each of the given add parameters we will just add the parameter without checking if the key exists.
+	// This is for parameters like "ifname" that need to be added multiple times with different values.
+	// These items will be added to the front of the params.
+	for _, addParam := range addParams {
+		addParamString := fmt.Sprintf("%s=%s", addParam.key, addParam.value)
+
+		params = append([]string{addParamString}, params...)
+	}
+
 	// Just to get rid of the whitespace.
 	var finalParts []string
 	for _, part := range params {
@@ -116,7 +144,7 @@ func updateNCNKernelParams() {
 
 		params := strings.Split(bssEntry.Params, " ")
 
-		finalParts := updateParams(params, setParams, paramsToDelete)
+		finalParts := updateParams(params, setParams, []paramTuple{}, paramsToDelete)
 
 		// Create a whole new structure to PATCH this entry with to not touch other pieces of the structure.
 		newBSSEntry := bssTypes.BootParams{
