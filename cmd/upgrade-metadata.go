@@ -404,12 +404,12 @@ func getBSSGlobalHostRecords(managementNCNs []sls_common.GenericHardware, networ
 	)
 
 	// Add entries for switches
-	nmnNetSubnet, err := networkEPs["NMN"].LookupSubnet("network_hardware")
+	hmnNetSubnet, err := networkEPs["HMN"].LookupSubnet("network_hardware")
 	if err != nil {
-		log.Fatal("Unable to find network_hardware in the NMN network")
+		log.Fatal("Unable to find network_hardware in the HMN network")
 	}
 
-	for _, ipReservation := range nmnNetSubnet.IPReservations {
+	for _, ipReservation := range hmnNetSubnet.IPReservations {
 		if strings.HasPrefix(ipReservation.Name, "sw-") {
 			globalHostRecords = append(globalHostRecords, bss.HostRecord{
 				IP:      ipReservation.IPAddress,
