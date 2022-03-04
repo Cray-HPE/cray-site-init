@@ -24,7 +24,6 @@
 // +build !integration
 // +build !shcd
 
-
 package cmd
 
 import (
