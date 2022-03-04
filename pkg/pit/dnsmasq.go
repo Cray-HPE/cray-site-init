@@ -184,15 +184,18 @@ func WriteDNSMasqConfig(path string, v *viper.Viper, bootstrap []csi.LogicalNCN,
 
 	// Shasta Networks:
 	netCMN, _ := template.New("cmnconfig").Parse(string(CMNConfigTemplate))
-	netCAN, _ := template.New("canconfig").Parse(string(CANConfigTemplate))
 	netHMN, _ := template.New("hmnconfig").Parse(string(HMNConfigTemplate))
 	netNMN, _ := template.New("nmnconfig").Parse(string(NMNConfigTemplate))
 	netMTL, _ := template.New("mtlconfig").Parse(string(MTLConfigTemplate))
 	writeConfig("CMN", path, *netCMN, networks)
-	writeConfig("CAN", path, *netCAN, networks)
 	writeConfig("HMN", path, *netHMN, networks)
 	writeConfig("NMN", path, *netNMN, networks)
 	writeConfig("MTL", path, *netMTL, networks)
+	// Work some BICAN required magic
+	if v.GetString("bican-user-network-name") == "CAN" || v.GetBool("retain-unused-user-network") {
+		netCAN, _ := template.New("canconfig").Parse(string(CANConfigTemplate))
+		writeConfig("CAN", path, *netCAN, networks)
+	}
 
 	// Expected NCNs (and other devices) reserved DHCP leases:
 	netIPAM, _ := template.New("statics").Parse(string(StaticConfigTemplate))
