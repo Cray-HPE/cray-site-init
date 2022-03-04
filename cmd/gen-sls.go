@@ -228,11 +228,6 @@ func convertIPV4NetworkToSLS(n *csi.IPV4Network) sls_common.Network {
 		subnets[i] = convertIPV4SubnetToSLS(subnet)
 	}
 
-	route := ""
-	if n.Name == "BICAN" {
-		route = csi.DefaultBICANNetwork
-	}
-
 	return sls_common.Network{
 		Name:     n.Name,
 		FullName: n.FullName,
@@ -246,7 +241,7 @@ func convertIPV4NetworkToSLS(n *csi.IPV4Network) sls_common.Network {
 			PeerASN:            n.PeerASN,
 			MyASN:              n.MyASN,
 			Subnets:            subnets,
-			SystemDefaultRoute: route,
+			SystemDefaultRoute: n.SystemDefaultRoute,
 		},
 	}
 }

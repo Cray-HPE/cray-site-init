@@ -114,7 +114,7 @@ var initCmd = &cobra.Command{
 
 		// Prepare the network layout configs for generating the networks
 		var internalNetConfigs = make(map[string]csi.NetworkLayoutConfiguration)
-		internalNetConfigs["BICAN"] = csi.GenDefaultBICANConfig()
+		internalNetConfigs["BICAN"] = csi.GenDefaultBICANConfig(v.GetString("bican-user-network-name"))
 		internalNetConfigs["HMN"] = csi.GenDefaultHMNConfig()
 		internalNetConfigs["CMN"] = csi.GenDefaultCMNConfig(len(logicalNcns), len(switches))
 		internalNetConfigs["CAN"] = csi.GenDefaultCANConfig()
@@ -403,6 +403,9 @@ func init() {
 	initCmd.Flags().String("site-gw", "", "Site Network IPv4 Gateway")
 	initCmd.Flags().String("site-dns", "", "Site Network DNS Server which can be different from the upstream ipv4-resolvers if necessary")
 	initCmd.Flags().String("site-nic", "em1", "Network Interface on install-ncn that will be connected to the site network")
+
+	// BICAN Network Toggle
+	initCmd.Flags().String("bican-user-network-name", "", "Name of the network over which non-admin users access the system [CAN, CHN, HSN]")
 
 	// Default IPv4 Networks
 	initCmd.Flags().String("nmn-cidr", csi.DefaultNMNString, "Overall IPv4 CIDR for all Node Management subnets")
@@ -723,6 +726,7 @@ func validateFlags() []string {
 		"site-nic",
 		"bootstrap-ncn-bmc-user",
 		"bootstrap-ncn-bmc-pass",
+		"bican-user-network-name",
 	}
 
 	for _, flagName := range requiredFlags {
@@ -772,6 +776,19 @@ func validateFlags() []string {
 			}
 		}
 	}
+
+	validBican := false
+	bicanFlag := "bican-user-network-name"
+	for _, value := range [3]string{"CAN", "CHN", "HSN"} {
+		if v.GetString(bicanFlag) == value {
+			validBican = true
+			break
+		}
+	}
+	if !validBican {
+		errors = append(errors, fmt.Sprintf("%v must be set to CAN, CHN or HSN. (HSN requires NAT device)", bicanFlag))
+	}
+
 	return errors
 }
 
