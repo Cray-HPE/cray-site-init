@@ -371,11 +371,13 @@ func buildPITArgs(base string) string {
 			cmdlineParts[i] = fmt.Sprintf("hostname=ncn-m001")
 		} else if strings.HasPrefix(part, "ifname=mgmt0") && len(macs) >= 2 {
 			cmdlineParts[i] = fmt.Sprintf("ifname=mgmt0:%s", macs[0])
-		} else if strings.HasPrefix(part, "ifname=mgmt1") && len(macs) >= 2 {
+		} else if strings.HasPrefix(part, "ifname=mgmt1") && len(macs) < 4 {
 			cmdlineParts[i] = fmt.Sprintf("ifname=mgmt1:%s", macs[1])
+                } else if strings.HasPrefix(part, "ifname=mgmt1") && len(macs) >= 4 {
+                        cmdlineParts[i] = fmt.Sprintf("ifname=sun0:%s", macs[1])
 		} else if strings.HasPrefix(part, "ifname=mgmt2") {
 			if len(macs) >= 4 {
-				cmdlineParts[i] = fmt.Sprintf("ifname=mgmt2:%s", macs[2])
+				cmdlineParts[i] = fmt.Sprintf("ifname=mgmt1:%s", macs[2])
 			} else {
 				cmdlineParts[i] = ""
 			}
@@ -383,7 +385,7 @@ func buildPITArgs(base string) string {
 			cmdlineParts[i] = ""
 		} else if strings.HasPrefix(part, "ifname=mgmt3") {
 			if len(macs) >= 4 {
-				cmdlineParts[i] = fmt.Sprintf("ifname=mgmt3:%s", macs[3])
+				cmdlineParts[i] = fmt.Sprintf("ifname=sun1:%s", macs[3])
 			} else {
 				cmdlineParts[i] = ""
 			}
