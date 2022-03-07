@@ -26,6 +26,7 @@ package pit
 import (
 	"log"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"text/template"
 
@@ -86,21 +87,11 @@ func GetMetalLBConfig(v *viper.Viper, networks map[string]*csi.IPV4Network, swit
 
 	var configStruct MetalLBConfigMap
 
-	var spineSwitchXnames, leafSwitchXnames, edgeSwitchXnames []string
 	var bgpPeers = v.GetStringSlice("bgp-peer-types")
 
-	// Split out switches into spine, leaf, and edge lists
-	for _, mgmtswitch := range switches {
-		if mgmtswitch.SwitchType == "Spine" {
-			spineSwitchXnames = append(spineSwitchXnames, mgmtswitch.Xname)
-		}
-		if mgmtswitch.SwitchType == "Leaf" {
-			leafSwitchXnames = append(leafSwitchXnames, mgmtswitch.Xname)
-		}
-		if mgmtswitch.SwitchType == "Edge" {
-			edgeSwitchXnames = append(edgeSwitchXnames, mgmtswitch.Xname)
-		}
-	}
+	spineSwitchNameRegexp := regexp.MustCompile(`sw-spine-\d{3}`)
+	leafSwitchNameRegexp := regexp.MustCompile(`sw-leaf-\d{3}`)
+	edgeSwitchNameRegexp := regexp.MustCompile(`chn-switch-\d`)
 
 	for name, network := range networks {
 		for _, subnet := range network.Subnets {
@@ -112,15 +103,11 @@ func GetMetalLBConfig(v *viper.Viper, networks map[string]*csi.IPV4Network, swit
 					tmpPeer.PeerASN = network.PeerASN
 					tmpPeer.MyASN = network.MyASN
 					tmpPeer.IPAddress = reservation.IPAddress.String()
-					for _, switchXname := range spineSwitchXnames {
-						if reservation.Comment == switchXname {
-							configStruct.SpineSwitches = append(configStruct.SpineSwitches, tmpPeer)
-						}
+					if spineSwitchNameRegexp.FindString(reservation.Name) != "" {
+						configStruct.SpineSwitches = append(configStruct.SpineSwitches, tmpPeer)
 					}
-					for _, switchXname := range leafSwitchXnames {
-						if reservation.Comment == switchXname {
-							configStruct.LeafSwitches = append(configStruct.LeafSwitches, tmpPeer)
-						}
+					if leafSwitchNameRegexp.FindString(reservation.Name) != "" {
+						configStruct.LeafSwitches = append(configStruct.LeafSwitches, tmpPeer)
 					}
 				}
 			} else if name == "CHN" && subnet.Name == "bootstrap_dhcp" {
@@ -130,10 +117,8 @@ func GetMetalLBConfig(v *viper.Viper, networks map[string]*csi.IPV4Network, swit
 					tmpPeer.PeerASN = network.PeerASN
 					tmpPeer.MyASN = network.MyASN
 					tmpPeer.IPAddress = reservation.IPAddress.String()
-					for _, switchXname := range edgeSwitchXnames {
-						if reservation.Comment == switchXname {
-							configStruct.EdgeSwitches = append(configStruct.EdgeSwitches, tmpPeer)
-						}
+					if edgeSwitchNameRegexp.FindString(reservation.Name) != "" {
+						configStruct.EdgeSwitches = append(configStruct.EdgeSwitches, tmpPeer)
 					}
 				}
 			}

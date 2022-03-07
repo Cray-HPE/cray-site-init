@@ -114,14 +114,18 @@ var initCmd = &cobra.Command{
 
 		// Prepare the network layout configs for generating the networks
 		var internalNetConfigs = make(map[string]csi.NetworkLayoutConfiguration)
-		internalNetConfigs["BICAN"] = csi.GenDefaultBICANConfig()
-		internalNetConfigs["HMN"] = csi.GenDefaultHMNConfig()
+		internalNetConfigs["BICAN"] = csi.GenDefaultBICANConfig(v.GetString("bican-user-network-name"))
 		internalNetConfigs["CMN"] = csi.GenDefaultCMNConfig(len(logicalNcns), len(switches))
-		internalNetConfigs["CAN"] = csi.GenDefaultCANConfig()
-		internalNetConfigs["CHN"] = csi.GenDefaultCHNConfig()
-		internalNetConfigs["NMN"] = csi.GenDefaultNMNConfig()
+		internalNetConfigs["HMN"] = csi.GenDefaultHMNConfig()
 		internalNetConfigs["HSN"] = csi.GenDefaultHSNConfig()
 		internalNetConfigs["MTL"] = csi.GenDefaultMTLConfig()
+		internalNetConfigs["NMN"] = csi.GenDefaultNMNConfig()
+		if v.GetString("bican-user-network-name") == "CAN" || v.GetBool("retain-unused-user-network") {
+			internalNetConfigs["CAN"] = csi.GenDefaultCANConfig()
+		}
+		if v.GetString("bican-user-network-name") == "CHN" || v.GetBool("retain-unused-user-network") {
+			internalNetConfigs["CHN"] = csi.GenDefaultCHNConfig()
+		}
 
 		if internalNetConfigs["HMN"].GroupNetworksByCabinetType {
 			if mountainCabinetCount > 0 || hillCabinetCount > 0 {
@@ -232,9 +236,12 @@ var initCmd = &cobra.Command{
 			log.Panic(err) // This should never happen.  I can't really imagine how it would.
 		}
 
-		canSubnet, _ := shastaNetworks["CAN"].LookUpSubnet("bootstrap_dhcp")
-		for _, uan := range slsUans {
-			canSubnet.AddReservation(uan.Hostname, uan.Xname)
+		// Only add UANs if there actually is a CAN network
+		if v.GetString("bican-user-network-name") == "CAN" || v.GetBool("retain-unused-user-network") {
+			canSubnet, _ := shastaNetworks["CAN"].LookUpSubnet("bootstrap_dhcp")
+			for _, uan := range slsUans {
+				canSubnet.AddReservation(uan.Hostname, uan.Xname)
+			}
 		}
 
 		// Cycle through the main networks and update the reservations, masks and dhcp ranges as necessary
@@ -353,8 +360,9 @@ var initCmd = &cobra.Command{
 		fmt.Printf("\tUpstream DNS: %v\n", v.GetString("ipv4-resolvers"))
 		fmt.Printf("\tMetalLB Peers: %v\n", v.GetStringSlice("bgp-peer-types"))
 		fmt.Println("Networking")
+		fmt.Printf("\tBICAN user network toggle set to %v\n", v.GetString("bican-user-network-name"))
 		if v.GetBool("supernet") {
-			fmt.Printf("\tSupernet enabled!  Using the supernet gateway for some management subnets \n")
+			fmt.Printf("\tSupernet enabled!  Using the supernet gateway for some management subnets\n")
 		}
 		for _, tempNet := range shastaNetworks {
 			fmt.Printf("\t* %v %v with %d subnets \n", tempNet.FullName, tempNet.CIDR, len(tempNet.Subnets))
@@ -403,6 +411,10 @@ func init() {
 	initCmd.Flags().String("site-gw", "", "Site Network IPv4 Gateway")
 	initCmd.Flags().String("site-dns", "", "Site Network DNS Server which can be different from the upstream ipv4-resolvers if necessary")
 	initCmd.Flags().String("site-nic", "em1", "Network Interface on install-ncn that will be connected to the site network")
+
+	// BICAN Network Toggle
+	initCmd.Flags().String("bican-user-network-name", "", "Name of the network over which non-admin users access the system [CAN, CHN, HSN]")
+	initCmd.Flags().Bool("retain-unused-user-network", false, "Use the supernet mask and gateway for NCNs and Switches")
 
 	// Default IPv4 Networks
 	initCmd.Flags().String("nmn-cidr", csi.DefaultNMNString, "Overall IPv4 CIDR for all Node Management subnets")
@@ -723,6 +735,7 @@ func validateFlags() []string {
 		"site-nic",
 		"bootstrap-ncn-bmc-user",
 		"bootstrap-ncn-bmc-pass",
+		"bican-user-network-name",
 	}
 
 	for _, flagName := range requiredFlags {
@@ -772,6 +785,19 @@ func validateFlags() []string {
 			}
 		}
 	}
+
+	validBican := false
+	bicanFlag := "bican-user-network-name"
+	for _, value := range [3]string{"CAN", "CHN", "HSN"} {
+		if v.GetString(bicanFlag) == value {
+			validBican = true
+			break
+		}
+	}
+	if !validBican {
+		errors = append(errors, fmt.Sprintf("%v must be set to CAN, CHN or HSN. (HSN requires NAT device)", bicanFlag))
+	}
+
 	return errors
 }
 
