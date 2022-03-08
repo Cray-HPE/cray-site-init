@@ -36,16 +36,17 @@ import (
 
 // IPV4Network is a type for managing IPv4 Networks
 type IPV4Network struct {
-	FullName  string                 `yaml:"full_name"`
-	CIDR      string                 `yaml:"cidr"`
-	Subnets   []*IPV4Subnet          `yaml:"subnets"`
-	Name      string                 `yaml:"name"`
-	VlanRange []int16                `yaml:"vlan_range"`
-	MTU       int16                  `yaml:"mtu"`
-	NetType   sls_common.NetworkType `yaml:"type"`
-	Comment   string                 `yaml:"comment"`
-	PeerASN   int                    `yaml:"peer-asn"`
-	MyASN     int                    `yaml:"my-asn"`
+	FullName           string                 `yaml:"full_name"`
+	CIDR               string                 `yaml:"cidr"`
+	Subnets            []*IPV4Subnet          `yaml:"subnets"`
+	Name               string                 `yaml:"name"`
+	VlanRange          []int16                `yaml:"vlan_range"`
+	MTU                int16                  `yaml:"mtu"`
+	NetType            sls_common.NetworkType `yaml:"type"`
+	Comment            string                 `yaml:"comment"`
+	PeerASN            int                    `yaml:"peer-asn"`
+	MyASN              int                    `yaml:"my-asn"`
+	SystemDefaultRoute string                 `yaml:"system_default_route"`
 }
 
 // IPV4Subnet is a type for managing IPv4 Subnets

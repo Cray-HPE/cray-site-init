@@ -1,6 +1,25 @@
-/*
-Copyright 2021 Hewlett Packard Enterprise Development LP
-*/
+//
+//  MIT License
+//
+//  (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a
+//  copy of this software and associated documentation files (the "Software"),
+//  to deal in the Software without restriction, including without limitation
+//  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//  and/or sell copies of the Software, and to permit persons to whom the
+//  Software is furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included
+//  in all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//  THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+//  OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+//  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+//  OTHER DEALINGS IN THE SOFTWARE.
 
 package pit
 
@@ -184,15 +203,18 @@ func WriteDNSMasqConfig(path string, v *viper.Viper, bootstrap []csi.LogicalNCN,
 
 	// Shasta Networks:
 	netCMN, _ := template.New("cmnconfig").Parse(string(CMNConfigTemplate))
-	netCAN, _ := template.New("canconfig").Parse(string(CANConfigTemplate))
 	netHMN, _ := template.New("hmnconfig").Parse(string(HMNConfigTemplate))
 	netNMN, _ := template.New("nmnconfig").Parse(string(NMNConfigTemplate))
 	netMTL, _ := template.New("mtlconfig").Parse(string(MTLConfigTemplate))
 	writeConfig("CMN", path, *netCMN, networks)
-	writeConfig("CAN", path, *netCAN, networks)
 	writeConfig("HMN", path, *netHMN, networks)
 	writeConfig("NMN", path, *netNMN, networks)
 	writeConfig("MTL", path, *netMTL, networks)
+	// Work some BICAN required magic
+	if v.GetString("bican-user-network-name") == "CAN" || v.GetBool("retain-unused-user-network") {
+		netCAN, _ := template.New("canconfig").Parse(string(CANConfigTemplate))
+		writeConfig("CAN", path, *netCAN, networks)
+	}
 
 	// Expected NCNs (and other devices) reserved DHCP leases:
 	netIPAM, _ := template.New("statics").Parse(string(StaticConfigTemplate))
