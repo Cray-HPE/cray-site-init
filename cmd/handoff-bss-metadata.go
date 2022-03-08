@@ -393,10 +393,6 @@ func buildPITArgs(base string) string {
 			} else {
 				cmdlineParts[i] = ""
 			}
-		} else if strings.HasPrefix(part, "bond") {
-			if len(macs) == 2 {
-				cmdlineParts[i] = strings.ReplaceAll(part, "mgmt2", "mgmt1")
-			}
 		}
 	}
 
