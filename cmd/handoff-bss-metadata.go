@@ -369,29 +369,29 @@ func buildPITArgs(base string) string {
 		//   * If there are 2 bonds (i.e., 4 MACs), then everything will just work out.
 		if strings.HasPrefix(part, "hostname") {
 			cmdlineParts[i] = fmt.Sprintf("hostname=ncn-m001")
-		} else if strings.HasPrefix(part, "ifname=mgmt0") && len(macs) >= 2 {
-			cmdlineParts[i] = fmt.Sprintf("ifname=mgmt0:%s", macs[0])
-		} else if strings.HasPrefix(part, "ifname=mgmt1") && len(macs) >= 2 {
-			cmdlineParts[i] = fmt.Sprintf("ifname=mgmt1:%s", macs[1])
-		} else if strings.HasPrefix(part, "ifname=mgmt2") {
+		} else if strings.HasPrefix(part, "ifname=mgmt0") {
+			if len(macs) >= 2 {
+				cmdlineParts[i] = fmt.Sprintf("ifname=mgmt0:%s", macs[0])
+			}else {
+                                cmdlineParts[i] = ""
+                         }
+                } else if strings.HasPrefix(part, "ifname=mgmt1") {
 			if len(macs) >= 4 {
-				cmdlineParts[i] = fmt.Sprintf("ifname=mgmt2:%s", macs[2])
+	                        cmdlineParts[i] = fmt.Sprintf("ifname=mgmt1:%s", macs[2])
+			} else {
+				cmdlineParts[i] = fmt.Sprintf("ifname=mgmt1:%s", macs[1])
+			}
+		} else if strings.HasPrefix(part, "ifname=sun0") {
+			if len(macs) >= 4 {
+				cmdlineParts[i] = fmt.Sprintf("ifname=sun0:%s", macs[1])
 			} else {
 				cmdlineParts[i] = ""
 			}
-		} else if strings.HasPrefix(part, "ip=mgmt3") && len(macs) < 4 {
-			cmdlineParts[i] = ""
-		} else if strings.HasPrefix(part, "ifname=mgmt3") {
+		} else if strings.HasPrefix(part, "ifname=sun1") {
 			if len(macs) >= 4 {
-				cmdlineParts[i] = fmt.Sprintf("ifname=mgmt3:%s", macs[3])
+				cmdlineParts[i] = fmt.Sprintf("ifname=sun1:%s", macs[3])
 			} else {
 				cmdlineParts[i] = ""
-			}
-		} else if strings.HasPrefix(part, "ip=mgmt2") && len(macs) < 4 {
-			cmdlineParts[i] = ""
-		} else if strings.HasPrefix(part, "bond") {
-			if len(macs) == 2 {
-				cmdlineParts[i] = strings.ReplaceAll(part, "mgmt2", "mgmt1")
 			}
 		}
 	}
