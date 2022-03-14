@@ -1,8 +1,29 @@
+//
+//  MIT License
+//
+//  (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a
+//  copy of this software and associated documentation files (the "Software"),
+//  to deal in the Software without restriction, including without limitation
+//  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//  and/or sell copies of the Software, and to permit persons to whom the
+//  Software is furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included
+//  in all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//  THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+//  OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+//  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+//  OTHER DEALINGS IN THE SOFTWARE.
+//
+
 package cmd
 
-/*
-Copyright 2021 Hewlett Packard Enterprise Development LP
-*/
 import (
 	"fmt"
 	"log"
@@ -13,8 +34,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-var lastFailure error
-var livecdProvisioning, livecdPreflight, ncnPreflight, validateCeph, validateK8s, validateNetwork, validateServices, validatePg bool
+var livecdProvisioning, livecdPreflight, ncnPreflight, validateCeph, validateK8s, validateServices, validatePg bool
 
 // validateCmd represents the validate command
 var validateCmd = &cobra.Command{
@@ -22,16 +42,6 @@ var validateCmd = &cobra.Command{
 	Short: "Runs unit tests",
 	Long:  `Runs unit tests and validates a working livecd and NCN deployment.`,
 	Run: func(cmd *cobra.Command, args []string) {
-
-		// TODO: Replace with GOSS tests
-		if validateNetwork {
-			runCommand("ip a show lan0")
-			runCommand("ip a show bond0")
-			runCommand("ip a show bond0.nmn0")
-			runCommand("ip a show bond0.hmn0")
-			runCommand("ip a show bond0.cmn0")
-			runCommand("ip a show bond0.can0")
-		}
 
 		// TODO: Replace with GOSS tests
 		if validateServices {
@@ -76,7 +86,6 @@ func runCommand(shellCode string) {
 	stdoutStderr, err := cmd.CombinedOutput()
 	fmt.Printf("%s\n", stdoutStderr)
 	if err != nil {
-		lastFailure = err
 		log.Fatalln(err)
 	}
 }
@@ -86,7 +95,6 @@ func init() {
 	validateCmd.DisableAutoGenTag = true
 	viper.SetEnvPrefix("pit")
 	viper.AutomaticEnv()
-	validateCmd.Flags().BoolVarP(&validateNetwork, "network", "N", false, "Run network tests")
 	validateCmd.Flags().BoolVarP(&validateServices, "services", "S", false, "Run services tests")
 	validateCmd.Flags().BoolVarP(&livecdProvisioning, "livecd-provisioning", "p", false, "Run LiveCD provisioning tests")
 	validateCmd.Flags().BoolVarP(&livecdPreflight, "livecd-preflight", "l", false, "Run LiveCD pre-flight tests")
