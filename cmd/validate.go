@@ -43,15 +43,6 @@ var validateCmd = &cobra.Command{
 	Long:  `Runs unit tests and validates a working livecd and NCN deployment.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		// TODO: Replace with GOSS tests
-		if validateServices {
-			runCommand("systemctl status dnsmasq")
-			runCommand("systemctl status nexus")
-			runCommand("systemctl status conman")
-			runCommand("systemctl status basecamp")
-			runCommand("podman container ls -a")
-		}
-
 		if livecdProvisioning {
 			runCommand(filepath.Join("/opt/cray/tests/install/livecd/automated/", "livecd-provisioning-checks"))
 		}
@@ -95,7 +86,6 @@ func init() {
 	validateCmd.DisableAutoGenTag = true
 	viper.SetEnvPrefix("pit")
 	viper.AutomaticEnv()
-	validateCmd.Flags().BoolVarP(&validateServices, "services", "S", false, "Run services tests")
 	validateCmd.Flags().BoolVarP(&livecdProvisioning, "livecd-provisioning", "p", false, "Run LiveCD provisioning tests")
 	validateCmd.Flags().BoolVarP(&livecdPreflight, "livecd-preflight", "l", false, "Run LiveCD pre-flight tests")
 	validateCmd.Flags().BoolVarP(&ncnPreflight, "ncn-preflight", "n", false, "Run NCN pre-flight tests")
