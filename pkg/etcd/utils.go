@@ -61,9 +61,10 @@ func NewETCDClient(endpoints []string, kubeconfig string) (utilsClient *UtilsCli
 	}
 
 	client, clientErr := clientv3.New(clientv3.Config{
-		Endpoints:   endpoints,
-		DialTimeout: 5 * time.Second,
-		TLS:         tlsConfig,
+		Endpoints:        endpoints,
+		DialTimeout:      5 * time.Second,
+		TLS:              tlsConfig,
+		AutoSyncInterval: 100 * time.Millisecond,
 	})
 	if clientErr != nil {
 		err = fmt.Errorf("failed to create new client: %w", clientErr)
