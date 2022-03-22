@@ -6,15 +6,17 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
+
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"net"
+	"net/http"
+	"time"
 
 	"go.etcd.io/etcd/api/v3/etcdserverpb"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"net"
-	"net/http"
-	"time"
 )
 
 // NewETCDClient - Creates a new etcd client.
@@ -59,9 +61,10 @@ func NewETCDClient(endpoints []string, kubeconfig string) (utilsClient *UtilsCli
 	}
 
 	client, clientErr := clientv3.New(clientv3.Config{
-		Endpoints:   endpoints,
-		DialTimeout: 5 * time.Second,
-		TLS:         tlsConfig,
+		Endpoints:        endpoints,
+		DialTimeout:      5 * time.Second,
+		TLS:              tlsConfig,
+		AutoSyncInterval: 100 * time.Millisecond,
 	})
 	if clientErr != nil {
 		err = fmt.Errorf("failed to create new client: %w", clientErr)
@@ -122,16 +125,10 @@ func (utilsClient *UtilsClient) getMembers() (members []*etcdserverpb.Member, er
 
 // RemoveMember - Removes the given NCN from the etcd cluster.
 func (utilsClient *UtilsClient) RemoveMember(ncn string) (bool, error) {
-	// Do not allow the removal if the cluster isn't healthy!
-	if err := utilsClient.ClusterIsHealthy(); err != nil {
-		return false, fmt.Errorf("cluster is not healthy, can not remove member: %w", err)
-	}
-
 	members, err := utilsClient.getMembers()
 	if err != nil {
 		return false, fmt.Errorf("failed to remove member: %w", err)
 	}
-
 	var targetMember *etcdserverpb.Member
 	for _, member := range members {
 		if member.Name == ncn {
@@ -140,7 +137,13 @@ func (utilsClient *UtilsClient) RemoveMember(ncn string) (bool, error) {
 		}
 	}
 	if targetMember == nil {
-		return false, fmt.Errorf("failed to find member %s in cluster", ncn)
+		// No op: the given NCN is not a member of etcd cluster, nothing to remove
+		return true, nil
+	}
+
+	// Do not allow the removal if the cluster isn't healthy!
+	if err := utilsClient.ClusterIsHealthy(); err != nil {
+		return false, fmt.Errorf("cluster is not healthy, can not remove member: %w", err)
 	}
 
 	// Now we can proceed with the removal.
