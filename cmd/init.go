@@ -243,6 +243,13 @@ var initCmd = &cobra.Command{
 				canSubnet.AddReservation(uan.Hostname, uan.Xname)
 			}
 		}
+		// Only add UANs if there actually is a CHN network
+		if v.GetString("bican-user-network-name") == "CHN" || v.GetBool("retain-unused-user-network") {
+			chnSubnet, _ := shastaNetworks["CHN"].LookUpSubnet("bootstrap_dhcp")
+			for _, uan := range slsUans {
+				chnSubnet.AddReservation(uan.Hostname, uan.Xname)
+			}
+		}
 
 		// Cycle through the main networks and update the reservations, masks and dhcp ranges as necessary
 		for _, netName := range csi.ValidNetNames {

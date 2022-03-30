@@ -113,7 +113,7 @@ var DefaultApplicationNodeSubroles = map[string]string{
 const SubrolePlaceHolder = "~fixme~"
 
 // ValidNetNames is the list of strings that enumerate valid main network names
-var ValidNetNames = []string{"BICAN", "HMN", "NMN", "CMN", "CAN", "MTL", "HMN_RVR", "HMN_MTN", "NMN_RVR", "NMN_MTN"}
+var ValidNetNames = []string{"BICAN", "CAN", "CHN", "CMN", "HMN", "HMN_MTN", "HMN_RVR", "MTL", "NMN", "NMN_MTN", "NMN_RVR"}
 
 // ValidCabinetTypes is the list of strings that enumerate valid cabinet types
 var ValidCabinetTypes = []string{"mountain", "river", "hill"}
