@@ -32,7 +32,6 @@ si config init \
     --can-dynamic-pool 10.103.11.128/25 \
     --nmn-cidr 10.252.0.0/17 \
     --hmn-cidr 10.254.0.0/17 \
-    --ntp-pool time.nist.gov \
     --site-domain dev.cray.com \
     --site-ip 172.30.53.79/20 \
     --site-gw 172.30.48.1 \
