@@ -69,7 +69,7 @@ type NtpModule struct {
 	NTPPeers   []string  `json:"peers"`
 	NTPAllow   []string  `json:"allow"`
 	NTPServers []string  `json:"servers"`
-	NTPPools   []string  `json:"pools"`
+	NTPPools   []string  `json:"pools,omitempty"`
 	Config     NtpConfig `json:"config"`
 }
 
@@ -228,10 +228,15 @@ func unique(arr []string) []string {
 	occured := map[string]bool{}
 	result := []string{}
 
-	for e := range arr {
+	for e, s := range arr {
 		if !occured[arr[e]] {
 			occured[arr[e]] = true
-			result = append(result, arr[e])
+			// only append if it's not an empty string
+			// checks later in the code for ntp pools happen for a slice of len > 0
+			// but that fails if the slice contains an empty string
+			if s != "" {
+				result = append(result, arr[e])
+			}
 		}
 	}
 	return result
@@ -479,8 +484,12 @@ func MakeBaseCampfromNCNs(v *viper.Viper, ncns []csi.LogicalNCN, shastaNetworks 
 			NTPPeers:   v.GetStringSlice("ntp-peers"),
 			NTPAllow:   nmnNets,
 			NTPServers: v.GetStringSlice("ntp-servers"),
-			NTPPools:   pools,
 			Config:     ntpConfig,
+		}
+
+		// Only configure pools if they are defined to avoid setting a default or an empty string in the chrony config
+		if len(pools) > 0 {
+			ntpModule.NTPPools = pools
 		}
 
 		userDataMap["ntp"] = ntpModule
