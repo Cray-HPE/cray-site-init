@@ -133,7 +133,7 @@ func (utilsClient *UtilsClient) DrainNCN(ncn string) error {
 	sleep, _ := time.ParseDuration("2s")
 	for i := 0; i < attempts; i++ {
 		if i > 0 {
-			utilsClient.Logger.warningf("Retrying after error: %v", err)
+			utilsClient.Logger.warningf("Retrying after error: %w", err)
 			time.Sleep(sleep)
 		}
 		err := utilsClient.runNodeDrain(utilsClient.helper, ncn)
