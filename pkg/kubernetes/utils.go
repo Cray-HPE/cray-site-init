@@ -3,6 +3,9 @@ package kubernetes
 import (
 	"context"
 	"fmt"
+	"log"
+	"time"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -10,7 +13,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/kubectl/pkg/drain"
-	"log"
 )
 
 // NewKubernetesClient - Creates a new kubernetes client.
@@ -127,12 +129,20 @@ func (utilsClient *UtilsClient) DrainNCN(ncn string) error {
 	utilsClient.Logger.debugf("Pod disruption budgets satisfied.")
 
 	// Now finally we can drain the node.
-	err = utilsClient.runNodeDrain(utilsClient.helper, ncn)
-	if err != nil {
-		return fmt.Errorf("failed to drain NCN: %w", err)
+	attempts := 3
+	sleep, _ := time.ParseDuration("2s")
+	for i := 0; i < attempts; i++ {
+		if i > 0 {
+			utilsClient.Logger.warningf("Retrying after error: %v", err)
+			time.Sleep(sleep)
+		}
+		err := utilsClient.runNodeDrain(utilsClient.helper, ncn)
+		if err == nil {
+			return nil
+		}
 	}
+	return fmt.Errorf("failed to drain NCN: %w", err)
 
-	return nil
 }
 
 // runNodeDrain is basically a direct copy of a function by the same name in the drain package except the way that it
