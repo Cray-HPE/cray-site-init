@@ -118,6 +118,7 @@ type BaseCampGlobals struct {
 var k8sRunCMD = []string{
 	"/srv/cray/scripts/metal/net-init.sh",
 	"/srv/cray/scripts/common/update_ca_certs.py",
+	"/srv/cray/scripts/metal/fix_chrony_configs.py",
 	"/srv/cray/scripts/metal/install.sh",
 	"/srv/cray/scripts/common/kubernetes-cloudinit.sh",
 	"/srv/cray/scripts/join-spire-on-storage.sh",
@@ -130,6 +131,7 @@ var k8sRunCMD = []string{
 var cephRunCMD = []string{
 	"/srv/cray/scripts/metal/net-init.sh",
 	"/srv/cray/scripts/common/update_ca_certs.py",
+	"/srv/cray/scripts/metal/fix_chrony_configs.py",
 	"/srv/cray/scripts/metal/install.sh",
 	"/srv/cray/scripts/common/pre-load-images.sh",
 	"/srv/cray/scripts/common/storage-ceph-cloudinit.sh",
@@ -142,6 +144,7 @@ var cephRunCMD = []string{
 var cephWorkerRunCMD = []string{
 	"/srv/cray/scripts/metal/net-init.sh",
 	"/srv/cray/scripts/common/update_ca_certs.py",
+	"/srv/cray/scripts/metal/fix_chrony_configs.py",
 	"/srv/cray/scripts/metal/install.sh",
 	"/srv/cray/scripts/common/pre-load-images.sh",
 	"touch /etc/cloud/cloud-init.disabled",
