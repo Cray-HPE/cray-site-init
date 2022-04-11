@@ -30,7 +30,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/Cray-HPE/cray-site-init/pkg/csi"
+	"github.com/Cray-HPE/csm-common/go/pkg/csi"
 	base "github.com/Cray-HPE/hms-base"
 	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 )

@@ -2,12 +2,13 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/Cray-HPE/cray-site-init/pkg/kubernetes"
+	"log"
+	"strings"
+
+	"github.com/Cray-HPE/csm-common/go/pkg/kubernetes"
 	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
-	"log"
-	"strings"
 )
 
 var (

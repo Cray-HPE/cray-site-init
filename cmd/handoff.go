@@ -26,13 +26,6 @@ package cmd
 import (
 	"context"
 	"crypto/tls"
-	"github.com/Cray-HPE/cray-site-init/pkg/bss"
-	"github.com/Cray-HPE/cray-site-init/pkg/sls"
-	"github.com/Cray-HPE/hms-bss/pkg/bssTypes"
-	hms_s3 "github.com/Cray-HPE/hms-s3"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 	"log"
 	"net"
 	"net/http"
@@ -40,6 +33,14 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Cray-HPE/csm-common/go/pkg/bss"
+	"github.com/Cray-HPE/csm-common/go/pkg/sls"
+	"github.com/Cray-HPE/hms-bss/pkg/bssTypes"
+	hms_s3 "github.com/Cray-HPE/hms-s3"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 
 	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 	"github.com/spf13/cobra"

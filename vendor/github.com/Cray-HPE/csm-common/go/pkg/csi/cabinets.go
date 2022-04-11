@@ -5,7 +5,7 @@ Copyright 2021 Hewlett Packard Enterprise Development LP
 package csi
 
 import (
-	csiFiles "github.com/Cray-HPE/cray-site-init/internal/files"
+	csiFiles "github.com/Cray-HPE/csm-common/go/internal/files"
 )
 
 // CabinetGroupDetail stores information that can only come from Manufacturing

@@ -31,8 +31,8 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/Cray-HPE/cray-site-init/pkg/bss"
-	"github.com/Cray-HPE/cray-site-init/pkg/sls"
+	"github.com/Cray-HPE/csm-common/go/pkg/bss"
+	"github.com/Cray-HPE/csm-common/go/pkg/sls"
 	"github.com/Cray-HPE/hms-bss/pkg/bssTypes"
 	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 	"github.com/mitchellh/mapstructure"

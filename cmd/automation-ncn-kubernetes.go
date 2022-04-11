@@ -1,10 +1,11 @@
 package cmd
 
 import (
-	"github.com/Cray-HPE/cray-site-init/pkg/kubernetes"
-	"github.com/spf13/cobra"
 	"log"
 	"os"
+
+	"github.com/Cray-HPE/csm-common/go/pkg/kubernetes"
+	"github.com/spf13/cobra"
 )
 
 var automateNCNKubernetesCommand = &cobra.Command{

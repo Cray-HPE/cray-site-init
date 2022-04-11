@@ -37,10 +37,10 @@ import (
 	"github.com/spf13/viper"
 
 	csiFiles "github.com/Cray-HPE/cray-site-init/internal/files"
-	"github.com/Cray-HPE/cray-site-init/pkg/csi"
-	"github.com/Cray-HPE/cray-site-init/pkg/ipam"
-	"github.com/Cray-HPE/cray-site-init/pkg/pit"
-	"github.com/Cray-HPE/cray-site-init/pkg/version"
+	"github.com/Cray-HPE/csm-common/go/pkg/csi"
+	"github.com/Cray-HPE/csm-common/go/pkg/ipam"
+	"github.com/Cray-HPE/csm-common/go/pkg/pit"
+	"github.com/Cray-HPE/csm-common/go/pkg/version"
 	shcd_parser "github.com/Cray-HPE/hms-shcd-parser/pkg/shcd-parser"
 	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 )

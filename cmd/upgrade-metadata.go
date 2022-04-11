@@ -30,8 +30,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Cray-HPE/cray-site-init/pkg/bss"
-	"github.com/Cray-HPE/cray-site-init/pkg/sls"
+	"github.com/Cray-HPE/csm-common/go/pkg/bss"
+	"github.com/Cray-HPE/csm-common/go/pkg/sls"
 	base "github.com/Cray-HPE/hms-base"
 	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 	"github.com/mitchellh/mapstructure"

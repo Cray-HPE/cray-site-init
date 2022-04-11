@@ -7,8 +7,8 @@ package pit
 import (
 	"text/template"
 
-	csiFiles "github.com/Cray-HPE/cray-site-init/internal/files"
-	"github.com/Cray-HPE/cray-site-init/pkg/csi"
+	csiFiles "github.com/Cray-HPE/csm-common/go/internal/files"
+	"github.com/Cray-HPE/csm-common/go/pkg/csi"
 	"github.com/spf13/viper"
 )
 

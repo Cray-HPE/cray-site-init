@@ -1,5 +1,5 @@
-// +build !integration
-// +build !shcd
+//go:build !integration && !shcd
+// +build !integration,!shcd
 
 /*
 Copyright 2021 Hewlett Packard Enterprise Development LP
@@ -12,7 +12,7 @@ import (
 	"net"
 	"testing"
 
-	"github.com/Cray-HPE/cray-site-init/pkg/csi"
+	"github.com/Cray-HPE/csm-common/go/pkg/csi"
 	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 	"github.com/stretchr/testify/suite"
 )

@@ -28,7 +28,7 @@ import (
 	"net"
 	"strings"
 
-	"github.com/Cray-HPE/cray-site-init/pkg/ipam"
+	"github.com/Cray-HPE/csm-common/go/pkg/ipam"
 )
 
 /*

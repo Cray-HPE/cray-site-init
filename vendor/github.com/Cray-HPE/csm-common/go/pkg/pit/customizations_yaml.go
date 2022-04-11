@@ -28,7 +28,7 @@ import (
 	"net"
 	"strings"
 
-	"github.com/Cray-HPE/cray-site-init/pkg/csi"
+	"github.com/Cray-HPE/csm-common/go/pkg/csi"
 	valid "github.com/asaskevich/govalidator"
 	"github.com/spf13/viper"
 )

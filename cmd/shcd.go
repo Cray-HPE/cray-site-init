@@ -19,7 +19,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/Cray-HPE/cray-site-init/pkg/csi"
+	"github.com/Cray-HPE/csm-common/go/pkg/csi"
 	"github.com/Cray-HPE/hms-base/xname"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

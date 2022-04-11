@@ -1,5 +1,5 @@
-// +build integration
-// +build shcd
+//go:build integration && shcd
+// +build integration,shcd
 
 /*
 Copyright 2021 Hewlett Packard Enterprise Development LP
@@ -17,7 +17,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/Cray-HPE/cray-site-init/pkg/csi"
+	"github.com/Cray-HPE/csm-common/go/pkg/csi"
 )
 
 // The user should populate this directory with the shcd.xlsx files for the systems they want to test

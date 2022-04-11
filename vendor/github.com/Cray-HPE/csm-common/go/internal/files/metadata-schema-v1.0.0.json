@@ -1,0 +1,429 @@
+{
+  "$id": "https://github.com/Cray-HPE/csm-common/tree/main/internal/files/#",
+  "description": "Metadata used within CSM",
+  "type": "object",
+  "minProperties":19,
+  "additionalProperties" : {
+      "type": "object",
+      "properties": {
+        "meta-data": {
+          "type": "object",
+          "properties": {
+            "local-hostname": {
+              "type": "string"
+            },
+            "xname": {
+              "type": "string"
+            },
+            "instance-id": {
+              "type": "string"
+            },
+            "region": {
+              "type": "string"
+            },
+            "availability-zone": {
+              "type": "string"
+            },
+            "shasta-role": {
+              "type": "string"
+            },
+            "ipam": {
+              "type": "object",
+              "properties": {
+                "can": {
+                  "type": "object",
+                  "properties": {
+                    "gateway": {
+                      "type": "string"
+                    },
+                    "ip": {
+                      "type": "string"
+                    },
+                    "parent_device": {
+                      "type": "string"
+                    },
+                    "vlanid": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "gateway",
+                    "ip",
+                    "parent_device",
+                    "vlanid"
+                  ]
+                },
+                "cmn": {
+                  "type": "object",
+                  "properties": {
+                    "gateway": {
+                      "type": "string"
+                    },
+                    "ip": {
+                      "type": "string"
+                    },
+                    "parent_device": {
+                      "type": "string"
+                    },
+                    "vlanid": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "gateway",
+                    "ip",
+                    "parent_device",
+                    "vlanid"
+                  ]
+                },
+                "hmn": {
+                  "type": "object",
+                  "properties": {
+                    "gateway": {
+                      "type": "string"
+                    },
+                    "ip": {
+                      "type": "string"
+                    },
+                    "parent_device": {
+                      "type": "string"
+                    },
+                    "vlanid": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "gateway",
+                    "ip",
+                    "parent_device",
+                    "vlanid"
+                  ]
+                },
+                "mtl": {
+                  "type": "object",
+                  "properties": {
+                    "gateway": {
+                      "type": "string"
+                    },
+                    "ip": {
+                      "type": "string"
+                    },
+                    "parent_device": {
+                      "type": "string"
+                    },
+                    "vlanid": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "gateway",
+                    "ip",
+                    "parent_device",
+                    "vlanid"
+                  ]
+                },
+                "nmn": {
+                  "type": "object",
+                  "properties": {
+                    "gateway": {
+                      "type": "string"
+                    },
+                    "ip": {
+                      "type": "string"
+                    },
+                    "parent_device": {
+                      "type": "string"
+                    },
+                    "vlanid": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "gateway",
+                    "ip",
+                    "parent_device",
+                    "vlanid"
+                  ]
+                }
+              },
+              "required": [
+                "can",
+                "cmn",
+                "hmn",
+                "mtl",
+                "nmn"
+              ]
+            }
+          },
+          "required": [
+            "availability-zone",
+            "instance-id",
+            "ipam",
+            "local-hostname",
+            "region",
+            "shasta-role",
+            "xname"
+          ]
+        },
+        "user-data": {
+          "type": "object",
+          "properties": {
+            "hostname": {
+              "type": "string"
+            },
+            "local_hostname": {
+              "type": "string"
+            },
+            "mac0": {
+              "type": "object",
+              "properties": {
+                "gateway": {
+                  "type": "string"
+                },
+                "ip": {
+                  "type": "string"
+                },
+                "mask": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "gateway",
+                "ip",
+                "mask"
+              ]
+            },
+            "ntp": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "ntp_client": {
+                  "type": "string"
+                },
+                "peers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "allow": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "servers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "pools": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "config": {
+                  "type": "object",
+                  "properties": {
+                    "confpath": {
+                      "type": "string"
+                    },
+                    "template": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "confpath",
+                    "template"
+                  ]
+                }
+              },
+              "required": [
+                "allow",
+                "config",
+                "enabled",
+                "ntp_client",
+                "peers",
+                "servers"
+              ]
+            },
+            "runcmd": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "timezone": {
+              "type": "string"
+            },
+            "write_files": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  },
+                  "owner": {
+                    "type": "string"
+                  },
+                  "path": {
+                    "type": "string"
+                  },
+                  "permissions": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "content",
+                  "owner",
+                  "path",
+                  "permissions"
+                ]
+              }
+            }
+          },
+          "required": [
+            "hostname",
+            "local_hostname",
+            "mac0",
+            "ntp",
+            "runcmd",
+            "timezone",
+            "write_files"
+          ]
+        }
+      },
+      "required": [
+        "meta-data",
+        "user-data"
+      ]
+  },
+  "properties": {
+    "Global": {
+      "type": "object",
+      "properties": {
+        "meta-data": {
+          "type": "object",
+          "properties": {
+            "can-gw": {
+              "type": "string"
+            },
+            "ceph-cephfs-image": {
+              "type": "string"
+            },
+            "ceph-rbd-image": {
+              "type": "string"
+            },
+            "dns-server": {
+              "type": "string"
+            },
+            "docker-image-registry": {
+              "type": "string"
+            },
+            "domain": {
+              "type": "string"
+            },
+            "first-master-hostname": {
+              "type": "string"
+            },
+            "host_records": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "ip": {
+                    "type": "string"
+                  },
+                  "aliases": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "aliases",
+                  "ip"
+                ]
+              }
+            },
+            "internal-domain": {
+              "type": "string"
+            },
+            "k8s-api-auditing-enabled": {
+              "type": "boolean"
+            },
+            "k8s-virtual-ip": {
+              "type": "string"
+            },
+            "kubernetes-max-pods-per-node": {
+              "type": "string"
+            },
+            "kubernetes-pods-cidr": {
+              "type": "string"
+            },
+            "kubernetes-services-cidr": {
+              "type": "string"
+            },
+            "kubernetes-weave-mtu": {
+              "type": "string"
+            },
+            "ncn-mgmt-node-auditing-enabled": {
+              "type": "boolean"
+            },
+            "num_storage_nodes": {
+              "type": "integer"
+            },
+            "rgw-virtual-ip": {
+              "type": "string"
+            },
+            "site-domain": {
+              "type": "string"
+            },
+            "system-name": {
+              "type": "string"
+            },
+            "wipe-ceph-osds": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "can-gw",
+            "ceph-cephfs-image",
+            "ceph-rbd-image",
+            "dns-server",
+            "docker-image-registry",
+            "domain",
+            "first-master-hostname",
+            "host_records",
+            "internal-domain",
+            "k8s-api-auditing-enabled",
+            "k8s-virtual-ip",
+            "kubernetes-max-pods-per-node",
+            "kubernetes-pods-cidr",
+            "kubernetes-services-cidr",
+            "kubernetes-weave-mtu",
+            "ncn-mgmt-node-auditing-enabled",
+            "num_storage_nodes",
+            "rgw-virtual-ip",
+            "site-domain",
+            "system-name",
+            "wipe-ceph-osds"
+          ]
+        }
+      },
+      "required": [
+        "meta-data"
+      ]
+    }
+
+},
+  "required": [
+    "Global"
+  ]
+}

@@ -1,5 +1,5 @@
-// +build integration
-// +build !shcd
+//go:build integration && !shcd
+// +build integration,!shcd
 
 /*
 Copyright 2021 Hewlett Packard Enterprise Development LP
@@ -14,7 +14,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Cray-HPE/cray-site-init/pkg/csi"
+	"github.com/Cray-HPE/csm-common/go/pkg/csi"
 )
 
 // ConfigInitTest runs 'csi config init' on a system passed to it using the cobra command object

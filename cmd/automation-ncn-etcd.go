@@ -2,10 +2,11 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/Cray-HPE/cray-site-init/pkg/etcd"
-	"github.com/spf13/cobra"
 	"log"
 	"os"
+
+	"github.com/Cray-HPE/csm-common/go/pkg/etcd"
+	"github.com/spf13/cobra"
 )
 
 var (

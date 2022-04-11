@@ -21,8 +21,8 @@
 //  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 //  OTHER DEALINGS IN THE SOFTWARE.
 
-// +build !integration
-// +build !shcd
+//go:build !integration && !shcd
+// +build !integration,!shcd
 
 package cmd
 
@@ -30,7 +30,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/Cray-HPE/cray-site-init/pkg/csi"
+	"github.com/Cray-HPE/csm-common/go/pkg/csi"
 	"github.com/stretchr/testify/suite"
 )
 

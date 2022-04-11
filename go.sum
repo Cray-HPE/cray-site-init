@@ -51,6 +51,8 @@ github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/ClickHouse/clickhouse-go v1.3.12/go.mod h1:EaI/sW7Azgz9UATzd5ZdZHRUhHgv5+JMS9NSr2smCJI=
+github.com/Cray-HPE/csm-common/go v0.0.0-20220411164326-93391ce233dc h1:P/+P2XUYbqljlh7DvBbU4ZX6q7BKEnBa+3Y61wO6ye0=
+github.com/Cray-HPE/csm-common/go v0.0.0-20220411164326-93391ce233dc/go.mod h1:01YPrIMPHZ0BVLJ4+44Bu5qKC+51456yQthd6dooqMU=
 github.com/Cray-HPE/hms-base v1.15.0/go.mod h1:+G8KFLPtanLC5lQ602hrf3MDfLTmIXedTavVCOdz5XA=
 github.com/Cray-HPE/hms-base v1.15.2-0.20210928201115-8d9f61f26219 h1:xEf46ditVK0vUPaw4mlptug8pjYVobGrG+Mv2ubiDtk=
 github.com/Cray-HPE/hms-base v1.15.2-0.20210928201115-8d9f61f26219/go.mod h1:+G8KFLPtanLC5lQ602hrf3MDfLTmIXedTavVCOdz5XA=
