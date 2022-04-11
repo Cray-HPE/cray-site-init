@@ -101,17 +101,17 @@ clean-all: clean clean-artifacts
 # Run tests
 test: build
 	mkdir -pv $(TEST_OUTPUT_DIR)/unittest $(TEST_OUTPUT_DIR)/coverage
-	go test ./cmd/... ./internal/... ./pkg/... -v -coverprofile $(TEST_OUTPUT_DIR)/coverage.out -covermode count | tee "$(TEST_OUTPUT_DIR)/testing.out"
+	go test ./cmd/... ./internal/...  -v -coverprofile $(TEST_OUTPUT_DIR)/coverage.out -covermode count | tee "$(TEST_OUTPUT_DIR)/testing.out"
 	cat "$(TEST_OUTPUT_DIR)/testing.out" | go-junit-report | tee "$(TEST_OUTPUT_DIR)/unittest/testing.xml" | tee "$(TEST_OUTPUT_DIR)/unittest/testing.xml"
 	gocover-cobertura < $(TEST_OUTPUT_DIR)/coverage.out > "$(TEST_OUTPUT_DIR)/coverage/coverage.xml"
 	go tool cover -html=$(TEST_OUTPUT_DIR)/coverage.out -o "$(TEST_OUTPUT_DIR)/coverage/coverage.html"
 
 # Run integration tests
 integrate:
-	go test ./cmd/... ./internal/... ./pkg/... -tags=integration -v -coverprofile coverage.out -covermode count
+	go test ./cmd/... ./internal/...  -tags=integration -v -coverprofile coverage.out -covermode count
 
 shcds:
-	go test ./cmd/... ./internal/... ./pkg/... -tags=integration,shcd -v
+	go test ./cmd/... ./internal/...  -tags=integration,shcd -v
 
 vet: version
 	go vet -v ./...
@@ -119,7 +119,7 @@ vet: version
 lint:
 	golint -set_exit_status ./cmd/...
 	golint -set_exit_status ./internal/...
-	golint -set_exit_status ./pkg/...
+	golint -set_exit_status 
 
 fmt:
 	go fmt ./...
