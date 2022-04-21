@@ -152,19 +152,12 @@ func (utilsClient *UtilsClient) DrainNCN(ncn string) error {
 	utilsClient.Logger.debugf("Pod disruption budgets satisfied.")
 
 	// Now finally we can drain the node.
-	attempts := 3
-	sleep, _ := time.ParseDuration("2s")
-	for i := 0; i < attempts; i++ {
-		if i > 0 {
-			utilsClient.Logger.warningf("Retrying after error: %w", err)
-			time.Sleep(sleep)
-		}
-		err := utilsClient.runNodeDrain(utilsClient.helper, ncn)
-		if err == nil {
-			return nil
-		}
+	err = utilsClient.runNodeDrain(utilsClient.helper, ncn)
+	if err != nil {
+		return fmt.Errorf("failed to drain NCN: %w", err)
 	}
-	return fmt.Errorf("failed to drain NCN: %w", err)
+
+	return nil
 
 }
 
@@ -191,7 +184,19 @@ func (utilsClient *UtilsClient) runNodeDrain(drainer *drain.Helper, nodeName str
 // DeleteNCN - Deletes the NCN from Kubernetes.
 func (utilsClient *UtilsClient) DeleteNCN(ncn string) error {
 	// Start by making sure the NCN is drained.
-	drainErr := utilsClient.DrainNCN(ncn)
+	attempts := 3
+	sleep, _ := time.ParseDuration("2s")
+	var drainErr error
+	for i := 0; i < attempts; i++ {
+		drainErr = utilsClient.DrainNCN(ncn)
+		if drainErr == nil {
+			break
+		}
+		if i > 0 {
+			utilsClient.Logger.warningf("Retrying after error: %w", drainErr)
+			time.Sleep(sleep)
+		}
+	}
 	if drainErr != nil {
 		return fmt.Errorf("failed to delete NCN: %w", drainErr)
 	}
