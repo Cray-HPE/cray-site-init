@@ -47,7 +47,7 @@ cp -pv scripts/write-livecd.sh ${RPM_BUILD_ROOT}/usr/local/bin/write-livecd.sh
 %files
 %license LICENSE
 %defattr(755,root,root)
-/usr/bin/csi
+/usr/local/bin/csi
 /usr/local/bin/write-livecd.sh
 
 %changelog
