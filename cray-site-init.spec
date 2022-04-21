@@ -38,8 +38,10 @@ GOARCH="%{GOARCH}"
 GO111MODULE=on
 export CGO_ENABLED GOOS GOARCH GO111MODULE
 
+mkdir -pv ${RPM_BUILD_ROOT}/usr/bin/
+cp -pv bin/csi ${RPM_BUILD_ROOT}/usr/bin/csi
+
 mkdir -pv ${RPM_BUILD_ROOT}/usr/local/bin/
-cp -pv bin/csi ${RPM_BUILD_ROOT}/usr/local/bin/csi
 cp -pv scripts/write-livecd.sh ${RPM_BUILD_ROOT}/usr/local/bin/write-livecd.sh
 
 %clean
@@ -47,7 +49,7 @@ cp -pv scripts/write-livecd.sh ${RPM_BUILD_ROOT}/usr/local/bin/write-livecd.sh
 %files
 %license LICENSE
 %defattr(755,root,root)
-/usr/local/bin/csi
+/usr/bin/csi
 /usr/local/bin/write-livecd.sh
 
 %changelog
