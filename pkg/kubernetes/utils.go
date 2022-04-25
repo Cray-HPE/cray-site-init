@@ -123,6 +123,7 @@ func (utilsClient *UtilsClient) DrainNCN(ncn string) error {
 		return fmt.Errorf("failed to drain NCN: %w", err)
 	}
 
+	var podsToDelete []corev1.Pod
 	for _, budget := range budgets.Items {
 		labels := budget.Spec.Selector.MatchLabels
 
@@ -136,17 +137,17 @@ func (utilsClient *UtilsClient) DrainNCN(ncn string) error {
 
 			for _, pod := range pods.Items {
 				if pod.Spec.NodeName == ncn {
-					err := utilsClient.clientSet.CoreV1().Pods(pod.Namespace).Delete(context.Background(), pod.Name,
-						v1.DeleteOptions{})
-					if err != nil {
-						return fmt.Errorf("failed to drain NCN: %w", err)
-					}
+					podsToDelete = append(podsToDelete, pod)
 
-					utilsClient.Logger.debugf("Deleted pod %s in %s namespace to satisfy pod disruption policy.",
+					utilsClient.Logger.debugf("Delete pod %s in %s namespace to satisfy pod disruption policy.",
 						pod.Name, pod.Namespace)
 				}
 			}
 		}
+	}
+
+	if err := utilsClient.helper.DeleteOrEvictPods(podsToDelete); err != nil {
+		return fmt.Errorf("failed to delete pods: %w", err)
 	}
 
 	utilsClient.Logger.debugf("Pod disruption budgets satisfied.")
