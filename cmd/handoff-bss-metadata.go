@@ -372,12 +372,12 @@ func buildPITArgs(base string) string {
 		} else if strings.HasPrefix(part, "ifname=mgmt0") {
 			if len(macs) >= 2 {
 				cmdlineParts[i] = fmt.Sprintf("ifname=mgmt0:%s", macs[0])
-			}else {
-                                cmdlineParts[i] = ""
-                         }
-                } else if strings.HasPrefix(part, "ifname=mgmt1") {
+			} else {
+				cmdlineParts[i] = ""
+			}
+		} else if strings.HasPrefix(part, "ifname=mgmt1") {
 			if len(macs) >= 4 {
-	                        cmdlineParts[i] = fmt.Sprintf("ifname=mgmt1:%s", macs[2])
+				cmdlineParts[i] = fmt.Sprintf("ifname=mgmt1:%s", macs[2])
 			} else {
 				cmdlineParts[i] = fmt.Sprintf("ifname=mgmt1:%s", macs[1])
 			}
