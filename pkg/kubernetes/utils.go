@@ -146,9 +146,13 @@ func (utilsClient *UtilsClient) DrainNCN(ncn string) error {
 		}
 	}
 
+	// force delete instead of evict
+	utilsClient.helper.DisableEviction = true
 	if err := utilsClient.helper.DeleteOrEvictPods(podsToDelete); err != nil {
 		return fmt.Errorf("failed to delete pods: %w", err)
 	}
+	// reset to evict for all other pods
+	utilsClient.helper.DisableEviction = false
 
 	utilsClient.Logger.debugf("Pod disruption budgets satisfied.")
 
