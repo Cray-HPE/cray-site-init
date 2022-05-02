@@ -230,7 +230,15 @@ func GenCustomizationsYaml(ncns []csi.LogicalNCN, shastaNetworks map[string]*csi
 		},
 	}
 	for netName, network := range shastaNetworks {
-		if netName == "NMNLB" || netName == "NMN_RVR" || netName == "NMN_MTN" || netName == "CMN" {
+		if netName == "NMNLB" {
+			output.WLM.MacVlanSetup.Routes = append(output.WLM.MacVlanSetup.Routes, struct {
+				Destination string "yaml:\"dst\" valid:\"cidr,required\""
+				Gateway     string "yaml:\"gw\" valid:\"cidr,required\""
+			}{
+				Destination: network.CIDR,
+				Gateway:     uaiNet.LookupReservation("uai_nmn_blackhole").IPAddress.String(),
+			})
+		} else if netName == "NMN_RVR" || netName == "NMN_MTN" || netName == "CMN" {
 			output.WLM.MacVlanSetup.Routes = append(output.WLM.MacVlanSetup.Routes, struct {
 				Destination string "yaml:\"dst\" valid:\"cidr,required\""
 				Gateway     string "yaml:\"gw\" valid:\"cidr,required\""

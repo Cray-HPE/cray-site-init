@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"sort"
 	"strings"
 
 	"github.com/Cray-HPE/cray-site-init/pkg/ipam"
@@ -347,7 +348,16 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 			log.Fatalf("Couln't add the uai subnet to the %v Network: %v", tempNet.Name, err)
 		}
 		uaisubnet.FullName = "NMN UAIs"
-		for reservationName, reservationComment := range DefaultUAISubnetReservations {
+
+		// Add the UAI reservations in order so they are consistent
+		var keys []string
+		for k := range DefaultUAISubnetReservations {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+
+		for _, reservationName := range keys {
+			var reservationComment = DefaultUAISubnetReservations[reservationName]
 			reservation := uaisubnet.AddReservation(reservationName, strings.Join(reservationComment, ","))
 			for _, alias := range reservationComment {
 				reservation.AddReservationAlias(alias)
