@@ -34,6 +34,7 @@ dev_size=0
 
 # URL or path for ISO. Defaults to latest ISO build on master branch
 
+#shellcheck disable=SC2034
 iso_uri="https://artifactory.algol60.net/ui/native/csm-images/stable/cray-pre-install-toolkit/latest/cray-pre-install-toolkit-latest.iso"
 
 # Initial empty values for usb device and iso file
@@ -59,20 +60,24 @@ EOF
 }
 
 error () {
+    #shellcheck disable=SC2068
     mesg ERROR $@
 }
 
 warning () {
+    #shellcheck disable=SC2068
     mesg WARNING $@
 }
 
 info () {
+    #shellcheck disable=SC2068
     mesg INFO $@
 }
 
 mesg () {
     LEVEL=$1
     shift 1
+    #shellcheck disable=SC2145
     echo "$LEVEL: $@"
 }
 
@@ -87,6 +92,7 @@ create_partition () {
     local end_num=0
 
 
+    #shellcheck disable=SC2071
     if [[ $size > 0 ]]; then
         # Use specified size
         ((end_num=start+size))
@@ -129,6 +135,7 @@ unmount_partitions () {
     readarray -t mount_list < <(mount | egrep "${dev}[0-9]+" | awk '{print $1,$3}')
     if [[ ${#mount_list[@]} != 0 ]]; then
         echo "The following partition on ${dev} are mounted:"
+        #shellcheck disable=SC2068
         for i in ${!mount_list[@]}; do
             echo "    ${mount_list[$i]}"
         done
@@ -138,7 +145,9 @@ unmount_partitions () {
 }
 
 # Process cmdline arguments
+#shellcheck disable=SC2071
 [[ $# < 2 ]] && usage && exit 1
+#shellcheck disable=SC2071
 [[ $# > 3 ]] && usage && exit 1
 usb=$1
 shift 1
@@ -212,12 +221,14 @@ readarray -t parted_line < <(parted -s -m $usb unit MB print)
 start_num=0
 end_num=0
 part_num=0
+#shellcheck disable=SC2068
 for i in ${!parted_line[@]}; do
 
     # Parse the line into fields
     IFS=":" read -r -a fields <<< ${parted_line[$i]}
 
     # Line beginning with USB device name gives total size of drive
+    #shellcheck disable=SC2053
     if [[ ${fields[0]} == ${usb} ]]; then
         # Get disk dev size
         dev_size=${fields[1]%%MB*}
