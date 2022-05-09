@@ -1,4 +1,27 @@
 #!/usr/bin/env bash
+#
+# MIT License
+#
+# (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+#
 # vim: et sw=4 ts=4 autoindent
 #
 # Copyright 2021 Hewlett Packard Enterprise Development LP
@@ -32,10 +55,6 @@ cow_size=0
 # Size of specified block device
 dev_size=0
 
-# URL or path for ISO. Defaults to latest ISO build on master branch
-
-iso_uri="https://artifactory.algol60.net/ui/native/csm-images/stable/cray-pre-install-toolkit/latest/cray-pre-install-toolkit-latest.iso"
-
 # Initial empty values for usb device and iso file
 usb=""
 iso_file=""
@@ -59,21 +78,21 @@ EOF
 }
 
 error () {
-    mesg ERROR $@
+    mesg ERROR "$@"
 }
 
 warning () {
-    mesg WARNING $@
+    mesg WARNING "$@"
 }
 
 info () {
-    mesg INFO $@
+    mesg INFO "$@"
 }
 
 mesg () {
     LEVEL=$1
     shift 1
-    echo "$LEVEL: $@"
+    echo "$LEVEL: $*"
 }
 
 create_partition () {
@@ -87,7 +106,7 @@ create_partition () {
     local end_num=0
 
 
-    if [[ $size > 0 ]]; then
+    if [[ $size -gt 0 ]]; then
         # Use specified size
         ((end_num=start+size))
     else
@@ -129,6 +148,7 @@ unmount_partitions () {
     readarray -t mount_list < <(mount | egrep "${dev}[0-9]+" | awk '{print $1,$3}')
     if [[ ${#mount_list[@]} != 0 ]]; then
         echo "The following partition on ${dev} are mounted:"
+        #shellcheck disable=SC2068
         for i in ${!mount_list[@]}; do
             echo "    ${mount_list[$i]}"
         done
@@ -137,9 +157,8 @@ unmount_partitions () {
     fi
 }
 
-# Process cmdline arguments
-[[ $# < 2 ]] && usage && exit 1
-[[ $# > 3 ]] && usage && exit 1
+[[ $# -lt 2 ]] && usage && exit 1
+[[ $# -gt 3 ]] && usage && exit 1
 usb=$1
 shift 1
 iso_file=$1
@@ -212,13 +231,13 @@ readarray -t parted_line < <(parted -s -m $usb unit MB print)
 start_num=0
 end_num=0
 part_num=0
-for i in ${!parted_line[@]}; do
+for i in "${!parted_line[@]}"; do
 
     # Parse the line into fields
     IFS=":" read -r -a fields <<< ${parted_line[$i]}
 
     # Line beginning with USB device name gives total size of drive
-    if [[ ${fields[0]} == ${usb} ]]; then
+    if [[ "${fields[0]}" == "${usb}" ]]; then
         # Get disk dev size
         dev_size=${fields[1]%%MB*}
 
