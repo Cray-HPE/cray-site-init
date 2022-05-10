@@ -92,12 +92,12 @@ var handoffBSSMetadataCmd = &cobra.Command{
 
 		desiredKubernetesVersion = os.Getenv("KUBERNETES_VERSION")
 		if desiredKubernetesVersion == "" {
-			log.Fatalf("KUBERNETES_VERSION enviornemnt variable not set!")
+			log.Fatalf("ERROR: KUBERNETES_VERSION environment variable not set!")
 		}
 
 		desiredCEPHVersion = os.Getenv("CEPH_VERSION")
 		if desiredCEPHVersion == "" {
-			log.Fatalf("CEPH_VERSION enviornemnt variable not set!")
+			log.Fatalf("ERROR: CEPH_VERSION environment variable not set!")
 		}
 
 		// Parse the data.json file.
