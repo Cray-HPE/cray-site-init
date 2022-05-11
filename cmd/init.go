@@ -392,7 +392,7 @@ func init() {
 	initCmd.Flags().String("system-name", "sn-2024", "Name of the System")
 	initCmd.Flags().String("csm-version", "1.0", "Version of CSM being installed")
 
-	initCmd.Flags().String("site-domain", "dev.cray.com", "Site Domain Name")
+	initCmd.Flags().String("site-domain", "", "Site Domain Name")
 	initCmd.Flags().String("first-master-hostname", "ncn-m002", "Hostname of the first master node")
 	// initCmd.Flags().String("internal-domain", "unicos.shasta", "Internal Domain Name")
 	initCmd.Flags().String("ntp-pool", "", "Hostname for Upstream NTP Pool")
