@@ -35,24 +35,53 @@ import (
 	"github.com/spf13/viper"
 )
 
-// MetaData is part of the cloud-init stucture and
-// is only used for validating the required fields in the
-// `CloudInit` struct below.
-type MetaData struct {
-	Hostname         string                 `yaml:"local-hostname" json:"local-hostname"`       // should be local hostname e.g. ncn-m003
-	Xname            string                 `yaml:"xname" json:"xname"`                         // should be xname e.g. x3000c0s1b0n0
-	InstanceID       string                 `yaml:"instance-id" json:"instance-id"`             // should be unique for the life of the image
-	Region           string                 `yaml:"region" json:"region"`                       // unused currently
-	AvailabilityZone string                 `yaml:"availability-zone" json:"availability-zone"` // unused currently
-	ShastaRole       string                 `yaml:"shasta-role" json:"shasta-role"`             // map to HSM role
-	IPAM             map[string]interface{} `yaml:"ipam" json:"ipam"`
+// Node MetaData is a single payload consumed by CSM services
+// Each node has a set of cloud-init compatible metadata that is used by the CSM services
+type Node struct {
+	MetaData MetaData `yaml:"meta-data" json:"meta-data"`
+	UserData UserData `yaml:"user-data" json:"user-data"`
 }
 
-// CloudInit is the main cloud-init struct. Leave the meta-data, user-data, and phone home
-// info as generic interfaces as the user defines how much info exists in it.
-type CloudInit struct {
-	MetaData MetaData               `yaml:"meta-data" json:"meta-data"`
-	UserData map[string]interface{} `yaml:"user-data" json:"user-data"`
+// MetaData is cloud-init metadata
+type MetaData struct {
+	Hostname         string         `yaml:"local-hostname" json:"local-hostname"`       // should be local hostname e.g. ncn-m003
+	Xname            string         `yaml:"xname" json:"xname"`                         // should be xname e.g. x3000c0s1b0n0
+	InstanceID       string         `yaml:"instance-id" json:"instance-id"`             // should be unique for the life of the image
+	Region           string         `yaml:"region" json:"region"`                       // unused currently
+	AvailabilityZone string         `yaml:"availability-zone" json:"availability-zone"` // unused currently
+	ShastaRole       string         `yaml:"shasta-role" json:"shasta-role"`             // map to HSM role
+	IPAM             *[]IpamNetwork `yaml:"ipam" json:"ipam"`
+}
+
+// UserData is cloud-init userdata
+type UserData struct {
+	Hostname      string       `json:"hostname"`
+	LocalHostname string       `json:"local-hostname"`
+	Mac0          Mac0         `json:"mac0"`
+	NTP           NtpModule    `json:"ntp"`
+	RunCmd        []string     `json:"runcmd"`
+	Timezone      string       `json:"timezone"`
+	WriteFiles    *[]WriteFile `json:"write_files"`
+}
+
+type IpamNetwork struct {
+	Gateway      string `json:"gateway"`
+	IP           string `json:"ip"`
+	ParentDevice string `json:"parent_device"`
+	VlanID       string `json:"vlanid"`
+}
+
+type Mac0 struct {
+	Gateway string `json:"address"`
+	IP      string `json:"ip"`
+	Netmask string `json:"netmask"`
+}
+
+type WriteFile struct {
+	Content     string `json:"content"`
+	Owner       string `json:"owner"`
+	Path        string `json:"path"`
+	Permissions string `json:"permissions"`
 }
 
 // NtpConfig is the options for the cloud-init ntp module.
