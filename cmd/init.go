@@ -24,6 +24,8 @@
 package cmd
 
 import (
+	"bufio"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -32,9 +34,11 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/term"
 
 	csiFiles "github.com/Cray-HPE/cray-site-init/internal/files"
 	"github.com/Cray-HPE/cray-site-init/pkg/csi"
@@ -44,6 +48,8 @@ import (
 	shcd_parser "github.com/Cray-HPE/hms-shcd-parser/pkg/shcd-parser"
 	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 )
+
+var interactive bool
 
 // initCmd represents the init command
 var initCmd = &cobra.Command{
@@ -74,26 +80,37 @@ var initCmd = &cobra.Command{
 	In addition, there are many flags to impact the layout of the system.  The defaults are generally fine except for the networking flags.
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		var err error
 		// Initialize the global viper
 		v := viper.GetViper()
 
+		// Check first is this is an interactive session
+		interactive, _ := cmd.Flags().GetBool("interactive")
+
+		// If it is interactive, the user fills out the site survey
+		if interactive {
+			fmt.Println("Interactive mode: Fill out the prompts to generate a configuration payload")
+			// Now we need to get all of the available flags
+			v.BindPFlags(cmd.Flags())
+			siteSurvey(v)
+			// Otherwise, the required flags need to be set
+		} else {
+			cmd.MarkFlagRequired("system-name")
+			cmd.MarkFlagRequired("csm-version")
+			cmd.MarkFlagRequired("site-ip")
+			cmd.MarkFlagRequired("site-gw")
+			cmd.MarkFlagRequired("site-dns")
+			cmd.MarkFlagRequired("site-nic")
+			cmd.MarkFlagRequired("bican-user-network-name")
+			cmd.MarkFlagRequired("cmn-cidr")
+			cmd.MarkFlagRequired("cmn-gateway")
+			cmd.MarkFlagRequired("cmn-external-dns")
+			cmd.MarkFlagRequired("can-gateway")
+			cmd.MarkFlagRequired("bootstrap-ncn-bmc-user")
+			cmd.MarkFlagRequired("bootstrap-ncn-bmc-pass")
+		}
+
+		// Now we need to get all of the available flags
 		v.BindPFlags(cmd.Flags())
-
-		flagErrors := validateFlags()
-		if len(flagErrors) > 0 {
-			cmd.Usage()
-			for _, e := range flagErrors {
-				log.Println(e)
-			}
-			log.Fatal("One or more flags are invalid")
-		}
-
-		if len(strings.Split(v.GetString("site-ip"), "/")) != 2 {
-			cmd.Usage()
-			log.Fatalf("FATAL ERROR: Unable to parse %s as --site-ip.  Must be in the format \"192.168.0.1/24\"", v.GetString("site-ip"))
-
-		}
 
 		// Read and validate our three input files
 		hmnRows, logicalNcns, switches, applicationNodeConfig, cabinetDetailList := collectInput(v)
@@ -386,34 +403,34 @@ var initCmd = &cobra.Command{
 func init() {
 	initCmd.DisableAutoGenTag = true
 
-	// Flags with defaults for initializing a configuration
+	initCmd.Flags().Bool("interactive", false, "Interactively generate a configuration payload")
 
-	// System Configuration Flags based on previous system_config.yml and networks_derived.yml
+	// PIT and cloud-init
 	initCmd.Flags().String("system-name", "sn-2024", "Name of the System")
+
 	initCmd.Flags().String("csm-version", "1.0", "Version of CSM being installed")
 
 	initCmd.Flags().String("site-domain", "dev.cray.com", "Site Domain Name")
 	initCmd.Flags().String("first-master-hostname", "ncn-m002", "Hostname of the first master node")
-	// initCmd.Flags().String("internal-domain", "unicos.shasta", "Internal Domain Name")
+	initCmd.Flags().String("install-ncn", "ncn-m001", "Hostname of the node to be used for installation")
+	initCmd.Flags().String("install-ncn-bond-members", "p1p1,p1p2", "List of devices to use to form a bond on the install ncn")
+
 	initCmd.Flags().String("ntp-pool", "", "Hostname for Upstream NTP Pool")
 	initCmd.Flags().MarkDeprecated("ntp-pool", "please use --ntp-pools (plural) instead")
 	initCmd.Flags().StringSlice("ntp-pools", []string{""}, "Comma-seperated list of upstream NTP pool(s)")
 	initCmd.Flags().StringSlice("ntp-servers", []string{"ncn-m001"}, "Comma-seperated list of upstream NTP server(s) ncn-m001 should always be in this list")
 	initCmd.Flags().StringSlice("ntp-peers", []string{"ncn-m001", "ncn-m002", "ncn-m003", "ncn-w001", "ncn-w002", "ncn-w003", "ncn-s001", "ncn-s002", "ncn-s003"}, "Comma-seperated list of NCNs that will peer together")
 	initCmd.Flags().String("ntp-timezone", "UTC", "Timezone to be used on the NCNs and across the system")
+
 	initCmd.Flags().String("ipv4-resolvers", "8.8.8.8, 9.9.9.9", "List of IP Addresses for DNS")
 	initCmd.Flags().String("v2-registry", "https://registry.nmn/", "URL for default v2 registry used for both helm and containers")
 	initCmd.Flags().String("rpm-repository", "https://packages.nmn/repository/shasta-master", "URL for default rpm repository")
-	initCmd.Flags().String("cmn-gateway", "", "Gateway for NCNs on the CMN (Administrative/Management)")
-	initCmd.Flags().String("can-gateway", "", "Gateway for NCNs on the CAN (User)")
-	initCmd.Flags().String("chn-gateway", "", "Gateway for NCNs on the CHN (User)")
+
 	initCmd.Flags().String("ceph-cephfs-image", "dtr.dev.cray.com/cray/cray-cephfs-provisioner:0.1.0-nautilus-1.3", "The container image for the cephfs provisioner")
 	initCmd.Flags().String("ceph-rbd-image", "dtr.dev.cray.com/cray/cray-rbd-provisioner:0.1.0-nautilus-1.3", "The container image for the ceph rbd provisioner")
 	initCmd.Flags().String("docker-image-registry", "dtr.dev.cray.com", "Upstream docker registry for use during the install")
 
-	// Site Networking and Preinstall Toolkit Information
-	initCmd.Flags().String("install-ncn", "ncn-m001", "Hostname of the node to be used for installation")
-	initCmd.Flags().String("install-ncn-bond-members", "p1p1,p1p2", "List of devices to use to form a bond on the install ncn")
+	// Site networking
 	initCmd.Flags().String("site-ip", "", "Site Network Information in the form ipaddress/prefix like 192.168.1.1/24")
 	initCmd.Flags().String("site-gw", "", "Site Network IPv4 Gateway")
 	initCmd.Flags().String("site-dns", "", "Site Network DNS Server which can be different from the upstream ipv4-resolvers if necessary")
@@ -421,33 +438,49 @@ func init() {
 
 	// BICAN Network Toggle
 	initCmd.Flags().String("bican-user-network-name", "", "Name of the network over which non-admin users access the system [CAN, CHN, HSN]")
+
 	initCmd.Flags().Bool("retain-unused-user-network", false, "Use the supernet mask and gateway for NCNs and Switches")
 
-	// Default IPv4 Networks
+	// NMN
 	initCmd.Flags().String("nmn-cidr", csi.DefaultNMNString, "Overall IPv4 CIDR for all Node Management subnets")
 	initCmd.Flags().String("nmn-static-pool", "", "Overall IPv4 CIDR for static Node Management load balancer addresses")
 	initCmd.Flags().String("nmn-dynamic-pool", csi.DefaultNMNLBString, "Overall IPv4 CIDR for dynamic Node Management load balancer addresses")
 	initCmd.Flags().String("nmn-mtn-cidr", csi.DefaultNMNMTNString, "IPv4 CIDR for grouped Mountain Node Management subnets")
 	initCmd.Flags().String("nmn-rvr-cidr", csi.DefaultNMNRVRString, "IPv4 CIDR for grouped River Node Management subnets")
 
+	// HMN
 	initCmd.Flags().String("hmn-cidr", csi.DefaultHMNString, "Overall IPv4 CIDR for all Hardware Management subnets")
 	initCmd.Flags().String("hmn-static-pool", "", "Overall IPv4 CIDR for static Hardware Management load balancer addresses")
 	initCmd.Flags().String("hmn-dynamic-pool", csi.DefaultHMNLBString, "Overall IPv4 CIDR for dynamic Hardware Management load balancer addresses")
 	initCmd.Flags().String("hmn-mtn-cidr", csi.DefaultHMNMTNString, "IPv4 CIDR for grouped Mountain Hardware Management subnets")
 	initCmd.Flags().String("hmn-rvr-cidr", csi.DefaultHMNRVRString, "IPv4 CIDR for grouped River Hardware Management subnets")
 
+	// CMN
 	initCmd.Flags().String("cmn-cidr", "", "Overall IPv4 CIDR for all Customer Management subnets")
+
+	initCmd.Flags().String("cmn-gateway", "", "Gateway for NCNs on the CMN (Administrative/Management)")
+
 	initCmd.Flags().String("cmn-static-pool", "", "Overall IPv4 CIDR for static Customer Management load balancer addresses")
 	initCmd.Flags().String("cmn-dynamic-pool", "", "Overall IPv4 CIDR for dynamic Customer Management load balancer addresses")
 	initCmd.Flags().String("cmn-external-dns", "", "IP Address in the cmn-static-pool for the external dns service \"site-to-system lookups\"")
+
+	// CAN
 	initCmd.Flags().String("can-cidr", "", "Overall IPv4 CIDR for all Customer Access subnets")
+	initCmd.Flags().String("can-gateway", "", "Gateway for NCNs on the CAN (User)")
+
 	initCmd.Flags().String("can-static-pool", "", "Overall IPv4 CIDR for static Customer Access load balancer addresses")
 	initCmd.Flags().String("can-dynamic-pool", "", "Overall IPv4 CIDR for dynamic Customer Access load balancer addresses")
+
+	// CHN
 	initCmd.Flags().String("chn-cidr", "", "Overall IPv4 CIDR for all Customer High-Speed subnets")
+	initCmd.Flags().String("chn-gateway", "", "Gateway for NCNs on the CHN (User)")
 	initCmd.Flags().String("chn-static-pool", "", "Overall IPv4 CIDR for static Customer High-Speed load balancer addresses")
 	initCmd.Flags().String("chn-dynamic-pool", "", "Overall IPv4 CIDR for dynamic Customer High-Speed load balancer addresses")
 
+	// MTL
 	initCmd.Flags().String("mtl-cidr", csi.DefaultMTLString, "Overall IPv4 CIDR for all Provisioning subnets")
+
+	// HSN
 	initCmd.Flags().String("hsn-cidr", csi.DefaultHSNString, "Overall IPv4 CIDR for all HSN subnets")
 	initCmd.Flags().String("hsn-static-pool", "", "Overall IPv4 CIDR for static High Speed load balancer addresses")
 	initCmd.Flags().String("hsn-dynamic-pool", "", "Overall IPv4 CIDR for dynamic High Speed load balancer addresses")
@@ -506,6 +539,17 @@ func init() {
 	initCmd.Flags().String("secondary-servers", "", "Comma seperated list of FQDN/IP for all DNS servers to notify when zone changes are made")
 	initCmd.Flags().String("notify-zones", "", "Comma seperated list of the zones to be allowed transfer")
 	initCmd.AddCommand(emptyCmd)
+	// initCmd.Flags().VisitAll(func(flag *pflag.Flag) {
+	// 	if flag.Name == "interactive" {
+	// 		interactive = true
+	// 		// siteSurvey(v)
+	// 	}
+	// })
+	// interactive, _ := initCmd.Flags().GetBool("interactive")
+	// if interactive {
+	// 	fmt.Println("csi config init: Interactive mode.  Please answer the following questions.")
+	// 	// siteSurvey(v)
+	// }
 }
 
 func initiailzeManifestDir(url, branch, destination string) {
@@ -725,90 +769,6 @@ func writeOutput(v *viper.Viper, shastaNetworks map[string]*csi.IPV4Network, sls
 	}
 }
 
-func validateFlags() []string {
-	var errors []string
-	v := viper.GetViper()
-	expectedCSMVersion := "1.2"
-
-	var requiredFlags = []string{
-		"system-name",
-		"csm-version",
-		"can-gateway",
-		"cmn-gateway",
-		"cmn-cidr",
-		"site-ip",
-		"site-gw",
-		"cmn-external-dns",
-		"site-dns",
-		"site-nic",
-		"bootstrap-ncn-bmc-user",
-		"bootstrap-ncn-bmc-pass",
-		"bican-user-network-name",
-	}
-
-	for _, flagName := range requiredFlags {
-		if !v.IsSet(flagName) || (v.GetString(flagName) == "") {
-			errors = append(errors, fmt.Sprintf("%v is required and not set through flag or config file (%s)", flagName, v.ConfigFileUsed()))
-		}
-	}
-
-	if v.GetString("csm-version") != expectedCSMVersion {
-		errors = append(errors, fmt.Sprintf("CSI inputs must be for csm-version %s", expectedCSMVersion))
-	}
-
-	var ipv4Flags = []string{
-		"site-dns",
-		"cmn-gateway",
-		"can-gateway",
-		"site-gw",
-	}
-	for _, flagName := range ipv4Flags {
-		if v.IsSet(flagName) {
-			if net.ParseIP(v.GetString(flagName)) == nil {
-				errors = append(errors, fmt.Sprintf("%v should be an ip address and is not set correctly through flag or config file (.%s)", flagName, v.ConfigFileUsed()))
-			}
-		}
-	}
-
-	var cidrFlags = []string{
-		"cmn-cidr",
-		"cmn-static-pool",
-		"cmn-dynamic-pool",
-		"can-cidr",
-		"can-static-pool",
-		"can-dynamic-pool",
-		"chn-cidr",
-		"chn-static-pool",
-		"chn-dynamic-pool",
-		"nmn-cidr",
-		"hmn-cidr",
-		"site-ip",
-	}
-
-	for _, flagName := range cidrFlags {
-		if v.IsSet(flagName) && (v.GetString(flagName) != "") {
-			_, _, err := net.ParseCIDR(v.GetString(flagName))
-			if err != nil {
-				errors = append(errors, fmt.Sprintf("%v should be a CIDR in the form 192.168.0.1/24 and is not set correctly through flag or config file (.%s)", flagName, v.ConfigFileUsed()))
-			}
-		}
-	}
-
-	validBican := false
-	bicanFlag := "bican-user-network-name"
-	for _, value := range [3]string{"CAN", "CHN", "HSN"} {
-		if v.GetString(bicanFlag) == value {
-			validBican = true
-			break
-		}
-	}
-	if !validBican {
-		errors = append(errors, fmt.Sprintf("%v must be set to CAN, CHN or HSN. (HSN requires NAT device)", bicanFlag))
-	}
-
-	return errors
-}
-
 // AllocateIps distributes IP reservations for each of the NCNs within the networks
 func AllocateIps(ncns []*csi.LogicalNCN, networks map[string]*csi.IPV4Network) {
 	//log.Printf("I'm here in AllocateIps with %d ncns to work with and %d networks", len(ncns), len(networks))
@@ -856,6 +816,286 @@ func AllocateIps(ncns []*csi.LogicalNCN, networks map[string]*csi.IPV4Network) {
 			}
 			ncn.Networks = append(ncn.Networks, tempNetwork)
 
+		}
+	}
+}
+
+// StringPrompt asks for a string value using the label
+func StringPrompt(label string) string {
+	var s string
+	r := bufio.NewReader(os.Stdin)
+	for {
+		fmt.Fprint(os.Stderr, label+" ")
+		s, _ = r.ReadString('\n')
+		if s != "" {
+			break
+		}
+	}
+	return strings.TrimSpace(s)
+}
+
+// PasswordPrompt asks for a string value using the label.
+// The entered value will not be displayed on the screen
+// while typing.
+func PasswordPrompt(label string) string {
+	var s string
+	for {
+		fmt.Fprint(os.Stderr, label+" ")
+		b, _ := term.ReadPassword(int(syscall.Stdin))
+		s = string(b)
+		if s != "" {
+			break
+		}
+	}
+	fmt.Println()
+	return s
+}
+
+func validateIPs(ip interface{}) (bool, error) {
+	fmt.Println("validating ip")
+	if net.ParseIP(fmt.Sprintf("%v", ip)) != nil {
+		error := fmt.Sprintf("%v should be an ip address", ip)
+		return false, errors.New(error)
+	}
+	return true, nil
+}
+
+func validateCIDRs(cidr interface{}) (bool, error) {
+	_, _, err := net.ParseCIDR(fmt.Sprintf("%v", cidr))
+	if err != nil {
+		error := fmt.Sprintf("%v should be a CIDR in the form 192.168.0.1/24", cidr)
+		return false, errors.New(error)
+	}
+	return true, nil
+}
+
+func validateBican(bican interface{}) (bool, error) {
+	validBican := false
+	for _, value := range [3]string{"CAN", "CHN", "HSN"} {
+		if fmt.Sprintf("%v", bican) == value {
+			validBican = true
+			break
+		}
+	}
+	if !validBican {
+		error := fmt.Sprintf("%v must be one of CAN, CHN or HSN. (HSN requires NAT device)", bican)
+		return false, errors.New(error)
+	}
+	return true, nil
+}
+
+// siteSurvey is an interactive wizard that asks the user questions about the site in order to craft a configuration payload
+func siteSurvey(v *viper.Viper) {
+	// Set a counter and get the number of flags that need to be populated
+	i := 0
+
+	// for p := range cmd.Flags().Parse() {
+	// 	fmt.Println(p.Name)
+	// }
+	// Loop through the flags and ask the user to enter the value
+	for key, val := range v.AllSettings() {
+		// increment the counter
+		i++
+
+		// Get the total number of flags
+		flags := len(v.AllSettings())
+
+		// Show progress
+		cnt := fmt.Sprintf("(%d of %d) Enter %s: \n", i, flags, key)
+
+		// Prompt the user for the value
+		var userValue string
+		if key == "bootstrap-ncn-bmc-pass" {
+			userValue = PasswordPrompt(cnt)
+		} else {
+			userValue = StringPrompt(cnt)
+		}
+
+		// Set the flag to the value entered by the user
+		v.Set(key, userValue)
+
+		// each key is a flag name has it's own checks for validity
+		switch key {
+		case "application-node-config-yaml":
+
+		case "bgp-asn":
+
+		case "bgp-chn-asn":
+
+		case "bgp-cmn-asn":
+
+		case "bgp-nmn-asn":
+
+		case "bgp-peer-types":
+
+		case "bgp-peers":
+
+		case "bican-user-network-name":
+			validateBican(userValue)
+		case "bootstrap-ncn-bmc-pass":
+
+		case "bootstrap-ncn-bmc-user":
+
+		case "cabinets-yaml":
+
+		case "can-bootstrap-vlan":
+
+		case "can-cidr":
+			validateCIDRs(val)
+		case "can-dynamic-pool":
+			validateCIDRs(val)
+		case "can-gateway":
+			validateIPs(val)
+		case "can-static-pool":
+			validateCIDRs(val)
+		case "ceph-cephfs-image":
+
+		case "ceph-rbd-image":
+
+		case "chn-cidr":
+			validateCIDRs(val)
+		case "chn-dynamic-pool":
+			validateCIDRs(val)
+		case "chn-gateway":
+
+		case "chn-static-pool":
+			validateCIDRs(val)
+		case "cmn-bootstrap-vlan":
+
+		case "cmn-cidr":
+			validateCIDRs(val)
+		case "cmn-dynamic-pool":
+			validateCIDRs(val)
+		case "cmn-external-dns":
+
+		case "cmn-gateway":
+			validateIPs(val)
+		case "cmn-static-pool":
+			validateCIDRs(val)
+		case "config":
+
+		case "csi config init":
+
+		case "csm-version":
+			// expectedCSMVersion := "1.2"
+			// if v.GetString("csm-version") != expectedCSMVersion {
+			// 	errors = append(errors, fmt.Sprintf("CSI inputs must be for csm-version %s", expectedCSMVersion))
+			// }
+		case "docker-image-registry":
+
+		case "first-master-hostname":
+
+		case "help":
+
+		case "hill-cabinets":
+
+		case "hmn-bootstrap-vlan":
+
+		case "hmn-cidr":
+			validateCIDRs(val)
+		case "hmn-connections":
+
+		case "hmn-dynamic-pool":
+
+		case "hmn-mtn-cidr":
+
+		case "hmn-rvr-cidr":
+
+		case "hmn-static-pool":
+
+		case "hsn-cidr":
+
+		case "hsn-dynamic-pool":
+
+		case "hsn-static-pool":
+
+		case "install-ncn":
+
+		case "install-ncn-bond-members":
+
+		case "interactive":
+
+		case "ipv4-resolvers":
+
+		case "k8s-api-auditing-enabled":
+
+		case "management-net-ips":
+
+		case "manifest-release":
+
+		case "mountain-cabinets":
+
+		case "mtl-cidr":
+
+		case "ncn-metadata":
+
+		case "ncn-mgmt-node-auditing-enabled":
+
+		case "nmn-bootstrap-vlan":
+
+		case "nmn-cidr":
+			validateCIDRs(val)
+		case "nmn-dynamic-pool":
+
+		case "nmn-mtn-cidr":
+
+		case "nmn-rvr-cidr":
+
+		case "nmn-static-pool":
+
+		case "notify-zones":
+
+		case "ntp-peers":
+
+		case "ntp-pool":
+
+		case "ntp-pools":
+
+		case "ntp-servers":
+
+		case "ntp-timezone":
+
+		case "primary-server-name":
+
+		case "retain-unused-user-network":
+
+		case "river-cabinets":
+
+		case "rpm-repository":
+
+		case "secondary-servers":
+
+		case "site-dns":
+			validateIPs(val)
+		case "site-domain":
+
+		case "site-gw":
+			validateIPs(val)
+		case "site-ip":
+			validateCIDRs(val)
+		case "site-nic":
+
+		case "starting-hill-cabinet":
+
+		case "starting-mountain-cabinet":
+
+		case "starting-mountain-nid":
+
+		case "starting-river-cabinet":
+
+		case "starting-river-nid":
+
+		case "supernet":
+
+		case "switch-metadata":
+
+		case "system-name":
+
+		case "v2-registry":
+
+		/* you can have any number of case statements */
+		default: /* Optional */
+			fmt.Println("Unknown flag:", key)
 		}
 	}
 }
