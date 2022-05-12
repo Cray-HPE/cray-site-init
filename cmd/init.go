@@ -24,6 +24,7 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -387,6 +388,7 @@ func init() {
 	initCmd.DisableAutoGenTag = true
 
 	// Flags with defaults for initializing a configuration
+	initCmd.Flags().Bool("interactive", false, "Interactive wizard that prompts for user input to generate a configuration")
 
 	// System Configuration Flags based on previous system_config.yml and networks_derived.yml
 	initCmd.Flags().String("system-name", "sn-2024", "Name of the System")
@@ -747,13 +749,22 @@ func validateFlags() []string {
 	}
 
 	for _, flagName := range requiredFlags {
-		if !v.IsSet(flagName) || (v.GetString(flagName) == "") {
-			errors = append(errors, fmt.Sprintf("%v is required and not set through flag or config file (%s)", flagName, v.ConfigFileUsed()))
-		}
-	}
+		if v.GetBool("interactive") {
+			fmt.Println("interactive mode", flagName)
+			// Prompt the user to enter the value
+			flagValue := StringPrompt("Enter " + flagName + ":")
+			// Set the flag to the value entered by the user
+			v.Set(flagName, flagValue)
 
-	if v.GetString("csm-version") != expectedCSMVersion {
-		errors = append(errors, fmt.Sprintf("CSI inputs must be for csm-version %s", expectedCSMVersion))
+		} else {
+			if !v.IsSet(flagName) || (v.GetString(flagName) == "") {
+				errors = append(errors, fmt.Sprintf("%v is required and not set through flag or config file (%s)", flagName, v.ConfigFileUsed()))
+			}
+		}
+
+		if v.GetString("csm-version") != expectedCSMVersion {
+			errors = append(errors, fmt.Sprintf("CSI inputs must be for csm-version %s", expectedCSMVersion))
+		}
 	}
 
 	var ipv4Flags = []string{
@@ -807,6 +818,20 @@ func validateFlags() []string {
 	}
 
 	return errors
+}
+
+// StringPrompt asks for a string value using the label
+func StringPrompt(label string) string {
+	var s string
+	r := bufio.NewReader(os.Stdin)
+	for {
+		fmt.Fprint(os.Stderr, label+" ")
+		s, _ = r.ReadString('\n')
+		if s != "" {
+			break
+		}
+	}
+	return strings.TrimSpace(s)
 }
 
 // AllocateIps distributes IP reservations for each of the NCNs within the networks
