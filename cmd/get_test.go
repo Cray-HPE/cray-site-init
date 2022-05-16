@@ -1,5 +1,5 @@
-// +build integration
-// +build !shcd
+//go:build integration && !shcd
+// +build integration,!shcd
 
 package cmd
 
