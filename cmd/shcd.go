@@ -64,7 +64,7 @@ var shcdCmd = &cobra.Command{
 		validSHCD, err := ValidateSchema(args[0], schemaFile)
 
 		if err != nil {
-			log.Fatalf(err.Error())
+			log.Fatalf("cannot validate schema: %v", err.Error())
 		}
 
 		// If the file meets the schema criteria
@@ -132,7 +132,13 @@ func init() {
 }
 
 // The Shcd type represents the entire machine-readable SHCD inside a go struct
-type Shcd []ID
+type Shcd struct {
+	Architecture string `json:"architecture"`
+	CanuVersion  string `json:"canu_version"`
+	ShcdFile     string `json:"shcd_file"`
+	UpdatedAt    string `json:"updated_at"`
+	Topology     []ID   `json:"topology"`
+}
 
 // The ID type represents all of the information needed for
 type ID struct {
@@ -508,22 +514,22 @@ func createNCNSeed(shcd Shcd, f string) {
 	var ncns NCNMetadata
 
 	// For each entry in the SHCD
-	for i := range shcd {
+	for i := range shcd.Topology {
 
-		switch shcd[i].Type {
+		switch shcd.Topology[i].Type {
 
 		// for ncn_metadata.csv, we only care about the servers
 		case "server":
 
 			// Only NCNs should be in ncn_metadata.csv
-			if !strings.HasPrefix(shcd[i].CommonName, "ncn") {
+			if !strings.HasPrefix(shcd.Topology[i].CommonName, "ncn") {
 				continue
 			}
 
 			// Generate the xname based on the rules we predefine
-			ncnXname := shcd[i].GenerateXname()
+			ncnXname := shcd.Topology[i].GenerateXname()
 			// Do the same for the ncn role and subrole
-			ncnRole, ncnSubrole := shcd[i].GenerateNCNRoleSubrole()
+			ncnRole, ncnSubrole := shcd.Topology[i].GenerateNCNRoleSubrole()
 
 			// Create a new Switch type and append it to the SwitchMetadata slice
 			ncns = append(ncns, NcnMacs{
@@ -602,24 +608,24 @@ func createSwitchSeed(shcd Shcd, f string) {
 	var switches SwitchMetadata
 
 	// For each entry in the SHCD
-	for i := range shcd {
+	for i := range shcd.Topology {
 
-		switch shcd[i].Type {
+		switch shcd.Topology[i].Type {
 
 		// for switch_metadata.csv, we only care about the switches
 		case "switch":
 
 			// HSN switch should not be in switch_metadata.csv
-			if strings.HasPrefix(shcd[i].CommonName, "sw-hsn") {
+			if strings.HasPrefix(shcd.Topology[i].CommonName, "sw-hsn") {
 				continue
 			}
 
 			// Generate the xname based on the rules we predefine
-			switchXname := shcd[i].GenerateXname()
+			switchXname := shcd.Topology[i].GenerateXname()
 			// Do the same for the switch type
-			switchType := shcd[i].GenerateSwitchType()
+			switchType := shcd.Topology[i].GenerateSwitchType()
 			// The vendor just needs to be capitalized
-			switchVendor := strings.Title(shcd[i].Vendor)
+			switchVendor := strings.Title(shcd.Topology[i].Vendor)
 
 			// Create a new Switch type and append it to the SwitchMetadata slice
 			switches = append(switches, Switch{
@@ -695,7 +701,7 @@ func createHMNSeed(shcd Shcd, f string) {
 	var hmn HMNConnections
 
 	// For each entry in the shcd
-	for i := range shcd {
+	for i := range shcd.Topology {
 
 		// instantiate a new HMNComponent
 		hmnConnection := HMNComponent{}
@@ -705,23 +711,23 @@ func createHMNSeed(shcd Shcd, f string) {
 		// nodeName := unNormalizeSemiStandardShcdNonName(shcd[i].CommonName)
 
 		// Setting the source name, source rack, source location, is pretty straightforward here
-		hmnConnection.Source = shcd[i].CommonName
-		hmnConnection.SourceRack = shcd[i].Location.Rack
-		hmnConnection.SourceLocation = shcd[i].Location.Elevation
+		hmnConnection.Source = shcd.Topology[i].CommonName
+		hmnConnection.SourceRack = shcd.Topology[i].Location.Rack
+		hmnConnection.SourceLocation = shcd.Topology[i].Location.Elevation
 
 		// Now it starts to get more complex.
 		// shcd.json has an array of ports that the device is connected to
 		// loop through the ports and find the destination id, which can be used
 		// to find the destination info
-		for p := range shcd[i].Ports {
+		for p := range shcd.Topology[i].Ports {
 			// get the id of the destination node, so it can be easily used an an index
-			destID := shcd[i].Ports[p].DestNodeID
+			destID := shcd.Topology[i].Ports[p].DestNodeID
 			// Special to this hmn_connections.json file, we need this SubRack/dense node stuff
 			// if the node is a dense compute node--indiciated by L or R in the location,
 			// we need to add the SourceSubLocation and SourceParent
 			// There should be a row in the shcd that has the SubRack name, which
 			// shares the same u location as the entries with the L or R in the location
-			if strings.HasSuffix(shcd[i].Location.Elevation, "L") || strings.HasSuffix(shcd[i].Location.Elevation, "R") {
+			if strings.HasSuffix(shcd.Topology[i].Location.Elevation, "L") || strings.HasSuffix(shcd.Topology[i].Location.Elevation, "R") {
 				// hmnConnection.SourceSubLocation = shcd[i].Location.Rack
 				hmnConnection.SourceParent = "FIXME INSERT SUBRACK HERE"
 				// FIXME: remove above and uncomment below when we have a way to get the subrack name
@@ -729,9 +735,9 @@ func createHMNSeed(shcd Shcd, f string) {
 			}
 
 			// Now use the destID again to set the destination info
-			hmnConnection.DestinationRack = shcd[destID].Location.Rack
-			hmnConnection.DestinationLocation = shcd[destID].Location.Elevation
-			hmnConnection.DestinationPort = fmt.Sprint("j", shcd[i].Ports[p].DestPort)
+			hmnConnection.DestinationRack = shcd.Topology[destID].Location.Rack
+			hmnConnection.DestinationLocation = shcd.Topology[destID].Location.Elevation
+			hmnConnection.DestinationPort = fmt.Sprint("j", shcd.Topology[i].Ports[p].DestPort)
 		}
 
 		// finally, append the created HMNComponent to the HMNConnections slice
@@ -766,7 +772,7 @@ func createANCSeed(shcd Shcd, f string) error {
 	prefixMap := make(map[string]string)
 
 	// Search the shcd for Application Nodes
-	for _, id := range shcd {
+	for _, id := range shcd.Topology {
 		source := strings.ToLower(id.CommonName)
 		idType := strings.ToLower(id.Type)
 		if idType != "server" ||
