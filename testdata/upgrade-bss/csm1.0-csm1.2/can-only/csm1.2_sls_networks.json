@@ -1233,13 +1233,12 @@
                 "packages",
                 "registry",
                 "spire.local",
-                "api_gw_service",
                 "registry.local",
                 "packages",
                 "packages.local",
                 "spire"
               ],
-              "Comment": "api-gw-service,api-gw-service-nmn.local,packages,registry,spire.local,api_gw_service,registry.local,packages,packages.local,spire"
+              "Comment": "api-gw-service,api-gw-service-nmn.local,packages,registry,spire.local,registry.local,packages,packages.local,spire"
             }
           ],
           "Name": "nmn_metallb_address_pool",
