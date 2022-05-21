@@ -35,6 +35,8 @@ pipeline {
 
   options {
     buildDiscarder(logRotator(numToKeepStr: "10"))
+    disableConcurrentBuilds()
+    timeout(time: 20, unit: 'MINUTES')
     timestamps()
   }
 
@@ -48,8 +50,15 @@ pipeline {
   stages {
 
     stage("Prepare: RPM") {
+      agent {
+        docker {
+          label 'docker'
+          reuseNode true
+          image "artifactory.algol60.net/csm-docker/stable/csm-docker-sle-go:${env.GO_VERSION}"
+        }
+      }
       steps {
-        runLibraryScript("addRpmMetaData.sh", env.SPEC_FILE)
+        runLibraryScript("addRpmMetaData.sh", "${env.GIT_REPO_NAME}.spec")
         sh "make prepare"
       }
     }
@@ -60,7 +69,6 @@ pipeline {
 		  label 'docker'
           reuseNode true
 		  image "artifactory.algol60.net/csm-docker/stable/csm-docker-sle-go:${env.GO_VERSION}"
-          args "-v ${env.WORKSPACE}:/workspace"
         }
       }
       steps {
