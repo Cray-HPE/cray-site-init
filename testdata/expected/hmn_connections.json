@@ -116,13 +116,13 @@
     "SourceRack": "x3000",
     "SourceLocation": "u36",
     "DestinationRack": "x3000",
-    "DestinationLocation": "u31",
+    "DestinationLocation": "u35",
     "DestinationPort": "j56"
   },
   {
     "Source": "sw-leaf-004",
     "SourceRack": "x3000",
-    "SourceLocation": "u31",
+    "SourceLocation": "u35",
     "DestinationRack": "x3000",
     "DestinationLocation": "u36",
     "DestinationPort": "j56"
@@ -132,13 +132,13 @@
     "SourceRack": "x3000",
     "SourceLocation": "u34",
     "DestinationRack": "x3000",
-    "DestinationLocation": "u32",
+    "DestinationLocation": "u33",
     "DestinationPort": "j56"
   },
   {
     "Source": "sw-leaf-002",
     "SourceRack": "x3000",
-    "SourceLocation": "u32",
+    "SourceLocation": "u33",
     "DestinationRack": "x3000",
     "DestinationLocation": "u34",
     "DestinationPort": "j56"
@@ -164,7 +164,7 @@
     "SourceRack": "x3000",
     "SourceLocation": "u16",
     "DestinationRack": "x3000",
-    "DestinationLocation": "u32",
+    "DestinationLocation": "u33",
     "DestinationPort": "j13"
   },
   {
@@ -172,7 +172,7 @@
     "SourceRack": "x3000",
     "SourceLocation": "u15",
     "DestinationRack": "x3000",
-    "DestinationLocation": "u32",
+    "DestinationLocation": "u33",
     "DestinationPort": "j12"
   },
   {
@@ -180,7 +180,7 @@
     "SourceRack": "x3000",
     "SourceLocation": "u10",
     "DestinationRack": "x3000",
-    "DestinationLocation": "u32",
+    "DestinationLocation": "u33",
     "DestinationPort": "j6"
   },
   {
@@ -188,7 +188,7 @@
     "SourceRack": "x3000",
     "SourceLocation": "u09",
     "DestinationRack": "x3000",
-    "DestinationLocation": "u31",
+    "DestinationLocation": "u35",
     "DestinationPort": "j4"
   },
   {
@@ -196,7 +196,7 @@
     "SourceRack": "x3000",
     "SourceLocation": "u08",
     "DestinationRack": "x3000",
-    "DestinationLocation": "u31",
+    "DestinationLocation": "u35",
     "DestinationPort": "j3"
   },
   {
@@ -204,7 +204,7 @@
     "SourceRack": "x3000",
     "SourceLocation": "u07",
     "DestinationRack": "x3000",
-    "DestinationLocation": "u31",
+    "DestinationLocation": "u35",
     "DestinationPort": "j2"
   },
   {
@@ -212,7 +212,7 @@
     "SourceRack": "x3000",
     "SourceLocation": "u06",
     "DestinationRack": "x3000",
-    "DestinationLocation": "u32",
+    "DestinationLocation": "u33",
     "DestinationPort": "j5"
   },
   {
@@ -220,7 +220,7 @@
     "SourceRack": "x3000",
     "SourceLocation": "u05",
     "DestinationRack": "x3000",
-    "DestinationLocation": "u32",
+    "DestinationLocation": "u33",
     "DestinationPort": "j4"
   },
   {
@@ -228,7 +228,7 @@
     "SourceRack": "x3000",
     "SourceLocation": "u04",
     "DestinationRack": "x3000",
-    "DestinationLocation": "u32",
+    "DestinationLocation": "u33",
     "DestinationPort": "j3"
   },
   {
@@ -236,7 +236,7 @@
     "SourceRack": "x3000",
     "SourceLocation": "u03",
     "DestinationRack": "x3000",
-    "DestinationLocation": "u31",
+    "DestinationLocation": "u35",
     "DestinationPort": "j1"
   },
   {
@@ -244,7 +244,7 @@
     "SourceRack": "x3000",
     "SourceLocation": "u02",
     "DestinationRack": "x3000",
-    "DestinationLocation": "u32",
+    "DestinationLocation": "u33",
     "DestinationPort": "j2"
   },
   {
@@ -252,7 +252,7 @@
     "SourceRack": "x3000",
     "SourceLocation": "u01",
     "DestinationRack": "x3000",
-    "DestinationLocation": "u32",
+    "DestinationLocation": "u33",
     "DestinationPort": "j1"
   },
   {
@@ -288,7 +288,7 @@
     "DestinationPort": "j48"
   },
   {
-    "Source": "sw-hsn-002",
+    "Source": "sw-hsn02",
     "SourceRack": "x3000",
     "SourceLocation": "u40",
     "DestinationRack": "x3000",
@@ -296,7 +296,7 @@
     "DestinationPort": "j47"
   },
   {
-    "Source": "sw-hsn-001",
+    "Source": "sw-hsn01",
     "SourceRack": "x3000",
     "SourceLocation": "u39",
     "DestinationRack": "x3000",

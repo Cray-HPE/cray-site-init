@@ -1,3 +1,6 @@
+//go:build !integration || shcd
+// +build !integration shcd
+
 /*
  *
  *  MIT License
@@ -23,12 +26,6 @@
  *  OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-//go:build !integration || shcd
-// +build !integration shcd
-
-/*
-Copyright 2021 Hewlett Packard Enterprise Development LP
-*/
 
 package cmd
 

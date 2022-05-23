@@ -961,7 +961,7 @@
       ],
       "location": {
         "rack": "x3000",
-        "elevation": "u31"
+        "elevation": "u35"
       }
     },
     {
@@ -1261,7 +1261,7 @@
       ],
       "location": {
         "rack": "x3000",
-        "elevation": "u32"
+        "elevation": "u33"
       }
     },
     {
