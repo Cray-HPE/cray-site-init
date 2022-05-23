@@ -401,7 +401,7 @@ func TestGenerateHMNSourceName(t *testing.T) {
 		{
 			desc:       "Common Name ncn-m001 returns nm01",
 			commonName: "ncn-m001",
-			want:       "nm01",
+			want:       "mn01",
 		},
 		{
 			desc:       "Common Name ncn-w002 returns wn02",

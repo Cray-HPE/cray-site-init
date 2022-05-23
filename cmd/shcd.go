@@ -451,65 +451,6 @@ func (id ID) GenerateSwitchType() (st string) {
 	return st
 }
 
-// GenerateSwitchSourceName crafts and prints the switch types that switch_metadata.csv expects
-func (id ID) GenerateSwitchSourceName() (src string) {
-
-	// var prefix string
-
-	// The Source in hmn_connections.json differs from the common_name in the SHCD
-	// These conditionals just adjust for the names we expect in that file
-	if strings.HasPrefix(id.CommonName, "ncn-m") ||
-		strings.HasPrefix(id.CommonName, "ncn-s") ||
-		strings.HasPrefix(id.CommonName, "ncn-w") ||
-		strings.HasPrefix(id.CommonName, "uan") ||
-		strings.HasPrefix(id.CommonName, "cn") ||
-		strings.HasPrefix(id.CommonName, "sw-hsn") ||
-		strings.HasPrefix(id.CommonName, "x3000p") ||
-		strings.HasPrefix(id.CommonName, "lnet") {
-
-		// Get the just number of the elevation
-		r := regexp.MustCompile(`\d+`)
-
-		// matches contains the numbers found in the common name
-		matches := r.FindAllString(id.CommonName, -1)
-
-		if strings.HasPrefix(id.CommonName, "uan") {
-
-			// if it's a uan, print "uan" and the number
-			src = string(id.CommonName[0:3]) + matches[0]
-
-		} else if strings.HasPrefix(id.CommonName, "cn") {
-
-			// if it's a compute node, print "cn" and the number
-			src = string(id.CommonName[0:2]) + matches[0]
-
-		} else if strings.HasPrefix(id.CommonName, "lnet") {
-
-			// if it's an lnet, print "lnet" and the number
-			src = string(id.CommonName[0:4]) + matches[0]
-
-		} else if strings.HasPrefix(id.CommonName, "x3000p") {
-
-			// if it's a pdu, print the entire name
-			src = string(id.CommonName)
-
-		} else if strings.HasPrefix(id.CommonName, "sw-hsn") {
-
-			// if it's a hsn switch, print the entire name
-			src = string(id.CommonName)
-
-		} else {
-
-			// if nothing else matches, return an empty string
-			src = ""
-
-		}
-	}
-
-	// Return the Source name hmn_connections.json is expecting
-	return src
-}
-
 // GenerateHMNSourceName crafts and prints the switch types that hmn_connections.json expects
 func (id ID) GenerateHMNSourceName() string {
 	var src string
@@ -521,7 +462,7 @@ func (id ID) GenerateHMNSourceName() string {
 	// matches contains the numbers found in the common name
 	matches := r.FindAllString(id.CommonName, -1)
 	if strings.HasPrefix(id.CommonName, "ncn-m") {
-		src = "nm" + matches[0]
+		src = "mn" + matches[0]
 	} else if strings.HasPrefix(id.CommonName, "ncn-w") {
 		src = "wn" + matches[0]
 	} else if strings.HasPrefix(id.CommonName, "ncn-s") {
