@@ -445,6 +445,9 @@ func (id ID) GenerateSwitchType() (st string) {
 	} else if strings.Contains(id.CommonName, "cdu") {
 
 		st = "CDU"
+	} else if strings.Contains(id.CommonName, "edge") {
+
+		st = "Edge"
 	}
 
 	// Return the switch type switch_metadata.csv is expecting
