@@ -284,7 +284,8 @@ func (id ID) GenerateXname() (xn string) {
 
 		// Spine switches
 	} else if strings.HasPrefix(id.CommonName, "sw-spine") ||
-		strings.HasPrefix(id.CommonName, "sw-leaf") {
+		strings.HasPrefix(id.CommonName, "sw-leaf") ||
+		strings.HasPrefix(id.CommonName, "sw-edge") {
 
 		// Convert the rack to a string
 		cabString := id.Location.Rack
