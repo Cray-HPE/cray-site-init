@@ -418,6 +418,16 @@ func TestGenerateHMNSourceName(t *testing.T) {
 			commonName: "uan001",
 			want:       "uan01",
 		},
+		{
+			desc:       "Common Name pdu-x3000-001 returns x3000p1",
+			commonName: "pdu-x3000-001",
+			want:       "x3000p1",
+		},
+		{
+			desc:       "Common Name sw-hsn-001 returns sw-hsn01",
+			commonName: "sw-hsn-001",
+			want:       "sw-hsn01",
+		},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {

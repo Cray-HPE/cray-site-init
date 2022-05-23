@@ -272,7 +272,7 @@
     "DestinationPort": "j28"
   },
   {
-    "Source": "pdu-x3000-001",
+    "Source": "x3000p1",
     "SourceRack": "x3000",
     "SourceLocation": "p1",
     "DestinationRack": "x3000",
@@ -280,7 +280,7 @@
     "DestinationPort": "j48"
   },
   {
-    "Source": "pdu-x3000-000",
+    "Source": "x3000p0",
     "SourceRack": "x3000",
     "SourceLocation": "p0",
     "DestinationRack": "x3000",
