@@ -450,8 +450,8 @@ func (id ID) GenerateSwitchType() (st string) {
 	return st
 }
 
-// GenerateHMNSourceName crafts and prints the switch types that switch_metadata.csv expects
-func (id ID) GenerateHMNSourceName() (src string) {
+// GenerateSwitchSourceName crafts and prints the switch types that switch_metadata.csv expects
+func (id ID) GenerateSwitchSourceName() (src string) {
 
 	// var prefix string
 
@@ -506,6 +506,30 @@ func (id ID) GenerateHMNSourceName() (src string) {
 	}
 
 	// Return the Source name hmn_connections.json is expecting
+	return src
+}
+
+// GenerateHMNSourceName crafts and prints the switch types that hmn_connections.json expects
+func (id ID) GenerateHMNSourceName() string {
+	var src string
+	// The Source in hmn_connections.json differs from the common_name in the paddle file
+	// These conditionals just adjust for the names we expect in that file
+	// Get the just number of the elevation
+	r := regexp.MustCompile(`\d{2}$`)
+
+	// matches contains the numbers found in the common name
+	matches := r.FindAllString(id.CommonName, -1)
+	if strings.HasPrefix(id.CommonName, "ncn-m") {
+		src = "nm" + matches[0]
+	} else if strings.HasPrefix(id.CommonName, "ncn-w") {
+		src = "wn" + matches[0]
+	} else if strings.HasPrefix(id.CommonName, "ncn-s") {
+		src = "sn" + matches[0]
+	} else if strings.HasPrefix(id.CommonName, "uan") {
+		src = "uan" + matches[0]
+	} else {
+		src = id.CommonName
+	}
 	return src
 }
 
@@ -711,7 +735,7 @@ func createHMNSeed(shcd Shcd, f string) {
 		// nodeName := unNormalizeSemiStandardShcdNonName(shcd[i].CommonName)
 
 		// Setting the source name, source rack, source location, is pretty straightforward here
-		hmnConnection.Source = shcd.Topology[i].CommonName
+		hmnConnection.Source = shcd.Topology[i].GenerateHMNSourceName()
 		hmnConnection.SourceRack = shcd.Topology[i].Location.Rack
 		hmnConnection.SourceLocation = shcd.Topology[i].Location.Elevation
 

@@ -386,3 +386,46 @@ func TestCreateApplicationNodeConfig(t *testing.T) {
 		}
 	}
 }
+
+func TestGenerateHMNSourceName(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		commonName string
+		want       string
+	}{
+		{
+			desc:       "Common Name bogus returns bogus",
+			commonName: "bogus",
+			want:       "bogus",
+		},
+		{
+			desc:       "Common Name ncn-m001 returns nm01",
+			commonName: "ncn-m001",
+			want:       "nm01",
+		},
+		{
+			desc:       "Common Name ncn-w002 returns wn02",
+			commonName: "ncn-w002",
+			want:       "wn02",
+		},
+		{
+			desc:       "Common Name ncn-s003 returns sn03",
+			commonName: "ncn-s003",
+			want:       "sn03",
+		},
+		{
+			desc:       "Common Name uan001 returns uan01",
+			commonName: "uan001",
+			want:       "uan01",
+		},
+	}
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+			ID := ID{CommonName: tC.commonName}
+			got := ID.GenerateHMNSourceName()
+			if tC.want != got {
+				t.Errorf("want common name %q, got %q", tC.want, got)
+			}
+		})
+	}
+}
