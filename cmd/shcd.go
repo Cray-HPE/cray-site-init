@@ -23,9 +23,6 @@
  *  OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-/*
-Copyright 2021 Hewlett Packard Enterprise Development LP
-*/
 
 package cmd
 
