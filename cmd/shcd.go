@@ -476,6 +476,8 @@ func (id ID) GenerateHMNSourceName() string {
 		r := regexp.MustCompile(`\d{1}$`)
 		matches := r.FindAllString(id.CommonName, -1)
 		src = "x3000p" + matches[0]
+	} else if strings.HasPrefix(id.CommonName, "cn") {
+		src = "cn" + matches[0]
 	} else if strings.HasPrefix(id.CommonName, "sw-hsn-") {
 		src = "sw-hsn" + matches[0]
 	} else {
