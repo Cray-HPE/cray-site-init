@@ -514,22 +514,14 @@ func createNCNSeed(shcd Shcd, f string) {
 
 	// For each entry in the SHCD
 	for i := range shcd.Topology {
-
-		switch shcd.Topology[i].Type {
-
-		// for ncn_metadata.csv, we only care about the servers
-		case "server":
-
-			// Only NCNs should be in ncn_metadata.csv
+		if shcd.Topology[i].Type == "server" {
 			if !strings.HasPrefix(shcd.Topology[i].CommonName, "ncn") {
 				continue
 			}
-
 			// Generate the xname based on the rules we predefine
 			ncnXname := shcd.Topology[i].GenerateXname()
 			// Do the same for the ncn role and subrole
 			ncnRole, ncnSubrole := shcd.Topology[i].GenerateNCNRoleSubrole()
-
 			// Create a new Switch type and append it to the SwitchMetadata slice
 			ncns = append(ncns, NcnMacs{
 				Xname:        ncnXname,
@@ -540,10 +532,6 @@ func createNCNSeed(shcd Shcd, f string) {
 				Bond0Mac0:    "MAC3",
 				Bond0Mac1:    "MAC4",
 			})
-
-		default:
-			// Skip anything else since we only need ncns
-			continue
 		}
 	}
 
@@ -556,35 +544,24 @@ func createNCNSeed(shcd Shcd, f string) {
 
 	// Then create a new slice with the three pieces of information needed
 	for _, v := range ncns {
-
 		row := []string{v.Xname, v.Role, v.Subrole, v.BmcMac, v.BootstrapMac, v.Bond0Mac0, v.Bond0Mac1}
-
 		// Append it to the records slice under the column headers
 		records = append(records, row)
-
 	}
 
 	// Create the file object
 	ncnmeta, err := os.Create(ncnMetadata)
-
 	if err != nil {
 		log.Fatalln(err)
 	}
-
 	defer ncnmeta.Close()
 
 	// Create a writer, which will write the data to the file
 	writer := csv.NewWriter(ncnmeta)
-
 	defer writer.Flush()
-
-	if err != nil {
-		log.Fatalln(err)
-	}
 
 	// Create a var for all the records except the header
 	r := records[1:]
-
 	// Pass an anonymous function to sort.Slice to sort everything except the headers
 	sort.Slice(r, func(i, j int) bool {
 		return r[i][0] < r[j][0]
@@ -608,17 +585,11 @@ func createSwitchSeed(shcd Shcd, f string) {
 
 	// For each entry in the SHCD
 	for i := range shcd.Topology {
-
-		switch shcd.Topology[i].Type {
-
-		// for switch_metadata.csv, we only care about the switches
-		case "switch":
-
+		if shcd.Topology[i].Type == "switch" {
 			// HSN switch should not be in switch_metadata.csv
 			if strings.HasPrefix(shcd.Topology[i].CommonName, "sw-hsn") {
 				continue
 			}
-
 			// Generate the xname based on the rules we predefine
 			switchXname := shcd.Topology[i].GenerateXname()
 			// Do the same for the switch type
@@ -632,10 +603,6 @@ func createSwitchSeed(shcd Shcd, f string) {
 				Type:  switchType,
 				Brand: switchVendor,
 			})
-
-		default:
-			// Skip anything else since we only need switches
-			continue
 		}
 	}
 
@@ -648,9 +615,7 @@ func createSwitchSeed(shcd Shcd, f string) {
 
 	// Then create a new slice with the three pieces of information needed
 	for _, v := range switches {
-
 		row := []string{v.Xname, v.Type, v.Brand}
-
 		// Append it to the records slice under the column headers
 		records = append(records, row)
 
@@ -658,21 +623,14 @@ func createSwitchSeed(shcd Shcd, f string) {
 
 	// Create the file object
 	sm, err := os.Create(switchMetadata)
-
 	if err != nil {
 		log.Fatalln(err)
 	}
-
 	defer sm.Close()
 
 	// Create a writer, which will write the data to the file
 	writer := csv.NewWriter(sm)
-
 	defer writer.Flush()
-
-	if err != nil {
-		log.Fatalln(err)
-	}
 
 	// Create a var for all the records except the header
 	r := records[1:]
@@ -745,10 +703,16 @@ func createHMNSeed(shcd Shcd, f string) {
 	}
 
 	// Indent the file for better human-readability
-	file, _ := json.MarshalIndent(hmn, "", " ")
+	file, err := json.MarshalIndent(hmn, "", " ")
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	// Write the file to disk
-	_ = ioutil.WriteFile(hmnConnections, file, 0644)
+	err = ioutil.WriteFile(hmnConnections, file, 0644)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	log.Printf("Created %v from SHCD data\n", hmnConnections)
 
@@ -879,16 +843,21 @@ func createANCSeed(shcd Shcd, f string) error {
 	ancYaml := yaml.Node{Kind: yaml.MappingNode, Content: []*yaml.Node{&prefixesTitle, &prefixes, &prefixHSMSubrolesTitle, &prefixHSMSubroles, &aliasesTitle, &aliases}}
 
 	ancFile, err := os.Create(applicationNodeConfig)
-
 	if err != nil {
 		log.Fatalln(err)
 	}
 	defer ancFile.Close()
 	_, err = ancFile.WriteString("---\n")
+	if err != nil {
+		log.Fatalln(err)
+	}
 	e := yaml.NewEncoder(ancFile)
 	defer e.Close()
 	e.SetIndent(2)
 	err = e.Encode(ancYaml)
+	if err != nil {
+		log.Fatalln(err)
+	}
 	log.Printf("Created %v from SHCD data\n", applicationNodeConfig)
 	return err
 }
@@ -902,18 +871,15 @@ func ValidateSchema(f string, s string) (bool, error) {
 	documentLoader := gojsonschema.NewReferenceLoader(jsonFile)
 
 	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
-
 	if err != nil {
 		return false, fmt.Errorf("%s", err)
 	}
 
 	// If the json passed in does not meet the schema requirements, error
 	if !result.Valid() {
-
 		for _, desc := range result.Errors() {
 			return false, fmt.Errorf("SHCD schema error: %s", desc)
 		}
-
 	}
 
 	return true, nil
@@ -926,7 +892,6 @@ func ParseSHCD(f []byte) (Shcd, error) {
 
 	// unmarshall it
 	err := json.Unmarshal(f, &shcd)
-
 	if err != nil {
 		fmt.Println("error:", err)
 		return shcd, err
