@@ -1,6 +1,28 @@
 /*
-Copyright 2021 Hewlett Packard Enterprise Development LP
-*/
+ *
+ *  MIT License
+ *
+ *  (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a
+ *  copy of this software and associated documentation files (the "Software"),
+ *  to deal in the Software without restriction, including without limitation
+ *  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ *  and/or sell copies of the Software, and to permit persons to whom the
+ *  Software is furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included
+ *  in all copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ *  THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ *  OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ *  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ *  OTHER DEALINGS IN THE SOFTWARE.
+ *
+ */
 
 package cmd
 
@@ -284,7 +306,8 @@ func (id ID) GenerateXname() (xn string) {
 
 		// Spine switches
 	} else if strings.HasPrefix(id.CommonName, "sw-spine") ||
-		strings.HasPrefix(id.CommonName, "sw-leaf") {
+		strings.HasPrefix(id.CommonName, "sw-leaf") ||
+		strings.HasPrefix(id.CommonName, "sw-edge") {
 
 		// Convert the rack to a string
 		cabString := id.Location.Rack
@@ -444,68 +467,44 @@ func (id ID) GenerateSwitchType() (st string) {
 	} else if strings.Contains(id.CommonName, "cdu") {
 
 		st = "CDU"
+	} else if strings.Contains(id.CommonName, "edge") {
+
+		st = "Edge"
 	}
 
 	// Return the switch type switch_metadata.csv is expecting
 	return st
 }
 
-// GenerateHMNSourceName crafts and prints the switch types that switch_metadata.csv expects
-func (id ID) GenerateHMNSourceName() (src string) {
-
-	// var prefix string
-
-	// The Source in hmn_connections.json differs from the common_name in the SHCD
+// GenerateHMNSourceName crafts and prints the switch types that hmn_connections.json expects
+func (id ID) GenerateHMNSourceName() string {
+	var src string
+	// The Source in hmn_connections.json differs from the common_name in the paddle file
 	// These conditionals just adjust for the names we expect in that file
-	if strings.HasPrefix(id.CommonName, "ncn-m") ||
-		strings.HasPrefix(id.CommonName, "ncn-s") ||
-		strings.HasPrefix(id.CommonName, "ncn-w") ||
-		strings.HasPrefix(id.CommonName, "uan") ||
-		strings.HasPrefix(id.CommonName, "cn") ||
-		strings.HasPrefix(id.CommonName, "sw-hsn") ||
-		strings.HasPrefix(id.CommonName, "x3000p") ||
-		strings.HasPrefix(id.CommonName, "lnet") {
+	// Get the just number of the elevation
+	r := regexp.MustCompile(`\d{2}$`)
 
-		// Get the just number of the elevation
-		r := regexp.MustCompile(`\d+`)
-
-		// matches contains the numbers found in the common name
+	// matches contains the numbers found in the common name
+	matches := r.FindAllString(id.CommonName, -1)
+	if strings.HasPrefix(id.CommonName, "ncn-m") {
+		src = "mn" + matches[0]
+	} else if strings.HasPrefix(id.CommonName, "ncn-w") {
+		src = "wn" + matches[0]
+	} else if strings.HasPrefix(id.CommonName, "ncn-s") {
+		src = "sn" + matches[0]
+	} else if strings.HasPrefix(id.CommonName, "uan") {
+		src = "uan" + matches[0]
+	} else if strings.HasPrefix(id.CommonName, "pdu-x3000-") {
+		r := regexp.MustCompile(`\d{1}$`)
 		matches := r.FindAllString(id.CommonName, -1)
-
-		if strings.HasPrefix(id.CommonName, "uan") {
-
-			// if it's a uan, print "uan" and the number
-			src = string(id.CommonName[0:3]) + matches[0]
-
-		} else if strings.HasPrefix(id.CommonName, "cn") {
-
-			// if it's a compute node, print "cn" and the number
-			src = string(id.CommonName[0:2]) + matches[0]
-
-		} else if strings.HasPrefix(id.CommonName, "lnet") {
-
-			// if it's an lnet, print "lnet" and the number
-			src = string(id.CommonName[0:4]) + matches[0]
-
-		} else if strings.HasPrefix(id.CommonName, "x3000p") {
-
-			// if it's a pdu, print the entire name
-			src = string(id.CommonName)
-
-		} else if strings.HasPrefix(id.CommonName, "sw-hsn") {
-
-			// if it's a hsn switch, print the entire name
-			src = string(id.CommonName)
-
-		} else {
-
-			// if nothing else matches, return an empty string
-			src = ""
-
-		}
+		src = "x3000p" + matches[0]
+	} else if strings.HasPrefix(id.CommonName, "cn") {
+		src = "cn" + matches[0]
+	} else if strings.HasPrefix(id.CommonName, "sw-hsn-") {
+		src = "sw-hsn" + matches[0]
+	} else {
+		src = id.CommonName
 	}
-
-	// Return the Source name hmn_connections.json is expecting
 	return src
 }
 
@@ -711,7 +710,7 @@ func createHMNSeed(shcd Shcd, f string) {
 		// nodeName := unNormalizeSemiStandardShcdNonName(shcd[i].CommonName)
 
 		// Setting the source name, source rack, source location, is pretty straightforward here
-		hmnConnection.Source = shcd.Topology[i].CommonName
+		hmnConnection.Source = shcd.Topology[i].GenerateHMNSourceName()
 		hmnConnection.SourceRack = shcd.Topology[i].Location.Rack
 		hmnConnection.SourceLocation = shcd.Topology[i].Location.Elevation
 
