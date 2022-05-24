@@ -261,7 +261,7 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 		nodeHardwareMap[nodeHardware.Xname] = nodeHardware
 
 		// Finally generate the network connection if there is one.
-		if strings.TrimSpace(row.DestinationPort) != "" && strings.TrimSpace(row.DestinationPort) != "0" {
+		if strings.TrimSpace(row.DestinationPort) != "" {
 			nodeConnection := g.getConnectionForNode(nodeHardware, row)
 			connectionHardwareMap[nodeConnection.Xname] = nodeConnection
 
