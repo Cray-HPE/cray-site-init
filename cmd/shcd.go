@@ -876,10 +876,9 @@ func ValidateSchema(json string, schema string) (bool, error) {
 	}
 
 	// If the json passed in does not meet the schema requirements, error
+	// TODO: return all errors
 	if !result.Valid() {
-		for _, desc := range result.Errors() {
-			return false, fmt.Errorf("SHCD schema error: %s", desc)
-		}
+		return false, fmt.Errorf(result.Errors()[0].String())
 	}
 
 	return true, nil
