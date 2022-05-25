@@ -106,13 +106,16 @@ var shcdCmd = &cobra.Command{
 		}
 
 		if v.IsSet("switch-metadata") {
-			createSwitchSeed(s, switchMetadata)
+			err := createSwitchSeed(s.Topology)
+			if err != nil {
+				fmt.Printf("WARNING - Error creating switch-metadata: %+v", err)
+			}
 		}
 
 		if v.IsSet("application-node-config") {
 			err := createANCSeed(s, applicationNodeConfig)
 			if err != nil {
-				fmt.Printf("WARNING - Error creating application-node-config.yaml: %+v", err)
+				fmt.Printf("WARNING - Error creating application-node-config: %+v", err)
 			}
 		}
 
@@ -289,7 +292,6 @@ func (id ID) GenerateXname() (xn string) {
 	} else if strings.HasPrefix(id.CommonName, "sw-spine") ||
 		strings.HasPrefix(id.CommonName, "sw-leaf") ||
 		strings.HasPrefix(id.CommonName, "sw-edge") {
-
 		// Convert the rack to a string
 		cabString := id.Location.Rack
 
@@ -322,7 +324,6 @@ func (id ID) GenerateXname() (xn string) {
 			Slot:    slot,    // H: 1-48
 			Space:   1,       // S: 1-4
 		}
-
 		xn = x.String()
 
 	} else if strings.HasPrefix(id.CommonName, "ncn-") {
@@ -561,41 +562,36 @@ func createNCNSeed(shcd Shcd, f string) {
 }
 
 // createSwitchSeed creates switch_metadata.csv using information from the shcd
-func createSwitchSeed(shcd Shcd, f string) {
-	var switches SwitchMetadata
-
-	// For each entry in the SHCD
-	for i := range shcd.Topology {
-		if shcd.Topology[i].Type == "switch" {
-			// HSN switch should not be in switch_metadata.csv
-			if strings.HasPrefix(shcd.Topology[i].CommonName, "sw-hsn") {
-				continue
-			}
-			// Generate the xname based on the rules we predefine
-			switchXname := shcd.Topology[i].GenerateXname()
-			// Do the same for the switch type
-			switchType := shcd.Topology[i].GenerateSwitchType()
-			// The vendor just needs to be capitalized
-			switchVendor := strings.Title(shcd.Topology[i].Vendor)
-
-			// Create a new Switch type and append it to the SwitchMetadata slice
-			switches = append(switches, Switch{
-				Xname: switchXname,
-				Type:  switchType,
-				Brand: switchVendor,
-			})
+func createSwitchSeed(topology []ID) error {
+	var sws SwitchMetadata
+	switches := FilterByType(topology, "switch")
+	for i := range switches {
+		// HSN switch should not be in switch_metadata.csv
+		if strings.HasPrefix(switches[i].CommonName, "sw-hsn") {
+			continue
 		}
+		// Generate the xname based on the rules we predefine
+		switchXname := switches[i].GenerateXname()
+		// Do the same for the switch type
+		switchType := switches[i].GenerateSwitchType()
+		// The vendor just needs to be capitalized
+		switchVendor := strings.Title(switches[i].Vendor)
+		// Create a new Switch type and append it to the SwitchMetadata slice
+		sws = append(sws, Switch{
+			Xname: switchXname,
+			Type:  switchType,
+			Brand: switchVendor,
+		})
+
 	}
 
 	// When writing to csv, the first row should be the headers
 	headers := []string{"Switch Xname", "Type", "Brand"}
-
 	// Set up the records we need to write to the file
 	// To begin, this contains the headers
 	records := [][]string{headers}
-
 	// Then create a new slice with the three pieces of information needed
-	for _, v := range switches {
+	for _, v := range sws {
 		row := []string{v.Xname, v.Type, v.Brand}
 		// Append it to the records slice under the column headers
 		records = append(records, row)
@@ -605,7 +601,7 @@ func createSwitchSeed(shcd Shcd, f string) {
 	// Create the file object
 	sm, err := os.Create(switchMetadata)
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
 	defer sm.Close()
 
@@ -615,22 +611,20 @@ func createSwitchSeed(shcd Shcd, f string) {
 
 	// Create a var for all the records except the header
 	r := records[1:]
-
-	// Pass an anonymous function to sort.Slice to sort everything except the headers
 	sort.Slice(r, func(i, j int) bool {
 		return r[i][0] < r[j][0]
 	})
-
 	// For each item in the records slice
 	for _, v := range records {
 		// Write it to the csv file
 		if err := writer.Write(v); err != nil {
-			log.Fatalln(err)
+			return err
 		}
 	}
 
 	// Let the user know the file was created
 	log.Printf("Created %v from SHCD data\n", switchMetadata)
+	return nil
 }
 
 // createHMNSeed creates hmn_connections.json using information from the shcd
@@ -876,4 +870,15 @@ func ParseSHCD(f []byte) (Shcd, error) {
 	}
 
 	return shcd, nil
+}
+
+func FilterByType(topology []ID, idType string) []ID {
+	switches := []ID{}
+
+	for i := range topology {
+		if topology[i].Type == idType {
+			switches = append(switches, topology[i])
+		}
+	}
+	return switches
 }
