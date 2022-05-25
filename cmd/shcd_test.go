@@ -125,26 +125,15 @@ func TestValidSHCDJSONTest(t *testing.T) {
 }
 
 func TestSHCDAgainstSchema(t *testing.T) {
-
 	for _, test := range tests {
-
 		t.Run(test.name, func(t *testing.T) {
-
 			// Validate the file passed against the pre-defined schema
-			validSHCD, err := ValidateSchema(test.fixture, _schemaFile)
-
-			if test.expectedError == false {
-
-				// If it meets the schema, it should return true
-				assert.Equal(t, validSHCD, true)
-
-			} else {
-
+			err := ValidateSchema(test.fixture, _schemaFile)
+			if test.expectedError == true {
 				// Otherwise, check the error message
 				if assert.Error(t, err) {
 					assert.EqualError(t, err, test.expectedSchemaErrorMsg)
 				}
-
 			}
 		})
 	}
