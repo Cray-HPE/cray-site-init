@@ -890,7 +890,6 @@ func ValidateSchema(f string, s string) (bool, error) {
 func ParseSHCD(f []byte) (Shcd, error) {
 	var shcd Shcd
 
-	// unmarshall it
 	err := json.Unmarshal(f, &shcd)
 	if err != nil {
 		return shcd, err
