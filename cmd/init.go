@@ -95,6 +95,21 @@ var initCmd = &cobra.Command{
 
 		}
 
+		// Validate that the BGP ASN is within the private range
+		var bgp = map[string]int{
+			"bgp-asn":     v.GetInt("bgp-asn"),
+			"bgp-chn-asn": v.GetInt("bgp-chn-asn"),
+			"bgp-cmn-asn": v.GetInt("bgp-cmn-asn"),
+			"bgp-nmn-asn": v.GetInt("bgp-nmn-asn"),
+		}
+
+		for network, asn := range bgp {
+			if asn > 65534 || asn < 64512 {
+				cmd.Usage()
+				log.Fatalln("FATAL ERROR: BGP ASNs must be within the private range 64512-65534, fix the value for:", network)
+			}
+		}
+
 		// Read and validate our three input files
 		hmnRows, logicalNcns, switches, applicationNodeConfig, cabinetDetailList := collectInput(v)
 
