@@ -119,9 +119,10 @@ var shcdCmd = &cobra.Command{
 			}
 
 			if v.IsSet("application-node-config") {
-
-				createANCSeed(s, applicationNodeConfig)
-
+				err := createANCSeed(s, applicationNodeConfig)
+				if err != nil {
+					fmt.Printf("WARNING - Error creating application-node-config.yaml: %+v", err)
+				}
 			}
 
 			if v.IsSet("ncn-metadata") {
