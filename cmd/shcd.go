@@ -872,7 +872,7 @@ func ValidateSchema(json string, schema string) (bool, error) {
 
 	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
 	if err != nil {
-		return false, fmt.Errorf("%s", err)
+		return false, err
 	}
 
 	// If the json passed in does not meet the schema requirements, error
