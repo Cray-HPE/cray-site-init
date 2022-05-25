@@ -84,38 +84,30 @@ var shcdCmd = &cobra.Command{
 
 		// Validate the file passed against the pre-defined schema
 		validSHCD, err := ValidateSchema(args[0], schemaFile)
-
 		if err != nil {
 			log.Fatalf("cannot validate schema: %v", err.Error())
 		}
 
 		// If the file meets the schema criteria
 		if validSHCD {
-
 			// Open the file since we know it is valid
 			shcdFile, err := ioutil.ReadFile(args[0])
-
 			if err != nil {
 				log.Fatalf(err.Error())
 			}
 
 			// Parse the JSON and return an Shcd object
 			s, err := ParseSHCD(shcdFile)
-
 			if err != nil {
 				log.Fatalf(err.Error())
 			}
 
 			if v.IsSet("hmn-connections") {
-
 				createHMNSeed(s, hmnConnections)
-
 			}
 
 			if v.IsSet("switch-metadata") {
-
 				createSwitchSeed(s, switchMetadata)
-
 			}
 
 			if v.IsSet("application-node-config") {
@@ -126,19 +118,8 @@ var shcdCmd = &cobra.Command{
 			}
 
 			if v.IsSet("ncn-metadata") {
-
 				createNCNSeed(s, ncnMetadata)
-
 			}
-
-		} else {
-
-			log.Printf("- %s\n", err)
-
-			if err != nil {
-				log.Fatalf(err.Error())
-			}
-
 		}
 	},
 }
