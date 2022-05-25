@@ -83,62 +83,43 @@ var shcdCmd = &cobra.Command{
 		}
 
 		// Validate the file passed against the pre-defined schema
-		validSHCD, err := ValidateSchema(args[0], schemaFile)
-
+		err := ValidateSchema(args[0], schemaFile)
 		if err != nil {
 			log.Fatalf("cannot validate schema: %v", err.Error())
 		}
 
 		// If the file meets the schema criteria
-		if validSHCD {
-
-			// Open the file since we know it is valid
-			shcdFile, err := ioutil.ReadFile(args[0])
-
-			if err != nil {
-				log.Fatalf(err.Error())
-			}
-
-			// Parse the JSON and return an Shcd object
-			s, err := ParseSHCD(shcdFile)
-
-			if err != nil {
-				log.Fatalf(err.Error())
-			}
-
-			if v.IsSet("hmn-connections") {
-
-				createHMNSeed(s, hmnConnections)
-
-			}
-
-			if v.IsSet("switch-metadata") {
-
-				createSwitchSeed(s, switchMetadata)
-
-			}
-
-			if v.IsSet("application-node-config") {
-
-				createANCSeed(s, applicationNodeConfig)
-
-			}
-
-			if v.IsSet("ncn-metadata") {
-
-				createNCNSeed(s, ncnMetadata)
-
-			}
-
-		} else {
-
-			log.Printf("- %s\n", err)
-
-			if err != nil {
-				log.Fatalf(err.Error())
-			}
-
+		// Open the file since we know it is valid
+		shcdFile, err := ioutil.ReadFile(args[0])
+		if err != nil {
+			log.Fatalf(err.Error())
 		}
+
+		// Parse the JSON and return an Shcd object
+		s, err := ParseSHCD(shcdFile)
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
+
+		if v.IsSet("hmn-connections") {
+			createHMNSeed(s, hmnConnections)
+		}
+
+		if v.IsSet("switch-metadata") {
+			createSwitchSeed(s, switchMetadata)
+		}
+
+		if v.IsSet("application-node-config") {
+			err := createANCSeed(s, applicationNodeConfig)
+			if err != nil {
+				fmt.Printf("WARNING - Error creating application-node-config.yaml: %+v", err)
+			}
+		}
+
+		if v.IsSet("ncn-metadata") {
+			createNCNSeed(s, ncnMetadata)
+		}
+
 	},
 }
 
@@ -863,26 +844,25 @@ func createANCSeed(shcd Shcd, f string) error {
 }
 
 // ValidateSchema compares a JSON file to the defined schema file
-func ValidateSchema(f string, s string) (bool, error) {
-	// First validate the file passed in conforms to the schema
-	schema := "file://" + s
-	schemaLoader := gojsonschema.NewReferenceLoader(schema)
-	jsonFile := "file://" + f
+func ValidateSchema(json string, schema string) error {
+	// First validate the file passed in conforms to the schemaFile
+	schemaFile := "file://" + schema
+	schemaLoader := gojsonschema.NewReferenceLoader(schemaFile)
+	jsonFile := "file://" + json
 	documentLoader := gojsonschema.NewReferenceLoader(jsonFile)
 
 	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
 	if err != nil {
-		return false, fmt.Errorf("%s", err)
+		return err
 	}
 
 	// If the json passed in does not meet the schema requirements, error
+	// TODO: return all errors
 	if !result.Valid() {
-		for _, desc := range result.Errors() {
-			return false, fmt.Errorf("SHCD schema error: %s", desc)
-		}
+		return fmt.Errorf(result.Errors()[0].String())
 	}
 
-	return true, nil
+	return nil
 }
 
 // ParseSHCD accepts a machine-readable SHCD and produces an Shcd object, which can be used throughout csi
@@ -890,10 +870,8 @@ func ValidateSchema(f string, s string) (bool, error) {
 func ParseSHCD(f []byte) (Shcd, error) {
 	var shcd Shcd
 
-	// unmarshall it
 	err := json.Unmarshal(f, &shcd)
 	if err != nil {
-		fmt.Println("error:", err)
 		return shcd, err
 	}
 

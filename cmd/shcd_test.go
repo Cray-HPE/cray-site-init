@@ -78,14 +78,14 @@ var tests = []struct {
 		fixture:                "../testdata/fixtures/invalid_shcd.json",
 		expectedError:          true,
 		expectedErrorMsg:       "invalid character ':' after top-level value",
-		expectedSchemaErrorMsg: "SHCD schema error: (root): Invalid type. Expected: object, given: string",
+		expectedSchemaErrorMsg: "(root): Invalid type. Expected: object, given: string",
 		name:                   "MissingBracketFile",
 	},
 	{
 		fixture:                "../testdata/fixtures/invalid_data_types_shcd.json",
 		expectedError:          true,
 		expectedErrorMsg:       "json: cannot unmarshal string into Go struct field ID.topology.id of type int",
-		expectedSchemaErrorMsg: "SHCD schema error: topology.0.id: Invalid type. Expected: integer, given: string",
+		expectedSchemaErrorMsg: "topology.0.id: Invalid type. Expected: integer, given: string",
 		name:                   "InvalidDataTypeFile",
 	},
 }
@@ -125,26 +125,15 @@ func TestValidSHCDJSONTest(t *testing.T) {
 }
 
 func TestSHCDAgainstSchema(t *testing.T) {
-
 	for _, test := range tests {
-
 		t.Run(test.name, func(t *testing.T) {
-
 			// Validate the file passed against the pre-defined schema
-			validSHCD, err := ValidateSchema(test.fixture, _schemaFile)
-
-			if test.expectedError == false {
-
-				// If it meets the schema, it should return true
-				assert.Equal(t, validSHCD, true)
-
-			} else {
-
+			err := ValidateSchema(test.fixture, _schemaFile)
+			if test.expectedError == true {
 				// Otherwise, check the error message
 				if assert.Error(t, err) {
 					assert.EqualError(t, err, test.expectedSchemaErrorMsg)
 				}
-
 			}
 		})
 	}
