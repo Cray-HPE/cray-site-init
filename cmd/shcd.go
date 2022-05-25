@@ -893,7 +893,6 @@ func ParseSHCD(f []byte) (Shcd, error) {
 	// unmarshall it
 	err := json.Unmarshal(f, &shcd)
 	if err != nil {
-		fmt.Println("error:", err)
 		return shcd, err
 	}
 
