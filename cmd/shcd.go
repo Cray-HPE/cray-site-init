@@ -863,11 +863,11 @@ func createANCSeed(shcd Shcd, f string) error {
 }
 
 // ValidateSchema compares a JSON file to the defined schema file
-func ValidateSchema(f string, s string) (bool, error) {
-	// First validate the file passed in conforms to the schema
-	schema := "file://" + s
-	schemaLoader := gojsonschema.NewReferenceLoader(schema)
-	jsonFile := "file://" + f
+func ValidateSchema(json string, schema string) (bool, error) {
+	// First validate the file passed in conforms to the schemaFile
+	schemaFile := "file://" + schema
+	schemaLoader := gojsonschema.NewReferenceLoader(schemaFile)
+	jsonFile := "file://" + json
 	documentLoader := gojsonschema.NewReferenceLoader(jsonFile)
 
 	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
