@@ -892,12 +892,12 @@ func ParseSHCD(f []byte) (Shcd, error) {
 }
 
 func FilterByType(topology []ID, idType string) []ID {
-	switches := []ID{}
+	items := []ID{}
 
 	for i := range topology {
 		if topology[i].Type == idType {
-			switches = append(switches, topology[i])
+			items = append(items, topology[i])
 		}
 	}
-	return switches
+	return items
 }
