@@ -38,6 +38,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -199,70 +200,54 @@ func TestCreateHMNConnections(t *testing.T) {
 }
 
 func TestCreateSwitchMetadata(t *testing.T) {
+	t.Parallel()
 
-	for _, test := range tests {
-
-		if test.fixture == "../testdata/fixtures/valid_shcd.json" {
-
-			t.Run(test.name, func(t *testing.T) {
-
-				// Open the file since we know it is valid
-				shcdFile, err := ioutil.ReadFile(test.fixture)
-
-				if err != nil {
-					log.Fatalf(err.Error())
-				}
-
-				shcd, err := ParseSHCD(shcdFile)
-
-				if err != nil {
-					log.Fatalf(err.Error())
-				}
-
-				// Create switch_metadata.csv
-				createSwitchSeed(shcd, switchMetadata)
-
-				// Validate the file was created
-				assert.FileExists(t, filepath.Join(".", switchMetadata))
-
-				// Read the csv and validate it's contents
-				generated, err := os.Open(filepath.Join(".", switchMetadata))
-
-				if err != nil {
-					log.Fatal("Unable to read "+filepath.Join(".", switchMetadata), err)
-				}
-
-				defer generated.Close()
-
-				smGenerated := csv.NewReader(generated)
-
-				actual, err := smGenerated.ReadAll()
-
-				if err != nil {
-					log.Fatal("Unable to parse as a CSV: "+filepath.Join(".", switchMetadata), err)
-				}
-
-				// Read the csv and validate it's contents
-				expected, err := os.Open(filepath.Join(".", switchMetadata))
-
-				if err != nil {
-					log.Fatal("Unable to read "+filepath.Join(".", switchMetadata), err)
-				}
-
-				defer expected.Close()
-
-				csvReader := csv.NewReader(expected)
-
-				smExpected, err := csvReader.ReadAll()
-
-				if err != nil {
-					log.Fatal("Unable to parse as a CSV: "+test.expectedSwitchMetadata, err)
-				}
-
-				assert.Equal(t, smExpected, actual)
-			})
-		}
+	jsonFilePath := "../testdata/fixtures/valid_shcd.json"
+	// Open the file since we know it is valid
+	shcdFile, err := ioutil.ReadFile(jsonFilePath)
+	if err != nil {
+		log.Fatal(err)
 	}
+
+	shcd, err := ParseSHCD(shcdFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Create switch_metadata.csv
+	err = createSwitchSeed(shcd.Topology)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Read the csv and validate it's contents
+	generated, err := os.Open(filepath.Join(".", switchMetadata))
+	if err != nil {
+		log.Fatalf("Unable to read %s: %+v", filepath.Join(".", switchMetadata), err)
+	}
+	defer generated.Close()
+
+	smGenerated := csv.NewReader(generated)
+	actual, err := smGenerated.ReadAll()
+	if err != nil {
+		log.Fatalf("Unable to read %s: %+v", filepath.Join(".", switchMetadata), err)
+	}
+
+	// Read the csv and validate it's contents
+	expected, err := os.Open(filepath.Join(".", switchMetadata))
+	if err != nil {
+		log.Fatalf("Unable to read %s: %+v", filepath.Join(".", switchMetadata), err)
+	}
+	defer expected.Close()
+
+	csvReader := csv.NewReader(expected)
+	smExpected, err := csvReader.ReadAll()
+	if err != nil {
+		log.Fatalf("Unable to parse %q as a CSV: %+v", filepath.Join(".", switchMetadata), err)
+	}
+
+	assert.Equal(t, smExpected, actual)
+
 }
 
 func TestCreateNCNMetadata(t *testing.T) {
@@ -453,5 +438,183 @@ func TestGenerateHMNSourceName(t *testing.T) {
 				t.Errorf("want common name %q, got %q", tC.want, got)
 			}
 		})
+	}
+}
+
+func TestFilterByTypeSwitch_ReturnsNoItemsIfNoSwitches(t *testing.T) {
+	t.Parallel()
+
+	want := []ID{}
+	topology := []ID{
+		{
+			CommonName: "ncn-m001",
+			Type:       "server",
+		},
+		{
+			CommonName: "ncn-m002",
+			Type:       "bogus",
+		},
+	}
+	got := FilterByType(topology, "switch")
+	if !cmp.Equal(want, got) {
+		t.Fatal(cmp.Diff(want, got))
+	}
+}
+
+func TestFilterByTypeSwitch_ReturnsCorrectItems(t *testing.T) {
+	t.Parallel()
+	want := []ID{
+		{
+			CommonName: "sw-spine-001",
+			Type:       "switch",
+		},
+		{
+			CommonName: "sw-spine-002",
+			Type:       "switch",
+		},
+		{
+			CommonName: "sw-leaf-bmc-001",
+			Type:       "switch",
+		},
+	}
+
+	topology := []ID{
+		{
+			CommonName: "ncn-m001",
+			Type:       "server",
+		},
+		{
+			CommonName: "sw-spine-001",
+			Type:       "switch",
+		},
+		{
+			CommonName: "sw-spine-002",
+			Type:       "switch",
+		},
+		{
+			CommonName: "ncn-m002",
+			Type:       "server",
+		},
+		{
+			CommonName: "sw-leaf-bmc-001",
+			Type:       "switch",
+		},
+	}
+
+	got := FilterByType(topology, "switch")
+	if !cmp.Equal(want, got) {
+		t.Fatal(cmp.Diff(want, got))
+	}
+}
+
+func TestFilterByTypeServer_ReturnsNoItemsIfNoServers(t *testing.T) {
+	t.Parallel()
+
+	want := []ID{}
+	topology := []ID{
+		{
+			CommonName: "sw-leaf-bmc-001",
+			Type:       "switch",
+		},
+		{
+			CommonName: "ncn-m002",
+			Type:       "bogus",
+		},
+	}
+	got := FilterByType(topology, "server")
+	if !cmp.Equal(want, got) {
+		t.Fatal(cmp.Diff(want, got))
+	}
+}
+
+func TestFilterByTypeServer_ReturnsCorrectItems(t *testing.T) {
+	t.Parallel()
+	want := []ID{
+		{
+			CommonName: "ncn-m002",
+			Type:       "server",
+		},
+		{
+			CommonName: "ncn-s005",
+			Type:       "server",
+		},
+	}
+
+	topology := []ID{
+		{
+			CommonName: "ncn-m002",
+			Type:       "server",
+		},
+		{
+			CommonName: "sw-spine-001",
+			Type:       "switch",
+		},
+		{
+			CommonName: "ncn-s005",
+			Type:       "server",
+		},
+	}
+
+	got := FilterByType(topology, "server")
+	if !cmp.Equal(want, got) {
+		t.Fatal(cmp.Diff(want, got))
+	}
+}
+
+func TestGenerateXNameGeneratesCorrectNameForCDUSwitch(t *testing.T) {
+	t.Parallel()
+
+	want := "d0w2"
+	id := ID{
+		Architecture: "mountain_compute_leaf",
+		CommonName:   "sw-cdu-002",
+		Type:         "switch",
+		Vendor:       "aruba",
+	}
+	got := id.GenerateXname()
+	if want != got {
+		t.Fatalf("want xname %q got %q", want, got)
+	}
+}
+
+func TestGenerateXNameGeneratesCorrectNameForSpineSwitch(t *testing.T) {
+	t.Parallel()
+
+	want := "x3000c0h38s1"
+	id := ID{
+		Architecture: "spine",
+		CommonName:   "sw-spine-003",
+		Location: Location{
+			Elevation: "u38",
+			Rack:      "x3000",
+		},
+		Model:  "8325_JL627A",
+		Type:   "switch",
+		Vendor: "aruba",
+	}
+	got := id.GenerateXname()
+	if want != got {
+		t.Fatalf("want xname %q got %q", want, got)
+	}
+}
+
+func TestGenerateXNameGeneratesCorrectNameForRedbullSpineSwitch(t *testing.T) {
+	t.Parallel()
+
+	want := "x3000c0h19s2"
+	id := ID{
+		Architecture: "spine",
+		CommonName:   "sw-spine-002",
+		Location: Location{
+			Elevation: "u19",
+			Rack:      "x3000",
+		},
+		Model:  "8325_JL627A",
+		Type:   "switch",
+		Vendor: "mellanox",
+	}
+	got := id.GenerateXname()
+	if want != got {
+		t.Fatalf("want xname %q got %q", want, got)
 	}
 }
