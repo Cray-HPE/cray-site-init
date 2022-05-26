@@ -43,6 +43,7 @@ import (
 
 	"github.com/Cray-HPE/cray-site-init/pkg/csi"
 	"github.com/Cray-HPE/hms-base/xname"
+	xnames "github.com/Cray-HPE/hms-xname/xnames"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/xeipuuv/gojsonschema"
@@ -229,27 +230,17 @@ func (id ID) GenerateXname() (xn string) {
 
 	// If it's a CDU switch
 	if strings.HasPrefix(id.CommonName, "sw-cdu-") {
-
 		// We need just the number
 		i := strings.TrimPrefix(id.CommonName, "sw-cdu-")
-
-		// convert it to an int, which the struct expects
 		slot, err := strconv.Atoi(i)
-
 		if err != nil {
 			log.Fatalln(err)
 		}
-
-		// Create the xname
-		// dDwW
-		x := xname.CDUMgmtSwitch{
-			CoolingGroup: 0,    // D: 0-999
-			Slot:         slot, // W: 0-31
+		x := xnames.CDUMgmtSwitch{
+			CDU:           0,
+			CDUMgmtSwitch: slot,
 		}
-
-		// Convert it to a string
 		xn = x.String()
-
 		// LeafBMC switches have their own needs
 	} else if strings.HasPrefix(id.CommonName, "sw-leaf-bmc-") {
 
@@ -289,32 +280,60 @@ func (id ID) GenerateXname() (xn string) {
 		xn = x.String()
 
 		// Spine switches
-	} else if strings.HasPrefix(id.CommonName, "sw-spine") ||
-		strings.HasPrefix(id.CommonName, "sw-leaf") ||
+	} else if strings.HasPrefix(id.CommonName, "sw-spine") {
+		// Convert the rack to a string
+		cabString := id.Location.Rack
+		// Strip the "x"
+		_, cabNum := utf8.DecodeRuneInString(cabString)
+		// Convert to an int
+		cabinet, err := strconv.Atoi(cabString[cabNum:])
+		if err != nil {
+			log.Fatalln(err)
+		}
+		// Strip the u
+		i := strings.TrimPrefix(id.Location.Elevation, "u")
+		// Convert it to an int
+		slot, err := strconv.Atoi(i)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		// space always 1 unless vendor is mellanox
+		space := 1
+		if id.Vendor == "mellanox" {
+			i := strings.TrimPrefix(id.CommonName, "sw-spine-")
+			space, err = strconv.Atoi(i)
+			if err != nil {
+				log.Fatalln(err)
+			}
+		}
+		// Create the xname
+		// Chassis and Space default to 0 and 1 in most cases
+		// xXcChHsS
+		x := xname.MgmtHLSwitch{
+			Cabinet: cabinet, // X: 0-999
+			Chassis: 0,       // C: 0-7
+			Slot:    slot,    // H: 1-48
+			Space:   space,   // S: 1-4
+		}
+		xn = x.String()
+	} else if strings.HasPrefix(id.CommonName, "sw-leaf") ||
 		strings.HasPrefix(id.CommonName, "sw-edge") {
 		// Convert the rack to a string
 		cabString := id.Location.Rack
-
 		// Strip the "x"
 		_, cabNum := utf8.DecodeRuneInString(cabString)
-
 		// Convert to an int
 		cabinet, err := strconv.Atoi(cabString[cabNum:])
-
 		if err != nil {
 			log.Fatalln(err)
 		}
-
 		// Strip the u
 		i := strings.TrimPrefix(id.Location.Elevation, "u")
-
 		// Convert it to an int
 		slot, err := strconv.Atoi(i)
-
 		if err != nil {
 			log.Fatalln(err)
 		}
-
 		// Create the xname
 		// Chassis and Space default to 0 and 1 in most cases
 		// xXcChHsS

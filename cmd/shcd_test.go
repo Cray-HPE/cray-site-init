@@ -560,3 +560,61 @@ func TestFilterByTypeServer_ReturnsCorrectItems(t *testing.T) {
 		t.Fatal(cmp.Diff(want, got))
 	}
 }
+
+func TestGenerateXNameGeneratesCorrectNameForCDUSwitch(t *testing.T) {
+	t.Parallel()
+
+	want := "d0w2"
+	id := ID{
+		Architecture: "mountain_compute_leaf",
+		CommonName:   "sw-cdu-002",
+		Type:         "switch",
+		Vendor:       "aruba",
+	}
+	got := id.GenerateXname()
+	if want != got {
+		t.Fatalf("want xname %q got %q", want, got)
+	}
+}
+
+func TestGenerateXNameGeneratesCorrectNameForOdinSpineSwitch(t *testing.T) {
+	t.Parallel()
+
+	want := "x3000c0h38s1"
+	id := ID{
+		Architecture: "spine",
+		CommonName:   "sw-spine-001",
+		Location: Location{
+			Elevation: "u38",
+			Rack:      "x3000",
+		},
+		Model:  "8325_JL627A",
+		Type:   "switch",
+		Vendor: "aruba",
+	}
+	got := id.GenerateXname()
+	if want != got {
+		t.Fatalf("want xname %q got %q", want, got)
+	}
+}
+
+func TestGenerateXNameGeneratesCorrectNameForRedbullSpineSwitch(t *testing.T) {
+	t.Parallel()
+
+	want := "x3000c0h19s2"
+	id := ID{
+		Architecture: "spine",
+		CommonName:   "sw-spine-002",
+		Location: Location{
+			Elevation: "u19",
+			Rack:      "x3000",
+		},
+		Model:  "8325_JL627A",
+		Type:   "switch",
+		Vendor: "mellanox",
+	}
+	got := id.GenerateXname()
+	if want != got {
+		t.Fatalf("want xname %q got %q", want, got)
+	}
+}
