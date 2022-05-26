@@ -22,5 +22,5 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 add_exclude:
-  - cmd/shcd_test.go
+  - cmd/*_test.go
   - vendor
