@@ -891,6 +891,7 @@ func ParseSHCD(f []byte) (Shcd, error) {
 	return shcd, nil
 }
 
+// FilterByType loop over the topology and return all items found in a give type.
 func FilterByType(topology []ID, idType string) []ID {
 	items := []ID{}
 
