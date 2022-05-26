@@ -577,13 +577,13 @@ func TestGenerateXNameGeneratesCorrectNameForCDUSwitch(t *testing.T) {
 	}
 }
 
-func TestGenerateXNameGeneratesCorrectNameForOdinSpineSwitch(t *testing.T) {
+func TestGenerateXNameGeneratesCorrectNameForSpineSwitch(t *testing.T) {
 	t.Parallel()
 
 	want := "x3000c0h38s1"
 	id := ID{
 		Architecture: "spine",
-		CommonName:   "sw-spine-001",
+		CommonName:   "sw-spine-003",
 		Location: Location{
 			Elevation: "u38",
 			Rack:      "x3000",
