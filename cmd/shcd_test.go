@@ -93,7 +93,6 @@ var tests = []struct {
 
 // Test different JSON input files
 func TestValidSHCDJSONTest(t *testing.T) {
-
 	expectedType := Shcd{}
 
 	for _, test := range tests {
