@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	base "github.com/Cray-HPE/hms-base"
 	shcd_parser "github.com/Cray-HPE/hms-shcd-parser/pkg/shcd-parser"
 	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 	"github.com/Cray-HPE/hms-xname/xnametypes"
@@ -28,14 +29,47 @@ var (
 	pduuRegex        = regexp.MustCompile(`(x\d+p|pdu)(\d+)`) // Match on x3000p0 and pdu0
 )
 
+// TODO Should this be merged with Cabinet detail?
+type SLSCabinetTemplate struct {
+	Xname           string
+	Model           string
+	Class           sls_common.CabinetType
+	CabinetNetworks map[string]map[string]sls_common.CabinetNetworks
+
+	LiquidCooledChassisList []int
+	AirCooledChassisList    []int
+}
+
+func (ct *SLSCabinetTemplate) ToSLS() (sls_common.GenericHardware, error) {
+	if base.IsHMSCompIDValid(ct.Xname) {
+		return sls_common.GenericHardware{}, fmt.Errorf("Invalid xname provided")
+	}
+
+	if xnameType := base.GetHMSType(ct.Xname); xnameType != base.Cabinet {
+		return sls_common.GenericHardware{}, fmt.Errorf("Unexpected xname type given for cabinet: %s", xnameType)
+	}
+
+	return sls_common.GenericHardware{
+		Parent:     "s0",
+		Xname:      ct.Xname,
+		Class:      ct.Class,
+		Type:       sls_common.Cabinet,
+		TypeString: base.Cabinet,
+		ExtraPropertiesRaw: sls_common.ComptypeCabinet{
+			// Model:    Model, // TODO
+			Networks: ct.CabinetNetworks,
+		},
+	}, nil
+}
+
 // SLSGeneratorInputState is given to the SLS config generator in order to generate the SLS config file
 type SLSGeneratorInputState struct {
 	ApplicationNodeConfig SLSGeneratorApplicationNodeConfig `json:"ApplicationNodeConfig"`
 
 	ManagementSwitches  map[string]sls_common.GenericHardware `json:"ManagementSwitches"` // SLS Type: comptype_mgmt_switch
-	RiverCabinets       map[string]sls_common.GenericHardware `json:"RiverCabinets"`      // SLS Type: comptype_cabinet
-	HillCabinets        map[string]sls_common.GenericHardware `json:"HillCabinets"`       // SLS Type: comptype_cabinet
-	MountainCabinets    map[string]sls_common.GenericHardware `json:"MountainCabinets"`   // SLS Type: comptype_cabinet
+	RiverCabinets       map[string]SLSCabinetTemplate         `json:"RiverCabinets"`      // SLS Type: comptype_cabinet
+	HillCabinets        map[string]SLSCabinetTemplate         `json:"HillCabinets"`       // SLS Type: comptype_cabinet
+	MountainCabinets    map[string]SLSCabinetTemplate         `json:"MountainCabinets"`   // SLS Type: comptype_cabinet
 	MountainStartingNid int                                   `json:"MountainStartingNid"`
 
 	Networks map[string]sls_common.Network `json:"Networks"`
@@ -190,6 +224,26 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 	connectionHardwareMap := make(map[string]sls_common.GenericHardware)
 	switchHardwareMap := g.inputState.ManagementSwitches
 
+	// // Create SLS Cabinets from the cabinet templates
+	// for xname, cabinetTemplate := range g.inputState.CabinetTemplates {
+	// 	if base.GetHMSType(xname) != base.Cabinet {
+	// 		g.logger.Fatal("Unexpected xname format given for cabinet",
+	// 			zap.String("xname", xname), zap.Any("cabinetTemplate", cabinetTemplate))
+	// 	}
+
+	// 	cabinet := sls_common.GenericHardware{
+	// 		Parent:     "s0",
+	// 		Xname:      xname,
+	// 		Type:       sls_common.Cabinet,
+	// 		TypeString: base.Cabinet,
+	// 		ExtraPropertiesRaw: sls_common.ComptypeCabinet{
+	// 			// Model:    Model, // TODO
+	// 			Networks: cabinetTemplate.CabinetNetworks,
+	// 		},
+	// 	}
+
+	// }
+
 	// Verify that all of the management switches have a corresponding river cabinet
 	for _, mySwitch := range switchHardwareMap {
 		if mySwitch.Class != sls_common.ClassRiver {
@@ -223,6 +277,18 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 		default:
 			logger.Fatal("Unknown river management switch type",
 				zap.Any("switch", mySwitch))
+		}
+	}
+
+	// Generate Cabinets
+	for _, cabinetMaps := range []map[string]SLSCabinetTemplate{g.inputState.RiverCabinets, g.inputState.HillCabinets, g.inputState.MountainCabinets} {
+		for xname, cabinetTemplate := range cabinetMaps {
+			cabinet, err := cabinetTemplate.ToSLS()
+			if err != nil {
+				g.logger.Fatal("Failed to create SLS representation of provided cabinet", zap.Any("cabinetTemplate", cabinetTemplate))
+			}
+
+			cabinetHardwareMap[xname] = cabinet
 		}
 	}
 
@@ -278,21 +344,16 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 		}
 	}
 
-	// Lastly add the River Cabinets
-	for xname, cab := range g.inputState.RiverCabinets {
-		cabinetHardwareMap[xname] = cab
-	}
-
 	//
 	// Next, build Up Hill Hardware
 	//
 	g.currentMountainNID = g.inputState.MountainStartingNid
 	hillCabinets := g.getSortedCabinetXNames(g.inputState.HillCabinets)
 	for _, xname := range hillCabinets {
-		cab := g.inputState.HillCabinets[xname]
+		cabinetTemplate := g.inputState.HillCabinets[xname]
 
-		cabinetHardwareMap[cab.Xname] = cab
-		hillHardware := g.getHardwareForMountainCab(cab.Xname, sls_common.ClassHill)
+		hillHardware := g.getLiquidCooledHardwareForCabinet(cabinetTemplate.Xname, sls_common.ClassHill, cabinetTemplate.LiquidCooledChassisList)
+
 		for _, hardware := range hillHardware {
 			nodeHardwareMap[hardware.Xname] = hardware
 		}
@@ -304,9 +365,8 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 	mountainCabinets := g.getSortedCabinetXNames(g.inputState.MountainCabinets)
 	for _, xname := range mountainCabinets {
 		cab := g.inputState.MountainCabinets[xname]
-		cabinetHardwareMap[xname] = cab
 
-		mountainHardware := g.getHardwareForMountainCab(cab.Xname, sls_common.ClassMountain)
+		mountainHardware := g.getHardwareForMountainCab(cab.Xname, sls_common.ClassMountain, mountainChassisList)
 		for _, hardware := range mountainHardware {
 			nodeHardwareMap[hardware.Xname] = hardware
 		}
@@ -342,7 +402,7 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 	return
 }
 
-func (g *SLSStateGenerator) getSortedCabinetXNames(cabinets map[string]sls_common.GenericHardware) []string {
+func (g *SLSStateGenerator) getSortedCabinetXNames(cabinets map[string]SLSCabinetTemplate) []string {
 	xnames := []string{}
 	for _, cab := range cabinets {
 		xnames = append(xnames, cab.Xname)
@@ -820,23 +880,9 @@ func (g *SLSStateGenerator) findRowWithSource(sourceParent string) shcd_parser.H
 //
 // Mountain and Hill hardware
 //
-func (g *SLSStateGenerator) getHardwareForMountainCab(cabXname string, cabClass sls_common.CabinetType) (nodes []sls_common.GenericHardware) {
-	logger := g.logger
+func (g *SLSStateGenerator) getLiquidCooledHardwareForCabinet(cabinetTemplate SLSCabinetTemplate) (nodes []sls_common.GenericHardware) {
+	for _, chassisId := range cabinetTemplate.LiquidCooledChassisList {
 
-	var chassisList []string
-	switch cabClass {
-	case sls_common.ClassMountain:
-		chassisList = mountainChassisList
-	case sls_common.ClassHill:
-		chassisList = tdsChassisList
-	default:
-		logger.Fatal("Unable to genreate mountain hardware for cabinet class",
-			zap.Any("cabClass", cabClass),
-			zap.String("cabNname", cabXname),
-		)
-	}
-
-	for _, chassis := range chassisList {
 		// Start with the CMM
 		cmm := sls_common.GenericHardware{
 			Parent:     cabXname,
