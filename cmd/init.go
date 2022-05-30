@@ -405,7 +405,7 @@ func init() {
 
 	// System Configuration Flags based on previous system_config.yml and networks_derived.yml
 	initCmd.Flags().String("system-name", "sn-2024", "Name of the System")
-	initCmd.Flags().String("csm-version", "1.0", "Version of CSM being installed")
+	initCmd.Flags().String("csm-version", "1.3", "Version of CSM being installed")
 
 	initCmd.Flags().String("site-domain", "", "Site Domain Name")
 	initCmd.Flags().String("first-master-hostname", "ncn-m002", "Hostname of the first master node")
@@ -741,7 +741,7 @@ func writeOutput(v *viper.Viper, shastaNetworks map[string]*csi.IPV4Network, sls
 func validateFlags() []string {
 	var errors []string
 	v := viper.GetViper()
-	expectedCSMVersion := "1.2"
+	expectedCSMVersion := "1.3"
 
 	var requiredFlags = []string{
 		"system-name",
