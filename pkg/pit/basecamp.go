@@ -467,11 +467,8 @@ func MakeBaseCampfromNCNs(v *viper.Viper, ncns []csi.LogicalNCN, shastaNetworks 
 		// for use with the timezone cloud-init module
 		userDataMap["timezone"] = v.GetString("ntp-timezone")
 
-		// merge the deprecated ntp-pool flag to the new list of pools
-		poolPool := append([]string{v.GetString("ntp-pool")}, v.GetStringSlice("ntp-pools")...)
-
 		// remove any duplicates
-		pools := unique(poolPool)
+		pools := v.GetStringSlice("ntp-pools")
 
 		ntpConfig := NtpConfig{
 			ConfPath: "/etc/chrony.d/cray.conf",

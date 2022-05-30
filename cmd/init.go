@@ -410,8 +410,6 @@ func init() {
 	initCmd.Flags().String("site-domain", "", "Site Domain Name")
 	initCmd.Flags().String("first-master-hostname", "ncn-m002", "Hostname of the first master node")
 	// initCmd.Flags().String("internal-domain", "unicos.shasta", "Internal Domain Name")
-	initCmd.Flags().String("ntp-pool", "", "Hostname for Upstream NTP Pool")
-	initCmd.Flags().MarkDeprecated("ntp-pool", "please use --ntp-pools (plural) instead")
 	initCmd.Flags().StringSlice("ntp-pools", []string{""}, "Comma-seperated list of upstream NTP pool(s)")
 	initCmd.Flags().StringSlice("ntp-servers", []string{"ncn-m001"}, "Comma-seperated list of upstream NTP server(s) ncn-m001 should always be in this list")
 	initCmd.Flags().StringSlice("ntp-peers", []string{"ncn-m001", "ncn-m002", "ncn-m003", "ncn-w001", "ncn-w002", "ncn-w003", "ncn-s001", "ncn-s002", "ncn-s003"}, "Comma-seperated list of NCNs that will peer together")
