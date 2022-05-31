@@ -2,8 +2,8 @@
 Name: cray-site-init
 License: MIT License
 Summary: HPCaaS configuration and deployment tool for bare-metal or reinstallations
-Version: %(cat .version)
-Release: %(echo ${BUILD_METADATA})
+Version: %(echo ${VERSION})
+Release: 1
 Source: %{name}-%{version}.tar.bz2
 Vendor: Cray Inc.
 Provides: csi
