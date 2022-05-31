@@ -131,24 +131,11 @@ The following parameters are related to the site and generally should
 match the expected values for the production environment except where
 specifically noted below.
 
-### `--ntp-pool` (`--ntp-pools`)
-
-The site time server that will be used to synchronize the clocks on
-the NCNs.  This setting is expected to be a DNS alias for an NTP pool
-which will be expanded through the NTP protocol.  The NCNs are
-configured to sync time with each other and operate as a stratum for
-other nodes in Shasta that do not have a site connection but still need
-to synchronize their clocks.
-
-> example: time.nist.gov
-
-> In Shasta 1.5, `--ntp-pool` is deprecated by `--ntp-pools` (plural) and accepts multiple entries such as `time.nist.gov,pool.ntp.org`
-
 ### `--ipv4-resolvers`
 
 The site DNS resolvers that are used by the PIT as part of the
 installation to resolve site services and upstream internet addresses
-(where applicable).  This setting is generally the same as --site-dns,
+(where applicable). This setting is generally the same as --site-dns,
 but remains a separate configuration item to support installation in a
 network that is different than the final production network.
 
