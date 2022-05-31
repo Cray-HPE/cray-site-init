@@ -508,7 +508,7 @@ func init() {
 	initCmd.Flags().String("ncn-metadata", "ncn_metadata.csv", "CSV for mapping the mac addresses of the NCNs to their xnames")
 	initCmd.Flags().String("switch-metadata", "switch_metadata.csv", "CSV for mapping the switch xname, brand, type, and model")
 	initCmd.Flags().String("cabinets-yaml", "", "YAML file listing the ids for all cabinets by type")
-	initCmd.Flags().String("application-node-config-yaml", "", "YAML to control Application node identification durring the SLS Input File generation")
+	initCmd.Flags().String("application-node-config-yaml", "application-node-config.yaml", "YAML to control Application node identification durring the SLS Input File generation")
 
 	// Loftsman Manifest Shasta-CFG
 	initCmd.Flags().String("manifest-release", "", "Loftsman Manifest Release Version (leave blank to prevent manifest generation)")
