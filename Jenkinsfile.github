@@ -25,8 +25,7 @@
  */
 @Library('csm-shared-library') _
 
-def promotionToken = ~"(main|release\\/.*)"
-def isStable = env.TAG_NAME != null || env.BRANCH_NAME ==~ promotionToken ? true : false
+def isStable = env.TAG_NAME != null ? true : false
 pipeline {
 
   agent {
@@ -41,10 +40,9 @@ pipeline {
   }
 
   environment {
-    BUILD_METADATA = getRpmRevision(isStable: isStable)
     GIT_REPO_NAME = getRepoName()
     GO_VERSION = sh(returnStdout: true, script: 'grep -Eo "^go .*" go.mod | cut -d " " -f2').trim()
-    VERSION = getDockerBuildVersion(isStable: isStable)
+    VERSION = sh(returnStdout: true, script: "git describe --tags | tr -s '-' '~' | tr -d '^v'").trim()
   }
 
   stages {
