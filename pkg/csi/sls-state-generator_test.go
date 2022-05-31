@@ -10,8 +10,8 @@ import (
 	"os"
 	"testing"
 
-	base "github.com/Cray-HPE/hms-base"
 	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
+	"github.com/Cray-HPE/hms-xname/xnametypes"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -295,14 +295,14 @@ var TestSLSInputState = SLSGeneratorInputState{
 			Xname:              "x3000",
 			Type:               sls_common.Cabinet,
 			Class:              sls_common.ClassRiver,
-			TypeString:         base.Cabinet,
+			TypeString:         xnametypes.Cabinet,
 			ExtraPropertiesRaw: sls_common.ComptypeCabinet{}, // Not required for current unit tests
 		}, "x3001": {
 			Parent:             "s0",
 			Xname:              "x3001",
 			Type:               sls_common.Cabinet,
 			Class:              sls_common.ClassRiver,
-			TypeString:         base.Cabinet,
+			TypeString:         xnametypes.Cabinet,
 			ExtraPropertiesRaw: sls_common.ComptypeCabinet{}, // Not required for current unit tests
 		},
 	},
@@ -312,7 +312,7 @@ var TestSLSInputState = SLSGeneratorInputState{
 			Xname:              "x5000",
 			Type:               sls_common.Cabinet,
 			Class:              sls_common.ClassHill,
-			TypeString:         base.Cabinet,
+			TypeString:         xnametypes.Cabinet,
 			ExtraPropertiesRaw: sls_common.ComptypeCabinet{}, // Not required for current unit tests
 		},
 	},
@@ -322,7 +322,7 @@ var TestSLSInputState = SLSGeneratorInputState{
 			Xname:              "x9000",
 			Type:               sls_common.Cabinet,
 			Class:              sls_common.ClassMountain,
-			TypeString:         base.Cabinet,
+			TypeString:         xnametypes.Cabinet,
 			ExtraPropertiesRaw: sls_common.ComptypeCabinet{}, // Not required for current unit tests
 		},
 	},
@@ -335,7 +335,7 @@ func buildMgmtSwitch(parent, xname, name, ipAddress string, brand ManagementSwit
 		Xname:      xname,
 		Type:       sls_common.MgmtSwitch,
 		Class:      sls_common.ClassRiver,
-		TypeString: base.MgmtSwitch,
+		TypeString: xnametypes.MgmtSwitch,
 		ExtraPropertiesRaw: sls_common.ComptypeMgmtSwitch{
 			IP4Addr:          ipAddress,
 			Brand:            brand.String(),
@@ -427,7 +427,7 @@ func (suite *ConfigGeneratorTestSuite) TestMasterNode() {
 	suite.Equal(hardware.Xname, "x3000c0s1b0n0")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_node"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
-	suite.Equal(hardware.TypeString, base.HMSType("Node"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("Node"))
 
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeNode)
 	suite.True(ok, "ExtraProperties type is not expected type.")
@@ -462,7 +462,7 @@ func (suite *ConfigGeneratorTestSuite) TestCANWorkerNode() {
 	suite.Equal(hardware.Xname, "x3000c0s7b0n0")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_node"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
-	suite.Equal(hardware.TypeString, base.HMSType("Node"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("Node"))
 
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeNode)
 	suite.True(ok, "ExtraProperties type is not expected type.")
@@ -497,7 +497,7 @@ func (suite *ConfigGeneratorTestSuite) TestWorkerNode() {
 	suite.Equal(hardware.Xname, "x3000c0s9b0n0")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_node"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
-	suite.Equal(hardware.TypeString, base.HMSType("Node"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("Node"))
 
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeNode)
 	suite.True(ok, "ExtraProperties type is not expected type.")
@@ -532,7 +532,7 @@ func (suite *ConfigGeneratorTestSuite) TestStorageNode() {
 	suite.Equal(hardware.Xname, "x3000c0s13b0n0")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_node"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
-	suite.Equal(hardware.TypeString, base.HMSType("Node"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("Node"))
 
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeNode)
 	suite.True(ok, "ExtraProperties type is not expected type.")
@@ -566,7 +566,7 @@ func (suite *ConfigGeneratorTestSuite) TestCompute_NID() {
 	suite.Equal(hardware.Xname, "x3000c0s19b1n0")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_node"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
-	suite.Equal(hardware.TypeString, base.HMSType("Node"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("Node"))
 
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeNode)
 	suite.True(ok, "ExtraProperties type is not expected type.")
@@ -601,7 +601,7 @@ func (suite *ConfigGeneratorTestSuite) TestCompute_NID_CapitolSourceU() {
 	suite.Equal(hardware.Xname, "x3000c0s19b2n0")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_node"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
-	suite.Equal(hardware.TypeString, base.HMSType("Node"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("Node"))
 
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeNode)
 	suite.True(ok, "ExtraProperties type is not expected type.")
@@ -636,7 +636,7 @@ func (suite *ConfigGeneratorTestSuite) TestCompute_CN_WithHyphen() {
 	suite.Equal(hardware.Xname, "x3000c0s19b3n0")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_node"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
-	suite.Equal(hardware.TypeString, base.HMSType("Node"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("Node"))
 
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeNode)
 	suite.True(ok, "ExtraProperties type is not expected type.")
@@ -671,7 +671,7 @@ func (suite *ConfigGeneratorTestSuite) TestCompute_CN_WithoutHyphen() {
 	suite.Equal(hardware.Xname, "x3000c0s19b4n0")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_node"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
-	suite.Equal(hardware.TypeString, base.HMSType("Node"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("Node"))
 
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeNode)
 	suite.True(ok, "ExtraProperties type is not expected type.")
@@ -706,7 +706,7 @@ func (suite *ConfigGeneratorTestSuite) TestCompute_SwitchDifferentCabinet() {
 	suite.Equal(hardware.Xname, "x3000c0s21b1n0")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_node"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
-	suite.Equal(hardware.TypeString, base.HMSType("Node"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("Node"))
 
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeNode)
 	suite.True(ok, "ExtraProperties type is not expected type.")
@@ -734,7 +734,7 @@ func (suite *ConfigGeneratorTestSuite) TestCompute_CMC() {
 	suite.Equal(hardware.Xname, "x3000c0s19b999")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_chassis_bmc"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
-	suite.Equal(hardware.TypeString, base.HMSType("ChassisBMC"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("ChassisBMC"))
 }
 
 func (suite *ConfigGeneratorTestSuite) TestUAN() {
@@ -761,7 +761,7 @@ func (suite *ConfigGeneratorTestSuite) TestUAN() {
 	suite.Equal(hardware.Xname, "x3000c0s26b0n0")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_node"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
-	suite.Equal(hardware.TypeString, base.HMSType("Node"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("Node"))
 
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeNode)
 	suite.True(ok, "ExtraProperties type is not expected type.")
@@ -794,7 +794,7 @@ func (suite *ConfigGeneratorTestSuite) TestLoginNode() {
 	suite.Equal(hardware.Xname, "x3000c0s27b0n0")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_node"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
-	suite.Equal(hardware.TypeString, base.HMSType("Node"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("Node"))
 
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeNode)
 	suite.True(ok, "ExtraProperties type is not expected type.")
@@ -827,7 +827,7 @@ func (suite *ConfigGeneratorTestSuite) TestGatewayNode() {
 	suite.Equal(hardware.Xname, "x3000c0s28b0n0")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_node"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
-	suite.Equal(hardware.TypeString, base.HMSType("Node"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("Node"))
 
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeNode)
 	suite.True(ok, "ExtraProperties type is not expected type.")
@@ -860,7 +860,7 @@ func (suite *ConfigGeneratorTestSuite) TestVisualizationNode() {
 	suite.Equal(hardware.Xname, "x3000c0s29b0n0")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_node"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
-	suite.Equal(hardware.TypeString, base.HMSType("Node"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("Node"))
 
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeNode)
 	suite.True(ok, "ExtraProperties type is not expected type.")
@@ -893,7 +893,7 @@ func (suite *ConfigGeneratorTestSuite) TestNodeLNet01() {
 	suite.Equal(hardware.Xname, "x3000c0s30b0n0")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_node"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
-	suite.Equal(hardware.TypeString, base.HMSType("Node"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("Node"))
 
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeNode)
 	suite.True(ok, "ExtraProperties type is not expected type.")
@@ -926,7 +926,7 @@ func (suite *ConfigGeneratorTestSuite) TestNodeLNet02() {
 	suite.Equal(hardware.Xname, "x3000c0s31b0n0")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_node"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
-	suite.Equal(hardware.TypeString, base.HMSType("Node"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("Node"))
 
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeNode)
 	suite.True(ok, "ExtraProperties type is not expected type.")
@@ -959,7 +959,7 @@ func (suite *ConfigGeneratorTestSuite) TestNodeUAN2() {
 	suite.Equal(hardware.Xname, "x3000c0s32b0n0")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_node"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
-	suite.Equal(hardware.TypeString, base.HMSType("Node"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("Node"))
 
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeNode)
 	suite.True(ok, "ExtraProperties type is not expected type.")
@@ -997,7 +997,7 @@ func (suite *ConfigGeneratorTestSuite) TestManagementSwitch() {
 	suite.Equal(hardware.Xname, "x3000c0w22")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_mgmt_switch"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
-	suite.Equal(hardware.TypeString, base.HMSType("MgmtSwitch"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("MgmtSwitch"))
 
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeMgmtSwitch)
 	suite.True(ok, "ExtraProperties type is not expected type.")
@@ -1032,7 +1032,7 @@ func (suite *ConfigGeneratorTestSuite) TestHSNSwitch_HSN() {
 	suite.Equal(hardware.Xname, "x3000c0r22b0")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_rtr_bmc"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
-	suite.Equal(hardware.TypeString, base.HMSType("RouterBMC"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("RouterBMC"))
 
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeRtrBmc)
 	suite.True(ok, "ExtraProperties type is not expected type.")
@@ -1062,7 +1062,7 @@ func (suite *ConfigGeneratorTestSuite) TestHSNSwitch_Columbia() {
 	suite.Equal(hardware.Xname, "x3000c0r24b0")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_rtr_bmc"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
-	suite.Equal(hardware.TypeString, base.HMSType("RouterBMC"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("RouterBMC"))
 
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeRtrBmc)
 	suite.True(ok, "ExtraProperties type is not expected type.")
@@ -1089,7 +1089,7 @@ func (suite *ConfigGeneratorTestSuite) TestCabinetPDUController() {
 	suite.Equal(hardware.Xname, "x3000m0")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_cab_pdu_controller"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
-	suite.Equal(hardware.TypeString, base.HMSType("CabinetPDUController"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("CabinetPDUController"))
 
 	suite.Nil(hardware.ExtraPropertiesRaw, "ExtraProperties type is not nil")
 }
@@ -1112,7 +1112,7 @@ func (suite *ConfigGeneratorTestSuite) TestCabinetPDUController_pduPrefix0() {
 	suite.Equal(hardware.Xname, "x3001m0")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_cab_pdu_controller"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
-	suite.Equal(hardware.TypeString, base.HMSType("CabinetPDUController"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("CabinetPDUController"))
 
 	suite.Nil(hardware.ExtraPropertiesRaw, "ExtraProperties type is not nil")
 }
@@ -1135,7 +1135,7 @@ func (suite *ConfigGeneratorTestSuite) TestCabinetPDUController_pduPrefix2() {
 	suite.Equal(hardware.Xname, "x3001m2")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_cab_pdu_controller"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
-	suite.Equal(hardware.TypeString, base.HMSType("CabinetPDUController"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("CabinetPDUController"))
 
 	suite.Nil(hardware.ExtraPropertiesRaw, "ExtraProperties type is not nil")
 }
@@ -1162,7 +1162,7 @@ func (suite *ConfigGeneratorTestSuite) TestMgmtSwitchConnector_CabinetPDUControl
 	suite.Equal(hardware.Xname, "x3000c0w22j48")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_mgmt_switch_connector"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
-	suite.Equal(hardware.TypeString, base.HMSType("MgmtSwitchConnector"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("MgmtSwitchConnector"))
 
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeMgmtSwitchConnector)
 	suite.True(ok, "ExtraProperties type is not expected type.")
@@ -1195,7 +1195,7 @@ func (suite *ConfigGeneratorTestSuite) TestMgmtSwitchConnector_ComputeSwitchDiff
 	suite.Equal(hardware.Xname, "x3001c0w21j21")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_mgmt_switch_connector"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
-	suite.Equal(hardware.TypeString, base.HMSType("MgmtSwitchConnector"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("MgmtSwitchConnector"))
 
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeMgmtSwitchConnector)
 	suite.True(ok, "ExtraProperties type is not expected type.")
@@ -1227,7 +1227,7 @@ func (suite *ConfigGeneratorTestSuite) TestMgmtSwitchConnector_ArubaSwitch() {
 	suite.Equal(hardware.Xname, "x3001c0w42j48")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_mgmt_switch_connector"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
-	suite.Equal(hardware.TypeString, base.HMSType("MgmtSwitchConnector"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("MgmtSwitchConnector"))
 
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeMgmtSwitchConnector)
 	suite.True(ok, "ExtraProperties type is not expected type.")
@@ -1255,7 +1255,7 @@ func (suite *ConfigGeneratorTestSuite) TestCabinet_River() {
 	suite.Equal(hardware.Xname, "x3000")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_cabinet"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
-	suite.Equal(hardware.TypeString, base.HMSType("Cabinet"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("Cabinet"))
 
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeCabinet)
 	suite.True(ok, "ExtraProperties type is not expected type.")
@@ -1282,7 +1282,7 @@ func (suite *ConfigGeneratorTestSuite) TestCabinet_Hill() {
 	suite.Equal(hardware.Xname, "x5000")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_cabinet"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("Hill"))
-	suite.Equal(hardware.TypeString, base.HMSType("Cabinet"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("Cabinet"))
 
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeCabinet)
 	suite.True(ok, "ExtraProperties type is not expected type.")
@@ -1314,7 +1314,7 @@ func (suite *ConfigGeneratorTestSuite) TestVerifyChassisBMC_Hill() {
 		suite.Equal(hardware.Xname, chassisBMC)
 		suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_chassis_bmc"))
 		suite.Equal(hardware.Class, sls_common.CabinetType("Hill"))
-		suite.Equal(hardware.TypeString, base.HMSType("ChassisBMC"))
+		suite.Equal(hardware.TypeString, xnametypes.HMSType("ChassisBMC"))
 
 		suite.Nil(hardware.ExtraPropertiesRaw, "ExtraProperties type is not nil")
 	}
@@ -1376,7 +1376,7 @@ func (suite *ConfigGeneratorTestSuite) TestVerifyComputeNodes_Hill() {
 				suite.Equal(hardware.Xname, nodeXname)
 				suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_node"))
 				suite.Equal(hardware.Class, sls_common.CabinetType("Hill"))
-				suite.Equal(hardware.TypeString, base.HMSType("Node"))
+				suite.Equal(hardware.TypeString, xnametypes.HMSType("Node"))
 
 				hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeNode)
 				suite.True(ok, "ExtraProperties type is not expected type.")
@@ -1412,7 +1412,7 @@ func (suite *ConfigGeneratorTestSuite) TestCabinet_Mountain() {
 	suite.Equal(hardware.Xname, "x9000")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_cabinet"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("Mountain"))
-	suite.Equal(hardware.TypeString, base.HMSType("Cabinet"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("Cabinet"))
 
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeCabinet)
 	suite.True(ok, "ExtraProperties type is not expected type.")
@@ -1450,7 +1450,7 @@ func (suite *ConfigGeneratorTestSuite) TestVerifyChassisBMC_Mountain() {
 		suite.Equal(hardware.Xname, chassisBMC)
 		suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_chassis_bmc"))
 		suite.Equal(hardware.Class, sls_common.CabinetType("Mountain"))
-		suite.Equal(hardware.TypeString, base.HMSType("ChassisBMC"))
+		suite.Equal(hardware.TypeString, xnametypes.HMSType("ChassisBMC"))
 
 		suite.Nil(hardware.ExtraPropertiesRaw, "ExtraProperties type is not nil")
 	}
@@ -1519,7 +1519,7 @@ func (suite *ConfigGeneratorTestSuite) TestVerifyComputeNodes_Mountain() {
 				suite.Equal(hardware.Xname, nodeXname)
 				suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_node"))
 				suite.Equal(hardware.Class, sls_common.CabinetType("Mountain"))
-				suite.Equal(hardware.TypeString, base.HMSType("Node"))
+				suite.Equal(hardware.TypeString, xnametypes.HMSType("Node"))
 
 				hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeNode)
 				suite.True(ok, "ExtraProperties type is not expected type.")

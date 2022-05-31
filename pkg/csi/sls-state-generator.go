@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"strings"
 
-	base "github.com/Cray-HPE/hms-base"
 	shcd_parser "github.com/Cray-HPE/hms-shcd-parser/pkg/shcd-parser"
 	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 	"github.com/Cray-HPE/hms-xname/xnametypes"
@@ -55,13 +54,13 @@ func (applicationNodeConfig *SLSGeneratorApplicationNodeConfig) Validate() error
 	// Verify that all keys in the Alias map are valid xnames
 	for xname := range applicationNodeConfig.Aliases {
 		// First off verify that this is valid xname
-		if !base.IsHMSCompIDValid(xname) {
+		if !xnametypes.IsHMSCompIDValid(xname) {
 			return fmt.Errorf("invalid xname for application node used as key in Aliases map: %s", xname)
 		}
 
 		// Next, verify that the xname is type of node
-		if base.GetHMSType(xname) != base.Node {
-			return fmt.Errorf("invalid type %s for Application xname in Aliases map: %s", base.GetHMSTypeString(xname), xname)
+		if xnametypes.GetHMSType(xname) != xnametypes.Node {
+			return fmt.Errorf("invalid type %s for Application xname in Aliases map: %s", xnametypes.GetHMSTypeString(xname), xname)
 		}
 	}
 
@@ -116,7 +115,7 @@ func (applicationNodeConfig *SLSGeneratorApplicationNodeConfig) Normalize() erro
 	// Normalize xnames in the Aliases map
 	normalizedAliases := map[string][]string{}
 	for xname, aliases := range applicationNodeConfig.Aliases {
-		normalizedXname := base.NormalizeHMSCompID(xname)
+		normalizedXname := xnametypes.NormalizeHMSCompID(xname)
 
 		if _, present := normalizedAliases[normalizedXname]; present {
 			// Found a duplicate xname, after normalization
@@ -202,7 +201,7 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 		switch mySwitch.Type {
 		case sls_common.MgmtSwitch:
 			// xname: xXcCwW
-			parentCabinet := base.GetHMSCompParent(mySwitch.Parent)
+			parentCabinet := xnametypes.GetHMSCompParent(mySwitch.Parent)
 			if _, ok := g.inputState.RiverCabinets[parentCabinet]; !ok {
 				logger.Fatal("Parent river cabinet does not exist for MgmtSwitch",
 					zap.Any("switch", mySwitch),
@@ -212,8 +211,8 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 			}
 		case sls_common.MgmtHLSwitch:
 			// xname: xXcChHsS
-			parentChassis := base.GetHMSCompParent(mySwitch.Parent)
-			parentCabinet := base.GetHMSCompParent(parentChassis)
+			parentChassis := xnametypes.GetHMSCompParent(mySwitch.Parent)
+			parentCabinet := xnametypes.GetHMSCompParent(parentChassis)
 			if _, ok := g.inputState.RiverCabinets[parentCabinet]; !ok {
 				logger.Fatal("Parent river cabinet does not exist for MgmtHLSwitch",
 					zap.Any("switch", mySwitch),

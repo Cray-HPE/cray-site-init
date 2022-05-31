@@ -28,7 +28,7 @@ import (
 	"net"
 	"os"
 
-	base "github.com/Cray-HPE/hms-base"
+	"github.com/Cray-HPE/hms-xname/xnametypes"
 	"github.com/gocarina/gocsv"
 )
 
@@ -118,7 +118,7 @@ func (mySwitch *ManagementSwitch) Validate() error {
 
 	xname := mySwitch.Xname
 	// Verify xname is valid
-	if !base.IsHMSCompIDValid(xname) {
+	if !xnametypes.IsHMSCompIDValid(xname) {
 		return fmt.Errorf("invalid xname for Switch: %s", xname)
 	}
 
@@ -129,10 +129,10 @@ func (mySwitch *ManagementSwitch) Validate() error {
 
 	// Now we need to verify that the correct switch xname format was used for the different
 	// types of management switches.
-	hmsType := base.GetHMSType(xname)
+	hmsType := xnametypes.GetHMSType(xname)
 	switch mySwitch.SwitchType {
 	case ManagementSwitchTypeLeafBMC:
-		if hmsType != base.MgmtSwitch {
+		if hmsType != xnametypes.MgmtSwitch {
 			return fmt.Errorf("invalid xname used for LeafBMC switch: %s,  should use xXcCwW format", xname)
 		}
 	case ManagementSwitchTypeEdge:
@@ -140,7 +140,7 @@ func (mySwitch *ManagementSwitch) Validate() error {
 	case ManagementSwitchTypeSpine:
 		fallthrough
 	case ManagementSwitchTypeLeaf:
-		if hmsType != base.MgmtHLSwitch {
+		if hmsType != xnametypes.MgmtHLSwitch {
 			return fmt.Errorf("invalid xname used for Spine/Leaf/Edge switch: %s, should use xXcChHsS format", xname)
 		}
 	case ManagementSwitchTypeCDU:
@@ -151,7 +151,7 @@ func (mySwitch *ManagementSwitch) Validate() error {
 		// xXcChHsS - This is normally for Leaf and Spine switches, but some Hill cabinets have the
 		// CDU switches powered/racked into the adjacent river cabinet.
 
-		if hmsType != base.CDUMgmtSwitch && hmsType != base.MgmtHLSwitch {
+		if hmsType != xnametypes.CDUMgmtSwitch && hmsType != xnametypes.MgmtHLSwitch {
 			return fmt.Errorf("invalid xname used for CDU switch: %s, should use dDwW format (if in an adjacent river cabinet to a TBD cabinet use the xXcChHsS format)", xname)
 		}
 	default:
@@ -164,7 +164,7 @@ func (mySwitch *ManagementSwitch) Validate() error {
 // Normalize the values of a Management switch
 func (mySwitch *ManagementSwitch) Normalize() error {
 	// Right now we only need to the normalize the xname for the switch. IE strip any leading 0s
-	mySwitch.Xname = base.NormalizeHMSCompID(mySwitch.Xname)
+	mySwitch.Xname = xnametypes.NormalizeHMSCompID(mySwitch.Xname)
 
 	return nil
 }

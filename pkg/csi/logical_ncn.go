@@ -12,7 +12,7 @@ import (
 	"net"
 	"os"
 
-	base "github.com/Cray-HPE/hms-base"
+	"github.com/Cray-HPE/hms-xname/xnametypes"
 	"github.com/gocarina/gocsv"
 )
 
@@ -76,13 +76,13 @@ func (lncn *LogicalNCN) Validate() error {
 	xname := lncn.Xname
 
 	// First off verify that this is a valid xname
-	if !base.IsHMSCompIDValid(xname) {
+	if !xnametypes.IsHMSCompIDValid(xname) {
 		return fmt.Errorf("invalid xname for NCN: %s", xname)
 	}
 
 	// Next, verify that the xname is type of Node
-	if base.GetHMSType(xname) != base.Node {
-		return fmt.Errorf("invalid type %s for NCN xname: %s", base.GetHMSTypeString(xname), xname)
+	if xnametypes.GetHMSType(xname) != xnametypes.Node {
+		return fmt.Errorf("invalid type %s for NCN xname: %s", xnametypes.GetHMSTypeString(xname), xname)
 	}
 
 	if lncn.Role == "" {
@@ -107,7 +107,7 @@ func (lncn LogicalNCN) GetHostname() string {
 // Normalize the values of a LogicalNCN
 func (lncn *LogicalNCN) Normalize() error {
 	// Right now we only need to the normalize the xname for the switch. IE strip any leading 0s
-	lncn.Xname = base.NormalizeHMSCompID(lncn.Xname)
+	lncn.Xname = xnametypes.NormalizeHMSCompID(lncn.Xname)
 
 	return nil
 }

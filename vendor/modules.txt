@@ -7,6 +7,7 @@ github.com/Azure/go-ansiterm/winterm
 github.com/Cray-HPE/hms-base
 # github.com/Cray-HPE/hms-base/v2 v2.0.1
 ## explicit
+github.com/Cray-HPE/hms-base/v2
 # github.com/Cray-HPE/hms-bss v1.16.0
 ## explicit
 github.com/Cray-HPE/hms-bss/pkg/bssTypes

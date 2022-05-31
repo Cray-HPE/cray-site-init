@@ -31,7 +31,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/Cray-HPE/cray-site-init/pkg/csi"
-	base "github.com/Cray-HPE/hms-base"
 	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 	"github.com/Cray-HPE/hms-xname/xnametypes"
 )
@@ -106,7 +105,7 @@ func genCabinetMap(cd []csi.CabinetGroupDetail, shastaNetworks map[string]*csi.I
 				cabinet.Class = sls_common.ClassMountain
 			}
 			// Validate that our cabinet will be addressable as a valid Xname
-			if base.GetHMSType(cabinet.Xname) != base.Cabinet {
+			if xnametypes.GetHMSType(cabinet.Xname) != xnametypes.Cabinet {
 				log.Fatalf("%s is not a valid Xname for a cabinet.  Refusing to continue.", cabinet.Xname)
 			}
 			tmpCabinets[cabinet.Xname] = cabinet
@@ -120,7 +119,7 @@ func convertManagementSwitchToSLS(s *csi.ManagementSwitch) (sls_common.GenericHa
 	switch s.SwitchType {
 	case csi.ManagementSwitchTypeLeafBMC:
 		return sls_common.GenericHardware{
-			Parent:     base.GetHMSCompParent(s.Xname),
+			Parent:     xnametypes.GetHMSCompParent(s.Xname),
 			Xname:      s.Xname,
 			Type:       sls_common.MgmtSwitch,
 			TypeString: xnametypes.MgmtSwitch,
@@ -142,7 +141,7 @@ func convertManagementSwitchToSLS(s *csi.ManagementSwitch) (sls_common.GenericHa
 		fallthrough
 	case csi.ManagementSwitchTypeSpine:
 		return sls_common.GenericHardware{
-			Parent:     base.GetHMSCompParent(s.Xname),
+			Parent:     xnametypes.GetHMSCompParent(s.Xname),
 			Xname:      s.Xname,
 			Type:       sls_common.MgmtHLSwitch,
 			TypeString: xnametypes.MgmtHLSwitch,
@@ -156,10 +155,10 @@ func convertManagementSwitchToSLS(s *csi.ManagementSwitch) (sls_common.GenericHa
 		}, nil
 
 	case csi.ManagementSwitchTypeCDU:
-		if base.GetHMSType(s.Xname) == base.MgmtHLSwitch {
+		if xnametypes.GetHMSType(s.Xname) == xnametypes.MgmtHLSwitch {
 			// This is a CDU switch in the River cabinet that is adjacent to the Hill cabinet. Use the MgmtHLSwitch type instead
 			return sls_common.GenericHardware{
-				Parent:     base.GetHMSCompParent(s.Xname),
+				Parent:     xnametypes.GetHMSCompParent(s.Xname),
 				Xname:      s.Xname,
 				Type:       sls_common.MgmtHLSwitch,
 				TypeString: xnametypes.MgmtHLSwitch,
@@ -174,7 +173,7 @@ func convertManagementSwitchToSLS(s *csi.ManagementSwitch) (sls_common.GenericHa
 		}
 
 		return sls_common.GenericHardware{
-			Parent:     base.GetHMSCompParent(s.Xname),
+			Parent:     xnametypes.GetHMSCompParent(s.Xname),
 			Xname:      s.Xname,
 			Type:       sls_common.CDUMgmtSwitch,
 			TypeString: xnametypes.CDUMgmtSwitch,

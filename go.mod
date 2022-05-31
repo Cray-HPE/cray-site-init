@@ -6,7 +6,7 @@ replace (
 )
 
 require (
-	github.com/Cray-HPE/hms-base/v2 v2.0.1 // indirect
+	github.com/Cray-HPE/hms-base/v2 v2.0.1
 	github.com/Cray-HPE/hms-bss v1.16.0
 	github.com/Cray-HPE/hms-s3 v1.10.1
 	github.com/Cray-HPE/hms-shcd-parser v1.8.0
