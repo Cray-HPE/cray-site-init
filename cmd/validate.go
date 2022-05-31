@@ -28,7 +28,6 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
-	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -44,30 +43,30 @@ var validateCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if livecdProvisioning {
-			runCommand(filepath.Join("/opt/cray/tests/install/livecd/automated/", "livecd-provisioning-checks"))
+			runCommand("/opt/cray/tests/install/livecd/automated/livecd-provisioning-checks")
 		}
 
 		if livecdPreflight {
-			runCommand(filepath.Join("/opt/cray/tests/install/livecd/automated/", "livecd-preflight-checks"))
+			runCommand("/opt/cray/tests/install/livecd/automated/livecd-preflight-checks")
 		}
 
 		if ncnPreflight {
-			runCommand(filepath.Join("/opt/cray/tests/install/livecd/automated/", "ncn-preflight-checks"))
+			runCommand("/opt/cray/tests/install/livecd/automated/ncn-preflight-checks")
 		}
 
 		if validateCeph {
-			runCommand(filepath.Join("/opt/cray/tests/install/livecd/automated/", "ncn-storage-checks"))
+			runCommand("/opt/cray/tests/install/livecd/automated/ncn-storage-checks")
 		}
 
 		if validateK8s {
-			runCommand(filepath.Join("/opt/cray/tests/install/livecd/automated/", "ncn-kubernetes-checks"))
+			runCommand("/opt/cray/tests/install/livecd/automated/ncn-kubernetes-checks")
 		}
 
 		if validatePg {
-			runCommand(filepath.Join("/opt/cray/tests/install/ncn/scripts/", "postgres_clusters_running.sh"))
-			runCommand(filepath.Join("/opt/cray/tests/install/ncn/scripts/", "postgres_pods_running.sh") + " -p")
-			runCommand(filepath.Join("/opt/cray/tests/install/ncn/scripts/", "postgres_clusters_leader.sh") + " -p")
-			runCommand(filepath.Join("/opt/cray/tests/install/ncn/scripts/", "postgres_replication_lag.sh") + " -p -e")
+			runCommand("/opt/cray/tests/install/ncn/scripts/postgres_clusters_running.sh")
+			runCommand("/opt/cray/tests/install/ncn/scripts/postgres_pods_running.sh -p")
+			runCommand("/opt/cray/tests/install/ncn/scripts/postgres_clusters_leader.sh -p")
+			runCommand("/opt/cray/tests/install/ncn/scripts/postgres_replication_lag.sh -p -e")
 		}
 	},
 }
