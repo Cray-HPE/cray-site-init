@@ -19,12 +19,7 @@ pipeline {
     }
 
     stages {
-        stage("Image") {
-            steps {
-                sh "make image"
-            }
-        }
-
+       
         stage("Run Unit Tests") {
             steps {
                 sh "make unittest"

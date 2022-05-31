@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2019, 2021] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2019, 2021-2022] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -26,7 +26,7 @@ import (
 	"encoding/json"
 	"net"
 
-	base "github.com/Cray-HPE/hms-base"
+	"github.com/Cray-HPE/hms-xname/xnametypes"
 )
 
 /*
@@ -34,16 +34,16 @@ GenericHardware is the top level type for hardware in the database.  See the
 Type property to cast it to whatever type it actually represets.
 */
 type GenericHardware struct {
-	Parent             string        `json:"Parent"`
-	Children           []string      `json:"Children,omitempty"`
-	Xname              string        `json:"Xname"`
-	Type               HMSStringType `json:"Type"`
-	Class              CabinetType   `json:"Class"`
-	TypeString         base.HMSType  `json:"TypeString"`
-	LastUpdated        int64         `json:"LastUpdated,omitempty"`
-	LastUpdatedTime    string        `json:"LastUpdatedTime,omitempty"`
-	ExtraPropertiesRaw interface{}   `json:"ExtraProperties,omitempty"`
-	VaultData          interface{}   `json:"VaultData,omitempty"`
+	Parent             string             `json:"Parent"`
+	Children           []string           `json:"Children,omitempty"`
+	Xname              string             `json:"Xname"`
+	Type               HMSStringType      `json:"Type"`
+	Class              CabinetType        `json:"Class"`
+	TypeString         xnametypes.HMSType `json:"TypeString"`
+	LastUpdated        int64              `json:"LastUpdated,omitempty"`
+	LastUpdatedTime    string             `json:"LastUpdatedTime,omitempty"`
+	ExtraPropertiesRaw interface{}        `json:"ExtraProperties,omitempty"`
+	VaultData          interface{}        `json:"VaultData,omitempty"`
 }
 
 type GenericHardwareArray []GenericHardware
@@ -87,7 +87,7 @@ func (gh *GenericHardware) GetClass() CabinetType {
 	return gh.Class
 }
 
-func (gh *GenericHardware) GetTypeString() base.HMSType {
+func (gh *GenericHardware) GetTypeString() xnametypes.HMSType {
 	return gh.TypeString
 }
 
@@ -346,8 +346,8 @@ type NetworkExtraProperties struct {
 	PeerASN   int     `json:"PeerASN,omitempty"`
 	MyASN     int     `json:"MyASN,omitempty"`
 
-	Subnets []IPV4Subnet `json:"Subnets"`
-	SystemDefaultRoute string `json:"SystemDefaultRoute,omitempty"`
+	Subnets            []IPV4Subnet `json:"Subnets"`
+	SystemDefaultRoute string       `json:"SystemDefaultRoute,omitempty"`
 }
 
 // IPReservation is a type for managing IP Reservations

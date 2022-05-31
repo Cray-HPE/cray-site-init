@@ -155,8 +155,8 @@ const (
 
 const MaxFanout int = 1000
 
-var ErrRFDiscFQDNMissing   = errors.New("FQDN unexpectedly empty string")
-var ErrRFDiscURLNotFound   = errors.New("URL request returned 404: Not Found")
+var ErrRFDiscFQDNMissing = errors.New("FQDN unexpectedly empty string")
+var ErrRFDiscURLNotFound = errors.New("URL request returned 404: Not Found")
 var ErrRFDiscILOLicenseReq = errors.New("iLO License Required")
 
 /////////////////////////////////////////////////////////////////////////////
@@ -975,6 +975,11 @@ func (ep *RedfishEP) GetRootInfo() {
 	// Next, the PowerEquipment for the endpoint, if it exits.  For now,
 	// we just get the RackPDUs collection under it.
 	//
+	// HPE PDUs use PowerDistribution, so setup PowerEquipment path
+	if ep.ServiceRootRF.PowerDistribution.Oid != "" {
+		ep.ServiceRootRF.PowerEquipment.Oid = "/redfish/v1/PowerEquipment"
+	}
+
 	if ep.ServiceRootRF.PowerEquipment.Oid != "" {
 		path = ep.ServiceRootRF.PowerEquipment.Oid
 		powerJSON, err := ep.GETRelative(path)
@@ -1773,7 +1778,7 @@ func (ep *RedfishEP) getManagerHMSType(m *EpManager) string {
 		return ep.Type
 	}
 	// See if manager provides an entry point to the root service
-	if m.ManagerRF.ServiceEntryPointUUID == ep.UUID {
+	if ep.UUID != "" && m.ManagerRF.ServiceEntryPointUUID == ep.UUID {
 		return ep.Type
 	}
 	if len(m.ManagedSystems) > 0 {
@@ -1781,6 +1786,12 @@ func (ep *RedfishEP) getManagerHMSType(m *EpManager) string {
 		return base.NodeBMC.String()
 	}
 	if m.ManagerRF.ManagerType == RFSubtypeEnclosureManager {
+		// Cassini NodeBMCs look like ChassisBMCs because they're missing the
+		// Links.ManagerForServers field. If the managerType is "EnclosureManager",
+		// check to see if there are any Systems at all.
+		if ep.NumSystems > 0 {
+			return base.NodeBMC.String()
+		}
 		return base.ChassisBMC.String()
 	}
 	// TODO: Multiple managers.  We don't roll up managers
@@ -1836,7 +1847,7 @@ func IsManufacturer(mfrCheckStr, mfr string) int {
 		for _, s := range split {
 			switch mfr {
 			case CrayMfr:
-				if s == "cray" || s == "crayinc" || s == "crayincorporated" {
+				if s == "cray" || s == "crayinc" || s == "crayincorporated" || s == "hpe" {
 					return 1
 				}
 			case IntelMfr:

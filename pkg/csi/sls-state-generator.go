@@ -13,6 +13,7 @@ import (
 	base "github.com/Cray-HPE/hms-base"
 	shcd_parser "github.com/Cray-HPE/hms-shcd-parser/pkg/shcd-parser"
 	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
+	"github.com/Cray-HPE/hms-xname/xnametypes"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -459,7 +460,7 @@ func (g *SLSStateGenerator) getPDUControllerHardwareFromRow(row shcd_parser.HMNR
 		Xname:      pduXname,
 		Type:       sls_common.CabinetPDUController,
 		Class:      sls_common.ClassRiver,
-		TypeString: base.CabinetPDUController,
+		TypeString: xnametypes.CabinetPDUController,
 	}
 
 	return

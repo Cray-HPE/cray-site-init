@@ -33,6 +33,7 @@ import (
 	"github.com/Cray-HPE/cray-site-init/pkg/csi"
 	base "github.com/Cray-HPE/hms-base"
 	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
+	"github.com/Cray-HPE/hms-xname/xnametypes"
 )
 
 // initCmd represents the init command
@@ -88,7 +89,7 @@ func genCabinetMap(cd []csi.CabinetGroupDetail, shastaNetworks map[string]*csi.I
 				Parent:     "s0",
 				Xname:      fmt.Sprintf("x%d", id),
 				Type:       sls_common.Cabinet,
-				TypeString: base.Cabinet,
+				TypeString: xnametypes.Cabinet,
 				ExtraPropertiesRaw: sls_common.ComptypeCabinet{
 					Networks: map[string]map[string]sls_common.CabinetNetworks{"cn": networks},
 				},
@@ -122,7 +123,7 @@ func convertManagementSwitchToSLS(s *csi.ManagementSwitch) (sls_common.GenericHa
 			Parent:     base.GetHMSCompParent(s.Xname),
 			Xname:      s.Xname,
 			Type:       sls_common.MgmtSwitch,
-			TypeString: base.MgmtSwitch,
+			TypeString: xnametypes.MgmtSwitch,
 			Class:      sls_common.ClassRiver,
 			ExtraPropertiesRaw: sls_common.ComptypeMgmtSwitch{
 				IP4Addr:          s.ManagementInterface.String(),
@@ -144,7 +145,7 @@ func convertManagementSwitchToSLS(s *csi.ManagementSwitch) (sls_common.GenericHa
 			Parent:     base.GetHMSCompParent(s.Xname),
 			Xname:      s.Xname,
 			Type:       sls_common.MgmtHLSwitch,
-			TypeString: base.MgmtHLSwitch,
+			TypeString: xnametypes.MgmtHLSwitch,
 			Class:      sls_common.ClassRiver,
 			ExtraPropertiesRaw: sls_common.ComptypeMgmtHLSwitch{
 				IP4Addr: s.ManagementInterface.String(),
@@ -161,7 +162,7 @@ func convertManagementSwitchToSLS(s *csi.ManagementSwitch) (sls_common.GenericHa
 				Parent:     base.GetHMSCompParent(s.Xname),
 				Xname:      s.Xname,
 				Type:       sls_common.MgmtHLSwitch,
-				TypeString: base.MgmtHLSwitch,
+				TypeString: xnametypes.MgmtHLSwitch,
 				Class:      sls_common.ClassRiver,
 				ExtraPropertiesRaw: sls_common.ComptypeMgmtHLSwitch{
 					IP4Addr: s.ManagementInterface.String(),
@@ -176,7 +177,7 @@ func convertManagementSwitchToSLS(s *csi.ManagementSwitch) (sls_common.GenericHa
 			Parent:     base.GetHMSCompParent(s.Xname),
 			Xname:      s.Xname,
 			Type:       sls_common.CDUMgmtSwitch,
-			TypeString: base.CDUMgmtSwitch,
+			TypeString: xnametypes.CDUMgmtSwitch,
 			Class:      sls_common.ClassMountain,
 			ExtraPropertiesRaw: sls_common.ComptypeCDUMgmtSwitch{
 				Brand:   s.Brand.String(),

@@ -25,6 +25,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"path"
+	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -45,8 +47,45 @@ func (rs ResourceIDSlice) Len() int {
 	return len(rs)
 }
 
+/*
+If we have an alpha-numeric string (i.e. abcdefg123),
+we need to sort on the numeric part of the string if the alpha part of the strings are the same.
+In our case (OUTLET3 and OUTLET24)
+If we just did a string compare, OUTLET24 < OUTLET3 - We need to have it the so OUTLET3 < OUTLET24.
+
+Break sting into alpha part and numeric part [OUTLET 3] [OUTLET 24]
+Compare alpha parts (OUTLET) if same, then compare numeric part by converting to int before comparing.
+
+If not alpha-numeric string, or alpha portion different, just use regular string compare.
+*/
+var alphanum, _ = regexp.Compile("([a-zA-Z]+)([0-9]+)$")
+
 // For sort interface, comparison operation
 func (rs ResourceIDSlice) Less(i, j int) bool {
+	// Check to see if we have to sort on numeric values
+	// For example OUTLET2 < OUTLET10
+	split1 := alphanum.FindStringSubmatch(rs[i].Oid)
+	split2 := alphanum.FindStringSubmatch(rs[j].Oid)
+	// split1/2 will return a slice of [OUTLET10 OUTLET 10]
+	// if in the correct format, otherwise emplty slice []
+	// If we did a successful split, check
+	if (len(split1) > 2) && (len(split2) > 2) &&
+		split1[1] == split2[1] {
+		// split1/2[1] will contain the alpha string
+		// split1/2[2] will contain the numeric part
+		// If alpha strings the same, sort on numeric value
+		num1, err := strconv.Atoi(split1[2])
+		if err == nil {
+			num2, err := strconv.Atoi(split2[2])
+			if err == nil {
+				if num1 < num2 {
+					return true
+				}
+				return false
+			}
+		}
+	}
+	// Compare as strings
 	cmp := strings.Compare(rs[i].Oid, rs[j].Oid)
 	if cmp < 0 {
 		return true
