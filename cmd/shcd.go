@@ -86,51 +86,46 @@ var shcdCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		v := viper.GetViper()
 		v.BindPFlags(cmd.Flags())
-
 		// Validate the file passed against the pre-defined schema
 		err := ValidateSchema(args[0], shcdSchemaFile)
 		if err != nil {
-			log.Fatalf("cannot validate schema: %v", err.Error())
+			log.Fatalf("cannot validate schema: %+v", err)
 		}
-
 		// If the file meets the schema criteria
 		// Open the file since we know it is valid
 		shcdFile, err := ioutil.ReadFile(args[0])
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
-
 		// Parse the JSON and return an Shcd object
 		shcd, err := ParseSHCD(shcdFile)
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
-
 		if v.IsSet("hmn-connections") {
 			err := createHMNSeed(shcd.Topology)
 			if err != nil {
 				fmt.Printf("WARNING - Error creating hmn-connections: %+v", err)
 			}
 		}
-
 		if v.IsSet("switch-metadata") {
 			err := createSwitchSeed(shcd.Topology)
 			if err != nil {
 				fmt.Printf("WARNING - Error creating switch-metadata: %+v", err)
 			}
 		}
-
 		if v.IsSet("application-node-config") {
-			err := createANCSeed(shcd, applicationNodeConfig)
+			err := createANCSeed(shcd.Topology)
 			if err != nil {
 				fmt.Printf("WARNING - Error creating application-node-config: %+v", err)
 			}
 		}
-
 		if v.IsSet("ncn-metadata") {
-			createNCNSeed(shcd.Topology)
+			err := createNCNSeed(shcd.Topology)
+			if err != nil {
+				fmt.Printf("WARNING - Error creating ncn-metadata: %+v", err)
+			}
 		}
-
 	},
 }
 
@@ -701,23 +696,20 @@ func createHMNSeed(topology []ID) error {
 }
 
 // createANCSeed creates application_node_config.yaml using information from the shcd
-func createANCSeed(shcd Shcd, f string) error {
-
+func createANCSeed(topology []ID) error {
 	var (
 		comment1 string = "# Additional application node prefixes to match in the hmn_connections.json file"
 		comment2 string = "\n# Additional HSM SubRoles"
 		comment3 string = "\n# Application Node aliases"
 	)
-
 	anc := csi.SLSGeneratorApplicationNodeConfig{
 		Prefixes:          make([]string, 0, 1),
 		PrefixHSMSubroles: make(map[string]string),
 		Aliases:           make(map[string][]string),
 	}
 	prefixMap := make(map[string]string)
-
 	// Search the shcd for Application Nodes
-	for _, id := range shcd.Topology {
+	for _, id := range topology {
 		source := strings.ToLower(id.CommonName)
 		idType := strings.ToLower(id.Type)
 		if idType != "server" ||
@@ -826,22 +818,22 @@ func createANCSeed(shcd Shcd, f string) error {
 
 	ancFile, err := os.Create(applicationNodeConfig)
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
 	defer ancFile.Close()
 	_, err = ancFile.WriteString("---\n")
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
 	e := yaml.NewEncoder(ancFile)
 	defer e.Close()
 	e.SetIndent(2)
 	err = e.Encode(ancYaml)
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
 	log.Printf("Created %v from SHCD data\n", applicationNodeConfig)
-	return err
+	return nil
 }
 
 // ValidateSchema compares a JSON file to the defined schema file

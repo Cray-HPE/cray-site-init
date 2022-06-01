@@ -280,7 +280,10 @@ func TestCreateApplicationNodeConfig(t *testing.T) {
 		"vn":      "Visualization",
 	}
 	// Create application_node_config.yaml
-	createANCSeed(shcd, applicationNodeConfig)
+	err = createANCSeed(shcd.Topology)
+	if err != nil {
+		t.Fatal(err)
+	}
 	// Validate the file was created
 	assert.FileExists(t, filepath.Join(".", applicationNodeConfig))
 	// Read the yaml and validate it's contents
