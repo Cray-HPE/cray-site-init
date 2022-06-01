@@ -133,7 +133,6 @@ var shcdCmd = &cobra.Command{
 func init() {
 	shcdCmd.DisableAutoGenTag = true
 	shcdCmd.Flags().SortFlags = true
-	shcdCmd.Flags().StringVarP(&customSchema, "schema-file", "j", "", "Use a custom schema file")
 	shcdCmd.Flags().BoolVarP(&createHMN, "hmn-connections", "H", false, "Generate the hmn_connections.json file")
 	shcdCmd.Flags().BoolVarP(&createNCN, "ncn-metadata", "N", false, "Generate the ncn_metadata.csv file")
 	shcdCmd.Flags().BoolVarP(&createSM, "switch-metadata", "S", false, "Generate the switch_metadata.csv file")
