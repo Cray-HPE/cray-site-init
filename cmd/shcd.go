@@ -516,19 +516,18 @@ func (id ID) GenerateHMNSourceName() string {
 }
 
 // createNCNSeed creates ncn_metadata.csv using information from the shcd
-func createNCNSeed(shcd Shcd, f string) {
+func createNCNSeed(topology []ID) error {
 	var ncns NCNMetadata
-
 	// For each entry in the SHCD
-	for i := range shcd.Topology {
-		if shcd.Topology[i].Type == "server" {
-			if !strings.HasPrefix(shcd.Topology[i].CommonName, "ncn") {
+	for i := range topology {
+		if topology[i].Type == "server" {
+			if !strings.HasPrefix(topology[i].CommonName, "ncn") {
 				continue
 			}
 			// Generate the xname based on the rules we predefine
-			ncnXname := shcd.Topology[i].GenerateXname()
+			ncnXname := topology[i].GenerateXname()
 			// Do the same for the ncn role and subrole
-			ncnRole, ncnSubrole := shcd.Topology[i].GenerateNCNRoleSubrole()
+			ncnRole, ncnSubrole := topology[i].GenerateNCNRoleSubrole()
 			// Create a new Switch type and append it to the SwitchMetadata slice
 			ncns = append(ncns, NcnMacs{
 				Xname:        ncnXname,
@@ -541,49 +540,42 @@ func createNCNSeed(shcd Shcd, f string) {
 			})
 		}
 	}
-
 	// When writing to csv, the first row should be the headers
 	headers := []string{"Xname", "Role", "Subrole", "BMC MAC", "Bootstrap MAC", "Bond0 MAC0", "Bond0 MAC1"}
-
 	// Set up the records we need to write to the file
 	// To begin, this contains the headers
 	records := [][]string{headers}
-
 	// Then create a new slice with the three pieces of information needed
 	for _, v := range ncns {
 		row := []string{v.Xname, v.Role, v.Subrole, v.BmcMac, v.BootstrapMac, v.Bond0Mac0, v.Bond0Mac1}
 		// Append it to the records slice under the column headers
 		records = append(records, row)
 	}
-
 	// Create the file object
 	ncnmeta, err := os.Create(ncnMetadata)
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
 	defer ncnmeta.Close()
-
 	// Create a writer, which will write the data to the file
 	writer := csv.NewWriter(ncnmeta)
 	defer writer.Flush()
-
 	// Create a var for all the records except the header
 	r := records[1:]
 	// Pass an anonymous function to sort.Slice to sort everything except the headers
 	sort.Slice(r, func(i, j int) bool {
 		return r[i][0] < r[j][0]
 	})
-
 	// For each item in the records slice
 	for _, v := range records {
 		// Write it to the csv file
 		if err := writer.Write(v); err != nil {
-			log.Fatalln(err)
+			return err
 		}
 	}
-
 	// Let the user know the file was created
-	log.Printf("Created %v from SHCD data\n", ncnMetadata)
+	log.Printf("Created %q from SHCD data\n", ncnMetadata)
+	return nil
 }
 
 // createSwitchSeed creates switch_metadata.csv using information from the shcd

@@ -219,70 +219,45 @@ func TestCreateSwitchMetadata(t *testing.T) {
 }
 
 func TestCreateNCNMetadata(t *testing.T) {
-
-	for _, test := range tests {
-
-		if test.fixture == "../testdata/fixtures/valid_shcd.json" {
-
-			t.Run(test.name, func(t *testing.T) {
-
-				// Open the file since we know it is valid
-				shcdFile, err := ioutil.ReadFile(test.fixture)
-
-				if err != nil {
-					log.Fatalf(err.Error())
-				}
-
-				shcd, err := ParseSHCD(shcdFile)
-
-				if err != nil {
-					log.Fatalf(err.Error())
-				}
-
-				// Create ncn_metadata.csv
-				createNCNSeed(shcd, ncnMetadata)
-
-				// Validate the file was created
-				assert.FileExists(t, filepath.Join(".", ncnMetadata))
-
-				// Read the csv and validate it's contents
-				generated, err := os.Open(filepath.Join(".", ncnMetadata))
-
-				if err != nil {
-					log.Fatal("Unable to read "+filepath.Join(".", ncnMetadata), err)
-				}
-
-				defer generated.Close()
-
-				ncnGenerated := csv.NewReader(generated)
-
-				actual, err := ncnGenerated.ReadAll()
-
-				if err != nil {
-					log.Fatal("Unable to parse as a CSV: "+filepath.Join(".", ncnMetadata), err)
-				}
-
-				// Read the csv and validate it's contents
-				expected, err := os.Open(filepath.Join(".", ncnMetadata))
-
-				if err != nil {
-					log.Fatal("Unable to read "+filepath.Join(".", ncnMetadata), err)
-				}
-
-				defer expected.Close()
-
-				csvReader := csv.NewReader(expected)
-
-				ncnExpected, err := csvReader.ReadAll()
-
-				if err != nil {
-					log.Fatal("Unable to parse as a CSV: "+test.expectedNCNMetadata, err)
-				}
-
-				assert.Equal(t, ncnExpected, actual)
-			})
-		}
+	t.Parallel()
+	// Open the file without validating it since we know it is valid
+	shcdFile, err := ioutil.ReadFile("../testdata/fixtures/valid_shcd.json")
+	if err != nil {
+		t.Fatal(err.Error())
 	}
+	shcd, err := ParseSHCD(shcdFile)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	err = createNCNSeed(shcd.Topology)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	// Validate the file was created
+	assert.FileExists(t, filepath.Join(".", ncnMetadata))
+	// Read the csv and validate it's contents
+	generated, err := os.Open(filepath.Join(".", ncnMetadata))
+	if err != nil {
+		t.Fatalf("Unable to read %q: %+v\n", filepath.Join(".", ncnMetadata), err)
+	}
+	defer generated.Close()
+	ncnGenerated := csv.NewReader(generated)
+	actual, err := ncnGenerated.ReadAll()
+	if err != nil {
+		t.Fatalf("Unable to parse file %q as a CSV: %+v", filepath.Join(".", ncnMetadata), err)
+	}
+	// Read the csv and validate it's contents
+	expected, err := os.Open(filepath.Join(".", ncnMetadata))
+	if err != nil {
+		t.Fatalf("Unable to read %q: %+v", filepath.Join(".", ncnMetadata), err)
+	}
+	defer expected.Close()
+	csvReader := csv.NewReader(expected)
+	ncnExpected, err := csvReader.ReadAll()
+	if err != nil {
+		t.Fatalf("Unable to parse file %q as a CSV: %+v", ncnMetaExpected, err)
+	}
+	assert.Equal(t, ncnExpected, actual)
 }
 
 func TestCreateApplicationNodeConfig(t *testing.T) {
