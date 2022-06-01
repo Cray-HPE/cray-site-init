@@ -42,14 +42,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const _schema = "shcd-schema.json"
-
-var _schemaFile = filepath.Join("../internal/files", _schema)
-
-var switchMetaExpected = "../testdata/expected/" + switchMetadata
-var hmnConnExpected = "../testdata/expected/" + hmnConnections
-var appNodeExpected = "../testdata/expected/" + applicationNodeConfig
-var ncnMetaExpected = "../testdata/expected/" + ncnMetadata
+var (
+	switchMetaExpected = "../testdata/expected/" + switchMetadata
+	hmnConnExpected    = "../testdata/expected/" + hmnConnections
+	appNodeExpected    = "../testdata/expected/" + applicationNodeConfig
+	ncnMetaExpected    = "../testdata/expected/" + ncnMetadata
+)
 
 // Generate shcd.json example:
 // canu validate shcd -a Full --shcd shcd.xlsx --tabs 10G_25G_40G_100G,NMN,HMN,MTN_TDS --corners I37,T125,J15,T24,J20,U51,K15,U36 --out shcd.json
@@ -128,7 +126,7 @@ func TestSHCDAgainstSchema(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			// Validate the file passed against the pre-defined schema
-			err := ValidateSchema(test.fixture, _schemaFile)
+			err := ValidateSchema(test.fixture, shcdSchemaFile)
 			if test.expectedError == true {
 				// Otherwise, check the error message
 				if assert.Error(t, err) {
