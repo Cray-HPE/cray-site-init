@@ -33,13 +33,14 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	_ "embed"
 
 	"github.com/Cray-HPE/cray-site-init/pkg/csi"
 	"github.com/Cray-HPE/hms-base/xname"
@@ -50,17 +51,25 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const schema = "shcd-schema.json"
-const hmnConnections = "hmn_connections.json"
-const switchMetadata = "switch_metadata.csv"
-const applicationNodeConfig = "application_node_config.yaml"
-const ncnMetadata = "ncn_metadata.csv"
+//go:embed embeded-files/shcd-schema.json
+var shcdSchemaFile []byte
 
-var createHMN, createSM, createANC, createNCN bool
+const (
+	schema                = "shcd-schema.json"
+	hmnConnections        = "hmn_connections.json"
+	switchMetadata        = "switch_metadata.csv"
+	applicationNodeConfig = "application_node_config.yaml"
+	ncnMetadata           = "ncn_metadata.csv"
+)
 
-var prefixSubroleMapIn map[string]string
-
-var schemaFile, customSchema string
+var (
+	createANC          bool
+	createHMN          bool
+	createNCN          bool
+	createSM           bool
+	customSchema       string
+	prefixSubroleMapIn map[string]string
+)
 
 // initCmd represents the init command
 var shcdCmd = &cobra.Command{
@@ -77,14 +86,8 @@ var shcdCmd = &cobra.Command{
 		v := viper.GetViper()
 		v.BindPFlags(cmd.Flags())
 
-		if v.IsSet("schema-file") {
-			schemaFile = customSchema
-		} else {
-			schemaFile = filepath.Join("internal/files/", schema)
-		}
-
 		// Validate the file passed against the pre-defined schema
-		err := ValidateSchema(args[0], schemaFile)
+		err := ValidateSchema(args[0], shcdSchemaFile)
 		if err != nil {
 			log.Fatalf("cannot validate schema: %v", err.Error())
 		}
@@ -857,24 +860,19 @@ func createANCSeed(shcd Shcd, f string) error {
 }
 
 // ValidateSchema compares a JSON file to the defined schema file
-func ValidateSchema(json string, schema string) error {
+func ValidateSchema(json string, shcdSchemaFile []byte) error {
 	// First validate the file passed in conforms to the schemaFile
-	schemaFile := "file://" + schema
-	schemaLoader := gojsonschema.NewReferenceLoader(schemaFile)
+	schemaLoader := gojsonschema.NewBytesLoader(shcdSchemaFile)
 	jsonFile := "file://" + json
 	documentLoader := gojsonschema.NewReferenceLoader(jsonFile)
-
 	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
 	if err != nil {
 		return err
 	}
-
-	// If the json passed in does not meet the schema requirements, error
 	// TODO: return all errors
 	if !result.Valid() {
 		return fmt.Errorf(result.Errors()[0].String())
 	}
-
 	return nil
 }
 
