@@ -45,7 +45,6 @@ import (
 	_ "embed"
 
 	"github.com/Cray-HPE/cray-site-init/pkg/csi"
-	"github.com/Cray-HPE/hms-base/xname"
 	xnames "github.com/Cray-HPE/hms-xname/xnames"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -271,10 +270,10 @@ func (id ID) GenerateXname() (xn string) {
 		// Create the xname
 		// Chassis defaults to 0 in most cases
 		// xXcCwW
-		x := xname.MgmtSwitch{
-			Cabinet: cabinet, // X: 0-999
-			Chassis: 0,       // C: 0-7
-			Slot:    slot,    // W: 1-48
+		x := xnames.MgmtSwitch{
+			Cabinet:    cabinet, // X: 0-999
+			Chassis:    0,       // C: 0-7
+			MgmtSwitch: slot,    // W: 1-48
 		}
 
 		// Convert it to a string
@@ -310,11 +309,11 @@ func (id ID) GenerateXname() (xn string) {
 		// Create the xname
 		// Chassis and Space default to 0 and 1 in most cases
 		// xXcChHsS
-		x := xname.MgmtHLSwitch{
-			Cabinet: cabinet, // X: 0-999
-			Chassis: 0,       // C: 0-7
-			Slot:    slot,    // H: 1-48
-			Space:   space,   // S: 1-4
+		x := xnames.MgmtHLSwitch{
+			Cabinet:               cabinet, // X: 0-999
+			Chassis:               0,       // C: 0-7
+			MgmtHLSwitchEnclosure: slot,    // H: 1-48
+			MgmtHLSwitch:          space,   // S: 1-4
 		}
 		xn = x.String()
 	} else if strings.HasPrefix(id.CommonName, "sw-leaf") ||
@@ -338,11 +337,11 @@ func (id ID) GenerateXname() (xn string) {
 		// Create the xname
 		// Chassis and Space default to 0 and 1 in most cases
 		// xXcChHsS
-		x := xname.MgmtHLSwitch{
-			Cabinet: cabinet, // X: 0-999
-			Chassis: 0,       // C: 0-7
-			Slot:    slot,    // H: 1-48
-			Space:   1,       // S: 1-4
+		x := xnames.MgmtHLSwitch{
+			Cabinet:               cabinet, // X: 0-999
+			Chassis:               0,       // C: 0-7
+			MgmtHLSwitchEnclosure: slot,    // H: 1-48
+			MgmtHLSwitch:          1,       // S: 1-4
 		}
 		xn = x.String()
 
@@ -408,11 +407,11 @@ func (id ID) GenerateXname() (xn string) {
 		}
 
 		// xCcCsSbBnN
-		x := xname.Node{
-			Cabinet: cabinet,    // X: 0-999
-			Chassis: 0,          // C: 0-7
-			Slot:    slot,       // S: 1-63
-			BMC:     bmcOrdinal, // B: 0-1 - TODO the HSOS document is wrong here. as we do actually use greater than 1
+		x := xnames.Node{
+			Cabinet:       cabinet,    // X: 0-999
+			Chassis:       0,          // C: 0-7
+			ComputeModule: slot,       // S: 1-63
+			NodeBMC:       bmcOrdinal, // B: 0-1 - TODO the HSOS document is wrong here. as we do actually use greater than 1
 			// For all river hardware the value of N should be always be 0
 			Node: 0, // N: 0-7
 
