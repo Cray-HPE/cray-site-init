@@ -31,7 +31,6 @@ package cmd
 
 import (
 	"encoding/csv"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -91,6 +90,8 @@ var tests = []struct {
 
 // Test different JSON input files
 func TestValidSHCDJSONTest(t *testing.T) {
+	t.Parallel()
+
 	expectedType := Shcd{}
 
 	for _, test := range tests {
@@ -123,6 +124,7 @@ func TestValidSHCDJSONTest(t *testing.T) {
 }
 
 func TestSHCDAgainstSchema(t *testing.T) {
+	t.Parallel()
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			// Validate the file passed against the pre-defined schema
@@ -138,249 +140,176 @@ func TestSHCDAgainstSchema(t *testing.T) {
 }
 
 func TestCreateHMNConnections(t *testing.T) {
-
-	for _, test := range tests {
-
-		if test.fixture == "../testdata/fixtures/valid_shcd.json" {
-
-			t.Run(test.name, func(t *testing.T) {
-
-				// Open the file since we know it is valid
-				shcdFile, err := ioutil.ReadFile(test.fixture)
-
-				if err != nil {
-					log.Fatalf(err.Error())
-				}
-
-				shcd, err := ParseSHCD(shcdFile)
-
-				if err != nil {
-					log.Fatalf(err.Error())
-				}
-
-				// Create hmn_connections.json
-				createHMNSeed(shcd, hmnConnections)
-
-				// Validate the file was created
-				assert.FileExists(t, filepath.Join(".", hmnConnections))
-
-				// Read the generated json and validate it's contents
-				hmnGenerated, err := os.Open(filepath.Join(".", hmnConnections))
-
-				if err != nil {
-					log.Fatal(err)
-				}
-
-				defer hmnGenerated.Close()
-
-				hmnExpected, err := os.Open(test.expectedHMNConnections)
-
-				// if we os.Open returns an error then handle it
-				if err != nil {
-					log.Fatal(err)
-				}
-
-				defer hmnExpected.Close()
-
-				hmnActual, _ := ioutil.ReadAll(hmnGenerated)
-
-				hmnConnections, err := ioutil.ReadAll(hmnExpected)
-
-				if err != nil {
-					log.Fatal(err)
-				}
-
-				assert.JSONEq(t, string(hmnConnections), string(hmnActual))
-			})
-		}
+	t.Parallel()
+	shcdFile, err := ioutil.ReadFile("../testdata/fixtures/valid_shcd.json")
+	if err != nil {
+		t.Fatalf(err.Error())
 	}
+	shcd, err := ParseSHCD(shcdFile)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	// Create hmn_connections.json
+	err = createHMNSeed(shcd.Topology)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	// Validate the file was created
+	assert.FileExists(t, filepath.Join(".", hmnConnections))
+	// Read the generated json and validate it's contents
+	hmnGenerated, err := os.Open(filepath.Join(".", hmnConnections))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer hmnGenerated.Close()
+	hmnExpected, err := os.Open(hmnConnExpected)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer hmnExpected.Close()
+	hmnActual, err := ioutil.ReadAll(hmnGenerated)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hmnConnections, err := ioutil.ReadAll(hmnExpected)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.JSONEq(t, string(hmnConnections), string(hmnActual))
+
 }
 
 func TestCreateSwitchMetadata(t *testing.T) {
 	t.Parallel()
-
 	jsonFilePath := "../testdata/fixtures/valid_shcd.json"
-	// Open the file since we know it is valid
+	// Open the file without validating it since we know it is valid
 	shcdFile, err := ioutil.ReadFile(jsonFilePath)
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	shcd, err := ParseSHCD(shcdFile)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// Create switch_metadata.csv
 	err = createSwitchSeed(shcd.Topology)
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	// Read the csv and validate it's contents
 	generated, err := os.Open(filepath.Join(".", switchMetadata))
 	if err != nil {
 		log.Fatalf("Unable to read %s: %+v", filepath.Join(".", switchMetadata), err)
 	}
 	defer generated.Close()
-
 	smGenerated := csv.NewReader(generated)
 	actual, err := smGenerated.ReadAll()
 	if err != nil {
 		log.Fatalf("Unable to read %s: %+v", filepath.Join(".", switchMetadata), err)
 	}
-
 	// Read the csv and validate it's contents
 	expected, err := os.Open(filepath.Join(".", switchMetadata))
 	if err != nil {
 		log.Fatalf("Unable to read %s: %+v", filepath.Join(".", switchMetadata), err)
 	}
 	defer expected.Close()
-
 	csvReader := csv.NewReader(expected)
 	smExpected, err := csvReader.ReadAll()
 	if err != nil {
 		log.Fatalf("Unable to parse %q as a CSV: %+v", filepath.Join(".", switchMetadata), err)
 	}
-
 	assert.Equal(t, smExpected, actual)
-
 }
 
 func TestCreateNCNMetadata(t *testing.T) {
-
-	for _, test := range tests {
-
-		if test.fixture == "../testdata/fixtures/valid_shcd.json" {
-
-			t.Run(test.name, func(t *testing.T) {
-
-				// Open the file since we know it is valid
-				shcdFile, err := ioutil.ReadFile(test.fixture)
-
-				if err != nil {
-					log.Fatalf(err.Error())
-				}
-
-				shcd, err := ParseSHCD(shcdFile)
-
-				if err != nil {
-					log.Fatalf(err.Error())
-				}
-
-				// Create ncn_metadata.csv
-				createNCNSeed(shcd, ncnMetadata)
-
-				// Validate the file was created
-				assert.FileExists(t, filepath.Join(".", ncnMetadata))
-
-				// Read the csv and validate it's contents
-				generated, err := os.Open(filepath.Join(".", ncnMetadata))
-
-				if err != nil {
-					log.Fatal("Unable to read "+filepath.Join(".", ncnMetadata), err)
-				}
-
-				defer generated.Close()
-
-				ncnGenerated := csv.NewReader(generated)
-
-				actual, err := ncnGenerated.ReadAll()
-
-				if err != nil {
-					log.Fatal("Unable to parse as a CSV: "+filepath.Join(".", ncnMetadata), err)
-				}
-
-				// Read the csv and validate it's contents
-				expected, err := os.Open(filepath.Join(".", ncnMetadata))
-
-				if err != nil {
-					log.Fatal("Unable to read "+filepath.Join(".", ncnMetadata), err)
-				}
-
-				defer expected.Close()
-
-				csvReader := csv.NewReader(expected)
-
-				ncnExpected, err := csvReader.ReadAll()
-
-				if err != nil {
-					log.Fatal("Unable to parse as a CSV: "+test.expectedNCNMetadata, err)
-				}
-
-				assert.Equal(t, ncnExpected, actual)
-			})
-		}
+	t.Parallel()
+	// Open the file without validating it since we know it is valid
+	shcdFile, err := ioutil.ReadFile("../testdata/fixtures/valid_shcd.json")
+	if err != nil {
+		t.Fatal(err.Error())
 	}
+	shcd, err := ParseSHCD(shcdFile)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	err = createNCNSeed(shcd.Topology)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	// Validate the file was created
+	assert.FileExists(t, filepath.Join(".", ncnMetadata))
+	// Read the csv and validate it's contents
+	generated, err := os.Open(filepath.Join(".", ncnMetadata))
+	if err != nil {
+		t.Fatalf("Unable to read %q: %+v\n", filepath.Join(".", ncnMetadata), err)
+	}
+	defer generated.Close()
+	ncnGenerated := csv.NewReader(generated)
+	actual, err := ncnGenerated.ReadAll()
+	if err != nil {
+		t.Fatalf("Unable to parse file %q as a CSV: %+v", filepath.Join(".", ncnMetadata), err)
+	}
+	// Read the csv and validate it's contents
+	expected, err := os.Open(filepath.Join(".", ncnMetadata))
+	if err != nil {
+		t.Fatalf("Unable to read %q: %+v", filepath.Join(".", ncnMetadata), err)
+	}
+	defer expected.Close()
+	csvReader := csv.NewReader(expected)
+	ncnExpected, err := csvReader.ReadAll()
+	if err != nil {
+		t.Fatalf("Unable to parse file %q as a CSV: %+v", ncnMetaExpected, err)
+	}
+	assert.Equal(t, ncnExpected, actual)
 }
 
 func TestCreateApplicationNodeConfig(t *testing.T) {
-
-	for _, test := range tests {
-
-		if test.fixture == "../testdata/fixtures/valid_shcd.json" {
-
-			t.Run(test.name, func(t *testing.T) {
-
-				// Open the file since we know it is valid
-				shcdFile, err := ioutil.ReadFile(test.fixture)
-
-				if err != nil {
-					log.Fatalf(err.Error())
-				}
-
-				shcd, err := ParseSHCD(shcdFile)
-
-				if err != nil {
-					log.Fatalf(err.Error())
-				}
-
-				prefixSubroleMapIn = map[string]string{
-					"gateway": "Gateway",
-					"login":   "UAN",
-					"lnet":    "LNETRouter",
-					"vn":      "Visualization",
-				}
-
-				// Create application_node_config.yaml
-				createANCSeed(shcd, applicationNodeConfig)
-
-				// Validate the file was created
-				assert.FileExists(t, filepath.Join(".", applicationNodeConfig))
-
-				// Read the yaml and validate it's contents
-				ancGenerated, err := os.Open(filepath.Join(".", applicationNodeConfig))
-
-				if err != nil {
-					log.Fatal("Unable to read "+filepath.Join(".", applicationNodeConfig), err)
-				}
-
-				defer ancGenerated.Close()
-
-				ancExpected, err := os.Open(test.expectedApplicationNodeConfig)
-
-				// if we os.Open returns an error then handle it
-				if err != nil {
-					fmt.Println(err)
-				}
-
-				defer ancExpected.Close()
-
-				ancActual, _ := ioutil.ReadAll(ancGenerated)
-
-				appNodeConfig, err := ioutil.ReadAll(ancExpected)
-
-				if err != nil {
-					fmt.Println(err)
-				}
-
-				assert.YAMLEq(t, string(appNodeConfig), string(ancActual))
-			})
-		}
+	t.Parallel()
+	// Open the file without validating it since we know it is valid
+	shcdFile, err := ioutil.ReadFile("../testdata/fixtures/valid_shcd.json")
+	if err != nil {
+		t.Fatal(err.Error())
 	}
+	shcd, err := ParseSHCD(shcdFile)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	prefixSubroleMapIn = map[string]string{
+		"gateway": "Gateway",
+		"login":   "UAN",
+		"lnet":    "LNETRouter",
+		"vn":      "Visualization",
+	}
+	// Create application_node_config.yaml
+	err = createANCSeed(shcd.Topology)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Validate the file was created
+	assert.FileExists(t, filepath.Join(".", applicationNodeConfig))
+	// Read the yaml and validate it's contents
+	ancGenerated, err := os.Open(filepath.Join(".", applicationNodeConfig))
+	if err != nil {
+		t.Fatalf("Unable to read %q: %+v", filepath.Join(".", applicationNodeConfig), err)
+	}
+	defer ancGenerated.Close()
+	ancExpected, err := os.Open(appNodeExpected)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ancExpected.Close()
+	ancActual, err := ioutil.ReadAll(ancGenerated)
+	if err != nil {
+		t.Fatal(err)
+	}
+	appNodeConfig, err := ioutil.ReadAll(ancExpected)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.YAMLEq(t, string(appNodeConfig), string(ancActual))
 }
 
 func TestGenerateHMNSourceName(t *testing.T) {
+	t.Parallel()
 	testCases := []struct {
 		desc       string
 		commonName string
@@ -440,7 +369,6 @@ func TestGenerateHMNSourceName(t *testing.T) {
 
 func TestFilterByTypeSwitch_ReturnsNoItemsIfNoSwitches(t *testing.T) {
 	t.Parallel()
-
 	want := []ID{}
 	topology := []ID{
 		{
@@ -506,7 +434,6 @@ func TestFilterByTypeSwitch_ReturnsCorrectItems(t *testing.T) {
 
 func TestFilterByTypeServer_ReturnsNoItemsIfNoServers(t *testing.T) {
 	t.Parallel()
-
 	want := []ID{}
 	topology := []ID{
 		{
@@ -560,7 +487,6 @@ func TestFilterByTypeServer_ReturnsCorrectItems(t *testing.T) {
 
 func TestGenerateXNameGeneratesCorrectNameForCDUSwitch(t *testing.T) {
 	t.Parallel()
-
 	want := "d0w2"
 	id := ID{
 		Architecture: "mountain_compute_leaf",
@@ -576,7 +502,6 @@ func TestGenerateXNameGeneratesCorrectNameForCDUSwitch(t *testing.T) {
 
 func TestGenerateXNameGeneratesCorrectNameForSpineSwitch(t *testing.T) {
 	t.Parallel()
-
 	want := "x3000c0h38s1"
 	id := ID{
 		Architecture: "spine",
@@ -597,7 +522,6 @@ func TestGenerateXNameGeneratesCorrectNameForSpineSwitch(t *testing.T) {
 
 func TestGenerateXNameGeneratesCorrectNameForRedbullSpineSwitch(t *testing.T) {
 	t.Parallel()
-
 	want := "x3000c0h19s2"
 	id := ID{
 		Architecture: "spine",

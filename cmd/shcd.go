@@ -86,48 +86,46 @@ var shcdCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		v := viper.GetViper()
 		v.BindPFlags(cmd.Flags())
-
 		// Validate the file passed against the pre-defined schema
 		err := ValidateSchema(args[0], shcdSchemaFile)
 		if err != nil {
-			log.Fatalf("cannot validate schema: %v", err.Error())
+			log.Fatalf("cannot validate schema: %+v", err)
 		}
-
 		// If the file meets the schema criteria
 		// Open the file since we know it is valid
 		shcdFile, err := ioutil.ReadFile(args[0])
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
-
 		// Parse the JSON and return an Shcd object
-		s, err := ParseSHCD(shcdFile)
+		shcd, err := ParseSHCD(shcdFile)
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
-
 		if v.IsSet("hmn-connections") {
-			createHMNSeed(s, hmnConnections)
+			err := createHMNSeed(shcd.Topology)
+			if err != nil {
+				fmt.Printf("WARNING - Error creating hmn-connections: %+v", err)
+			}
 		}
-
 		if v.IsSet("switch-metadata") {
-			err := createSwitchSeed(s.Topology)
+			err := createSwitchSeed(shcd.Topology)
 			if err != nil {
 				fmt.Printf("WARNING - Error creating switch-metadata: %+v", err)
 			}
 		}
-
 		if v.IsSet("application-node-config") {
-			err := createANCSeed(s, applicationNodeConfig)
+			err := createANCSeed(shcd.Topology)
 			if err != nil {
 				fmt.Printf("WARNING - Error creating application-node-config: %+v", err)
 			}
 		}
-
 		if v.IsSet("ncn-metadata") {
-			createNCNSeed(s, ncnMetadata)
+			err := createNCNSeed(shcd.Topology)
+			if err != nil {
+				fmt.Printf("WARNING - Error creating ncn-metadata: %+v", err)
+			}
 		}
-
 	},
 }
 
@@ -513,19 +511,18 @@ func (id ID) GenerateHMNSourceName() string {
 }
 
 // createNCNSeed creates ncn_metadata.csv using information from the shcd
-func createNCNSeed(shcd Shcd, f string) {
+func createNCNSeed(topology []ID) error {
 	var ncns NCNMetadata
-
 	// For each entry in the SHCD
-	for i := range shcd.Topology {
-		if shcd.Topology[i].Type == "server" {
-			if !strings.HasPrefix(shcd.Topology[i].CommonName, "ncn") {
+	for i := range topology {
+		if topology[i].Type == "server" {
+			if !strings.HasPrefix(topology[i].CommonName, "ncn") {
 				continue
 			}
 			// Generate the xname based on the rules we predefine
-			ncnXname := shcd.Topology[i].GenerateXname()
+			ncnXname := topology[i].GenerateXname()
 			// Do the same for the ncn role and subrole
-			ncnRole, ncnSubrole := shcd.Topology[i].GenerateNCNRoleSubrole()
+			ncnRole, ncnSubrole := topology[i].GenerateNCNRoleSubrole()
 			// Create a new Switch type and append it to the SwitchMetadata slice
 			ncns = append(ncns, NcnMacs{
 				Xname:        ncnXname,
@@ -538,49 +535,42 @@ func createNCNSeed(shcd Shcd, f string) {
 			})
 		}
 	}
-
 	// When writing to csv, the first row should be the headers
 	headers := []string{"Xname", "Role", "Subrole", "BMC MAC", "Bootstrap MAC", "Bond0 MAC0", "Bond0 MAC1"}
-
 	// Set up the records we need to write to the file
 	// To begin, this contains the headers
 	records := [][]string{headers}
-
 	// Then create a new slice with the three pieces of information needed
 	for _, v := range ncns {
 		row := []string{v.Xname, v.Role, v.Subrole, v.BmcMac, v.BootstrapMac, v.Bond0Mac0, v.Bond0Mac1}
 		// Append it to the records slice under the column headers
 		records = append(records, row)
 	}
-
 	// Create the file object
 	ncnmeta, err := os.Create(ncnMetadata)
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
 	defer ncnmeta.Close()
-
 	// Create a writer, which will write the data to the file
 	writer := csv.NewWriter(ncnmeta)
 	defer writer.Flush()
-
 	// Create a var for all the records except the header
 	r := records[1:]
 	// Pass an anonymous function to sort.Slice to sort everything except the headers
 	sort.Slice(r, func(i, j int) bool {
 		return r[i][0] < r[j][0]
 	})
-
 	// For each item in the records slice
 	for _, v := range records {
 		// Write it to the csv file
 		if err := writer.Write(v); err != nil {
-			log.Fatalln(err)
+			return err
 		}
 	}
-
 	// Let the user know the file was created
-	log.Printf("Created %v from SHCD data\n", ncnMetadata)
+	log.Printf("Created %q from SHCD data\n", ncnMetadata)
+	return nil
 }
 
 // createSwitchSeed creates switch_metadata.csv using information from the shcd
@@ -650,89 +640,76 @@ func createSwitchSeed(topology []ID) error {
 }
 
 // createHMNSeed creates hmn_connections.json using information from the shcd
-func createHMNSeed(shcd Shcd, f string) {
-
+func createHMNSeed(topology []ID) error {
 	var hmn HMNConnections
-
-	// For each entry in the shcd
-	for i := range shcd.Topology {
-
+	for i := range topology {
 		// instantiate a new HMNComponent
 		hmnConnection := HMNComponent{}
-
 		// This just aligns the names to better match existing hmn_connections.json's
 		// The SHCD and shcd.json all use different names, so why should csi be any different?
-		// nodeName := unNormalizeSemiStandardShcdNonName(shcd[i].CommonName)
+		// nodeName := unNormalizeSemiStandardShcdNonName(topology[i].CommonName)
 
 		// Setting the source name, source rack, source location, is pretty straightforward here
-		hmnConnection.Source = shcd.Topology[i].GenerateHMNSourceName()
-		hmnConnection.SourceRack = shcd.Topology[i].Location.Rack
-		hmnConnection.SourceLocation = shcd.Topology[i].Location.Elevation
+		hmnConnection.Source = topology[i].GenerateHMNSourceName()
+		hmnConnection.SourceRack = topology[i].Location.Rack
+		hmnConnection.SourceLocation = topology[i].Location.Elevation
 
 		// Now it starts to get more complex.
 		// shcd.json has an array of ports that the device is connected to
 		// loop through the ports and find the destination id, which can be used
 		// to find the destination info
-		for p := range shcd.Topology[i].Ports {
+		for p := range topology[i].Ports {
 			// get the id of the destination node, so it can be easily used an an index
-			destID := shcd.Topology[i].Ports[p].DestNodeID
+			destID := topology[i].Ports[p].DestNodeID
 			// Special to this hmn_connections.json file, we need this SubRack/dense node stuff
 			// if the node is a dense compute node--indiciated by L or R in the location,
 			// we need to add the SourceSubLocation and SourceParent
 			// There should be a row in the shcd that has the SubRack name, which
 			// shares the same u location as the entries with the L or R in the location
-			if strings.HasSuffix(shcd.Topology[i].Location.Elevation, "L") || strings.HasSuffix(shcd.Topology[i].Location.Elevation, "R") {
+			if strings.HasSuffix(topology[i].Location.Elevation, "L") || strings.HasSuffix(topology[i].Location.Elevation, "R") {
 				// hmnConnection.SourceSubLocation = shcd[i].Location.Rack
 				hmnConnection.SourceParent = "FIXME INSERT SUBRACK HERE"
 				// FIXME: remove above and uncomment below when we have a way to get the subrack name
 				// hmnConnection.SourceParent = fmt.Sprint(shcd[destID].CommonName)
 			}
-
 			// Now use the destID again to set the destination info
-			hmnConnection.DestinationRack = shcd.Topology[destID].Location.Rack
-			hmnConnection.DestinationLocation = shcd.Topology[destID].Location.Elevation
-			hmnConnection.DestinationPort = fmt.Sprint("j", shcd.Topology[i].Ports[p].DestPort)
+			hmnConnection.DestinationRack = topology[destID].Location.Rack
+			hmnConnection.DestinationLocation = topology[destID].Location.Elevation
+			hmnConnection.DestinationPort = fmt.Sprint("j", topology[i].Ports[p].DestPort)
 		}
-
 		// finally, append the created HMNComponent to the HMNConnections slice
 		// This slice will be what is written to the file as hmn_connections.json
 		hmn = append(hmn, hmnConnection)
 	}
-
 	// Indent the file for better human-readability
-	file, err := json.MarshalIndent(hmn, "", " ")
+	file, err := json.MarshalIndent(hmn, "", "    ")
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
-
 	// Write the file to disk
 	err = ioutil.WriteFile(hmnConnections, file, 0644)
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
-
 	log.Printf("Created %v from SHCD data\n", hmnConnections)
-
+	return nil
 }
 
 // createANCSeed creates application_node_config.yaml using information from the shcd
-func createANCSeed(shcd Shcd, f string) error {
-
+func createANCSeed(topology []ID) error {
 	var (
 		comment1 string = "# Additional application node prefixes to match in the hmn_connections.json file"
 		comment2 string = "\n# Additional HSM SubRoles"
 		comment3 string = "\n# Application Node aliases"
 	)
-
 	anc := csi.SLSGeneratorApplicationNodeConfig{
 		Prefixes:          make([]string, 0, 1),
 		PrefixHSMSubroles: make(map[string]string),
 		Aliases:           make(map[string][]string),
 	}
 	prefixMap := make(map[string]string)
-
 	// Search the shcd for Application Nodes
-	for _, id := range shcd.Topology {
+	for _, id := range topology {
 		source := strings.ToLower(id.CommonName)
 		idType := strings.ToLower(id.Type)
 		if idType != "server" ||
@@ -841,22 +818,22 @@ func createANCSeed(shcd Shcd, f string) error {
 
 	ancFile, err := os.Create(applicationNodeConfig)
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
 	defer ancFile.Close()
 	_, err = ancFile.WriteString("---\n")
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
 	e := yaml.NewEncoder(ancFile)
 	defer e.Close()
 	e.SetIndent(2)
 	err = e.Encode(ancYaml)
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
 	log.Printf("Created %v from SHCD data\n", applicationNodeConfig)
-	return err
+	return nil
 }
 
 // ValidateSchema compares a JSON file to the defined schema file
