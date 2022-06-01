@@ -31,7 +31,6 @@ package cmd
 
 import (
 	"encoding/csv"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -91,6 +90,8 @@ var tests = []struct {
 
 // Test different JSON input files
 func TestValidSHCDJSONTest(t *testing.T) {
+	t.Parallel()
+
 	expectedType := Shcd{}
 
 	for _, test := range tests {
@@ -123,6 +124,7 @@ func TestValidSHCDJSONTest(t *testing.T) {
 }
 
 func TestSHCDAgainstSchema(t *testing.T) {
+	t.Parallel()
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			// Validate the file passed against the pre-defined schema
@@ -261,72 +263,50 @@ func TestCreateNCNMetadata(t *testing.T) {
 }
 
 func TestCreateApplicationNodeConfig(t *testing.T) {
-
-	for _, test := range tests {
-
-		if test.fixture == "../testdata/fixtures/valid_shcd.json" {
-
-			t.Run(test.name, func(t *testing.T) {
-
-				// Open the file since we know it is valid
-				shcdFile, err := ioutil.ReadFile(test.fixture)
-
-				if err != nil {
-					log.Fatalf(err.Error())
-				}
-
-				shcd, err := ParseSHCD(shcdFile)
-
-				if err != nil {
-					log.Fatalf(err.Error())
-				}
-
-				prefixSubroleMapIn = map[string]string{
-					"gateway": "Gateway",
-					"login":   "UAN",
-					"lnet":    "LNETRouter",
-					"vn":      "Visualization",
-				}
-
-				// Create application_node_config.yaml
-				createANCSeed(shcd, applicationNodeConfig)
-
-				// Validate the file was created
-				assert.FileExists(t, filepath.Join(".", applicationNodeConfig))
-
-				// Read the yaml and validate it's contents
-				ancGenerated, err := os.Open(filepath.Join(".", applicationNodeConfig))
-
-				if err != nil {
-					log.Fatal("Unable to read "+filepath.Join(".", applicationNodeConfig), err)
-				}
-
-				defer ancGenerated.Close()
-
-				ancExpected, err := os.Open(test.expectedApplicationNodeConfig)
-
-				// if we os.Open returns an error then handle it
-				if err != nil {
-					fmt.Println(err)
-				}
-
-				defer ancExpected.Close()
-
-				ancActual, _ := ioutil.ReadAll(ancGenerated)
-
-				appNodeConfig, err := ioutil.ReadAll(ancExpected)
-
-				if err != nil {
-					fmt.Println(err)
-				}
-
-				assert.YAMLEq(t, string(appNodeConfig), string(ancActual))
-			})
-		}
+	t.Parallel()
+	// Open the file without validating it since we know it is valid
+	shcdFile, err := ioutil.ReadFile("../testdata/fixtures/valid_shcd.json")
+	if err != nil {
+		t.Fatal(err.Error())
 	}
+	shcd, err := ParseSHCD(shcdFile)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	prefixSubroleMapIn = map[string]string{
+		"gateway": "Gateway",
+		"login":   "UAN",
+		"lnet":    "LNETRouter",
+		"vn":      "Visualization",
+	}
+	// Create application_node_config.yaml
+	createANCSeed(shcd, applicationNodeConfig)
+	// Validate the file was created
+	assert.FileExists(t, filepath.Join(".", applicationNodeConfig))
+	// Read the yaml and validate it's contents
+	ancGenerated, err := os.Open(filepath.Join(".", applicationNodeConfig))
+	if err != nil {
+		t.Fatalf("Unable to read %q: %+v", filepath.Join(".", applicationNodeConfig), err)
+	}
+	defer ancGenerated.Close()
+	ancExpected, err := os.Open(appNodeExpected)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ancExpected.Close()
+	ancActual, err := ioutil.ReadAll(ancGenerated)
+	if err != nil {
+		t.Fatal(err)
+	}
+	appNodeConfig, err := ioutil.ReadAll(ancExpected)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.YAMLEq(t, string(appNodeConfig), string(ancActual))
 }
 
 func TestGenerateHMNSourceName(t *testing.T) {
+	t.Parallel()
 	testCases := []struct {
 		desc       string
 		commonName string
@@ -386,7 +366,6 @@ func TestGenerateHMNSourceName(t *testing.T) {
 
 func TestFilterByTypeSwitch_ReturnsNoItemsIfNoSwitches(t *testing.T) {
 	t.Parallel()
-
 	want := []ID{}
 	topology := []ID{
 		{
@@ -452,7 +431,6 @@ func TestFilterByTypeSwitch_ReturnsCorrectItems(t *testing.T) {
 
 func TestFilterByTypeServer_ReturnsNoItemsIfNoServers(t *testing.T) {
 	t.Parallel()
-
 	want := []ID{}
 	topology := []ID{
 		{
@@ -506,7 +484,6 @@ func TestFilterByTypeServer_ReturnsCorrectItems(t *testing.T) {
 
 func TestGenerateXNameGeneratesCorrectNameForCDUSwitch(t *testing.T) {
 	t.Parallel()
-
 	want := "d0w2"
 	id := ID{
 		Architecture: "mountain_compute_leaf",
@@ -522,7 +499,6 @@ func TestGenerateXNameGeneratesCorrectNameForCDUSwitch(t *testing.T) {
 
 func TestGenerateXNameGeneratesCorrectNameForSpineSwitch(t *testing.T) {
 	t.Parallel()
-
 	want := "x3000c0h38s1"
 	id := ID{
 		Architecture: "spine",
@@ -543,7 +519,6 @@ func TestGenerateXNameGeneratesCorrectNameForSpineSwitch(t *testing.T) {
 
 func TestGenerateXNameGeneratesCorrectNameForRedbullSpineSwitch(t *testing.T) {
 	t.Parallel()
-
 	want := "x3000c0h19s2"
 	id := ID{
 		Architecture: "spine",
