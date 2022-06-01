@@ -40,6 +40,8 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	// we need a blank import to avoid conflict with go fmt
+	// that would remove it
 	_ "embed"
 
 	"github.com/Cray-HPE/cray-site-init/pkg/csi"
