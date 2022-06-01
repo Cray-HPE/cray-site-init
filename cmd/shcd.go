@@ -55,7 +55,6 @@ import (
 var shcdSchemaFile []byte
 
 const (
-	schema                = "shcd-schema.json"
 	hmnConnections        = "hmn_connections.json"
 	switchMetadata        = "switch_metadata.csv"
 	applicationNodeConfig = "application_node_config.yaml"
