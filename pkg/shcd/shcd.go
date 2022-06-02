@@ -47,6 +47,8 @@ type Shcd struct {
 	Topology     []ID   `json:"topology"`
 }
 
+// NewShcd functions reads the shcd file, parses and and returns a new Shcd
+// object with the json file data filled into the struct.
 func NewShcd(shcdFilePath string) (*Shcd, error) {
 	data, err := ioutil.ReadFile(shcdFilePath)
 	if err != nil {
