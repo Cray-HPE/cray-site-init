@@ -33,19 +33,16 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 	"unicode"
-	"unicode/utf8"
 
 	// we need a blank import to avoid conflict with go fmt
 	// that would remove it
 	_ "embed"
 
 	"github.com/Cray-HPE/cray-site-init/pkg/csi"
-	xnames "github.com/Cray-HPE/hms-xname/xnames"
+	"github.com/Cray-HPE/cray-site-init/pkg/shcd"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/xeipuuv/gojsonschema"
@@ -138,401 +135,28 @@ func init() {
 	shcdCmd.Flags().StringToStringVarP(&prefixSubroleMapIn, "prefix-subrole-mapping", "M", map[string]string{}, "Specify one or more additional <Prefix>=<Subrole> mappings to use when generating application_node_config.yaml. Multiple mappings can be specified in the format of <prefix1>=<subrole1>,<prefix2>=<subrole2>")
 }
 
-// The Shcd type represents the entire machine-readable SHCD inside a go struct
-type Shcd struct {
-	Architecture string `json:"architecture"`
-	CanuVersion  string `json:"canu_version"`
-	ShcdFile     string `json:"shcd_file"`
-	UpdatedAt    string `json:"updated_at"`
-	Topology     []ID   `json:"topology"`
-}
-
-// The ID type represents all of the information needed for
-type ID struct {
-	Architecture string   `json:"architecture"`
-	CommonName   string   `json:"common_name"`
-	ID           int      `json:"id"`
-	Location     Location `json:"location"`
-	Model        string   `json:"model"`
-	Ports        []Port   `json:"ports"`
-	Type         string   `json:"type"`
-	Vendor       string   `json:"vendor"`
-}
-
-// The Port type defines where things are plugged in
-type Port struct {
-	DestNodeID int    `json:"destination_node_id"`
-	DestPort   int    `json:"destination_port"`
-	DestSlot   string `json:"destination_slot"`
-	Port       int    `json:"port"`
-	Slot       string `json:"slot"`
-	Speed      int    `json:"speed"`
-}
-
-// The Location type defines where the server physically exists in the datacenter.
-type Location struct {
-	Elevation string `json:"elevation"`
-	Rack      string `json:"rack"`
-}
-
-// HMNConnections type is the go equivalent structure of hmn_connections.json
-type HMNConnections []HMNComponent
-
-// HMNComponent is an individual component in the HMNConnections slice
-type HMNComponent struct {
-	Source              string `json:"Source"`
-	SourceRack          string `json:"SourceRack"`
-	SourceLocation      string `json:"SourceLocation"`
-	SourceParent        string `json:"SourceParent,omitempty"`
-	SourceSubLocation   string `json:"SourceSubLocation,omitempty"`
-	DestinationRack     string `json:"DestinationRack"`
-	DestinationLocation string `json:"DestinationLocation"`
-	DestinationPort     string `json:"DestinationPort"`
-}
-
-// NCNMetadata type is the go equivalent structure of ncn_metadata.csv
-type NCNMetadata []NcnMacs
-
-// NcnMacs is a row in ncn_metadata.csv
-type NcnMacs struct {
-	Xname        string
-	Role         string
-	Subrole      string
-	BmcMac       string
-	BootstrapMac string
-	Bond0Mac0    string
-	Bond0Mac1    string
-}
-
-// SwitchMetadata type is the go equivalent structure of switch_metadata.csv
-type SwitchMetadata []Switch
-
-// Switch is a row in switch_metadata.csv
-type Switch struct {
-	Xname string
-	Type  string
-	Brand string
-}
-
-// GenerateXname crafts and prints the xname of a give ID type in the SHCD
-func (id ID) GenerateXname() (xn string) {
-	// Schema decoder ring:
-	// 		cabinet = rack
-	// 		chassis = defaults to 0  River: c0, Mountain/Hill: this is the CMM number
-	// 		slot = elevation
-	// 		space =
-
-	// Each xname has a different structure depending on what the device is
-	// This is just a big string of if/else conditionals to determine this
-	// At present, this is limited to checking the nodes needed in switch_metadata.csv
-
-	var bmcOrdinal int
-
-	// If it's a CDU switch
-	if strings.HasPrefix(id.CommonName, "sw-cdu-") {
-		// We need just the number
-		i := strings.TrimPrefix(id.CommonName, "sw-cdu-")
-		slot, err := strconv.Atoi(i)
-		if err != nil {
-			log.Fatalln(err)
-		}
-		x := xnames.CDUMgmtSwitch{
-			CDU:           0,
-			CDUMgmtSwitch: slot,
-		}
-		xn = x.String()
-		// LeafBMC switches have their own needs
-	} else if strings.HasPrefix(id.CommonName, "sw-leaf-bmc-") {
-
-		// Get the just number of the elevation
-		i := strings.TrimPrefix(id.Location.Elevation, "u")
-
-		// Convert it to an int
-		slot, err := strconv.Atoi(i)
-
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		// Get the rack as a string
-		cabString := id.Location.Rack
-
-		// Strip the "x"
-		_, cabNum := utf8.DecodeRuneInString(cabString)
-
-		// Convert to an int
-		cabinet, err := strconv.Atoi(cabString[cabNum:])
-
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		// Create the xname
-		// Chassis defaults to 0 in most cases
-		// xXcCwW
-		x := xnames.MgmtSwitch{
-			Cabinet:    cabinet, // X: 0-999
-			Chassis:    0,       // C: 0-7
-			MgmtSwitch: slot,    // W: 1-48
-		}
-
-		// Convert it to a string
-		xn = x.String()
-
-		// Spine switches
-	} else if strings.HasPrefix(id.CommonName, "sw-spine") {
-		// Convert the rack to a string
-		cabString := id.Location.Rack
-		// Strip the "x"
-		_, cabNum := utf8.DecodeRuneInString(cabString)
-		// Convert to an int
-		cabinet, err := strconv.Atoi(cabString[cabNum:])
-		if err != nil {
-			log.Fatalln(err)
-		}
-		// Strip the u
-		i := strings.TrimPrefix(id.Location.Elevation, "u")
-		// Convert it to an int
-		slot, err := strconv.Atoi(i)
-		if err != nil {
-			log.Fatalln(err)
-		}
-		// space always 1 unless vendor is mellanox
-		space := 1
-		if id.Vendor == "mellanox" {
-			i := strings.TrimPrefix(id.CommonName, "sw-spine-")
-			space, err = strconv.Atoi(i)
-			if err != nil {
-				log.Fatalln(err)
-			}
-		}
-		// Create the xname
-		// Chassis and Space default to 0 and 1 in most cases
-		// xXcChHsS
-		x := xnames.MgmtHLSwitch{
-			Cabinet:               cabinet, // X: 0-999
-			Chassis:               0,       // C: 0-7
-			MgmtHLSwitchEnclosure: slot,    // H: 1-48
-			MgmtHLSwitch:          space,   // S: 1-4
-		}
-		xn = x.String()
-	} else if strings.HasPrefix(id.CommonName, "sw-leaf") ||
-		strings.HasPrefix(id.CommonName, "sw-edge") {
-		// Convert the rack to a string
-		cabString := id.Location.Rack
-		// Strip the "x"
-		_, cabNum := utf8.DecodeRuneInString(cabString)
-		// Convert to an int
-		cabinet, err := strconv.Atoi(cabString[cabNum:])
-		if err != nil {
-			log.Fatalln(err)
-		}
-		// Strip the u
-		i := strings.TrimPrefix(id.Location.Elevation, "u")
-		// Convert it to an int
-		slot, err := strconv.Atoi(i)
-		if err != nil {
-			log.Fatalln(err)
-		}
-		// Create the xname
-		// Chassis and Space default to 0 and 1 in most cases
-		// xXcChHsS
-		x := xnames.MgmtHLSwitch{
-			Cabinet:               cabinet, // X: 0-999
-			Chassis:               0,       // C: 0-7
-			MgmtHLSwitchEnclosure: slot,    // H: 1-48
-			MgmtHLSwitch:          1,       // S: 1-4
-		}
-		xn = x.String()
-
-	} else if strings.HasPrefix(id.CommonName, "ncn-") {
-
-		// Convert the rack to a string
-		cabString := id.Location.Rack
-
-		// Strip the "x"
-		_, cabNum := utf8.DecodeRuneInString(cabString)
-
-		// Convert to an int
-		cabinet, err := strconv.Atoi(cabString[cabNum:])
-
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		// Strip the u
-		i := strings.TrimPrefix(id.Location.Elevation, "u")
-
-		// Check if this is a dense 4 node chassis or dual node chassis as additional logic is needed for these to find the slot number
-		if strings.HasSuffix(i, "L") || strings.HasSuffix(i, "R") {
-			// Dense 4 node chassis - Gigabyte or Intel chassis --
-			// The BMC ordinal for the nodes BMC is derived from the NID of the node, by applying a modulo of 4 plus 1
-			if id.Vendor == "gigabyte" || id.Vendor == "intel" {
-
-				i = strings.TrimSuffix(i, "L")
-				i = strings.TrimSuffix(i, "R")
-
-				slot, err := strconv.Atoi(i)
-
-				if err != nil {
-					log.Fatalln(err)
-				}
-
-				bmcOrdinal = (slot % 4) + 1
-
-				// Dual node chassis - Apollo 6500 XL645D -- L == b1, R == b2
-			} else if id.Vendor == "hpe" {
-
-				if strings.HasSuffix(i, "L") {
-
-					bmcOrdinal = 1
-
-				} else if strings.HasSuffix(i, "R") {
-
-					bmcOrdinal = 2
-
-				}
-
-			}
-		} else {
-			// Single node chassis bB is always 0
-			bmcOrdinal = 0
-		}
-
-		// Convert it to an int
-		slot, err := strconv.Atoi(i)
-
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		// xCcCsSbBnN
-		x := xnames.Node{
-			Cabinet:       cabinet,    // X: 0-999
-			Chassis:       0,          // C: 0-7
-			ComputeModule: slot,       // S: 1-63
-			NodeBMC:       bmcOrdinal, // B: 0-1 - TODO the HSOS document is wrong here. as we do actually use greater than 1
-			// For all river hardware the value of N should be always be 0
-			Node: 0, // N: 0-7
-
-		}
-
-		xn = x.String()
-
-	}
-
-	// Return the crafted xname
-	return xn
-}
-
-// GenerateNCNRoleSubrole generates the appropriate role and subrole based on the ncn-* name
-func (id ID) GenerateNCNRoleSubrole() (r string, sr string) {
-
-	if strings.HasPrefix(id.CommonName, "ncn-s") {
-		r = "Management"
-		sr = "Storage"
-
-	} else if strings.HasPrefix(id.CommonName, "ncn-w") {
-
-		r = "Management"
-		sr = "Worker"
-
-	} else if strings.HasPrefix(id.CommonName, "ncn-m") {
-
-		r = "Management"
-		sr = "Master"
-
-	}
-
-	// Return the role and subrole ncn_metadata.csv is expecting
-	return r, sr
-}
-
-// GenerateSwitchType crafts and prints the switch types that switch_metadata.csv expects
-func (id ID) GenerateSwitchType() (st string) {
-
-	// The switch type in switch_metadata.csv differs from the types in the SHCD
-	// These conditionals just adjust for the names we expect in that file
-	if strings.Contains(id.Architecture, "bmc") {
-
-		st = "LeafBMC"
-
-	} else if strings.Contains(id.Architecture, "spine") {
-
-		st = "Spine"
-
-	} else if strings.Contains(id.Architecture, "river_ncn_leaf") {
-
-		st = "Leaf"
-
-	} else if strings.Contains(id.CommonName, "cdu") {
-
-		st = "CDU"
-	} else if strings.Contains(id.CommonName, "edge") {
-
-		st = "Edge"
-	}
-
-	// Return the switch type switch_metadata.csv is expecting
-	return st
-}
-
-// GenerateHMNSourceName crafts and prints the switch types that hmn_connections.json expects
-func (id ID) GenerateHMNSourceName() string {
-	var src string
-	// The Source in hmn_connections.json differs from the common_name in the paddle file
-	// These conditionals just adjust for the names we expect in that file
-	// Get the just number of the elevation
-	r := regexp.MustCompile(`\d{2}$`)
-
-	// matches contains the numbers found in the common name
-	matches := r.FindAllString(id.CommonName, -1)
-	if strings.HasPrefix(id.CommonName, "ncn-m") {
-		src = "mn" + matches[0]
-	} else if strings.HasPrefix(id.CommonName, "ncn-w") {
-		src = "wn" + matches[0]
-	} else if strings.HasPrefix(id.CommonName, "ncn-s") {
-		src = "sn" + matches[0]
-	} else if strings.HasPrefix(id.CommonName, "uan") {
-		src = "uan" + matches[0]
-	} else if strings.HasPrefix(id.CommonName, "pdu-x3000-") {
-		r := regexp.MustCompile(`\d{1}$`)
-		matches := r.FindAllString(id.CommonName, -1)
-		src = "x3000p" + matches[0]
-	} else if strings.HasPrefix(id.CommonName, "cn") {
-		src = "cn" + matches[0]
-	} else if strings.HasPrefix(id.CommonName, "sw-hsn-") {
-		src = "sw-hsn" + matches[0]
-	} else {
-		src = id.CommonName
-	}
-	return src
-}
-
 // createNCNSeed creates ncn_metadata.csv using information from the shcd
-func createNCNSeed(topology []ID) error {
-	var ncns NCNMetadata
-	// For each entry in the SHCD
-	for i := range topology {
-		if topology[i].Type == "server" {
-			if !strings.HasPrefix(topology[i].CommonName, "ncn") {
-				continue
-			}
-			// Generate the xname based on the rules we predefine
-			ncnXname := topology[i].GenerateXname()
-			// Do the same for the ncn role and subrole
-			ncnRole, ncnSubrole := topology[i].GenerateNCNRoleSubrole()
-			// Create a new Switch type and append it to the SwitchMetadata slice
-			ncns = append(ncns, NcnMacs{
-				Xname:        ncnXname,
-				Role:         ncnRole,
-				Subrole:      ncnSubrole,
-				BmcMac:       "MAC1",
-				BootstrapMac: "MAC2",
-				Bond0Mac0:    "MAC3",
-				Bond0Mac1:    "MAC4",
-			})
+func createNCNSeed(topology []shcd.ID) error {
+	var ncns shcd.NCNMetadata
+	servers := FilterByType(topology, "server")
+	for _, server := range servers {
+		if !strings.HasPrefix(server.CommonName, "ncn") {
+			continue
 		}
+		// Generate the xname based on the rules we predefine
+		ncnXname := server.GenerateXname()
+		// Do the same for the ncn role and subrole
+		ncnRole, ncnSubrole := server.GenerateNCNRoleSubrole()
+		// Create a new Switch type and append it to the SwitchMetadata slice
+		ncns = append(ncns, shcd.NcnMacs{
+			Xname:        ncnXname,
+			Role:         ncnRole,
+			Subrole:      ncnSubrole,
+			BmcMac:       "MAC1",
+			BootstrapMac: "MAC2",
+			Bond0Mac0:    "MAC3",
+			Bond0Mac1:    "MAC4",
+		})
 	}
 	// When writing to csv, the first row should be the headers
 	headers := []string{"Xname", "Role", "Subrole", "BMC MAC", "Bootstrap MAC", "Bond0 MAC0", "Bond0 MAC1"}
@@ -573,86 +197,76 @@ func createNCNSeed(topology []ID) error {
 }
 
 // createSwitchSeed creates switch_metadata.csv using information from the shcd
-func createSwitchSeed(topology []ID) error {
-	var sws SwitchMetadata
+func createSwitchSeed(topology []shcd.ID) error {
+	var sws shcd.SwitchMetadata
 	switches := FilterByType(topology, "switch")
-	for i := range switches {
+	for _, sw := range switches {
 		// HSN switch should not be in switch_metadata.csv
-		if strings.HasPrefix(switches[i].CommonName, "sw-hsn") {
+		if strings.HasPrefix(sw.CommonName, "sw-hsn") {
 			continue
 		}
 		// Generate the xname based on the rules we predefine
-		switchXname := switches[i].GenerateXname()
+		switchXname := sw.GenerateXname()
 		// Do the same for the switch type
-		switchType := switches[i].GenerateSwitchType()
+		switchType := sw.GenerateSwitchType()
 		// The vendor just needs to be capitalized
-		switchVendor := strings.Title(switches[i].Vendor)
+		switchVendor := strings.Title(sw.Vendor)
 		// Create a new Switch type and append it to the SwitchMetadata slice
-		sws = append(sws, Switch{
+		sws = append(sws, shcd.Switch{
 			Xname: switchXname,
 			Type:  switchType,
 			Brand: switchVendor,
 		})
-
 	}
-
 	// When writing to csv, the first row should be the headers
 	headers := []string{"Switch Xname", "Type", "Brand"}
 	// Set up the records we need to write to the file
 	// To begin, this contains the headers
 	records := [][]string{headers}
 	// Then create a new slice with the three pieces of information needed
-	for _, v := range sws {
-		row := []string{v.Xname, v.Type, v.Brand}
-		// Append it to the records slice under the column headers
-		records = append(records, row)
-
+	for _, sw := range sws {
+		records = append(records, []string{sw.Xname, sw.Type, sw.Brand})
 	}
-
 	// Create the file object
 	sm, err := os.Create(switchMetadata)
 	if err != nil {
 		return err
 	}
 	defer sm.Close()
-
 	// Create a writer, which will write the data to the file
 	writer := csv.NewWriter(sm)
 	defer writer.Flush()
-
 	// Create a var for all the records except the header
 	r := records[1:]
 	sort.Slice(r, func(i, j int) bool {
 		return r[i][0] < r[j][0]
 	})
 	// For each item in the records slice
-	for _, v := range records {
+	for _, r := range records {
 		// Write it to the csv file
-		if err := writer.Write(v); err != nil {
+		if err := writer.Write(r); err != nil {
 			return err
 		}
 	}
 
 	// Let the user know the file was created
-	log.Printf("Created %v from SHCD data\n", switchMetadata)
+	log.Printf("Created %q from SHCD data\n", switchMetadata)
 	return nil
 }
 
 // createHMNSeed creates hmn_connections.json using information from the shcd
-func createHMNSeed(topology []ID) error {
-	var hmn HMNConnections
+func createHMNSeed(topology []shcd.ID) error {
+	var hmn shcd.HMNConnections
 	for i := range topology {
 		// instantiate a new HMNComponent
-		hmnConnection := HMNComponent{}
+		hmnConnection := shcd.HMNComponent{}
 		// This just aligns the names to better match existing hmn_connections.json's
 		// The SHCD and shcd.json all use different names, so why should csi be any different?
 		// nodeName := unNormalizeSemiStandardShcdNonName(topology[i].CommonName)
-
 		// Setting the source name, source rack, source location, is pretty straightforward here
 		hmnConnection.Source = topology[i].GenerateHMNSourceName()
 		hmnConnection.SourceRack = topology[i].Location.Rack
 		hmnConnection.SourceLocation = topology[i].Location.Elevation
-
 		// Now it starts to get more complex.
 		// shcd.json has an array of ports that the device is connected to
 		// loop through the ports and find the destination id, which can be used
@@ -690,12 +304,12 @@ func createHMNSeed(topology []ID) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("Created %v from SHCD data\n", hmnConnections)
+	log.Printf("Created %q from SHCD data\n", hmnConnections)
 	return nil
 }
 
 // createANCSeed creates application_node_config.yaml using information from the shcd
-func createANCSeed(topology []ID) error {
+func createANCSeed(topology []shcd.ID) error {
 	var (
 		comment1 string = "# Additional application node prefixes to match in the hmn_connections.json file"
 		comment2 string = "\n# Additional HSM SubRoles"
@@ -708,14 +322,12 @@ func createANCSeed(topology []ID) error {
 	}
 	prefixMap := make(map[string]string)
 	// Search the shcd for Application Nodes
-	for _, id := range topology {
-		source := strings.ToLower(id.CommonName)
-		idType := strings.ToLower(id.Type)
-		if idType != "server" ||
-			strings.Contains(source, "ncn") {
+	servers := FilterByType(topology, "server")
+	for _, server := range servers {
+		source := strings.ToLower(server.CommonName)
+		if strings.Contains(source, "ncn") {
 			continue
 		}
-
 		found := false
 		// Match custom prefix<->subrole mappings first before default ones
 		if len(prefixSubroleMapIn) > 0 {
@@ -736,7 +348,6 @@ func createANCSeed(topology []ID) error {
 				}
 			}
 		}
-
 		if !found {
 			// Add a placeholder for unmatched prefixes to have the admin
 			// assign a subrole to use for that prefix.
@@ -744,18 +355,17 @@ func createANCSeed(topology []ID) error {
 				func(c rune) bool { return !unicode.IsLetter(c) })
 			prefixMap[f[0]] = "~fixme~"
 		}
-
-		location := strings.TrimFunc(id.Location.Elevation,
+		location := strings.TrimFunc(server.Location.Elevation,
 			func(r rune) bool { return unicode.IsLetter(r) })
 
 		// Construct the xname
 		xname := ""
-		if strings.HasSuffix(strings.ToLower(id.Location.Elevation), "l") {
-			xname = fmt.Sprintf("%sc0s%sb1n0", id.Location.Rack, location)
-		} else if strings.HasSuffix(strings.ToLower(id.Location.Elevation), "r") {
-			xname = fmt.Sprintf("%sc0s%sb2n0", id.Location.Rack, location)
+		if strings.HasSuffix(strings.ToLower(server.Location.Elevation), "l") {
+			xname = fmt.Sprintf("%sc0s%sb1n0", server.Location.Rack, location)
+		} else if strings.HasSuffix(strings.ToLower(server.Location.Elevation), "r") {
+			xname = fmt.Sprintf("%sc0s%sb2n0", server.Location.Rack, location)
 		} else {
-			xname = fmt.Sprintf("%sc0s%sb0n0", id.Location.Rack, location)
+			xname = fmt.Sprintf("%sc0s%sb0n0", server.Location.Rack, location)
 		}
 
 		// List Aliases
@@ -764,7 +374,6 @@ func createANCSeed(topology []ID) error {
 		}
 		anc.Aliases[xname] = append(anc.Aliases[xname], source)
 	}
-
 	// Build the 'Prefixes' list and the 'PrefixHSMSubroles' map
 	for prefix, subrole := range prefixMap {
 		anc.Prefixes = append(anc.Prefixes, prefix)
@@ -774,7 +383,6 @@ func createANCSeed(topology []ID) error {
 			log.Printf("WARNING: Prefix '%s' has no subrole mapping. Replace `%s` placeholder with a valid subrole in the resulting %s.\n", prefix, csi.SubrolePlaceHolder, applicationNodeConfig)
 		}
 	}
-
 	// Format the yaml
 	prefixNodes := []*yaml.Node{}
 	prefixHSMSubroleNodes := []*yaml.Node{}
@@ -782,7 +390,6 @@ func createANCSeed(topology []ID) error {
 	for _, prefix := range anc.Prefixes {
 		n := yaml.Node{Kind: yaml.ScalarNode, Value: prefix}
 		prefixNodes = append(prefixNodes, &n)
-
 		subrole := anc.PrefixHSMSubroles[prefix]
 		kn := yaml.Node{Kind: yaml.ScalarNode, Value: prefix}
 		vn := yaml.Node{Kind: yaml.ScalarNode, Value: subrole}
@@ -792,7 +399,6 @@ func createANCSeed(topology []ID) error {
 	prefixesTitle := yaml.Node{Kind: yaml.ScalarNode, Value: "prefixes", HeadComment: comment1}
 	prefixHSMSubroles := yaml.Node{Kind: yaml.MappingNode, Content: prefixHSMSubroleNodes}
 	prefixHSMSubrolesTitle := yaml.Node{Kind: yaml.ScalarNode, Value: "prefix_hsm_subroles", HeadComment: comment2}
-
 	aliasNodes := []*yaml.Node{}
 	aliasArray := make([]string, 0, 1)
 	for xname := range anc.Aliases {
@@ -812,9 +418,7 @@ func createANCSeed(topology []ID) error {
 	}
 	aliases := yaml.Node{Kind: yaml.MappingNode, Content: aliasNodes}
 	aliasesTitle := yaml.Node{Kind: yaml.ScalarNode, Value: "aliases", HeadComment: comment3}
-
 	ancYaml := yaml.Node{Kind: yaml.MappingNode, Content: []*yaml.Node{&prefixesTitle, &prefixes, &prefixHSMSubrolesTitle, &prefixHSMSubroles, &aliasesTitle, &aliases}}
-
 	ancFile, err := os.Create(applicationNodeConfig)
 	if err != nil {
 		return err
@@ -831,7 +435,7 @@ func createANCSeed(topology []ID) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("Created %v from SHCD data\n", applicationNodeConfig)
+	log.Printf("Created %q from SHCD data\n", applicationNodeConfig)
 	return nil
 }
 
@@ -854,21 +458,18 @@ func ValidateSchema(json string, shcdSchemaFile []byte) error {
 
 // ParseSHCD accepts a machine-readable SHCD and produces an Shcd object, which can be used throughout csi
 // It is the golang and csi equivalent of the shcd.json file generated by canu
-func ParseSHCD(f []byte) (Shcd, error) {
-	var shcd Shcd
-
+func ParseSHCD(f []byte) (shcd.Shcd, error) {
+	var shcd shcd.Shcd
 	err := json.Unmarshal(f, &shcd)
 	if err != nil {
 		return shcd, err
 	}
-
 	return shcd, nil
 }
 
 // FilterByType loop over the topology and return all items found in a give type.
-func FilterByType(topology []ID, idType string) []ID {
-	items := []ID{}
-
+func FilterByType(topology []shcd.ID, idType string) []shcd.ID {
+	items := []shcd.ID{}
 	for i := range topology {
 		if topology[i].Type == idType {
 			items = append(items, topology[i])

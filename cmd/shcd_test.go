@@ -37,6 +37,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/Cray-HPE/cray-site-init/pkg/shcd"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 )
@@ -92,7 +93,7 @@ var tests = []struct {
 func TestValidSHCDJSONTest(t *testing.T) {
 	t.Parallel()
 
-	expectedType := Shcd{}
+	expectedType := shcd.Shcd{}
 
 	for _, test := range tests {
 
@@ -358,7 +359,7 @@ func TestGenerateHMNSourceName(t *testing.T) {
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
-			ID := ID{CommonName: tC.commonName}
+			ID := shcd.ID{CommonName: tC.commonName}
 			got := ID.GenerateHMNSourceName()
 			if tC.want != got {
 				t.Errorf("want common name %q, got %q", tC.want, got)
@@ -369,8 +370,8 @@ func TestGenerateHMNSourceName(t *testing.T) {
 
 func TestFilterByTypeSwitch_ReturnsNoItemsIfNoSwitches(t *testing.T) {
 	t.Parallel()
-	want := []ID{}
-	topology := []ID{
+	want := []shcd.ID{}
+	topology := []shcd.ID{
 		{
 			CommonName: "ncn-m001",
 			Type:       "server",
@@ -388,7 +389,7 @@ func TestFilterByTypeSwitch_ReturnsNoItemsIfNoSwitches(t *testing.T) {
 
 func TestFilterByTypeSwitch_ReturnsCorrectItems(t *testing.T) {
 	t.Parallel()
-	want := []ID{
+	want := []shcd.ID{
 		{
 			CommonName: "sw-spine-001",
 			Type:       "switch",
@@ -403,7 +404,7 @@ func TestFilterByTypeSwitch_ReturnsCorrectItems(t *testing.T) {
 		},
 	}
 
-	topology := []ID{
+	topology := []shcd.ID{
 		{
 			CommonName: "ncn-m001",
 			Type:       "server",
@@ -434,8 +435,8 @@ func TestFilterByTypeSwitch_ReturnsCorrectItems(t *testing.T) {
 
 func TestFilterByTypeServer_ReturnsNoItemsIfNoServers(t *testing.T) {
 	t.Parallel()
-	want := []ID{}
-	topology := []ID{
+	want := []shcd.ID{}
+	topology := []shcd.ID{
 		{
 			CommonName: "sw-leaf-bmc-001",
 			Type:       "switch",
@@ -453,7 +454,7 @@ func TestFilterByTypeServer_ReturnsNoItemsIfNoServers(t *testing.T) {
 
 func TestFilterByTypeServer_ReturnsCorrectItems(t *testing.T) {
 	t.Parallel()
-	want := []ID{
+	want := []shcd.ID{
 		{
 			CommonName: "ncn-m002",
 			Type:       "server",
@@ -464,7 +465,7 @@ func TestFilterByTypeServer_ReturnsCorrectItems(t *testing.T) {
 		},
 	}
 
-	topology := []ID{
+	topology := []shcd.ID{
 		{
 			CommonName: "ncn-m002",
 			Type:       "server",
@@ -488,7 +489,7 @@ func TestFilterByTypeServer_ReturnsCorrectItems(t *testing.T) {
 func TestGenerateXNameGeneratesCorrectNameForCDUSwitch(t *testing.T) {
 	t.Parallel()
 	want := "d0w2"
-	id := ID{
+	id := shcd.ID{
 		Architecture: "mountain_compute_leaf",
 		CommonName:   "sw-cdu-002",
 		Type:         "switch",
@@ -503,10 +504,10 @@ func TestGenerateXNameGeneratesCorrectNameForCDUSwitch(t *testing.T) {
 func TestGenerateXNameGeneratesCorrectNameForSpineSwitch(t *testing.T) {
 	t.Parallel()
 	want := "x3000c0h38s1"
-	id := ID{
+	id := shcd.ID{
 		Architecture: "spine",
 		CommonName:   "sw-spine-003",
-		Location: Location{
+		Location: shcd.Location{
 			Elevation: "u38",
 			Rack:      "x3000",
 		},
@@ -523,10 +524,10 @@ func TestGenerateXNameGeneratesCorrectNameForSpineSwitch(t *testing.T) {
 func TestGenerateXNameGeneratesCorrectNameForRedbullSpineSwitch(t *testing.T) {
 	t.Parallel()
 	want := "x3000c0h19s2"
-	id := ID{
+	id := shcd.ID{
 		Architecture: "spine",
 		CommonName:   "sw-spine-002",
-		Location: Location{
+		Location: shcd.Location{
 			Elevation: "u19",
 			Rack:      "x3000",
 		},
