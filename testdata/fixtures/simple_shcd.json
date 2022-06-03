@@ -1,0 +1,26 @@
+{
+  "topology": [
+    {
+      "common_name": "ncn-m001",
+      "id": 31,
+      "architecture": "river_ncn_node_4_port",
+      "model": "river_ncn_node_4_port",
+      "type": "server",
+      "vendor": "hpe",
+      "ports": [
+        {
+          "port": 1,
+          "speed": 25,
+          "slot": "pcie-slot1",
+          "destination_node_id": 17,
+          "destination_port": 1,
+          "destination_slot": null
+        }
+      ],
+      "location": {
+        "rack": "x3000",
+        "elevation": "u01"
+      }
+    }
+  ]
+}

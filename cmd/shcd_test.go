@@ -31,12 +31,14 @@ package cmd
 
 import (
 	"encoding/csv"
+	"errors"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/Cray-HPE/cray-site-init/pkg/shcd"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 )
@@ -92,7 +94,7 @@ var tests = []struct {
 func TestValidSHCDJSONTest(t *testing.T) {
 	t.Parallel()
 
-	expectedType := Shcd{}
+	expectedType := shcd.Shcd{}
 
 	for _, test := range tests {
 
@@ -105,7 +107,7 @@ func TestValidSHCDJSONTest(t *testing.T) {
 			}
 
 			// Test the shcd file to see if it is parsed properly
-			shcd, err := ParseSHCD(f)
+			shcd, err := shcd.ParseSHCD(f)
 
 			// returnedErr := err != nil
 
@@ -123,29 +125,13 @@ func TestValidSHCDJSONTest(t *testing.T) {
 	}
 }
 
-func TestSHCDAgainstSchema(t *testing.T) {
-	t.Parallel()
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			// Validate the file passed against the pre-defined schema
-			err := ValidateSchema(test.fixture, shcdSchemaFile)
-			if test.expectedError == true {
-				// Otherwise, check the error message
-				if assert.Error(t, err) {
-					assert.EqualError(t, err, test.expectedSchemaErrorMsg)
-				}
-			}
-		})
-	}
-}
-
 func TestCreateHMNConnections(t *testing.T) {
 	t.Parallel()
 	shcdFile, err := ioutil.ReadFile("../testdata/fixtures/valid_shcd.json")
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
-	shcd, err := ParseSHCD(shcdFile)
+	shcd, err := shcd.ParseSHCD(shcdFile)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -187,7 +173,7 @@ func TestCreateSwitchMetadata(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	shcd, err := ParseSHCD(shcdFile)
+	shcd, err := shcd.ParseSHCD(shcdFile)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -227,7 +213,7 @@ func TestCreateNCNMetadata(t *testing.T) {
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	shcd, err := ParseSHCD(shcdFile)
+	shcd, err := shcd.ParseSHCD(shcdFile)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -269,7 +255,7 @@ func TestCreateApplicationNodeConfig(t *testing.T) {
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	shcd, err := ParseSHCD(shcdFile)
+	shcd, err := shcd.ParseSHCD(shcdFile)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -358,7 +344,7 @@ func TestGenerateHMNSourceName(t *testing.T) {
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
-			ID := ID{CommonName: tC.commonName}
+			ID := shcd.ID{CommonName: tC.commonName}
 			got := ID.GenerateHMNSourceName()
 			if tC.want != got {
 				t.Errorf("want common name %q, got %q", tC.want, got)
@@ -369,8 +355,8 @@ func TestGenerateHMNSourceName(t *testing.T) {
 
 func TestFilterByTypeSwitch_ReturnsNoItemsIfNoSwitches(t *testing.T) {
 	t.Parallel()
-	want := []ID{}
-	topology := []ID{
+	want := []shcd.ID{}
+	topology := []shcd.ID{
 		{
 			CommonName: "ncn-m001",
 			Type:       "server",
@@ -380,7 +366,7 @@ func TestFilterByTypeSwitch_ReturnsNoItemsIfNoSwitches(t *testing.T) {
 			Type:       "bogus",
 		},
 	}
-	got := FilterByType(topology, "switch")
+	got := shcd.FilterByType(topology, "switch")
 	if !cmp.Equal(want, got) {
 		t.Fatal(cmp.Diff(want, got))
 	}
@@ -388,7 +374,7 @@ func TestFilterByTypeSwitch_ReturnsNoItemsIfNoSwitches(t *testing.T) {
 
 func TestFilterByTypeSwitch_ReturnsCorrectItems(t *testing.T) {
 	t.Parallel()
-	want := []ID{
+	want := []shcd.ID{
 		{
 			CommonName: "sw-spine-001",
 			Type:       "switch",
@@ -403,7 +389,7 @@ func TestFilterByTypeSwitch_ReturnsCorrectItems(t *testing.T) {
 		},
 	}
 
-	topology := []ID{
+	topology := []shcd.ID{
 		{
 			CommonName: "ncn-m001",
 			Type:       "server",
@@ -426,7 +412,7 @@ func TestFilterByTypeSwitch_ReturnsCorrectItems(t *testing.T) {
 		},
 	}
 
-	got := FilterByType(topology, "switch")
+	got := shcd.FilterByType(topology, "switch")
 	if !cmp.Equal(want, got) {
 		t.Fatal(cmp.Diff(want, got))
 	}
@@ -434,8 +420,8 @@ func TestFilterByTypeSwitch_ReturnsCorrectItems(t *testing.T) {
 
 func TestFilterByTypeServer_ReturnsNoItemsIfNoServers(t *testing.T) {
 	t.Parallel()
-	want := []ID{}
-	topology := []ID{
+	want := []shcd.ID{}
+	topology := []shcd.ID{
 		{
 			CommonName: "sw-leaf-bmc-001",
 			Type:       "switch",
@@ -445,7 +431,7 @@ func TestFilterByTypeServer_ReturnsNoItemsIfNoServers(t *testing.T) {
 			Type:       "bogus",
 		},
 	}
-	got := FilterByType(topology, "server")
+	got := shcd.FilterByType(topology, "server")
 	if !cmp.Equal(want, got) {
 		t.Fatal(cmp.Diff(want, got))
 	}
@@ -453,7 +439,7 @@ func TestFilterByTypeServer_ReturnsNoItemsIfNoServers(t *testing.T) {
 
 func TestFilterByTypeServer_ReturnsCorrectItems(t *testing.T) {
 	t.Parallel()
-	want := []ID{
+	want := []shcd.ID{
 		{
 			CommonName: "ncn-m002",
 			Type:       "server",
@@ -464,7 +450,7 @@ func TestFilterByTypeServer_ReturnsCorrectItems(t *testing.T) {
 		},
 	}
 
-	topology := []ID{
+	topology := []shcd.ID{
 		{
 			CommonName: "ncn-m002",
 			Type:       "server",
@@ -479,7 +465,7 @@ func TestFilterByTypeServer_ReturnsCorrectItems(t *testing.T) {
 		},
 	}
 
-	got := FilterByType(topology, "server")
+	got := shcd.FilterByType(topology, "server")
 	if !cmp.Equal(want, got) {
 		t.Fatal(cmp.Diff(want, got))
 	}
@@ -488,7 +474,7 @@ func TestFilterByTypeServer_ReturnsCorrectItems(t *testing.T) {
 func TestGenerateXNameGeneratesCorrectNameForCDUSwitch(t *testing.T) {
 	t.Parallel()
 	want := "d0w2"
-	id := ID{
+	id := shcd.ID{
 		Architecture: "mountain_compute_leaf",
 		CommonName:   "sw-cdu-002",
 		Type:         "switch",
@@ -503,10 +489,10 @@ func TestGenerateXNameGeneratesCorrectNameForCDUSwitch(t *testing.T) {
 func TestGenerateXNameGeneratesCorrectNameForSpineSwitch(t *testing.T) {
 	t.Parallel()
 	want := "x3000c0h38s1"
-	id := ID{
+	id := shcd.ID{
 		Architecture: "spine",
 		CommonName:   "sw-spine-003",
-		Location: Location{
+		Location: shcd.Location{
 			Elevation: "u38",
 			Rack:      "x3000",
 		},
@@ -523,10 +509,10 @@ func TestGenerateXNameGeneratesCorrectNameForSpineSwitch(t *testing.T) {
 func TestGenerateXNameGeneratesCorrectNameForRedbullSpineSwitch(t *testing.T) {
 	t.Parallel()
 	want := "x3000c0h19s2"
-	id := ID{
+	id := shcd.ID{
 		Architecture: "spine",
 		CommonName:   "sw-spine-002",
-		Location: Location{
+		Location: shcd.Location{
 			Elevation: "u19",
 			Rack:      "x3000",
 		},
@@ -537,5 +523,74 @@ func TestGenerateXNameGeneratesCorrectNameForRedbullSpineSwitch(t *testing.T) {
 	got := id.GenerateXname()
 	if want != got {
 		t.Fatalf("want xname %q got %q", want, got)
+	}
+}
+
+func TestNewShcdErrorsIfFileDoesNotExist(t *testing.T) {
+	t.Parallel()
+	_, err := shcd.NewShcd("bogus-file-name-bogus.bogus-bogus")
+	if !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("want error os.ErrNotExist got %+v", err)
+	}
+}
+
+func TestNewShcdErrorsIfShcdFileSyntaxIsBroken(t *testing.T) {
+	t.Parallel()
+	// we are testing that the syntax fails, so we must be sure the file
+	// exists or this is going to be the erro and we don't get into the syntax validation
+	_, err := os.Stat("../testdata/fixtures/invalid_shcd.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = shcd.NewShcd("../testdata/fixtures/invalid_shcd.json")
+	if err == nil {
+		t.Fatal("want error to be not nil")
+	}
+}
+
+func TestNewShcdErrorsIfShcdFileHasWrongDataType(t *testing.T) {
+	t.Parallel()
+	// we are testing that the syntax fails, so we must be sure the file
+	// exists or this is going to be the erro and we don't get into the syntax validation
+	_, err := os.Stat("../testdata/fixtures/invalid_data_types_shcd.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = shcd.NewShcd("../testdata/fixtures/invalid_data_types_shcd.json")
+	if err == nil {
+		t.Fatal("want error to be not nil")
+	}
+}
+
+func TestNewShcdReturnsCorrectShcdData(t *testing.T) {
+	t.Parallel()
+	want := &shcd.Shcd{
+		Topology: []shcd.ID{{
+			Architecture: "river_ncn_node_4_port",
+			CommonName:   "ncn-m001",
+			ID:           31,
+			Location: shcd.Location{
+				Elevation: "u01",
+				Rack:      "x3000",
+			},
+			Model: "river_ncn_node_4_port",
+			Ports: []shcd.Port{
+				{
+					DestNodeID: 17,
+					DestPort:   1,
+					Port:       1,
+					Slot:       "pcie-slot1",
+					Speed:      25,
+				}},
+			Type:   "server",
+			Vendor: "hpe",
+		}},
+	}
+	got, err := shcd.NewShcd("../testdata/fixtures/simple_shcd.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !cmp.Equal(want, got) {
+		t.Fatal(cmp.Diff(want, got))
 	}
 }
