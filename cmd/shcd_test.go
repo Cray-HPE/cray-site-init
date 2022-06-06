@@ -179,7 +179,7 @@ func TestCreateNCNMetadata(t *testing.T) {
 func TestCreateApplicationNodeConfig(t *testing.T) {
 	t.Parallel()
 	// Open the file without validating it since we know it is valid
-	shcdFile, err := ioutil.ReadFile("../testdata/fixtures/valid_shcd.json")
+	shcdFile, err := ioutil.ReadFile("../testdata/fixtures/odin_valid_ccj.json")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -227,7 +227,7 @@ func TestCreateApplicationNodeConfig(t *testing.T) {
 	}
 }
 
-func TestGenerateHMNSourceName(t *testing.T) {
+func TestGenerateSourceName(t *testing.T) {
 	t.Parallel()
 	testCases := []struct {
 		desc       string
@@ -274,11 +274,16 @@ func TestGenerateHMNSourceName(t *testing.T) {
 			commonName: "cn005",
 			want:       "cn05",
 		},
+		{
+			desc:       "Common Name gateway001 returns gateway01",
+			commonName: "gateway001",
+			want:       "gateway01",
+		},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
 			ID := shcd.ID{CommonName: tC.commonName}
-			got := ID.GenerateHMNSourceName()
+			got := ID.GenerateSourceName()
 			if tC.want != got {
 				t.Errorf("want common name %q, got %q", tC.want, got)
 			}

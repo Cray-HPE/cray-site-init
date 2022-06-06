@@ -301,8 +301,8 @@ func (id ID) GenerateSwitchType() (st string) {
 	return st
 }
 
-// GenerateHMNSourceName crafts and prints the switch types that hmn_connections.json expects
-func (id ID) GenerateHMNSourceName() string {
+// GenerateSourceName crafts and prints the switch types that hmn_connections.json expects
+func (id ID) GenerateSourceName() string {
 	var src string
 	// The Source in hmn_connections.json differs from the common_name in the paddle file
 	// These conditionals just adjust for the names we expect in that file
@@ -326,6 +326,8 @@ func (id ID) GenerateHMNSourceName() string {
 		src = "cn" + matches[0]
 	} else if strings.HasPrefix(id.CommonName, "sw-hsn-") {
 		src = "sw-hsn" + matches[0]
+	} else if strings.HasPrefix(id.CommonName, "gateway") {
+		src = "gateway" + matches[0]
 	} else {
 		src = id.CommonName
 	}

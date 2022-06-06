@@ -251,7 +251,7 @@ func createHMNSeed(topology []shcd.ID) error {
 		// The SHCD and shcd.json all use different names, so why should csi be any different?
 		// nodeName := unNormalizeSemiStandardShcdNonName(topology[i].CommonName)
 		// Setting the source name, source rack, source location, is pretty straightforward here
-		hmnConnection.Source = topology[i].GenerateHMNSourceName()
+		hmnConnection.Source = topology[i].GenerateSourceName()
 		hmnConnection.SourceRack = topology[i].Location.Rack
 		hmnConnection.SourceLocation = topology[i].Location.Elevation
 		// Now it starts to get more complex.
@@ -311,28 +311,16 @@ func createANCSeed(topology []shcd.ID) error {
 	// Search the shcd for Application Nodes
 	servers := shcd.FilterByType(topology, "server")
 	for _, server := range servers {
-		source := strings.ToLower(server.CommonName)
-		if strings.Contains(source, "ncn") {
+		if strings.Contains(server.CommonName, "ncn") {
 			continue
 		}
+		source := server.GenerateSourceName()
 		found := false
-		// Match custom prefix<->subrole mappings first before default ones
-		if len(prefixSubroleMapIn) > 0 {
-			for prefix, subrole := range prefixSubroleMapIn {
-				if strings.HasPrefix(source, prefix) {
-					found = true
-					prefixMap[prefix] = subrole
-					break
-				}
-			}
-		}
-		if !found {
-			// Match default prefix<->subrole mappings
-			for _, prefix := range csi.DefaultApplicationNodePrefixes {
-				if strings.HasPrefix(source, prefix) {
-					found = true
-					break
-				}
+		// Match default prefix<->subrole mappings
+		for _, prefix := range csi.DefaultApplicationNodePrefixes {
+			if strings.HasPrefix(source, prefix) {
+				found = true
+				break
 			}
 		}
 		if !found {
