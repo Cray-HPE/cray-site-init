@@ -83,6 +83,32 @@ func FilterByType(topology []ID, idType string) []ID {
 	return items
 }
 
+// Prefixes return all application node prefixes for a given topology
+func Prefixes(topology []ID) []string {
+	items := []string{}
+	keys := map[string]bool{}
+	for _, item := range topology {
+		if item.Type != "server" {
+			continue
+		}
+		cn := strings.ToLower(item.CommonName)
+		switch {
+		case strings.HasPrefix(cn, "uan"):
+			if !keys["uan"] {
+				keys["uan"] = true
+				items = append(items, "uan")
+			}
+		case strings.HasPrefix(cn, "gateway"):
+			if !keys["gn"] {
+				keys["gn"] = true
+				items = append(items, "gn")
+			}
+		}
+
+	}
+	return items
+}
+
 // The ID type represents all of the information needed for
 type ID struct {
 	Architecture string   `json:"architecture"`

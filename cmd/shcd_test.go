@@ -532,3 +532,60 @@ func TestNewShcdReturnsCorrectShcdData(t *testing.T) {
 		t.Fatal(cmp.Diff(want, got))
 	}
 }
+
+func TestPrefixesReturnsEmptyGivenOnlySwitches(t *testing.T) {
+	t.Parallel()
+	want := []string{}
+	topology := []shcd.ID{
+		{
+			CommonName: "sw-spine-002",
+			Type:       "switch",
+		},
+		{
+			CommonName: "sw-spine-003",
+			Type:       "switch",
+		},
+	}
+	got := shcd.Prefixes(topology)
+	if !cmp.Equal(want, got) {
+		t.Fatalf("want %v, got %v", want, got)
+	}
+}
+
+func TestPrefixesReturnsUANIfMultipleUANNodes(t *testing.T) {
+	t.Parallel()
+	want := []string{"uan"}
+	topology := []shcd.ID{
+		{
+			CommonName: "uan006",
+			Type:       "server",
+		},
+		{
+			CommonName: "uan001",
+			Type:       "server",
+		},
+	}
+	got := shcd.Prefixes(topology)
+	if !cmp.Equal(want, got) {
+		t.Fatalf("want %v, got %v", want, got)
+	}
+}
+
+func TestPrefixesReturnsMultipleValuesIfNodesWithDifferentPrefix(t *testing.T) {
+	t.Parallel()
+	want := []string{"uan", "gn"}
+	topology := []shcd.ID{
+		{
+			CommonName: "uan006",
+			Type:       "server",
+		},
+		{
+			CommonName: "gateway001",
+			Type:       "server",
+		},
+	}
+	got := shcd.Prefixes(topology)
+	if !cmp.Equal(want, got) {
+		t.Fatalf("want %v, got %v", want, got)
+	}
+}
