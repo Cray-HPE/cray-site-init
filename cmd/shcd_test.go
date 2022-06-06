@@ -40,90 +40,7 @@ import (
 
 	"github.com/Cray-HPE/cray-site-init/pkg/shcd"
 	"github.com/google/go-cmp/cmp"
-	"github.com/stretchr/testify/assert"
 )
-
-var (
-	switchMetaExpected = "../testdata/expected/" + switchMetadata
-	hmnConnExpected    = "../testdata/expected/" + hmnConnections
-	appNodeExpected    = "../testdata/expected/" + applicationNodeConfig
-	ncnMetaExpected    = "../testdata/expected/" + ncnMetadata
-)
-
-// Generate shcd.json example:
-// canu validate shcd -a Full --shcd shcd.xlsx --tabs 10G_25G_40G_100G,NMN,HMN,MTN_TDS --corners I37,T125,J15,T24,J20,U51,K15,U36 --out shcd.json
-var tests = []struct {
-	fixture                       string
-	expectedError                 bool
-	expectedErrorMsg              string
-	expectedSchemaErrorMsg        string
-	name                          string
-	expectedSwitchMetadata        string
-	expectedHMNConnections        string
-	expectedApplicationNodeConfig string
-	expectedNCNMetadata           string
-}{
-	{
-		fixture:                       "../testdata/fixtures/valid_shcd.json",
-		expectedError:                 false,
-		expectedErrorMsg:              "",
-		expectedSchemaErrorMsg:        "",
-		name:                          "ValidFile",
-		expectedSwitchMetadata:        switchMetaExpected,
-		expectedHMNConnections:        hmnConnExpected,
-		expectedApplicationNodeConfig: appNodeExpected,
-		expectedNCNMetadata:           ncnMetaExpected,
-	},
-	{
-		fixture:                "../testdata/fixtures/invalid_shcd.json",
-		expectedError:          true,
-		expectedErrorMsg:       "invalid character ':' after top-level value",
-		expectedSchemaErrorMsg: "(root): Invalid type. Expected: object, given: string",
-		name:                   "MissingBracketFile",
-	},
-	{
-		fixture:                "../testdata/fixtures/invalid_data_types_shcd.json",
-		expectedError:          true,
-		expectedErrorMsg:       "json: cannot unmarshal string into Go struct field ID.topology.id of type int",
-		expectedSchemaErrorMsg: "topology.0.id: Invalid type. Expected: integer, given: string",
-		name:                   "InvalidDataTypeFile",
-	},
-}
-
-// Test different JSON input files
-func TestValidSHCDJSONTest(t *testing.T) {
-	t.Parallel()
-
-	expectedType := shcd.Shcd{}
-
-	for _, test := range tests {
-
-		t.Run(test.name, func(t *testing.T) {
-			// Open the file
-			f, err := ioutil.ReadFile(test.fixture)
-
-			if err != nil {
-				t.Fatalf("%v", err)
-			}
-
-			// Test the shcd file to see if it is parsed properly
-			shcd, err := shcd.ParseSHCD(f)
-
-			// returnedErr := err != nil
-
-			if test.expectedError == false {
-				// A valid, machine-readable shcd should return no errors
-				assert.NoError(t, err)
-				// and be of type Shcd
-				assert.IsType(t, expectedType, shcd)
-			} else {
-				if assert.Error(t, err) {
-					assert.EqualError(t, err, test.expectedErrorMsg)
-				}
-			}
-		})
-	}
-}
 
 func TestCreateHMNConnections(t *testing.T) {
 	t.Parallel()
@@ -141,14 +58,17 @@ func TestCreateHMNConnections(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 	// Validate the file was created
-	assert.FileExists(t, filepath.Join(".", hmnConnections))
+	_, err = os.Stat(filepath.Join(".", hmnConnections))
+	if err != nil {
+		t.Fatal(err)
+	}
 	// Read the generated json and validate it's contents
 	hmnGenerated, err := os.Open(filepath.Join(".", hmnConnections))
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer hmnGenerated.Close()
-	hmnExpected, err := os.Open(hmnConnExpected)
+	hmnExpected, err := os.Open("../testdata/expected/" + hmnConnections)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -161,8 +81,9 @@ func TestCreateHMNConnections(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert.JSONEq(t, string(hmnConnections), string(hmnActual))
-
+	if !cmp.Equal(string(hmnConnections), string(hmnActual)) {
+		t.Fatal(cmp.Diff(string(hmnConnections), string(hmnActual)))
+	}
 }
 
 func TestCreateSwitchMetadata(t *testing.T) {
@@ -203,7 +124,9 @@ func TestCreateSwitchMetadata(t *testing.T) {
 	if err != nil {
 		log.Fatalf("Unable to parse %q as a CSV: %+v", filepath.Join(".", switchMetadata), err)
 	}
-	assert.Equal(t, smExpected, actual)
+	if !cmp.Equal(smExpected, actual) {
+		t.Fatal(cmp.Diff(smExpected, actual))
+	}
 }
 
 func TestCreateNCNMetadata(t *testing.T) {
@@ -222,7 +145,10 @@ func TestCreateNCNMetadata(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 	// Validate the file was created
-	assert.FileExists(t, filepath.Join(".", ncnMetadata))
+	_, err = os.Stat(filepath.Join(".", ncnMetadata))
+	if err != nil {
+		t.Fatal(err)
+	}
 	// Read the csv and validate it's contents
 	generated, err := os.Open(filepath.Join(".", ncnMetadata))
 	if err != nil {
@@ -243,9 +169,11 @@ func TestCreateNCNMetadata(t *testing.T) {
 	csvReader := csv.NewReader(expected)
 	ncnExpected, err := csvReader.ReadAll()
 	if err != nil {
-		t.Fatalf("Unable to parse file %q as a CSV: %+v", ncnMetaExpected, err)
+		t.Fatalf("Unable to parse file %q as a CSV: %+v", "../testdata/expected/"+ncnMetadata, err)
 	}
-	assert.Equal(t, ncnExpected, actual)
+	if !cmp.Equal(ncnExpected, actual) {
+		t.Fatal(cmp.Diff(ncnExpected, actual))
+	}
 }
 
 func TestCreateApplicationNodeConfig(t *testing.T) {
@@ -271,14 +199,17 @@ func TestCreateApplicationNodeConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Validate the file was created
-	assert.FileExists(t, filepath.Join(".", applicationNodeConfig))
+	_, err = os.Stat(filepath.Join(".", applicationNodeConfig))
+	if err != nil {
+		t.Fatal(err)
+	}
 	// Read the yaml and validate it's contents
 	ancGenerated, err := os.Open(filepath.Join(".", applicationNodeConfig))
 	if err != nil {
 		t.Fatalf("Unable to read %q: %+v", filepath.Join(".", applicationNodeConfig), err)
 	}
 	defer ancGenerated.Close()
-	ancExpected, err := os.Open(appNodeExpected)
+	ancExpected, err := os.Open("../testdata/expected/" + applicationNodeConfig)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -291,7 +222,9 @@ func TestCreateApplicationNodeConfig(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert.YAMLEq(t, string(appNodeConfig), string(ancActual))
+	if !cmp.Equal(string(appNodeConfig), string(ancActual)) {
+		t.Fatal(cmp.Diff(string(appNodeConfig), string(ancActual)))
+	}
 }
 
 func TestGenerateHMNSourceName(t *testing.T) {
