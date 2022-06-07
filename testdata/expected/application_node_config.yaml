@@ -1,11 +1,46 @@
+#
+# MIT License
+#
+# (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+#
 ---
 # Additional application node prefixes to match in the hmn_connections.json file
-prefixes: []
+prefixes:
+    - uan
+    - gn
 
 # Additional HSM SubRoles
-prefix_hsm_subroles: {}
+prefix_hsm_subroles:
+    uan: UAN
+    gn: Gateway
 
 # Application Node aliases
 aliases:
-  x3000c0s15b0n0: ["uan001"]
-  x3000c0s16b0n0: ["uan002"]
+    x3000c0s17b0n0: ["uan01"]
+    x3000c0s18b0n0: ["uan02"]
+    x3000c0s19b0n0: ["uan03"]
+    x3000c0s21b0n0: ["uan04"]
+    x3000c0s23b0n0: ["gateway01"]
+    x3000c0s24b0n0: ["gateway02"]
+    x3000c0s25b0n0: ["uan06"]
+    x3000c0s27b0n0: ["gateway03"]
+    x3000c0s28b0n0: ["gateway04"]
+    x3000c0s29b0n0: ["gateway05"]

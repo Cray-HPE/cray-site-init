@@ -251,7 +251,7 @@ func createHMNSeed(topology []shcd.ID) error {
 		// The SHCD and shcd.json all use different names, so why should csi be any different?
 		// nodeName := unNormalizeSemiStandardShcdNonName(topology[i].CommonName)
 		// Setting the source name, source rack, source location, is pretty straightforward here
-		hmnConnection.Source = topology[i].GenerateHMNSourceName()
+		hmnConnection.Source = topology[i].GenerateSourceName()
 		hmnConnection.SourceRack = topology[i].Location.Rack
 		hmnConnection.SourceLocation = topology[i].Location.Elevation
 		// Now it starts to get more complex.
@@ -307,45 +307,15 @@ func createANCSeed(topology []shcd.ID) error {
 		PrefixHSMSubroles: make(map[string]string),
 		Aliases:           make(map[string][]string),
 	}
-	prefixMap := make(map[string]string)
 	// Search the shcd for Application Nodes
 	servers := shcd.FilterByType(topology, "server")
 	for _, server := range servers {
-		source := strings.ToLower(server.CommonName)
-		if strings.Contains(source, "ncn") {
+		if strings.Contains(server.CommonName, "ncn") {
 			continue
 		}
-		found := false
-		// Match custom prefix<->subrole mappings first before default ones
-		if len(prefixSubroleMapIn) > 0 {
-			for prefix, subrole := range prefixSubroleMapIn {
-				if strings.HasPrefix(source, prefix) {
-					found = true
-					prefixMap[prefix] = subrole
-					break
-				}
-			}
-		}
-		if !found {
-			// Match default prefix<->subrole mappings
-			for _, prefix := range csi.DefaultApplicationNodePrefixes {
-				if strings.HasPrefix(source, prefix) {
-					found = true
-					break
-				}
-			}
-		}
-		if !found {
-			// Add a placeholder for unmatched prefixes to have the admin
-			// assign a subrole to use for that prefix.
-			f := strings.FieldsFunc(source,
-				func(c rune) bool { return !unicode.IsLetter(c) })
-			prefixMap[f[0]] = "~fixme~"
-		}
+		source := server.GenerateSourceName()
 		location := strings.TrimFunc(server.Location.Elevation,
 			func(r rune) bool { return unicode.IsLetter(r) })
-
-		// Construct the xname
 		xname := ""
 		if strings.HasSuffix(strings.ToLower(server.Location.Elevation), "l") {
 			xname = fmt.Sprintf("%sc0s%sb1n0", server.Location.Rack, location)
@@ -354,26 +324,24 @@ func createANCSeed(topology []shcd.ID) error {
 		} else {
 			xname = fmt.Sprintf("%sc0s%sb0n0", server.Location.Rack, location)
 		}
-
-		// List Aliases
 		if _, ok := anc.Aliases[xname]; !ok {
 			anc.Aliases[xname] = make([]string, 0, 1)
 		}
 		anc.Aliases[xname] = append(anc.Aliases[xname], source)
 	}
-	// Build the 'Prefixes' list and the 'PrefixHSMSubroles' map
-	for prefix, subrole := range prefixMap {
+	shcdPrefixes := shcd.Prefixes(topology)
+	for _, prefix := range shcdPrefixes {
 		anc.Prefixes = append(anc.Prefixes, prefix)
-		anc.PrefixHSMSubroles[prefix] = subrole
-		// Warn the admin if there are any prefixes that have no subrole
-		if subrole == csi.SubrolePlaceHolder {
+		subrole, ok := csi.DefaultApplicationNodeSubroles[prefix]
+		if !ok {
+			subrole = csi.SubrolePlaceHolder
 			log.Printf("WARNING: Prefix '%s' has no subrole mapping. Replace `%s` placeholder with a valid subrole in the resulting %s.\n", prefix, csi.SubrolePlaceHolder, applicationNodeConfig)
 		}
+		anc.PrefixHSMSubroles[prefix] = subrole
 	}
 	// Format the yaml
 	prefixNodes := []*yaml.Node{}
 	prefixHSMSubroleNodes := []*yaml.Node{}
-	sort.Strings(anc.Prefixes)
 	for _, prefix := range anc.Prefixes {
 		n := yaml.Node{Kind: yaml.ScalarNode, Value: prefix}
 		prefixNodes = append(prefixNodes, &n)
@@ -417,7 +385,7 @@ func createANCSeed(topology []shcd.ID) error {
 	}
 	e := yaml.NewEncoder(ancFile)
 	defer e.Close()
-	e.SetIndent(2)
+	e.SetIndent(4)
 	err = e.Encode(ancYaml)
 	if err != nil {
 		return err

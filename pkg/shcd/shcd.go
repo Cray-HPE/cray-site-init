@@ -83,6 +83,32 @@ func FilterByType(topology []ID, idType string) []ID {
 	return items
 }
 
+// Prefixes return all application node prefixes for a given topology
+func Prefixes(topology []ID) []string {
+	items := []string{}
+	keys := map[string]bool{}
+	for _, item := range topology {
+		if item.Type != "server" {
+			continue
+		}
+		cn := strings.ToLower(item.CommonName)
+		switch {
+		case strings.HasPrefix(cn, "uan"):
+			if !keys["uan"] {
+				keys["uan"] = true
+				items = append(items, "uan")
+			}
+		case strings.HasPrefix(cn, "gateway"):
+			if !keys["gn"] {
+				keys["gn"] = true
+				items = append(items, "gn")
+			}
+		}
+
+	}
+	return items
+}
+
 // The ID type represents all of the information needed for
 type ID struct {
 	Architecture string   `json:"architecture"`
@@ -301,8 +327,8 @@ func (id ID) GenerateSwitchType() (st string) {
 	return st
 }
 
-// GenerateHMNSourceName crafts and prints the switch types that hmn_connections.json expects
-func (id ID) GenerateHMNSourceName() string {
+// GenerateSourceName crafts and prints the switch types that hmn_connections.json expects
+func (id ID) GenerateSourceName() string {
 	var src string
 	// The Source in hmn_connections.json differs from the common_name in the paddle file
 	// These conditionals just adjust for the names we expect in that file
@@ -326,6 +352,8 @@ func (id ID) GenerateHMNSourceName() string {
 		src = "cn" + matches[0]
 	} else if strings.HasPrefix(id.CommonName, "sw-hsn-") {
 		src = "sw-hsn" + matches[0]
+	} else if strings.HasPrefix(id.CommonName, "gateway") {
+		src = "gateway" + matches[0]
 	} else {
 		src = id.CommonName
 	}
