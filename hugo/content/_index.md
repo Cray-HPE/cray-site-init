@@ -24,7 +24,7 @@ The Site Survey CSM Questionnaire outlines information needed to begin an instal
 
 - `hmn_connections.json`: maps which switch ports on the LeafBMC switches are cabled to what the River node BMCs, PDUs, or other hardware[307-HMN-CONNECTIONS](#)
 - `ncn_metadata.csv`: maps the MACs of the Management NCNs to their xnames and is used to initialize the management cluster ([301-NCN-METADATA-BMC](#) and [302-NCN-METADATA-BONDX](#))
-- `switch_metdata.csv`: maps the switch xname, brand, type, and model for the management switches in the system ([305-SWITCH-METADATA](#))
+- `switch_metadata.csv`: maps the switch xname, brand, type, and model for the management switches in the system ([305-SWITCH-METADATA](#))
 
 These three files represent the minimum set of inputs `csi` needs to generate a new configuration payload.  
 
@@ -122,7 +122,7 @@ Block".
 
 The CMN IP address to reserved for the CSM DNS endpoint which must be
 part of the CMN Static Pool.  This is generally referred to as the
-site-to-system lookup target.  The DNS zone \<sytem-name>.\<site-domain>
+site-to-system lookup target.  The DNS zone \<system-name>.\<site-domain>
 will be served by a DNS server at this IP address.
 
 #### Site Parameters
