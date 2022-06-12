@@ -27,7 +27,7 @@ csi handoff ncn-images [flags]
       --k8s-squashfs-path string    Path to the squashfs image to upload for K8s NCNs
       --kubeconfig string           Absolute path to the kubeconfig file (default "/Users/jsalmela/.kube/config")
       --s3-bucket string            Bucket to create and upload NCN images to (default "ncn-images")
-      --s3-secret string            Secret to use for connecting to S3 (default "sds-s3-credentials")
+      --s3-secret string            Secret to use for connecting to S3 (default "sts-s3-credentials")
 ```
 
 ### SEE ALSO
