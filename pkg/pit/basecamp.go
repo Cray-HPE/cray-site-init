@@ -225,12 +225,12 @@ func MakeBasecampHostRecords(ncns []csi.LogicalNCN, shastaNetworks map[string]*c
 
 // unique de-dupes an array of string
 func unique(arr []string) []string {
-	occured := map[string]bool{}
+	occurred := map[string]bool{}
 	result := []string{}
 
 	for e, s := range arr {
-		if !occured[arr[e]] {
-			occured[arr[e]] = true
+		if !occurred[arr[e]] {
+			occurred[arr[e]] = true
 			// only append if it's not an empty string
 			// checks later in the code for ntp pools happen for a slice of len > 0
 			// but that fails if the slice contains an empty string
