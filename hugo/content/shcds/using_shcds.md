@@ -11,7 +11,7 @@ In CSM 1.2+ `csi` will have the ability to ingest a JSON file and automatically 
 
 - `hmn_connections.json`: maps which switch ports on the Leaf switches are cabled to what the River node BMCs, PDUs, or other hardware
 - `ncn_metadata.csv`: maps the MACs of the Management NCNs to their xnames and is used to initialize the management cluster
-- `switch_metdata.csv`: maps the switch xname, brand, type, and model for the management switches in the system
+- `switch_metadata.csv`: maps the switch xname, brand, type, and model for the management switches in the system
 - (optional) `application_node_config.yaml`: offers additional control of the application node identification in SLS
 - (optional) `cabinets.yaml`: a mapping file is necessary for systems with non-sequential cabinet ID numbers
 
@@ -40,7 +40,7 @@ csi config init
 
 # Running integration tests with canu and csi
 
-The SHCD is the beginning source of truth for how a system is laid out and connected.  The information found there is used through several different tools throughout the install of CSM, so if changes are made to an SHCD, it can be beneficial in both development and production environments to see how those changes might propogate.
+The SHCD is the beginning source of truth for how a system is laid out and connected.  The information found there is used through several different tools throughout the install of CSM, so if changes are made to an SHCD, it can be beneficial in both development and production environments to see how those changes might propagate.
 
 To that end, there are some integration tests built in to `csi` that can test the flow mentioned above. 
 
@@ -74,7 +74,7 @@ cp mysupercomputer.xlsx testdata/shcds
 make shcds
 ```
 
-On a successful test, you'll see output similiar to:
+On a successful test, you'll see output similar to:
 
 ```
 === RUN   TestConfigShcd_GenerateSeeds

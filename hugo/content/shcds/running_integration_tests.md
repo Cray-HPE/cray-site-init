@@ -3,7 +3,7 @@ layout: default
 title: Running integration tests with canu and csi
 ---
 
-The SHCD is the beginning source-of-truth for how a system is laid out and connected.  The information found there is used through several different tools throughout the install of CSM, so if changes are made to an SHCD, it can be beneficial in both development and production environments to see how those changes might propogate.
+The SHCD is the beginning source-of-truth for how a system is laid out and connected.  The information found there is used through several different tools throughout the install of CSM, so if changes are made to an SHCD, it can be beneficial in both development and production environments to see how those changes might propagate.
 
 To that end, there are some integration tests built in to `csi` that can test the flow mentioned above, which allow you to generate seed files for multiple systems at once.
 
@@ -62,7 +62,7 @@ make shcds
 
 ## Watch the files get created in `testdata/shcds`
 
-On a successful test, you'll see output similiar to:
+On a successful test, you'll see output similar to:
 
 ```
 === RUN   TestConfigShcd_GenerateSeeds
