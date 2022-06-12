@@ -151,7 +151,7 @@ func setupHandoffCommon() (limitManagementNCNs []sls_common.GenericHardware, set
 			paramSplit := strings.Split(setParam, "=")
 
 			if len(paramSplit) != 2 {
-				log.Panicf("Set paramater had invalid format: %s", setParam)
+				log.Panicf("Set parameter had invalid format: %s", setParam)
 			}
 
 			tuple := paramTuple{

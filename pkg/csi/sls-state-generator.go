@@ -179,7 +179,7 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 		objects.
 
 		The only real trick here is the source parent field. That indicates two things:
-		  1) A grouping of nodes that are phycsially located in the same chassis.
+		  1) A grouping of nodes that are physically located in the same chassis.
 		  2) There is another device that needs to be treated differently (a CMC on a Gigabyte node is the only example
 		     of this at the time of writing.)
 	*/
@@ -190,10 +190,10 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 	connectionHardwareMap := make(map[string]sls_common.GenericHardware)
 	switchHardwareMap := g.inputState.ManagementSwitches
 
-	// Verify that all of the management switches have a corrensponding river cabinet
+	// Verify that all of the management switches have a corresponding river cabinet
 	for _, mySwitch := range switchHardwareMap {
 		if mySwitch.Class != sls_common.ClassRiver {
-			// Right now we only care about verifying that the river management switches have a corrensponding cabinet,
+			// Right now we only care about verifying that the river management switches have a corresponding cabinet,
 			// This means we are not doing any checking for the parent CDU for CDU switches.
 			continue
 		}
@@ -451,7 +451,7 @@ func (g *SLSStateGenerator) getPDUControllerHardwareFromRow(row shcd_parser.HMNR
 	}
 
 	// Note: the PDU integer is being treated as PDU Cabinet controller number
-	// Which in this case make sense, as a controling PDU is connected to the HMN network
+	// Which in this case make sense, as a controlling PDU is connected to the HMN network
 	pduXname := fmt.Sprintf("%sm%d", row.SourceRack, pduInteger)
 
 	hardware = sls_common.GenericHardware{

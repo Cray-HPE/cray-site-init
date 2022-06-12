@@ -139,7 +139,7 @@ func updateNCNKernelParams() {
 	limitManagementNCNs, setParams := setupHandoffCommon()
 
 	for _, ncn := range limitManagementNCNs {
-		// Get the BSS bootparamaters for this NCN.
+		// Get the BSS bootparameters for this NCN.
 		bssEntry := getBSSBootparametersForXname(ncn.Xname)
 
 		params := strings.Split(bssEntry.Params, " ")

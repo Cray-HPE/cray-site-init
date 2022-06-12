@@ -130,7 +130,7 @@ func collectInput(v *viper.Viper) ([]shcd_parser.HMNRow, []*csi.LogicalNCN, []*c
 	// this seedfile should be in the same place as the config, so use that to craft the path
 	hmnRows := collectHMNRows(v)
 
-	// This is techincally sufficient to generate an SLSState object, but to do so now
+	// This is technically sufficient to generate an SLSState object, but to do so now
 	// would not include extended information about the NCNs and Network Switches.
 	//
 	// The first step in building the NCN map is to read the NCN Metadata file
@@ -140,7 +140,7 @@ func collectInput(v *viper.Viper) ([]shcd_parser.HMNRow, []*csi.LogicalNCN, []*c
 	// we need to load the switches
 	switches := collectSwitches(v)
 
-	// Application Node configration for SLS Config Generator
+	// Application Node configuration for SLS Config Generator
 	// This is an optional input file
 	applicationNodeConfig := collectApplicationNodeConfig(v)
 

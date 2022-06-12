@@ -109,7 +109,7 @@ func updateNCNCloudInitParamsFromFile() {
 	limitManagementNCNs, _ := setupHandoffCommon()
 
 	for _, ncn := range limitManagementNCNs {
-		// Get the BSS bootparamaters for this NCN.
+		// Get the BSS bootparameters for this NCN.
 		bssEntry := getBSSBootparametersForXname(ncn.Xname)
 
 		if ciData.UserData != nil {
@@ -144,7 +144,7 @@ func updateNCNCloudInitParams() {
 	limitManagementNCNs, setParams := setupHandoffCommon()
 
 	for _, ncn := range limitManagementNCNs {
-		// Get the BSS bootparamaters for this NCN.
+		// Get the BSS bootparameters for this NCN.
 		bssEntry := getBSSBootparametersForXname(ncn.Xname)
 
 		// Create/update params.
