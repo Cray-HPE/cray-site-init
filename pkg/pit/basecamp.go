@@ -35,7 +35,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-// MetaData is part of the cloud-init stucture and
+// MetaData is part of the cloud-init structure and
 // is only used for validating the required fields in the
 // `CloudInit` struct below.
 type MetaData struct {

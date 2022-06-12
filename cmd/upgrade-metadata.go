@@ -368,7 +368,7 @@ func getBSSGlobalHostRecords(managementNCNs []sls_common.GenericHardware, networ
 				Aliases: []string{fmt.Sprintf("%s.%s", ncnAlias, network)},
 			}
 
-			// The NMN network gets the privledge of also containing the bare NCN Alias without network domain.
+			// The NMN network gets the privilege of also containing the bare NCN Alias without network domain.
 			if strings.ToLower(network) == "nmn" {
 				hostRecord.Aliases = append(hostRecord.Aliases, ncnAlias)
 			}

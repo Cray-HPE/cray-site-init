@@ -62,12 +62,12 @@ var initCmd = &cobra.Command{
 	** NB **
 
 	** NB **
-	For additional control of the application node identification durring the SLS Input File generation, an additional config file is necessary
+	For additional control of the application node identification during the SLS Input File generation, an additional config file is necessary
 	and must be indicated with the --application-node-config-yaml flag.
 
 	Allows control of the following in the SLS Input File:
 	1. System specific prefix for Applications node
-	2. Specify HSM Subroles for system specifc application nodes
+	2. Specify HSM Subroles for system-specific application nodes
 	3. Specify Application node Aliases
 	** NB **
 
@@ -412,9 +412,9 @@ func init() {
 	// initCmd.Flags().String("internal-domain", "unicos.shasta", "Internal Domain Name")
 	initCmd.Flags().String("ntp-pool", "", "Hostname for Upstream NTP Pool")
 	initCmd.Flags().MarkDeprecated("ntp-pool", "please use --ntp-pools (plural) instead")
-	initCmd.Flags().StringSlice("ntp-pools", []string{""}, "Comma-seperated list of upstream NTP pool(s)")
-	initCmd.Flags().StringSlice("ntp-servers", []string{"ncn-m001"}, "Comma-seperated list of upstream NTP server(s) ncn-m001 should always be in this list")
-	initCmd.Flags().StringSlice("ntp-peers", []string{"ncn-m001", "ncn-m002", "ncn-m003", "ncn-w001", "ncn-w002", "ncn-w003", "ncn-s001", "ncn-s002", "ncn-s003"}, "Comma-seperated list of NCNs that will peer together")
+	initCmd.Flags().StringSlice("ntp-pools", []string{""}, "Comma-separated list of upstream NTP pool(s)")
+	initCmd.Flags().StringSlice("ntp-servers", []string{"ncn-m001"}, "Comma-separated list of upstream NTP server(s) ncn-m001 should always be in this list")
+	initCmd.Flags().StringSlice("ntp-peers", []string{"ncn-m001", "ncn-m002", "ncn-m003", "ncn-w001", "ncn-w002", "ncn-w003", "ncn-s001", "ncn-s002", "ncn-s003"}, "Comma-separated list of NCNs that will peer together")
 	initCmd.Flags().String("ntp-timezone", "UTC", "Timezone to be used on the NCNs and across the system")
 	initCmd.Flags().MarkDeprecated("ipv4-resolvers", "please use --site-dns instead")
 	initCmd.Flags().String("v2-registry", "https://registry.nmn/", "URL for default v2 registry used for both helm and containers")
@@ -495,7 +495,7 @@ func init() {
 	initCmd.Flags().String("bgp-chn-asn", "65530", "The autonomous system number for CHN BGP clients")
 	initCmd.Flags().String("bgp-peers", "spine", "Which set of switches to use as metallb peers, spine (default) or leaf")
 	initCmd.Flags().MarkDeprecated("bgp-peers", "please use --bgp-peer-types instead")
-	initCmd.Flags().StringSlice("bgp-peer-types", []string{"spine"}, "Comma separated list of which set of switches to use as metallb peers: spine (default), leaf and/or edge")
+	initCmd.Flags().StringSlice("bgp-peer-types", []string{"spine"}, "Comma-separated list of which set of switches to use as metallb peers: spine (default), leaf and/or edge")
 	initCmd.Flags().Int("management-net-ips", 0, "Additional number of ip addresses to reserve in each vlan for network equipment")
 	initCmd.Flags().Bool("k8s-api-auditing-enabled", false, "Enable the kubernetes auditing API")
 	initCmd.Flags().Bool("ncn-mgmt-node-auditing-enabled", false, "Enable management node auditing")
@@ -510,7 +510,7 @@ func init() {
 	initCmd.Flags().String("ncn-metadata", "ncn_metadata.csv", "CSV for mapping the mac addresses of the NCNs to their xnames")
 	initCmd.Flags().String("switch-metadata", "switch_metadata.csv", "CSV for mapping the switch xname, brand, type, and model")
 	initCmd.Flags().String("cabinets-yaml", "", "YAML file listing the ids for all cabinets by type")
-	initCmd.Flags().String("application-node-config-yaml", "", "YAML to control Application node identification durring the SLS Input File generation")
+	initCmd.Flags().String("application-node-config-yaml", "", "YAML to control Application node identification during the SLS Input File generation")
 
 	// Loftsman Manifest Shasta-CFG
 	initCmd.Flags().String("manifest-release", "", "Loftsman Manifest Release Version (leave blank to prevent manifest generation)")
@@ -518,8 +518,8 @@ func init() {
 
 	// DNS zone transfer settings
 	initCmd.Flags().String("primary-server-name", "primary", "Desired name for the primary DNS server")
-	initCmd.Flags().String("secondary-servers", "", "Comma seperated list of FQDN/IP for all DNS servers to notify when zone changes are made")
-	initCmd.Flags().String("notify-zones", "", "Comma seperated list of the zones to be allowed transfer")
+	initCmd.Flags().String("secondary-servers", "", "Comma-separated list of FQDN/IP for all DNS servers to notify when zone changes are made")
+	initCmd.Flags().String("notify-zones", "", "Comma-separated list of the zones to be allowed transfer")
 }
 
 func initiailzeManifestDir(url, branch, destination string) {
@@ -640,7 +640,7 @@ func prepareAndGenerateSLS(cd []csi.CabinetGroupDetail, shastaNetworks map[strin
 	for _, mySwitch := range reservedSwitches {
 		xname := mySwitch.Xname
 
-		// Extract Switch brand from data stored in switch_metdata.csv
+		// Extract Switch brand from data stored in switch_metadata.csv
 		for _, inputSwitch := range inputSwitches {
 			if inputSwitch.Xname == xname {
 				mySwitch.Brand = inputSwitch.Brand
@@ -680,7 +680,7 @@ func prepareAndGenerateSLS(cd []csi.CabinetGroupDetail, shastaNetworks map[strin
 
 func updateReservations(tempSubnet *csi.IPV4Subnet, logicalNcns []*csi.LogicalNCN) {
 	// Loop the reservations and update the NCN reservations with hostnames
-	// we likely didn't have when we registered the resevation
+	// we likely didn't have when we registered the reservation
 	for index, reservation := range tempSubnet.IPReservations {
 		for _, ncn := range logicalNcns {
 			if reservation.Comment == ncn.Xname {

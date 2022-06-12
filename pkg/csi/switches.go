@@ -111,7 +111,7 @@ type ManagementSwitch struct {
 
 // Validate ManagementSwitch contents
 func (mySwitch *ManagementSwitch) Validate() error {
-	// Validate the data that was read in switch_metadata.csv. We are inforcing 3 constaints:
+	// Validate the data that was read in switch_metadata.csv. We are enforcing 3 constraints:
 	// 1. Validate the xname is valid
 	// 2. The specified switch type is valid
 	// 3. The HMS type for the xname matches the type of switch being used
