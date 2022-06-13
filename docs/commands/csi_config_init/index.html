@@ -7,35 +7,35 @@
 <meta name=author content="Cray-HPE">
 <link rel=icon href=/cray-site-init/images/favicon.png type=image/png>
 <title>csi config init - Cray Site Init</title>
-<link href=/cray-site-init/css/nucleus.css?1655023970 rel=stylesheet>
-<link href=/cray-site-init/css/fontawesome-all.min.css?1655023970 rel=stylesheet>
-<link href=/cray-site-init/css/hybrid.css?1655023970 rel=stylesheet>
-<link href=/cray-site-init/css/featherlight.min.css?1655023970 rel=stylesheet>
-<link href=/cray-site-init/css/perfect-scrollbar.min.css?1655023970 rel=stylesheet>
-<link href=/cray-site-init/css/auto-complete.css?1655023970 rel=stylesheet>
-<link href=/cray-site-init/css/atom-one-dark-reasonable.css?1655023970 rel=stylesheet>
-<link href=/cray-site-init/css/theme.css?1655023970 rel=stylesheet>
-<link href=/cray-site-init/css/tabs.css?1655023970 rel=stylesheet>
-<link href=/cray-site-init/css/hugo-theme.css?1655023970 rel=stylesheet>
-<link href=/cray-site-init/css/theme-blue.css?1655023970 rel=stylesheet>
-<link href=/cray-site-init/css/foo.css?1655023970 rel=stylesheet><link href=/cray-site-init/css/bar.css?1655023970 rel=stylesheet>
-<script src=/cray-site-init/js/jquery-3.3.1.min.js?1655023970></script>
+<link href=/cray-site-init/css/nucleus.css?1655130375 rel=stylesheet>
+<link href=/cray-site-init/css/fontawesome-all.min.css?1655130375 rel=stylesheet>
+<link href=/cray-site-init/css/hybrid.css?1655130375 rel=stylesheet>
+<link href=/cray-site-init/css/featherlight.min.css?1655130375 rel=stylesheet>
+<link href=/cray-site-init/css/perfect-scrollbar.min.css?1655130375 rel=stylesheet>
+<link href=/cray-site-init/css/auto-complete.css?1655130375 rel=stylesheet>
+<link href=/cray-site-init/css/atom-one-dark-reasonable.css?1655130375 rel=stylesheet>
+<link href=/cray-site-init/css/theme.css?1655130375 rel=stylesheet>
+<link href=/cray-site-init/css/tabs.css?1655130375 rel=stylesheet>
+<link href=/cray-site-init/css/hugo-theme.css?1655130375 rel=stylesheet>
+<link href=/cray-site-init/css/theme-blue.css?1655130375 rel=stylesheet>
+<link href=/cray-site-init/css/foo.css?1655130375 rel=stylesheet><link href=/cray-site-init/css/bar.css?1655130375 rel=stylesheet>
+<script src=/cray-site-init/js/jquery-3.3.1.min.js?1655130375></script>
 <style>:root #header+#content>#left>#rlblock_left{display:none!important}</style>
 </head>
 <body data-url=/cray-site-init/commands/csi_config_init/>
 <nav id=sidebar class=showVisitedLinks>
 <div id=header-wrapper>
-<div id=header><svg viewBox="0 0 240 80" xmlns="http://www.w3.org/2000/svg"><style>.small{font:italic 13px sans-serif}.heavy{font:700 30px sans-serif}</style><text x="40" y="35" class="heavy">CSI</text><text x="55" y="55" class="small">Cray Site Initilizer</text></svg>
+<div id=header><svg viewBox="0 0 240 80" xmlns="http://www.w3.org/2000/svg"><style>.small{font:italic 13px sans-serif}.heavy{font:700 30px sans-serif}</style><text x="40" y="35" class="heavy">CSI</text><text x="55" y="55" class="small">Cray Site Initializer</text></svg>
 </div>
 <div class=searchbox>
 <label for=search-by><i class="fas fa-search"></i></label>
 <input data-search-input id=search-by type=search placeholder=Search...>
 <span data-search-clear><i class="fas fa-times"></i></span>
 </div>
-<script type=text/javascript src=/cray-site-init/js/lunr.min.js?1655023970></script>
-<script type=text/javascript src=/cray-site-init/js/auto-complete.js?1655023970></script>
+<script type=text/javascript src=/cray-site-init/js/lunr.min.js?1655130375></script>
+<script type=text/javascript src=/cray-site-init/js/auto-complete.js?1655130375></script>
 <script type=text/javascript>var baseurl="https://cray-hpe.github.io/cray-site-init/"</script>
-<script type=text/javascript src=/cray-site-init/js/search.js?1655023970></script>
+<script type=text/javascript src=/cray-site-init/js/search.js?1655130375></script>
 </div>
 <div class=highlightable>
 <ul class=topics>
@@ -339,12 +339,12 @@ with the --cabinets-yaml flag.
 ** NB **
 
 ** NB **
-For additional control of the application node identification durring the SLS Input File generation, an additional config file is necessary
+For additional control of the application node identification during the SLS Input File generation, an additional config file is necessary
 and must be indicated with the --application-node-config-yaml flag.
 
 Allows control of the following in the SLS Input File:
 1. System specific prefix for Applications node
-2. Specify HSM Subroles for system specifc application nodes
+2. Specify HSM Subroles for system-specific application nodes
 3. Specify Application node Aliases
 ** NB **
 
@@ -356,9 +356,9 @@ In addition, there are many flags to impact the layout of the system.  The defau
       --csm-version string                    Version of CSM being installed (default &quot;1.3&quot;)
       --site-domain string                    Site Domain Name
       --first-master-hostname string          Hostname of the first master node (default &quot;ncn-m002&quot;)
-      --ntp-pools strings                     Comma-seperated list of upstream NTP pool(s)
-      --ntp-servers strings                   Comma-seperated list of upstream NTP server(s) ncn-m001 should always be in this list (default [ncn-m001])
-      --ntp-peers strings                     Comma-seperated list of NCNs that will peer together (default [ncn-m001,ncn-m002,ncn-m003,ncn-w001,ncn-w002,ncn-w003,ncn-s001,ncn-s002,ncn-s003])
+      --ntp-pools strings                     Comma-separated list of upstream NTP pool(s)
+      --ntp-servers strings                   Comma-separated list of upstream NTP server(s); ncn-m001 should always be in this list (default [ncn-m001])
+      --ntp-peers strings                     Comma-separated list of NCNs that will peer together (default [ncn-m001,ncn-m002,ncn-m003,ncn-w001,ncn-w002,ncn-w003,ncn-s001,ncn-s002,ncn-s003])
       --ntp-timezone string                   Timezone to be used on the NCNs and across the system (default &quot;UTC&quot;)
       --ipv4-resolvers string                 List of IP Addresses for DNS (default &quot;8.8.8.8, 9.9.9.9&quot;)
       --v2-registry string                    URL for default v2 registry used for both helm and containers (default &quot;https://registry.nmn/&quot;)
@@ -418,7 +418,7 @@ In addition, there are many flags to impact the layout of the system.  The defau
       --bgp-cmn-asn string                    The autonomous system number for CMN BGP clients (default &quot;65532&quot;)
       --bgp-nmn-asn string                    The autonomous system number for NMN BGP clients (default &quot;65531&quot;)
       --bgp-chn-asn string                    The autonomous system number for CHN BGP clients (default &quot;65530&quot;)
-      --bgp-peer-types strings                Comma separated list of which set of switches to use as metallb peers: spine (default), leaf and/or edge (default [spine])
+      --bgp-peer-types strings                Comma-separated list of which set of switches to use as metallb peers: spine (default), leaf and/or edge (default [spine])
       --management-net-ips int                Additional number of ip addresses to reserve in each vlan for network equipment
       --k8s-api-auditing-enabled              Enable the kubernetes auditing API
       --ncn-mgmt-node-auditing-enabled        Enable management node auditing
@@ -428,11 +428,11 @@ In addition, there are many flags to impact the layout of the system.  The defau
       --ncn-metadata string                   CSV for mapping the mac addresses of the NCNs to their xnames (default &quot;ncn_metadata.csv&quot;)
       --switch-metadata string                CSV for mapping the switch xname, brand, type, and model (default &quot;switch_metadata.csv&quot;)
       --cabinets-yaml string                  YAML file listing the ids for all cabinets by type
-      --application-node-config-yaml string   YAML to control Application node identification durring the SLS Input File generation (default &quot;application_node_config.yaml&quot;)
+      --application-node-config-yaml string   YAML to control Application node identification during the SLS Input File generation (default &quot;application_node_config.yaml&quot;)
       --manifest-release string               Loftsman Manifest Release Version (leave blank to prevent manifest generation)
       --primary-server-name string            Desired name for the primary DNS server (default &quot;primary&quot;)
-      --secondary-servers string              Comma seperated list of FQDN/IP for all DNS servers to notify when zone changes are made
-      --notify-zones string                   Comma seperated list of the zones to be allowed transfer
+      --secondary-servers string              Comma-separated list of FQDN/IP for all DNS servers to notify when zone changes are made
+      --notify-zones string                   Comma-separated list of the zones to be allowed transfer
   -h, --help                                  help for init
 </code></pre><h3 id=options-inherited-from-parent-commands>Options inherited from parent commands</h3>
 <pre tabindex=0><code>      --config string   config file
@@ -451,17 +451,17 @@ In addition, there are many flags to impact the layout of the system.  The defau
 <div style=left:-1000px;overflow:scroll;position:absolute;top:-1000px;border:none;box-sizing:content-box;height:200px;margin:0;padding:0;width:200px>
 <div style=border:none;box-sizing:content-box;height:200px;margin:0;padding:0;width:200px></div>
 </div>
-<script src=/cray-site-init/js/clipboard.min.js?1655023970></script>
-<script src=/cray-site-init/js/perfect-scrollbar.min.js?1655023970></script>
-<script src=/cray-site-init/js/perfect-scrollbar.jquery.min.js?1655023970></script>
-<script src=/cray-site-init/js/jquery.sticky.js?1655023970></script>
-<script src=/cray-site-init/js/featherlight.min.js?1655023970></script>
-<script src=/cray-site-init/js/highlight.pack.js?1655023970></script>
+<script src=/cray-site-init/js/clipboard.min.js?1655130375></script>
+<script src=/cray-site-init/js/perfect-scrollbar.min.js?1655130375></script>
+<script src=/cray-site-init/js/perfect-scrollbar.jquery.min.js?1655130375></script>
+<script src=/cray-site-init/js/jquery.sticky.js?1655130375></script>
+<script src=/cray-site-init/js/featherlight.min.js?1655130375></script>
+<script src=/cray-site-init/js/highlight.pack.js?1655130375></script>
 <script>hljs.initHighlightingOnLoad()</script>
-<script src=/cray-site-init/js/modernizr.custom-3.6.0.js?1655023970></script>
-<script src=/cray-site-init/js/learn.js?1655023970></script>
-<script src=/cray-site-init/js/hugo-learn.js?1655023970></script>
-<script src=/cray-site-init/mermaid/mermaid.js?1655023970></script>
+<script src=/cray-site-init/js/modernizr.custom-3.6.0.js?1655130375></script>
+<script src=/cray-site-init/js/learn.js?1655130375></script>
+<script src=/cray-site-init/js/hugo-learn.js?1655130375></script>
+<script src=/cray-site-init/mermaid/mermaid.js?1655130375></script>
 <script>mermaid.initialize({startOnLoad:!0})</script>
 </body>
 </html>

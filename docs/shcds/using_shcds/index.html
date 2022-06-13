@@ -7,35 +7,35 @@
 <meta name=author content="Cray-HPE">
 <link rel=icon href=/cray-site-init/images/favicon.png type=image/png>
 <title>Using a canu-generated shcd.json with csi - Cray Site Init</title>
-<link href=/cray-site-init/css/nucleus.css?1655023970 rel=stylesheet>
-<link href=/cray-site-init/css/fontawesome-all.min.css?1655023970 rel=stylesheet>
-<link href=/cray-site-init/css/hybrid.css?1655023970 rel=stylesheet>
-<link href=/cray-site-init/css/featherlight.min.css?1655023970 rel=stylesheet>
-<link href=/cray-site-init/css/perfect-scrollbar.min.css?1655023970 rel=stylesheet>
-<link href=/cray-site-init/css/auto-complete.css?1655023970 rel=stylesheet>
-<link href=/cray-site-init/css/atom-one-dark-reasonable.css?1655023970 rel=stylesheet>
-<link href=/cray-site-init/css/theme.css?1655023970 rel=stylesheet>
-<link href=/cray-site-init/css/tabs.css?1655023970 rel=stylesheet>
-<link href=/cray-site-init/css/hugo-theme.css?1655023970 rel=stylesheet>
-<link href=/cray-site-init/css/theme-blue.css?1655023970 rel=stylesheet>
-<link href=/cray-site-init/css/foo.css?1655023970 rel=stylesheet><link href=/cray-site-init/css/bar.css?1655023970 rel=stylesheet>
-<script src=/cray-site-init/js/jquery-3.3.1.min.js?1655023970></script>
+<link href=/cray-site-init/css/nucleus.css?1655130375 rel=stylesheet>
+<link href=/cray-site-init/css/fontawesome-all.min.css?1655130375 rel=stylesheet>
+<link href=/cray-site-init/css/hybrid.css?1655130375 rel=stylesheet>
+<link href=/cray-site-init/css/featherlight.min.css?1655130375 rel=stylesheet>
+<link href=/cray-site-init/css/perfect-scrollbar.min.css?1655130375 rel=stylesheet>
+<link href=/cray-site-init/css/auto-complete.css?1655130375 rel=stylesheet>
+<link href=/cray-site-init/css/atom-one-dark-reasonable.css?1655130375 rel=stylesheet>
+<link href=/cray-site-init/css/theme.css?1655130375 rel=stylesheet>
+<link href=/cray-site-init/css/tabs.css?1655130375 rel=stylesheet>
+<link href=/cray-site-init/css/hugo-theme.css?1655130375 rel=stylesheet>
+<link href=/cray-site-init/css/theme-blue.css?1655130375 rel=stylesheet>
+<link href=/cray-site-init/css/foo.css?1655130375 rel=stylesheet><link href=/cray-site-init/css/bar.css?1655130375 rel=stylesheet>
+<script src=/cray-site-init/js/jquery-3.3.1.min.js?1655130375></script>
 <style>:root #header+#content>#left>#rlblock_left{display:none!important}</style>
 </head>
 <body data-url=/cray-site-init/shcds/using_shcds/>
 <nav id=sidebar class=showVisitedLinks>
 <div id=header-wrapper>
-<div id=header><svg viewBox="0 0 240 80" xmlns="http://www.w3.org/2000/svg"><style>.small{font:italic 13px sans-serif}.heavy{font:700 30px sans-serif}</style><text x="40" y="35" class="heavy">CSI</text><text x="55" y="55" class="small">Cray Site Initilizer</text></svg>
+<div id=header><svg viewBox="0 0 240 80" xmlns="http://www.w3.org/2000/svg"><style>.small{font:italic 13px sans-serif}.heavy{font:700 30px sans-serif}</style><text x="40" y="35" class="heavy">CSI</text><text x="55" y="55" class="small">Cray Site Initializer</text></svg>
 </div>
 <div class=searchbox>
 <label for=search-by><i class="fas fa-search"></i></label>
 <input data-search-input id=search-by type=search placeholder=Search...>
 <span data-search-clear><i class="fas fa-times"></i></span>
 </div>
-<script type=text/javascript src=/cray-site-init/js/lunr.min.js?1655023970></script>
-<script type=text/javascript src=/cray-site-init/js/auto-complete.js?1655023970></script>
+<script type=text/javascript src=/cray-site-init/js/lunr.min.js?1655130375></script>
+<script type=text/javascript src=/cray-site-init/js/auto-complete.js?1655130375></script>
 <script type=text/javascript>var baseurl="https://cray-hpe.github.io/cray-site-init/"</script>
-<script type=text/javascript src=/cray-site-init/js/search.js?1655023970></script>
+<script type=text/javascript src=/cray-site-init/js/search.js?1655130375></script>
 </div>
 <div class=highlightable>
 <ul class=topics>
@@ -330,7 +330,7 @@ Using a canu-generated shcd.json with csi
 <ul>
 <li><code>hmn_connections.json</code>: maps which switch ports on the Leaf switches are cabled to what the River node BMCs, PDUs, or other hardware</li>
 <li><code>ncn_metadata.csv</code>: maps the MACs of the Management NCNs to their xnames and is used to initialize the management cluster</li>
-<li><code>switch_metdata.csv</code>: maps the switch xname, brand, type, and model for the management switches in the system</li>
+<li><code>switch_metadata.csv</code>: maps the switch xname, brand, type, and model for the management switches in the system</li>
 <li>(optional) <code>application_node_config.yaml</code>: offers additional control of the application node identification in SLS</li>
 <li>(optional) <code>cabinets.yaml</code>: a mapping file is necessary for systems with non-sequential cabinet ID numbers</li>
 </ul>
@@ -350,7 +350,7 @@ csi config shcd --hmn-connections --switch-metadata MySystem.json
 <span style=color:#75715e># Use the newly-generated files with the traditional workflow</span>
 csi config init
 </code></pre></div><h1 id=running-integration-tests-with-canu-and-csi>Running integration tests with canu and csi</h1>
-<p>The SHCD is the beginning source of truth for how a system is laid out and connected. The information found there is used through several different tools throughout the install of CSM, so if changes are made to an SHCD, it can be beneficial in both development and production environments to see how those changes might propogate.</p>
+<p>The SHCD is the beginning source of truth for how a system is laid out and connected. The information found there is used through several different tools throughout the install of CSM, so if changes are made to an SHCD, it can be beneficial in both development and production environments to see how those changes might propagate.</p>
 <p>To that end, there are some integration tests built in to <code>csi</code> that can test the flow mentioned above.</p>
 <h2 id=add-testdata>Add testdata</h2>
 <p><code>canu</code> requires several arguments in order to generate an <code>shcd.json</code>. The necessary arguments can be added to the <code>tests</code> struct in <code>cmd/shcd_integration_test.go</code> similar to the example below.</p>
@@ -372,7 +372,7 @@ csi config init
 cp mysupercomputer.xlsx testdata/shcds
 <span style=color:#75715e># make sure canu is installed</span>
 make shcds
-</code></pre></div><p>On a successful test, you&rsquo;ll see output similiar to:</p>
+</code></pre></div><p>On a successful test, you&rsquo;ll see output similar to:</p>
 <pre tabindex=0><code>=== RUN   TestConfigShcd_GenerateSeeds
 2021/11/02 12:47:54 Running canu to create shcd.json for baldar...
 2021/11/02 12:47:56 Using schema file: ../internal/files/shcd-schema.json
@@ -402,17 +402,17 @@ make shcds
 <div style=left:-1000px;overflow:scroll;position:absolute;top:-1000px;border:none;box-sizing:content-box;height:200px;margin:0;padding:0;width:200px>
 <div style=border:none;box-sizing:content-box;height:200px;margin:0;padding:0;width:200px></div>
 </div>
-<script src=/cray-site-init/js/clipboard.min.js?1655023970></script>
-<script src=/cray-site-init/js/perfect-scrollbar.min.js?1655023970></script>
-<script src=/cray-site-init/js/perfect-scrollbar.jquery.min.js?1655023970></script>
-<script src=/cray-site-init/js/jquery.sticky.js?1655023970></script>
-<script src=/cray-site-init/js/featherlight.min.js?1655023970></script>
-<script src=/cray-site-init/js/highlight.pack.js?1655023970></script>
+<script src=/cray-site-init/js/clipboard.min.js?1655130375></script>
+<script src=/cray-site-init/js/perfect-scrollbar.min.js?1655130375></script>
+<script src=/cray-site-init/js/perfect-scrollbar.jquery.min.js?1655130375></script>
+<script src=/cray-site-init/js/jquery.sticky.js?1655130375></script>
+<script src=/cray-site-init/js/featherlight.min.js?1655130375></script>
+<script src=/cray-site-init/js/highlight.pack.js?1655130375></script>
 <script>hljs.initHighlightingOnLoad()</script>
-<script src=/cray-site-init/js/modernizr.custom-3.6.0.js?1655023970></script>
-<script src=/cray-site-init/js/learn.js?1655023970></script>
-<script src=/cray-site-init/js/hugo-learn.js?1655023970></script>
-<script src=/cray-site-init/mermaid/mermaid.js?1655023970></script>
+<script src=/cray-site-init/js/modernizr.custom-3.6.0.js?1655130375></script>
+<script src=/cray-site-init/js/learn.js?1655130375></script>
+<script src=/cray-site-init/js/hugo-learn.js?1655130375></script>
+<script src=/cray-site-init/mermaid/mermaid.js?1655130375></script>
 <script>mermaid.initialize({startOnLoad:!0})</script>
 </body>
 </html>
