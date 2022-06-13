@@ -22,7 +22,7 @@ v1.6.0
 - MTL-1342 remove 1.4 references from csi
 - CASMINST-2133 use new ReservationStart/End for uai_macvlan
 - CASMINST-471 allow customer to set timezone in csi
-- CASMINST-2016 dont peer more than 10 ncns
+- CASMINST-2016 do not peer more than 10 ncns
 - MTL-1295 cloud-init ntp flags for csi
 - CASMISNT-1914: csi version bump
 - CASMINST-1914: do not use supernet hack for CAN dhcp range
@@ -222,7 +222,7 @@ v1.5.26
 - Add a base subnet back to the HSN again.
 - adding pit.nmn to host_records to be served via cloud-init
 - CASMINST-994 convert validate command to run goss tests
-- CASMINST-679 dont fail if checkmedia is not there and let the user format the drive
+- CASMINST-679 do not fail if checkmedia is not there and let the user format the drive
 - use lowest IP in the normalized CIDR for gateway
 - normalize the CIDR before using it for supernet
 - reversed the naming when fixing supernet
@@ -251,7 +251,7 @@ v1.5.3
 - Adding reset Makefile target
 - Fix error test for when switch metadata file fails validation
 - Adjust error message format
-- Refractor validation logic, created validation functions for Logical NCN & Management Switch
+- Refactor validation logic, created validation functions for Logical NCN & Management Switch
 - Fix log output
 - Add tests for modified functions in gen-sls.go
 - Move zero-ncn check into validateNCNInput, and add unit test

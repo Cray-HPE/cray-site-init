@@ -345,7 +345,7 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 		_, supernetNet, _ := net.ParseCIDR(tempNet.CIDR)
 		uaisubnet.Gateway = ipam.Add(supernetNet.IP, 1)
 		if err != nil {
-			log.Fatalf("Couln't add the uai subnet to the %v Network: %v", tempNet.Name, err)
+			log.Fatalf("Could not add the uai subnet to the %v Network: %v", tempNet.Name, err)
 		}
 		uaisubnet.FullName = "NMN UAIs"
 

@@ -63,7 +63,7 @@ type Metadata struct {
 	CACerts `json:"ca-certs"`
 }
 
-// CloudInitGlobal - Boilerplace for cloud-init hierarchical structure
+// CloudInitGlobal - Boilerplate for cloud-init hierarchical structure
 type CloudInitGlobal struct {
 	Global struct {
 		Metadata `json:"meta-data"`
@@ -222,7 +222,7 @@ func decryptCABundle(privKey *rsa.PrivateKey, ciphertext []byte) ([]byte, error)
 	// The first two bytes contain the length of the encrypted
 	// AES session key
 	if len(ciphertext) < 2 {
-		return nil, errors.New("truncuated ciphertext, corrupt data?")
+		return nil, errors.New("truncated ciphertext, corrupt data?")
 	}
 
 	// Get the RSA encrypted AES session key length,

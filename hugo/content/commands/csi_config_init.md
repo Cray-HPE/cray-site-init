@@ -22,12 +22,12 @@ init generates a scaffolding the Shasta configuration payload.  It is based on s
 	** NB **
 
 	** NB **
-	For additional control of the application node identification durring the SLS Input File generation, an additional config file is necessary
+	For additional control of the application node identification during the SLS Input File generation, an additional config file is necessary
 	and must be indicated with the --application-node-config-yaml flag.
 
 	Allows control of the following in the SLS Input File:
 	1. System specific prefix for Applications node
-	2. Specify HSM Subroles for system specifc application nodes
+	2. Specify HSM Subroles for system-specific application nodes
 	3. Specify Application node Aliases
 	** NB **
 
@@ -43,9 +43,9 @@ csi config init [flags]
 ```
       --system-name string                    Name of the System (default "sn-2024")
       --site-domain string                    Site Domain Name (default "dev.cray.com")
-      --ntp-pools strings                     Comma-seperated list of upstream NTP pool(s)
-      --ntp-servers strings                   Comma-seperated list of upstream NTP server(s) ncn-m001 should always be in this list (default [ncn-m001])
-      --ntp-peers strings                     Comma-seperated list of NCNs that will peer together (default [ncn-m001,ncn-m002,ncn-m003,ncn-w001,ncn-w002,ncn-w003,ncn-s001,ncn-s002,ncn-s003])
+      --ntp-pools strings                     Comma-separated list of upstream NTP pool(s)
+      --ntp-servers strings                   Comma-separated list of upstream NTP server(s) ncn-m001 should always be in this list (default [ncn-m001])
+      --ntp-peers strings                     Comma-separated list of NCNs that will peer together (default [ncn-m001,ncn-m002,ncn-m003,ncn-w001,ncn-w002,ncn-w003,ncn-s001,ncn-s002,ncn-s003])
       --ntp-timezone string                   Timezone to be used on the NCNs and across the system (default "UTC")
       --ipv4-resolvers string                 List of IP Addresses for DNS (default "8.8.8.8, 9.9.9.9")
       --v2-registry string                    URL for default v2 registry used for both helm and containers (default "https://registry.nmn/")
@@ -92,7 +92,7 @@ csi config init [flags]
       --bgp-asn string                        The autonomous system number for BGP conversations (default "65533")
       --bgp-peers string                      Which set of switches to use as metallb peers, spine (default) or leaf (default "spine")
       --management-net-ips int                Additional number of ip addresses to reserve in each vlan for network equipment
-      --k8s-api-auditing-enabled              Enable the kubernetes auditing API
+      --k8s-api-auditing-enabled              Enable the Kubernetes auditing API
       --ncn-mgmt-node-auditing-enabled        Enable management node auditing
       --bootstrap-ncn-bmc-user string         Username for connecting to the BMC on the initial NCNs
       --bootstrap-ncn-bmc-pass string         Password for connecting to the BMC on the initial NCNs
@@ -100,7 +100,7 @@ csi config init [flags]
       --ncn-metadata string                   CSV for mapping the mac addresses of the NCNs to their xnames (default "ncn_metadata.csv")
       --switch-metadata string                CSV for mapping the switch xname, brand, type, and model (default "switch_metadata.csv")
       --cabinets-yaml string                  YAML file listing the ids for all cabinets by type
-      --application-node-config-yaml string   YAML to control Application node identification durring the SLS Input File generation
+      --application-node-config-yaml string   YAML to control Application node identification during the SLS Input File generation
       --manifest-release string               Loftsman Manifest Release Version (leave blank to prevent manifest generation)
   -h, --help                                  help for init
 ```

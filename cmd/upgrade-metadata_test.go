@@ -147,7 +147,7 @@ func (suite *UpgradeBSSMetadataSuite) TestUpdateBSS_oneToOneTwo_CANOnly() {
 
 			host := bootParameters.Hosts[0]
 			if _, present := allBootParameters[host]; !present {
-				suite.T().Logf("Received unexpected BSS Put request for nonexistant host %s", host)
+				suite.T().Logf("Received unexpected BSS Put request for nonexistent host %s", host)
 				suite.T().Fail()
 			}
 
@@ -368,7 +368,7 @@ func (suite *UpgradeBSSMetadataSuite) TestUpdateBSS_oneToOneTwo_CHNOnly() {
 
 			host := bootParameters.Hosts[0]
 			if _, present := allBootParameters[host]; !present {
-				suite.T().Logf("Received unexpected BSS Put request for nonexistant host %s", host)
+				suite.T().Logf("Received unexpected BSS Put request for nonexistent host %s", host)
 				suite.T().Fail()
 			}
 
@@ -513,7 +513,7 @@ func (suite *UpgradeBSSMetadataSuite) TestUpdateBSS_oneToOneTwo_CANandCHN() {
 
 			host := bootParameters.Hosts[0]
 			if _, present := allBootParameters[host]; !present {
-				suite.T().Logf("Received unexpected BSS Put request for nonexistant host %s", host)
+				suite.T().Logf("Received unexpected BSS Put request for nonexistent host %s", host)
 				suite.T().Fail()
 			}
 
@@ -659,7 +659,7 @@ func (suite *UpgradeBSSMetadataSuite) TestUpdateBSS_oneToOneTwo_NoCANorCHN() {
 
 			host := bootParameters.Hosts[0]
 			if _, present := allBootParameters[host]; !present {
-				suite.T().Logf("Received unexpected BSS Put request for nonexistant host %s", host)
+				suite.T().Logf("Received unexpected BSS Put request for nonexistent host %s", host)
 				suite.T().Fail()
 			}
 

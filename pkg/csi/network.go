@@ -344,7 +344,7 @@ func (iSubnet *IPV4Subnet) AddReservationWithPin(name, comment string, pin uint8
 	// Grab the "floor" of the subnet and alter the last byte to match the pinned byte
 	// modulo 4/16 bit ip addresses
 	// Worth noting that I could not seem to do this by copying the IP from the struct into a new
-	// net.IP struct and moddifying only the last byte.  I suspected complier error, but as every
+	// net.IP struct and modifying only the last byte.  I suspected complier error, but as every
 	// good programmer knows, it's probably not a compiler error and the time to debug the compiler
 	// is not *NOW*
 	newIP := make(net.IP, 4)

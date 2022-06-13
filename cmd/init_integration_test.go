@@ -64,4 +64,4 @@ func TestConfigInit_GeneratePayload(t *testing.T) {
 }
 
 // TODO: test 'config init' using command line flags instead of system_config.yaml
-// TODO: test--with some tolerance--that generated output is similiar to what we know is a good config
+// TODO: test--with some tolerance--that generated output is similar to what we know is a good config
