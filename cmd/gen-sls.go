@@ -32,6 +32,7 @@ import (
 
 	"github.com/Cray-HPE/cray-site-init/pkg/csi"
 	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
+	"github.com/Cray-HPE/hms-xname/xnames"
 	"github.com/Cray-HPE/hms-xname/xnametypes"
 )
 
@@ -56,7 +57,7 @@ func init() {
 	genSLSCmd.Flags().Int("hill-cabinets", 0, "Number of River cabinets")
 }
 
-func genCabinetMap(cd []csi.CabinetGroupDetail, shastaNetworks map[string]*csi.IPV4Network) map[string]map[string]sls_common.GenericHardware {
+func genCabinetMap(cd []csi.CabinetGroupDetail, shastaNetworks map[string]*csi.IPV4Network) map[string]map[string]csi.SLSCabinetTemplate {
 	// Use information from CabinetGroupDetails and shastaNetworks to generate
 	// Cabinet information for SLS
 	cabinets := make(map[string][]int) // key => kind, value => list of cabinet_ids
@@ -65,9 +66,9 @@ func genCabinetMap(cd []csi.CabinetGroupDetail, shastaNetworks map[string]*csi.I
 	}
 
 	// Iterate through the cabinets of each kind and build structures that work for SLS Generation
-	slsCabinetMap := make(map[string]map[string]sls_common.GenericHardware)
+	slsCabinetMap := make(map[string]map[string]csi.SLSCabinetTemplate)
 	for kind, cabIds := range cabinets {
-		tmpCabinets := make(map[string]sls_common.GenericHardware)
+		tmpCabinets := make(map[string]csi.SLSCabinetTemplate)
 		for _, id := range cabIds {
 			// Find the NMN and HMN networks for each cabinet
 			networks := make(map[string]sls_common.CabinetNetworks)
@@ -84,31 +85,34 @@ func genCabinetMap(cd []csi.CabinetGroupDetail, shastaNetworks map[string]*csi.I
 				}
 			}
 			// Build out the sls cabinet structure
-			cabinet := sls_common.GenericHardware{
-				Parent:     "s0",
-				Xname:      fmt.Sprintf("x%d", id),
-				Type:       sls_common.Cabinet,
-				TypeString: xnametypes.Cabinet,
-				ExtraPropertiesRaw: sls_common.ComptypeCabinet{
-					Networks: map[string]map[string]sls_common.CabinetNetworks{"cn": networks},
+			cabinetTemplate := csi.SLSCabinetTemplate{
+				Xname: xnames.Cabinet{
+					Cabinet: id,
+				},
+				CabinetNetworks: map[string]map[string]sls_common.CabinetNetworks{
+					"cn": networks,
 				},
 			}
+
 			// Do the stuff specific to each kind (within the context of a single cabinet)
 			if kind == "river" {
-				cabinet.Class = sls_common.ClassRiver
-				cabinet.ExtraPropertiesRaw.(sls_common.ComptypeCabinet).Networks["ncn"] = networks
+				cabinetTemplate.Class = sls_common.ClassRiver
+				cabinetTemplate.CabinetNetworks["ncn"] = networks
+				cabinetTemplate.AirCooledChassisList = csi.DefaultRiverChassisList
 			}
 			if kind == "hill" {
-				cabinet.Class = sls_common.ClassHill
+				cabinetTemplate.Class = sls_common.ClassHill
+				cabinetTemplate.LiquidCooledChassisList = csi.DefaultHillChassisList
 			}
 			if kind == "mountain" {
-				cabinet.Class = sls_common.ClassMountain
+				cabinetTemplate.Class = sls_common.ClassMountain
+				cabinetTemplate.LiquidCooledChassisList = csi.DefaultMountainChassisList
 			}
 			// Validate that our cabinet will be addressable as a valid Xname
-			if xnametypes.GetHMSType(cabinet.Xname) != xnametypes.Cabinet {
-				log.Fatalf("%s is not a valid Xname for a cabinet.  Refusing to continue.", cabinet.Xname)
+			if err := cabinetTemplate.Xname.Validate(); err != nil {
+				log.Fatalf("%s is not a valid Xname for a cabinet. Error %v.  Refusing to continue.", cabinetTemplate.Xname.String(), err)
 			}
-			tmpCabinets[cabinet.Xname] = cabinet
+			tmpCabinets[cabinetTemplate.Xname.String()] = cabinetTemplate
 		}
 		slsCabinetMap[kind] = tmpCabinets
 	}

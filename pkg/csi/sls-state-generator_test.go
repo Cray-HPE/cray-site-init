@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
+	"github.com/Cray-HPE/hms-xname/xnames"
 	"github.com/Cray-HPE/hms-xname/xnametypes"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
@@ -260,6 +261,13 @@ var HMNConnections = []shcd_parser.HMNRow{
 	},
 }
 
+// TestSLSInputState contains a data to generate a configuration with the following configuration
+// - 2 River Cabinets (x3000 & x3001)
+// - 4 LeafBMC switches (2 in each river cabinet)
+//   - sw-leaf-bmc-00[1-3] are Dell
+//   - sw-leaf-bmc-004 is Aruba
+// - 1 Hill Cabinet x5000
+// - 1 Mountain Cabinet x1000
 var TestSLSInputState = SLSGeneratorInputState{
 	ApplicationNodeConfig: SLSGeneratorApplicationNodeConfig{
 		Prefixes: []string{
@@ -289,43 +297,166 @@ var TestSLSInputState = SLSGeneratorInputState{
 		"x3001c0w42": buildMgmtSwitch("x3001c0", "x3001c0w42", "sw-leaf-bmc-04", "10.254.0.42", ManagementSwitchBrandAruba),
 	},
 
-	RiverCabinets: map[string]sls_common.GenericHardware{
-		"x3000": {
-			Parent:             "s0",
-			Xname:              "x3000",
-			Type:               sls_common.Cabinet,
-			Class:              sls_common.ClassRiver,
-			TypeString:         xnametypes.Cabinet,
-			ExtraPropertiesRaw: sls_common.ComptypeCabinet{}, // Not required for current unit tests
-		}, "x3001": {
-			Parent:             "s0",
-			Xname:              "x3001",
-			Type:               sls_common.Cabinet,
-			Class:              sls_common.ClassRiver,
-			TypeString:         xnametypes.Cabinet,
-			ExtraPropertiesRaw: sls_common.ComptypeCabinet{}, // Not required for current unit tests
+	// RiverCabinets: map[string]sls_common.GenericHardware{
+	// 	"x3000": {
+	// 		Parent:             "s0",
+	// 		Xname:              "x3000",
+	// 		Type:               sls_common.Cabinet,
+	// 		Class:              sls_common.ClassRiver,
+	// 		TypeString:         xnametypes.Cabinet,
+	// 		ExtraPropertiesRaw: sls_common.ComptypeCabinet{}, // Not required for current unit tests
+	// 	}, "x3001": {
+	// 		Parent:             "s0",
+	// 		Xname:              "x3001",
+	// 		Type:               sls_common.Cabinet,
+	// 		Class:              sls_common.ClassRiver,
+	// 		TypeString:         xnametypes.Cabinet,
+	// 		ExtraPropertiesRaw: sls_common.ComptypeCabinet{}, // Not required for current unit tests
+	// 	},
+	// },
+	RiverCabinets: map[string]SLSCabinetTemplate{
+		"x3000": SLSCabinetTemplate{
+			Xname: xnames.Cabinet{
+				Cabinet: 3000,
+			},
+			// Model: , Not applicable???
+			AirCooledChassisList:    DefaultRiverChassisList,
+			LiquidCooledChassisList: []int{},
+			CabinetNetworks: map[string]map[string]sls_common.CabinetNetworks{
+				"cn": map[string]sls_common.CabinetNetworks{
+					"HMN": sls_common.CabinetNetworks{
+						CIDR:    "10.107.0.0/22",
+						Gateway: "10.107.0.1",
+						VLan:    1513,
+					},
+					"NMN": sls_common.CabinetNetworks{
+						CIDR:    "10.106.0.0/22",
+						Gateway: "10.106.0.1",
+						VLan:    1770,
+					},
+				},
+				"ncn": map[string]sls_common.CabinetNetworks{
+					"HMN": sls_common.CabinetNetworks{
+						CIDR:    "10.107.0.0/22",
+						Gateway: "10.107.0.1",
+						VLan:    1513,
+					},
+					"NMN": sls_common.CabinetNetworks{
+						CIDR:    "10.106.0.0/22",
+						Gateway: "10.106.0.1",
+						VLan:    1770,
+					},
+				},
+			},
+		},
+		"x3001": SLSCabinetTemplate{
+			Xname: xnames.Cabinet{
+				Cabinet: 3000,
+			},
+			Class: sls_common.ClassRiver,
+			// Model: , Not applicable???
+			AirCooledChassisList:    DefaultRiverChassisList,
+			LiquidCooledChassisList: []int{},
+			CabinetNetworks: map[string]map[string]sls_common.CabinetNetworks{
+				"cn": map[string]sls_common.CabinetNetworks{
+					"HMN": sls_common.CabinetNetworks{
+						CIDR:    "10.107.2.0/22",
+						Gateway: "10.107.2.1",
+						VLan:    1514,
+					},
+					"NMN": sls_common.CabinetNetworks{
+						CIDR:    "10.106.2.0/22",
+						Gateway: "10.106.2.1",
+						VLan:    1771,
+					},
+				},
+				"ncn": map[string]sls_common.CabinetNetworks{
+					"HMN": sls_common.CabinetNetworks{
+						CIDR:    "10.107.2.0/22",
+						Gateway: "10.107.2.1",
+						VLan:    1514,
+					},
+					"NMN": sls_common.CabinetNetworks{
+						CIDR:    "10.106.2.0/22",
+						Gateway: "10.106.2.1",
+						VLan:    1771,
+					},
+				},
+			},
 		},
 	},
-	HillCabinets: map[string]sls_common.GenericHardware{
-		"x5000": {
-			Parent:             "s0",
-			Xname:              "x5000",
-			Type:               sls_common.Cabinet,
-			Class:              sls_common.ClassHill,
-			TypeString:         xnametypes.Cabinet,
-			ExtraPropertiesRaw: sls_common.ComptypeCabinet{}, // Not required for current unit tests
+
+	// HillCabinets: map[string]sls_common.GenericHardware{
+	// 	"x5000": {
+	// 		Parent:             "s0",
+	// 		Xname:              "x5000",
+	// 		Type:               sls_common.Cabinet,
+	// 		Class:              sls_common.ClassHill,
+	// 		TypeString:         xnametypes.Cabinet,
+	// 		ExtraPropertiesRaw: sls_common.ComptypeCabinet{}, // Not required for current unit tests
+	// 	},
+	// },
+	HillCabinets: map[string]SLSCabinetTemplate{
+		"x5000": SLSCabinetTemplate{
+			Xname: xnames.Cabinet{
+				Cabinet: 5000,
+			},
+			Class: sls_common.ClassHill,
+			// Model: , // TODO
+			AirCooledChassisList:    []int{},
+			LiquidCooledChassisList: DefaultHillChassisList,
+			CabinetNetworks: map[string]map[string]sls_common.CabinetNetworks{
+				"cn": map[string]sls_common.CabinetNetworks{
+					"HMN": sls_common.CabinetNetworks{
+						CIDR:    "10.108.4.0/22",
+						Gateway: "10.108.4.1",
+						VLan:    2000,
+					},
+					"NMN": sls_common.CabinetNetworks{
+						CIDR:    "10.107.4.0/22",
+						Gateway: "10.107.4.1",
+						VLan:    3000,
+					},
+				},
+			},
 		},
 	},
-	MountainCabinets: map[string]sls_common.GenericHardware{
-		"x9000": {
-			Parent:             "s0",
-			Xname:              "x9000",
-			Type:               sls_common.Cabinet,
-			Class:              sls_common.ClassMountain,
-			TypeString:         xnametypes.Cabinet,
-			ExtraPropertiesRaw: sls_common.ComptypeCabinet{}, // Not required for current unit tests
+	// MountainCabinets: map[string]sls_common.GenericHardware{
+	// 	"x9000": {
+	// 		Parent:             "s0",
+	// 		Xname:              "x9000",
+	// 		Type:               sls_common.Cabinet,
+	// 		Class:              sls_common.ClassMountain,
+	// 		TypeString:         xnametypes.Cabinet,
+	// 		ExtraPropertiesRaw: sls_common.ComptypeCabinet{}, // Not required for current unit tests
+	// 	},
+	// },
+	MountainCabinets: map[string]SLSCabinetTemplate{
+		"x1000": SLSCabinetTemplate{
+			Xname: xnames.Cabinet{
+				Cabinet: 1000,
+			},
+			Class: sls_common.ClassMountain,
+			// Model: , // TODO
+			AirCooledChassisList:    []int{},
+			LiquidCooledChassisList: DefaultMountainChassisList,
+			CabinetNetworks: map[string]map[string]sls_common.CabinetNetworks{
+				"cn": map[string]sls_common.CabinetNetworks{
+					"HMN": sls_common.CabinetNetworks{
+						CIDR:    "10.108.6.0/22",
+						Gateway: "10.108.6.1",
+						VLan:    2001,
+					},
+					"NMN": sls_common.CabinetNetworks{
+						CIDR:    "10.107.6.0/22",
+						Gateway: "10.107.6.1",
+						VLan:    3001,
+					},
+				},
+			},
 		},
 	},
+
 	MountainStartingNid: 1000,
 }
 
@@ -399,6 +530,42 @@ func (suite *ConfigGeneratorTestSuite) TestVerifyNoEmptyHardware() {
 		suite.NotEmpty(hardware.Class)
 
 		// Note: The extra properties field maybe empty for some component types
+	}
+}
+
+func (suite *ConfigGeneratorTestSuite) TestVerifyXnameMatches() {
+	for xname, hardware := range suite.allHardware {
+		suite.Equal(xname, hardware.Xname, "Found inconsistent xname in the hardware map, key does not match SLS object")
+	}
+}
+
+func (suite *ConfigGeneratorTestSuite) TestVerifyXnameValid() {
+	for _, hardware := range suite.allHardware {
+		suite.True(xnametypes.IsHMSCompIDValid(hardware.Xname), "Found invalid xname %s", hardware.Xname)
+	}
+}
+
+func (suite *ConfigGeneratorTestSuite) TestVerifyParentXname() {
+	for _, hardware := range suite.allHardware {
+		expectedParentXname := xnametypes.GetHMSCompParent(hardware.Xname)
+
+		suite.Equal(expectedParentXname, hardware.Parent, "Found inconsistent parent xname for %s", hardware.Xname)
+	}
+}
+
+func (suite *ConfigGeneratorTestSuite) TestVerifyTypeValid() {
+	for _, hardware := range suite.allHardware {
+		expectedType := sls_common.HMSTypeToHMSStringType(xnametypes.GetHMSType(hardware.Xname))
+
+		suite.Equal(expectedType, hardware.Type, "Found inconsistent type for %s", hardware.Xname)
+	}
+}
+
+func (suite *ConfigGeneratorTestSuite) TestVerifyTypeStringValid() {
+	for _, hardware := range suite.allHardware {
+		expectedTypeString := xnametypes.GetHMSType(hardware.Xname)
+
+		suite.Equal(expectedTypeString, hardware.TypeString, "Found inconsistent type string for %s", hardware.Xname)
 	}
 }
 
@@ -1260,7 +1427,34 @@ func (suite *ConfigGeneratorTestSuite) TestCabinet_River() {
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeCabinet)
 	suite.True(ok, "ExtraProperties type is not expected type.")
 
-	suite.Equal(sls_common.ComptypeCabinet{}, hardwareExtraProperties)
+	suite.Equal(sls_common.ComptypeCabinet{
+		Networks: map[string]map[string]sls_common.CabinetNetworks{
+			"cn": map[string]sls_common.CabinetNetworks{
+				"HMN": sls_common.CabinetNetworks{
+					CIDR:    "10.107.2.0/22",
+					Gateway: "10.107.2.1",
+					VLan:    1514,
+				},
+				"NMN": sls_common.CabinetNetworks{
+					CIDR:    "10.106.2.0/22",
+					Gateway: "10.106.2.1",
+					VLan:    1771,
+				},
+			},
+			"ncn": map[string]sls_common.CabinetNetworks{
+				"HMN": sls_common.CabinetNetworks{
+					CIDR:    "10.107.2.0/22",
+					Gateway: "10.107.2.1",
+					VLan:    1514,
+				},
+				"NMN": sls_common.CabinetNetworks{
+					CIDR:    "10.106.2.0/22",
+					Gateway: "10.106.2.1",
+					VLan:    1771,
+				},
+			},
+		},
+	}, hardwareExtraProperties)
 }
 
 func (suite *ConfigGeneratorTestSuite) TestCabinet_Hill() {
@@ -1287,21 +1481,66 @@ func (suite *ConfigGeneratorTestSuite) TestCabinet_Hill() {
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeCabinet)
 	suite.True(ok, "ExtraProperties type is not expected type.")
 
-	suite.Equal(sls_common.ComptypeCabinet{}, hardwareExtraProperties)
+	suite.Equal(sls_common.ComptypeCabinet{
+		Networks: map[string]map[string]sls_common.CabinetNetworks{
+			"cn": {
+				"HMN": sls_common.CabinetNetworks{
+					CIDR:    "10.108.4.0/22",
+					Gateway: "10.108.4.1",
+					VLan:    2000,
+				},
+				"NMN": sls_common.CabinetNetworks{
+					CIDR:    "10.107.4.0/22",
+					Gateway: "10.107.4.1",
+					VLan:    3000,
+				},
+			},
+		},
+	}, hardwareExtraProperties)
+}
+
+func (suite *ConfigGeneratorTestSuite) TestVerifyChassis_Hill() {
+	chassiss := []string{
+		"x5000c1",
+		"x5000c3",
+	}
+
+	// Verify Hill Chassis BMCs
+	for _, chassis := range chassiss {
+		/*
+			{
+				"Parent": "x5000",
+				"Xname": "x5000c0",
+				"Type": "comptype_chassis",
+				"Class": "Hill",
+				"TypeString": "Chassis"
+			}
+		*/
+		hardware, ok := suite.allHardware[chassis]
+		suite.True(ok, "Unable to find xname.") // TODO update all to specify the xname they are missing
+
+		suite.Equal(hardware.Parent, "x5000")
+		suite.Equal(hardware.Xname, chassis)
+		suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_chassis"))
+		suite.Equal(hardware.Class, sls_common.CabinetType("Hill"))
+		suite.Equal(hardware.TypeString, xnametypes.HMSType("Chassis"))
+
+		suite.Nil(hardware.ExtraPropertiesRaw, "ExtraProperties type is not nil")
+	}
 }
 
 func (suite *ConfigGeneratorTestSuite) TestVerifyChassisBMC_Hill() {
 	chassisBMCs := []string{
-		"x5000c1",
-		"x5000c3",
+		"x5000c1b0",
+		"x5000c3b0",
 	}
 
 	// Verify Hill Chassis BMCs
 	for _, chassisBMC := range chassisBMCs {
 		/*
 			{
-				"Parent": "x5000",
-				"Xname": "x5000c0",
+				"Parent": "x5000c0",
+				"Xname": "x5000c0b0",
 				"Type": "comptype_chassis_bmc",
 				"Class": "Hill",
 				"TypeString": "ChassisBMC"
@@ -1310,7 +1549,7 @@ func (suite *ConfigGeneratorTestSuite) TestVerifyChassisBMC_Hill() {
 		hardware, ok := suite.allHardware[chassisBMC]
 		suite.True(ok, "Unable to find xname.")
 
-		suite.Equal(hardware.Parent, "x5000")
+		suite.Equal(hardware.Parent, xnametypes.GetHMSCompParent(chassisBMC))
 		suite.Equal(hardware.Xname, chassisBMC)
 		suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_chassis_bmc"))
 		suite.Equal(hardware.Class, sls_common.CabinetType("Hill"))
@@ -1319,6 +1558,8 @@ func (suite *ConfigGeneratorTestSuite) TestVerifyChassisBMC_Hill() {
 		suite.Nil(hardware.ExtraPropertiesRaw, "ExtraProperties type is not nil")
 	}
 }
+
+// TODO add a negative test to verify Chassis/ChassisBMCs for non specified chassis no not exist.
 
 func (suite *ConfigGeneratorTestSuite) TestVerifyComputeNodes_Hill() {
 	chassisBMCs := []string{
@@ -1397,7 +1638,7 @@ func (suite *ConfigGeneratorTestSuite) TestCabinet_Mountain() {
 	/*
 		{
 			"Parent": "s0",
-			"Xname": "x9000",
+			"Xname": "x1000",
 			"Type": "comptype_cabinet",
 			"Class": "Mountain",
 			"TypeString": "Cabinet",
@@ -1405,11 +1646,11 @@ func (suite *ConfigGeneratorTestSuite) TestCabinet_Mountain() {
 		}
 	*/
 
-	hardware, ok := suite.allHardware["x9000"]
+	hardware, ok := suite.allHardware["x1000"]
 	suite.True(ok, "Unable to find xname.")
 
 	suite.Equal(hardware.Parent, "s0")
-	suite.Equal(hardware.Xname, "x9000")
+	suite.Equal(hardware.Xname, "x1000")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_cabinet"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("Mountain"))
 	suite.Equal(hardware.TypeString, xnametypes.HMSType("Cabinet"))
@@ -1417,27 +1658,78 @@ func (suite *ConfigGeneratorTestSuite) TestCabinet_Mountain() {
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeCabinet)
 	suite.True(ok, "ExtraProperties type is not expected type.")
 
-	suite.Equal(sls_common.ComptypeCabinet{}, hardwareExtraProperties)
+	suite.Equal(sls_common.ComptypeCabinet{
+		Networks: map[string]map[string]sls_common.CabinetNetworks{
+			"cn": {
+				"HMN": sls_common.CabinetNetworks{
+					CIDR:    "10.108.6.0/22",
+					Gateway: "10.108.6.1",
+					VLan:    2001,
+				},
+				"NMN": sls_common.CabinetNetworks{
+					CIDR:    "10.107.6.0/22",
+					Gateway: "10.107.6.1",
+					VLan:    3001,
+				},
+			},
+		},
+	}, hardwareExtraProperties)
+}
+
+func (suite *ConfigGeneratorTestSuite) TestVerifyChassis_Mountain() {
+	chassiss := []string{
+		"x1000c0",
+		"x1000c1",
+		"x1000c2",
+		"x1000c3",
+		"x1000c4",
+		"x1000c5",
+		"x1000c6",
+		"x1000c7",
+	}
+
+	// Verify Mountain Chassis
+	for _, chassis := range chassiss {
+		/*
+			{
+				"Parent": "x1000",
+				"Xname": "x1000c0",
+				"Type": "comptype_chassis",
+				"Class": "Mountain",
+				"TypeString": "Chassis"
+			}
+		*/
+		hardware, ok := suite.allHardware[chassis]
+		suite.True(ok, "Unable to find xname %s", chassis)
+
+		suite.Equal(hardware.Parent, "x1000")
+		suite.Equal(hardware.Xname, chassis)
+		suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_chassis"))
+		suite.Equal(hardware.Class, sls_common.CabinetType("Mountain"))
+		suite.Equal(hardware.TypeString, xnametypes.HMSType("Chassis"))
+
+		suite.Nil(hardware.ExtraPropertiesRaw, "ExtraProperties type is not nil")
+	}
 }
 
 func (suite *ConfigGeneratorTestSuite) TestVerifyChassisBMC_Mountain() {
 	chassisBMCs := []string{
-		"x9000c0",
-		"x9000c1",
-		"x9000c2",
-		"x9000c3",
-		"x9000c4",
-		"x9000c5",
-		"x9000c6",
-		"x9000c7",
+		"x1000c0b0",
+		"x1000c1b0",
+		"x1000c2b0",
+		"x1000c3b0",
+		"x1000c4b0",
+		"x1000c5b0",
+		"x1000c6b0",
+		"x1000c7b0",
 	}
 
 	// Verify Mountain Chassis BMCs
 	for _, chassisBMC := range chassisBMCs {
 		/*
 			{
-				"Parent": "x9000",
-				"Xname": "x9000c0",
+				"Parent": "x1000c0",
+				"Xname": "x1000c0b0",
 				"Type": "comptype_chassis_bmc",
 				"Class": "Mountain",
 				"TypeString": "ChassisBMC"
@@ -1446,7 +1738,7 @@ func (suite *ConfigGeneratorTestSuite) TestVerifyChassisBMC_Mountain() {
 		hardware, ok := suite.allHardware[chassisBMC]
 		suite.True(ok, "Unable to find xname.")
 
-		suite.Equal(hardware.Parent, "x9000")
+		suite.Equal(hardware.Parent, xnametypes.GetHMSCompParent(chassisBMC))
 		suite.Equal(hardware.Xname, chassisBMC)
 		suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_chassis_bmc"))
 		suite.Equal(hardware.Class, sls_common.CabinetType("Mountain"))
@@ -1458,14 +1750,14 @@ func (suite *ConfigGeneratorTestSuite) TestVerifyChassisBMC_Mountain() {
 
 func (suite *ConfigGeneratorTestSuite) TestVerifyComputeNodes_Mountain() {
 	chassisBMCs := []string{
-		"x9000c0",
-		"x9000c1",
-		"x9000c2",
-		"x9000c3",
-		"x9000c4",
-		"x9000c5",
-		"x9000c6",
-		"x9000c7",
+		"x1000c0",
+		"x1000c1",
+		"x1000c2",
+		"x1000c3",
+		"x1000c4",
+		"x1000c5",
+		"x1000c6",
+		"x1000c7",
 	}
 
 	nodeBMCs := []string{
@@ -1492,7 +1784,7 @@ func (suite *ConfigGeneratorTestSuite) TestVerifyComputeNodes_Mountain() {
 		for _, nodeBMCSuffix := range nodeBMCs {
 			for _, node := range nodes {
 				/*
-				   "x9000c1s0b0n0": {
+				   "x1000c1s0b0n0": {
 				     "Parent": "x5000c1s0b0",
 				     "Xname": "x5000c1s0b0n0",
 				     "Type": "comptype_node",
@@ -1536,27 +1828,83 @@ func (suite *ConfigGeneratorTestSuite) TestVerifyComputeNodes_Mountain() {
 	}
 }
 
+func (suite *ConfigGeneratorTestSuite) TestVerifyNoUnexpectedLiquidCooledChassis() {
+	expectedChassis := map[string]bool{}
+
+	// Hill
+	expectedChassis["x5000c1"] = true
+	expectedChassis["x5000c3"] = true
+
+	// Mountain
+	expectedChassis["x1000c0"] = true
+	expectedChassis["x1000c1"] = true
+	expectedChassis["x1000c2"] = true
+	expectedChassis["x1000c3"] = true
+	expectedChassis["x1000c4"] = true
+	expectedChassis["x1000c5"] = true
+	expectedChassis["x1000c6"] = true
+	expectedChassis["x1000c7"] = true
+
+	for xname, hardware := range suite.allHardware {
+		if xnametypes.GetHMSType(xname) != xnametypes.Chassis {
+			continue
+		}
+
+		if present := expectedChassis[xname]; !present && hardware.Class != sls_common.ClassRiver {
+			suite.Fail("Found unexpected liquid-cooled chassis", xname)
+		}
+	}
+}
+
+func (suite *ConfigGeneratorTestSuite) TestVerifyNoUnexpectedLiquidCooledChassisBMCs() {
+	expectedChassis := map[string]bool{}
+
+	// Hill
+	expectedChassis["x5000c1b0"] = true
+	expectedChassis["x5000c3b0"] = true
+
+	// Mountain
+	expectedChassis["x1000c0b0"] = true
+	expectedChassis["x1000c1b0"] = true
+	expectedChassis["x1000c2b0"] = true
+	expectedChassis["x1000c3b0"] = true
+	expectedChassis["x1000c4b0"] = true
+	expectedChassis["x1000c5b0"] = true
+	expectedChassis["x1000c6b0"] = true
+	expectedChassis["x1000c7b0"] = true
+
+	for xname, hardware := range suite.allHardware {
+		if xnametypes.GetHMSType(xname) != xnametypes.ChassisBMC {
+			continue
+		}
+
+		if present := expectedChassis[xname]; !present && hardware.Class != sls_common.ClassRiver {
+			suite.Fail("Found unexpected liquid-cooled chassis bmc", xname)
+		}
+	}
+}
+
 func (suite *ConfigGeneratorTestSuite) Test_getSortedCabinetXNames() {
-	cabinetXnames := []string{
-		"x3000",
-		"x9000",
-		"x5001",
-		"x0",
-		"x100",
-		"x110",
-		"x111",
-		"x10",
+	cabinetXnames := []xnames.Cabinet{
+		{Cabinet: 3000},
+		{Cabinet: 9000},
+		{Cabinet: 5001},
+		{Cabinet: 0},
+		{Cabinet: 100},
+		{Cabinet: 110},
+		{Cabinet: 111},
+		{Cabinet: 10},
 	}
 
 	// Build up the list of cabinets from the list of xnames. We only care about the xname of the cabinet
 	// when sorting.
-	cabinets := map[string]sls_common.GenericHardware{}
+	cabinets := map[string]SLSCabinetTemplate{}
 	for _, xname := range cabinetXnames {
-		cab := sls_common.GenericHardware{
+		cab := SLSCabinetTemplate{
 			Xname: xname,
 		}
 
-		cabinets[xname] = cab
+		cabinets[xname.String()] = cab
 	}
 
 	sortedCabinets := suite.generator.getSortedCabinetXNames(cabinets)
@@ -1818,6 +2166,27 @@ func (suite *ConfigGeneratorTestSuite) TestApplicationNodeConfigValidate_Duplica
 	suite.Error(err)
 	// Since we are iterating over maps, the key order is not guaranteed, so the following condition some times fails
 	// suite.EqualError(err, "found duplicate application node alias: uan-01 for xnames x3000c0s26b0n0 x3000c0s28b0n0")
+}
+
+func (suite *ConfigGeneratorTestSuite) TestGetLiquidCooledHardwareForCabinet_Mountain() {
+	cabinetTemplate := SLSCabinetTemplate{
+		Xname: xnames.Cabinet{
+			Cabinet: 1000,
+		},
+		Class:                   sls_common.ClassMountain,
+		LiquidCooledChassisList: DefaultMountainChassisList,
+	}
+
+	slsHardware := suite.generator.getLiquidCooledHardwareForCabinet(cabinetTemplate)
+	suite.NotEmpty(slsHardware)
+	for _, hardware := range slsHardware {
+		suite.T().Log(hardware.Xname)
+	}
+}
+
+func (suite *ConfigGeneratorTestSuite) TestBuildHardware() {
+	slsHardware := suite.generator.buildHardware(xnames.Cabinet{Cabinet: 1234}, sls_common.ClassMountain, nil)
+	suite.T().Log(slsHardware)
 }
 
 func TestConfigGeneratorTestSuite(t *testing.T) {

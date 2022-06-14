@@ -10,18 +10,21 @@ import (
 	"strconv"
 	"strings"
 
-	base "github.com/Cray-HPE/hms-base"
-	"github.com/Cray-HPE/hms-base/xname"
 	shcd_parser "github.com/Cray-HPE/hms-shcd-parser/pkg/shcd-parser"
 	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
+	xnames "github.com/Cray-HPE/hms-xname/xnames"
 	"github.com/Cray-HPE/hms-xname/xnametypes"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
 var (
-	mountainChassisList = []string{"c0", "c1", "c2", "c3", "c4", "c5", "c6", "c7"}
-	tdsChassisList      = []string{"c1", "c3"}
+	// DefaultMountainChassisList contains the default list of liquid cooled chassis for a TODO MODEL cabinet
+	DefaultMountainChassisList = []int{0, 1, 2, 3, 4, 5, 6, 7}
+	// DefaultHillChassisList contains the default list of liquid cooled chassis for a TODO MODEL cabinet
+	DefaultHillChassisList = []int{1, 3}
+	// DefaultRiverChassisList contains the default list of air cooled chassis for standard 19 inch rack
+	DefaultRiverChassisList = []int{0}
 
 	// Regular expressions to get around humans.
 	portRegex        = regexp.MustCompile(`[a-zA-Z]*(\d+)`)
@@ -30,9 +33,9 @@ var (
 	pduuRegex        = regexp.MustCompile(`(x\d+p|pdu)(\d+)`) // Match on x3000p0 and pdu0
 )
 
-// TODO Should this be merged with Cabinet detail?
+// SLSCabinetTemplate Should this be merged with Cabinet detail?
 type SLSCabinetTemplate struct {
-	Xname           string
+	Xname           xnames.Cabinet
 	Model           string
 	Class           sls_common.CabinetType
 	CabinetNetworks map[string]map[string]sls_common.CabinetNetworks
@@ -41,26 +44,19 @@ type SLSCabinetTemplate struct {
 	AirCooledChassisList    []int
 }
 
-func (ct *SLSCabinetTemplate) ToSLS() (sls_common.GenericHardware, error) {
-	if base.IsHMSCompIDValid(ct.Xname) {
-		return sls_common.GenericHardware{}, fmt.Errorf("Invalid xname provided")
-	}
+func (ct *SLSCabinetTemplate) buildExtraProperties() sls_common.ComptypeCabinet {
+	// if xnametypes.IsHMSCompIDValid(ct.Xname) {
+	// 	return sls_common.GenericHardware{}, fmt.Errorf("Invalid xname provided")
+	// }
 
-	if xnameType := base.GetHMSType(ct.Xname); xnameType != base.Cabinet {
-		return sls_common.GenericHardware{}, fmt.Errorf("Unexpected xname type given for cabinet: %s", xnameType)
-	}
+	// if hmsType := xnametypes.GetHMSType(ct.Xname); hmsType != xnametypes.Cabinet {
+	// 	return sls_common.GenericHardware{}, fmt.Errorf("Unexpected xname type given for cabinet: %s", hmsType)
+	// }
 
-	return sls_common.GenericHardware{
-		Parent:     "s0",
-		Xname:      ct.Xname,
-		Class:      ct.Class,
-		Type:       sls_common.Cabinet,
-		TypeString: base.Cabinet,
-		ExtraPropertiesRaw: sls_common.ComptypeCabinet{
-			// Model:    Model, // TODO
-			Networks: ct.CabinetNetworks,
-		},
-	}, nil
+	return sls_common.ComptypeCabinet{
+		// Model:    Model, // TODO
+		Networks: ct.CabinetNetworks,
+	}
 }
 
 // SLSGeneratorInputState is given to the SLS config generator in order to generate the SLS config file
@@ -297,6 +293,13 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 	// First off lets, build up the river hardware
 	//
 
+	// Create River Cabinets
+	for _, cabinetTemplate := range g.inputState.RiverCabinets {
+		riverCabinet := g.buildHardware(cabinetTemplate.Xname, cabinetTemplate.Class, cabinetTemplate.buildExtraProperties())
+
+		cabinetHardwareMap[cabinetTemplate.Xname.String()] = riverCabinet
+	}
+
 	// We need to run through the HMN connections file and build up the list of parents first.
 	g.nodeParents = map[string]int{}
 	for _, row := range g.hmnRows {
@@ -365,9 +368,9 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 	//
 	mountainCabinets := g.getSortedCabinetXNames(g.inputState.MountainCabinets)
 	for _, xname := range mountainCabinets {
-		cab := g.inputState.MountainCabinets[xname]
+		cabinetTemplate := g.inputState.MountainCabinets[xname]
 
-		mountainHardware := g.getHardwareForMountainCab(cab.Xname, sls_common.ClassMountain, mountainChassisList)
+		mountainHardware := g.getLiquidCooledHardwareForCabinet(cabinetTemplate)
 		for _, hardware := range mountainHardware {
 			nodeHardwareMap[hardware.Xname] = hardware
 		}
@@ -406,7 +409,7 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 func (g *SLSStateGenerator) getSortedCabinetXNames(cabinets map[string]SLSCabinetTemplate) []string {
 	xnames := []string{}
 	for _, cab := range cabinets {
-		xnames = append(xnames, cab.Xname)
+		xnames = append(xnames, cab.Xname.String())
 	}
 
 	sort.Strings(xnames)
@@ -882,29 +885,22 @@ func (g *SLSStateGenerator) findRowWithSource(sourceParent string) shcd_parser.H
 // Mountain and Hill hardware
 //
 func (g *SLSStateGenerator) getLiquidCooledHardwareForCabinet(cabinetTemplate SLSCabinetTemplate) (hardware []sls_common.GenericHardware) {
-	cabinetXname := xname.Cabinet{}
+	// Start with the Cabinet
+	cabinetXname := cabinetTemplate.Xname
 
-	// cabinet, err := cabinetTemplate.ToSLS()
-	// if err != nil {
-	// 	g.logger.Fatal("Failed to create SLS representation of provided cabinet", zap.Any("cabinetTemplate", cabinetTemplate))
-	// }
-
-	// cabinetHardwareMap[xname] = cabinet
+	slsCabinet := g.buildHardware(cabinetXname, cabinetTemplate.Class, cabinetTemplate.buildExtraProperties())
+	hardware = append(hardware, slsCabinet)
 
 	for _, chassisOrdinal := range cabinetTemplate.LiquidCooledChassisList {
 		chassisXname := cabinetXname.Chassis(chassisOrdinal)
 
-		// Start with the CMM
-		chassis := sls_common.GenericHardware{
-			Parent:     chassisXname.Parent().String(),
-			Xname:      chassisXname.String(),
-			Type:       sls_common.Chassis,
-			Class:      cabinetTemplate.Class,
-			TypeString: base.HMSType(xnametypes.Chassis), // TODO need to pickup newer SLS & HMS base
-		}
-		chassis = g.BuildHardware(chassis, cabinetTemplate.Class, sls_common.ComptypeNode{
+		// Start with the Chassis
+		slsChassis := g.buildHardware(chassisXname, cabinetTemplate.Class, nil)
+		hardware = append(hardware, slsChassis)
 
-		hardware = append(hardware, chassis)
+		// Next the CMM
+		slsChassisBMC := g.buildHardware(chassisXname.ChassisBMC(0), cabinetTemplate.Class, nil)
+		hardware = append(hardware, slsChassisBMC)
 
 		for slotOrdinal := 0; slotOrdinal < 8; slotOrdinal++ {
 			for bmcOrdinal := 0; bmcOrdinal < 2; bmcOrdinal++ {
@@ -912,7 +908,7 @@ func (g *SLSStateGenerator) getLiquidCooledHardwareForCabinet(cabinetTemplate SL
 					// Construct the xname for the node
 					nodeXname := chassisXname.ComputeModule(slotOrdinal).NodeBMC(bmcOrdinal).Node(nodeOrdinal)
 
-					node = g.BuildHardware(nodeXname, cabinetTemplate.Class, sls_common.ComptypeNode{
+					node := g.buildHardware(nodeXname, cabinetTemplate.Class, sls_common.ComptypeNode{
 						NID:     g.currentMountainNID,
 						Role:    "Compute",
 						Aliases: []string{fmt.Sprintf("nid%06d", g.currentMountainNID)},
@@ -929,14 +925,15 @@ func (g *SLSStateGenerator) getLiquidCooledHardwareForCabinet(cabinetTemplate SL
 	return
 }
 
-func (g *SLSStateGenerator) BuildHardware(xname xname., class sls_common.CabinetType, extraProperties interface{}) {
-	node := sls_common.GenericHardware{
-		Parent:     xname.Parent().String(),
-		Xname:      xname.String(),
-		Type:       sls_common.HMSTypeToHMSStringType(base.HMSType(xnametypes.GetHMSTypeString(xname.String()))),
-		Class:      class,
-		TypeString: base.HMSType(xnametypes.GetHMSTypeString(xname.String())),
+func (g *SLSStateGenerator) buildHardware(xname xnames.GenericXname, class sls_common.CabinetType, extraProperties interface{}) sls_common.GenericHardware {
+	return sls_common.GenericHardware{
+		Parent:             xname.ParentGeneric().String(),
+		Xname:              xname.String(),
+		Type:               sls_common.HMSTypeToHMSStringType(xname.Type()),
+		Class:              class,
+		TypeString:         xname.Type(),
 		ExtraPropertiesRaw: extraProperties,
+	}
 }
 
 //
