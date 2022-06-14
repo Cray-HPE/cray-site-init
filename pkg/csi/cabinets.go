@@ -18,21 +18,18 @@ type CabinetGroupDetail struct {
 
 // CabinetDetail stores information about individual cabinets
 type CabinetDetail struct {
-	ID           int    `mapstructure:"id" yaml:"id" valid:"numeric"`
-	Model        string `mapstructure:"model" yaml:"model" valid:"-"`
-	ChassisCount int    `mapstructure:"chassis-count" yaml:"chassis-count" valid:"numeric"`
-	NMNSubnet    string `mapstructure:"nmn-subnet" yaml:"nmn-subnet" valid:"-"`
-	NMNVlanID    int16  `mapstructure:"nmn-vlan" yaml:"nmn-vlan" valid:"numeric"`
-	HMNSubnet    string `mapstructure:"hmn-subnet" yaml:"hmn-subnet" valid:"-"`
-	HMNVlanID    int16  `mapstructure:"hmn-vlan" yaml:"hmn-vlan" valid:"numeric"`
+	ID           int           `mapstructure:"id" yaml:"id" valid:"numeric"`
+	Model        string        `mapstructure:"model" yaml:"model" valid:"-"`
+	ChassisCount *ChassisCount `mapstructure:"chassis-count" yaml:"chassis-count" valid:"-"` // TODO this is an optional field, if not provided defaults will take presendence
+	NMNSubnet    string        `mapstructure:"nmn-subnet" yaml:"nmn-subnet" valid:"-"`
+	NMNVlanID    int16         `mapstructure:"nmn-vlan" yaml:"nmn-vlan" valid:"numeric"`
+	HMNSubnet    string        `mapstructure:"hmn-subnet" yaml:"hmn-subnet" valid:"-"`
+	HMNVlanID    int16         `mapstructure:"hmn-vlan" yaml:"hmn-vlan" valid:"numeric"`
 }
 
-// type ChassisCount struct {
-// 	LiquidCooled
-// }
-
-func (cd *CabinetDetail) Normalize() {
-
+type ChassisCount struct {
+	LiquidCooled int `mapstructure:"liquid-cooled" yaml:"liquid-cooled" valid:"numeric"`
+	AirCooled    int `mapstructure:"air-cooled" yaml:"air-cooled" valid:"numeric"`
 }
 
 // CabinetIDs returns the list of all cabinet ids
@@ -61,6 +58,17 @@ func (cgd *CabinetGroupDetail) PopulateIds() {
 			cgd.CabinetDetails[cabIndex] = tmpCabinet
 		}
 	}
+}
+
+// CabinetDetails will retrieve all cabinets that have cabinet specific overrides present
+func (cgd *CabinetGroupDetail) GetCabinetDetails() map[int]CabinetDetail {
+	details := map[int]CabinetDetail{}
+
+	for _, cab := range cgd.CabinetDetails {
+		details[cab.ID] = cab
+	}
+
+	return details
 }
 
 // Length returns the expected number of cabinets from the total_number passed in or the length of the cabinet_ids array

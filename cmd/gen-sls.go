@@ -61,8 +61,11 @@ func genCabinetMap(cd []csi.CabinetGroupDetail, shastaNetworks map[string]*csi.I
 	// Use information from CabinetGroupDetails and shastaNetworks to generate
 	// Cabinet information for SLS
 	cabinets := make(map[string][]int) // key => kind, value => list of cabinet_ids
+	cabinetDetails := make(map[string]map[int]csi.CabinetDetail)
 	for _, cab := range cd {
-		cabinets[strings.ToLower(cab.Kind)] = cab.CabinetIDs()
+		kind := strings.ToLower(cab.Kind)
+		cabinets[kind] = cab.CabinetIDs()
+		cabinetDetails[kind] = cab.GetCabinetDetails()
 	}
 
 	// Iterate through the cabinets of each kind and build structures that work for SLS Generation
@@ -94,19 +97,75 @@ func genCabinetMap(cd []csi.CabinetGroupDetail, shastaNetworks map[string]*csi.I
 				},
 			}
 
+			// TODO handle models correctly
+
 			// Do the stuff specific to each kind (within the context of a single cabinet)
-			if kind == "river" {
+			switch kind {
+			case "river":
 				cabinetTemplate.Class = sls_common.ClassRiver
 				cabinetTemplate.CabinetNetworks["ncn"] = networks
 				cabinetTemplate.AirCooledChassisList = csi.DefaultRiverChassisList
-			}
-			if kind == "hill" {
+				cabinetTemplate.LiquidCooledChassisList = []int{}
+
+				if cabinetDetail, present := cabinetDetails[kind][id]; present && cabinetDetail.ChassisCount != nil {
+					log.Fatalf("Overriding air or liquid cooled chassis counts is not permitted for river cabinets (%s). Refusing to continue", cabinetTemplate.Xname.String())
+				}
+			case "hill":
 				cabinetTemplate.Class = sls_common.ClassHill
+				cabinetTemplate.AirCooledChassisList = []int{}
 				cabinetTemplate.LiquidCooledChassisList = csi.DefaultHillChassisList
-			}
-			if kind == "mountain" {
+
+				if cabinetDetail, present := cabinetDetails[kind][id]; present {
+					if cabinetDetail.Model != "EX2500" {
+						log.Fatalf("Overriding air or liquid cooled chassis counts is not permitted for hill (EX2000) cabinets (%s). Refusing to continue", cabinetTemplate.Xname.String())
+					}
+
+					// So we have a EX2500 Cabinet, as chassis overrides has been specified
+					// Here are following allowed configurations for it to be considered a hill cabinet
+					// - 0 air-cooled chassis, with 1, 2, or 3 liquid cooled chassis
+					// - 1 air-cooled chassis, with 1 liquid-cooled chassis
+					switch cabinetDetail.ChassisCount.AirCooled {
+					case 0:
+						if cabinetDetail.ChassisCount.LiquidCooled < 1 || 3 < cabinetDetail.ChassisCount.LiquidCooled {
+							log.Fatalf("Invalid liquid-cooled chassis count specified for hill (EX2500) cabinet %s. Given %d, expected between 1 and 3. Refusing to continue", cabinetTemplate.Xname.String(), cabinetDetail.ChassisCount.AirCooled)
+						}
+
+						// We are assuming the following chassis configuration
+						// 1 Chassis - c0
+						// 2 Chassis - c0, c1
+						// 3 Chassis - c0, c1, c3
+						liquidCooledChassisList := []int{}
+						for i := 0; i < cabinetDetail.ChassisCount.LiquidCooled; i++ {
+							liquidCooledChassisList = append(liquidCooledChassisList, i)
+						}
+						cabinetTemplate.LiquidCooledChassisList = liquidCooledChassisList
+
+					case 1:
+						switch cabinetDetail.ChassisCount.LiquidCooled {
+						case 0:
+							// The EX2500 cabinet can also be like a standard 19 inch server rack. In that case it should be treated like a normal river cabinet
+							log.Fatalf("A EX2000 (hill) cabinet %s with 1 air-cooled chassis and 0 liquid-cooled chassis provided. This cabinet should be treated a standard river cabinet, and not hill. Refusing to continue", cabinetTemplate.Xname.String())
+						case 1:
+							// Valid configuration
+							cabinetTemplate.AirCooledChassisList = []int{4}
+							cabinetTemplate.LiquidCooledChassisList = []int{0}
+						default:
+							// Invalid configuration
+							log.Fatalf("Invalid liquid-cooled chassis count specified for hill (EX2500) cabinet %s. Given %d, expected 1.  Refusing to continue", cabinetTemplate.Xname.String(), cabinetDetail.ChassisCount.LiquidCooled)
+						}
+					default:
+						log.Fatalf("Invalid air-cooled chassis count specified for hill (EX2500) cabinet %s. Given %d, expected 0 or 1. Refusing to continue", cabinetTemplate.Xname.String(), cabinetDetail.ChassisCount.AirCooled)
+					}
+				}
+
+			case "mountain":
 				cabinetTemplate.Class = sls_common.ClassMountain
+				cabinetTemplate.AirCooledChassisList = []int{}
 				cabinetTemplate.LiquidCooledChassisList = csi.DefaultMountainChassisList
+
+				if cabinetDetail, present := cabinetDetails[kind][id]; present && cabinetDetail.ChassisCount != nil {
+					log.Fatalf("Overriding air or liquid cooled chassis counts is not permitted for mountain cabinets (%s). Refusing to continue", cabinetTemplate.Xname.String())
+				}
 			}
 			// Validate that our cabinet will be addressable as a valid Xname
 			if err := cabinetTemplate.Xname.Validate(); err != nil {
