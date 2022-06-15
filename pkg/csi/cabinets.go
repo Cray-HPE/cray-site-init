@@ -27,6 +27,7 @@ type CabinetDetail struct {
 	HMNVlanID    int16         `mapstructure:"hmn-vlan" yaml:"hmn-vlan" valid:"numeric"`
 }
 
+// ChassisCount stores optional information about the chassis composition of the cabinet
 type ChassisCount struct {
 	LiquidCooled int `mapstructure:"liquid-cooled" yaml:"liquid-cooled" valid:"numeric"`
 	AirCooled    int `mapstructure:"air-cooled" yaml:"air-cooled" valid:"numeric"`
@@ -60,7 +61,7 @@ func (cgd *CabinetGroupDetail) PopulateIds() {
 	}
 }
 
-// CabinetDetails will retrieve all cabinets that have cabinet specific overrides present
+// GetCabinetDetails will retrieve all cabinets that have cabinet specific overrides present
 func (cgd *CabinetGroupDetail) GetCabinetDetails() map[int]CabinetDetail {
 	details := map[int]CabinetDetail{}
 
