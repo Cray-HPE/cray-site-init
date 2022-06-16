@@ -1884,7 +1884,7 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_NID101_MgmtSw
 	suite.True(ok, "ExtraProperties type is not expected type.")
 
 	suite.Equal(hardwareExtraProperties.NodeNics, []string{"x50004c3s17b1"})
-	suite.Equal(hardwareExtraProperties.VendorName, "ethernet1/1/31")
+	suite.Equal(hardwareExtraProperties.VendorName, "1/1/31")
 }
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_NID102() {
@@ -1952,7 +1952,7 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_NID102_MgmtSw
 	suite.True(ok, "ExtraProperties type is not expected type.")
 
 	suite.Equal(hardwareExtraProperties.NodeNics, []string{"x50004c3s17b2"})
-	suite.Equal(hardwareExtraProperties.VendorName, "ethernet1/1/32")
+	suite.Equal(hardwareExtraProperties.VendorName, "1/1/32")
 }
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_NID103() {
@@ -2019,7 +2019,7 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_NID103_MgmtSw
 	suite.True(ok, "ExtraProperties type is not expected type.")
 
 	suite.Equal(hardwareExtraProperties.NodeNics, []string{"x50004c3s17b3"})
-	suite.Equal(hardwareExtraProperties.VendorName, "ethernet1/1/33")
+	suite.Equal(hardwareExtraProperties.VendorName, "1/1/33")
 }
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_NID104() {
@@ -2086,7 +2086,7 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_NID104_MgmtSw
 	suite.True(ok, "ExtraProperties type is not expected type.")
 
 	suite.Equal(hardwareExtraProperties.NodeNics, []string{"x50004c3s17b4"})
-	suite.Equal(hardwareExtraProperties.VendorName, "ethernet1/1/34")
+	suite.Equal(hardwareExtraProperties.VendorName, "1/1/34")
 }
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_CMC() {
@@ -2140,7 +2140,7 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_CMC_MgmtSwitc
 	suite.True(ok, "ExtraProperties type is not expected type.")
 
 	suite.Equal(hardwareExtraProperties.NodeNics, []string{"x50004c3s17b999"})
-	suite.Equal(hardwareExtraProperties.VendorName, "ethernet1/1/30")
+	suite.Equal(hardwareExtraProperties.VendorName, "1/1/30")
 }
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverWorkerNode() {
@@ -2206,16 +2206,76 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverWorkerNode_MgmtSwitchConn
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeMgmtSwitchConnector)
 	suite.True(ok, "ExtraProperties type is not expected type.")
 
-	suite.Equal(hardwareExtraProperties.NodeNics, []string{"x50004c3s17b999"})
-	suite.Equal(hardwareExtraProperties.VendorName, "ethernet1/1/35")
+	suite.Equal(hardwareExtraProperties.NodeNics, []string{"x5004c3s19b0"})
+	suite.Equal(hardwareExtraProperties.VendorName, "1/1/35")
 }
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverApplicationNode_UAN() {
+	/*
+		  "x5004c3s20b0n0": {
+		    "Parent": "x5004c3s20b0",
+		    "Xname": "x5004c3s20b0n0",
+		    "Type": "comptype_node",
+		    "Class": "River",
+		    "TypeString": "Node",
+		    "ExtraProperties": {
+		      "Role": "Application",
+			  "SubRole": "UAN"
+			  "Aliases": [
+				  "uan-50"
+			  ]
+		    }
+		  },
+	*/
+	hardware, ok := suite.allHardware["x5004c3s20b0n0"]
+	suite.True(ok, "Unable to find xname.")
 
+	suite.Equal(hardware.Parent, "x5004c3s20b0")
+	suite.Equal(hardware.Xname, "x5004c3s20b0n0")
+	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_node"))
+	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("Node"))
+
+	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeNode)
+	suite.True(ok, "ExtraProperties type is not expected type.")
+
+	// TODO: CASMHMS-3598
+	//suite.Equal(hardwareExtraProperties.NID, 4) // No NIDs on UANs yet.
+	suite.Equal(hardwareExtraProperties.Role, "Application")
+	suite.Equal(hardwareExtraProperties.SubRole, "UAN")
+	suite.Equal(hardwareExtraProperties.Aliases, []string{"uan-50"})
 }
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverApplicationNode_UAN_MgmtSwitchConnector() {
+	/*
+		  "x5004c3w16j36": {
+			"Parent": "x5004c3w16",
+			"Xname": "x5004c3w16j36",
+			"Type": "comptype_mgmt_switch_connector",
+			"Class": "River",
+			"TypeString": "MgmtSwitchConnector",
+			"ExtraProperties": {
+				"NodeNics": [
+					"x5004c3s20b0"
+				],
+				"VendorName": "ethernet1/1/36"
+			}
+		  }
+	*/
+	hardware, ok := suite.allHardware["x5004c3w16j36"]
+	suite.True(ok, "Unable to find xname.")
 
+	suite.Equal(hardware.Parent, "x5004c3w16")
+	suite.Equal(hardware.Xname, "x5004c3w16j36")
+	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_mgmt_switch_connector"))
+	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("MgmtSwitchConnector"))
+
+	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeMgmtSwitchConnector)
+	suite.True(ok, "ExtraProperties type is not expected type.")
+
+	suite.Equal(hardwareExtraProperties.NodeNics, []string{"x50004c3s20b0"})
+	suite.Equal(hardwareExtraProperties.VendorName, "1/1/36")
 }
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverApplicationNode_LNetRouter() {
@@ -2285,7 +2345,7 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverApplicationNode_LNetRoute
 	suite.True(ok, "ExtraProperties type is not expected type.")
 
 	suite.Equal(hardwareExtraProperties.NodeNics, []string{"x5004c3s21b0"})
-	suite.Equal(hardwareExtraProperties.VendorName, "ethernet1/1/20")
+	suite.Equal(hardwareExtraProperties.VendorName, "1/1/20")
 }
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverRosetta() {
@@ -2347,7 +2407,7 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverRosetta_MgmtSwitchConnect
 	suite.True(ok, "ExtraProperties type is not expected type.")
 
 	suite.Equal(hardwareExtraProperties.NodeNics, []string{"x5004c3r1b0"})
-	suite.Equal(hardwareExtraProperties.VendorName, "ethernet1/1/37")
+	suite.Equal(hardwareExtraProperties.VendorName, "1/1/37")
 }
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_PDU0() {
@@ -2402,7 +2462,7 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_PDU0_MgmtSwitchConnector() {
 	suite.True(ok, "ExtraProperties type is not expected type.")
 
 	suite.Equal(hardwareExtraProperties.NodeNics, []string{"x5004m0"})
-	suite.Equal(hardwareExtraProperties.VendorName, "ethernet1/1/38")
+	suite.Equal(hardwareExtraProperties.VendorName, "1/1/38")
 }
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_PDU1() {
@@ -2457,7 +2517,7 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_PDU1_MgmtSwitchConnector() {
 	suite.True(ok, "ExtraProperties type is not expected type.")
 
 	suite.Equal(hardwareExtraProperties.NodeNics, []string{"x5004m1"})
-	suite.Equal(hardwareExtraProperties.VendorName, "ethernet1/1/39")
+	suite.Equal(hardwareExtraProperties.VendorName, "1/1/39")
 }
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_VerifyChassis() {
@@ -2729,6 +2789,42 @@ func (suite *ConfigGeneratorTestSuite) TestVerifyNoUnexpectedLiquidCooledChassis
 			suite.Fail("Found unexpected liquid-cooled chassis bmc", xname)
 		}
 	}
+}
+
+func (suite *ConfigGeneratorTestSuite) Test_canCabinetContainAirCooledHardware_RiverCabinet() {
+	ok, err := suite.generator.canCabinetContainAirCooledHardware("x3000")
+	suite.NoError(err)
+	suite.True(ok)
+}
+
+func (suite *ConfigGeneratorTestSuite) Test_canCabinetContainAirCooledHardware_MountainCabinet() {
+	ok, err := suite.generator.canCabinetContainAirCooledHardware("x1000")
+	suite.EqualError(err, "mountain cabinet x1000 cannot contain air-cooled hardware")
+	suite.False(ok)
+}
+
+func (suite *ConfigGeneratorTestSuite) Test_canCabinetContainAirCooledHardware_HillCabinet() {
+	ok, err := suite.generator.canCabinetContainAirCooledHardware("x5000")
+	suite.EqualError(err, "hill cabinet (non EX2500) x5000 cannot contain air-cooled hardware")
+	suite.False(ok)
+}
+
+func (suite *ConfigGeneratorTestSuite) Test_canCabinetContainAirCooledHardware_EX2500_NoAirCooledChassis() {
+	ok, err := suite.generator.canCabinetContainAirCooledHardware("x5001")
+	suite.EqualError(err, "hill cabinet (EX2500) x5001 does not contain any air-cooled chassis")
+	suite.False(ok)
+}
+
+func (suite *ConfigGeneratorTestSuite) Test_canCabinetContainAirCooledHardware_EX2500_AirCooledChassis() {
+	ok, err := suite.generator.canCabinetContainAirCooledHardware("x5004")
+	suite.NoError(err)
+	suite.True(ok)
+}
+
+func (suite *ConfigGeneratorTestSuite) Test_canCabinetContainAirCooledHardware_UnknownCabinet() {
+	ok, err := suite.generator.canCabinetContainAirCooledHardware("x1234")
+	suite.Error(err)
+	suite.False(ok)
 }
 
 func (suite *ConfigGeneratorTestSuite) Test_getSortedCabinetXNames() {

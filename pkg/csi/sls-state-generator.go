@@ -221,26 +221,6 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 	connectionHardwareMap := make(map[string]sls_common.GenericHardware)
 	switchHardwareMap := g.inputState.ManagementSwitches
 
-	// // Create SLS Cabinets from the cabinet templates
-	// for xname, cabinetTemplate := range g.inputState.CabinetTemplates {
-	// 	if base.GetHMSType(xname) != base.Cabinet {
-	// 		g.logger.Fatal("Unexpected xname format given for cabinet",
-	// 			zap.String("xname", xname), zap.Any("cabinetTemplate", cabinetTemplate))
-	// 	}
-
-	// 	cabinet := sls_common.GenericHardware{
-	// 		Parent:     "s0",
-	// 		Xname:      xname,
-	// 		Type:       sls_common.Cabinet,
-	// 		TypeString: base.Cabinet,
-	// 		ExtraPropertiesRaw: sls_common.ComptypeCabinet{
-	// 			// Model:    Model, // TODO
-	// 			Networks: cabinetTemplate.CabinetNetworks,
-	// 		},
-	// 	}
-
-	// }
-
 	// Verify that all of the management switches have a corresponding river cabinet
 	for _, mySwitch := range switchHardwareMap {
 		if mySwitch.Class != sls_common.ClassRiver {
@@ -253,22 +233,26 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 		case sls_common.MgmtSwitch:
 			// xname: xXcCwW
 			parentCabinet := xnametypes.GetHMSCompParent(mySwitch.Parent)
-			if _, ok := g.inputState.RiverCabinets[parentCabinet]; !ok {
-				logger.Fatal("Parent river cabinet does not exist for MgmtSwitch",
+
+			if _, err := g.canCabinetContainAirCooledHardware(parentCabinet); err != nil {
+				logger.Fatal("Parent cabinet for MgmtHLSwitch can not contain air-cooled hardware",
 					zap.Any("switch", mySwitch),
 					zap.String("parentCabinet", parentCabinet),
 					zap.String("xname", mySwitch.Xname),
+					zap.Error(err),
 				)
 			}
 		case sls_common.MgmtHLSwitch:
 			// xname: xXcChHsS
 			parentChassis := xnametypes.GetHMSCompParent(mySwitch.Parent)
 			parentCabinet := xnametypes.GetHMSCompParent(parentChassis)
-			if _, ok := g.inputState.RiverCabinets[parentCabinet]; !ok {
-				logger.Fatal("Parent river cabinet does not exist for MgmtHLSwitch",
+
+			if _, err := g.canCabinetContainAirCooledHardware(parentCabinet); err != nil {
+				logger.Fatal("Parent cabinet for MgmtHLSwitch can not contain air-cooled hardware",
 					zap.Any("switch", mySwitch),
 					zap.String("parentCabinet", parentCabinet),
 					zap.String("xname", mySwitch.Xname),
+					zap.Error(err),
 				)
 			}
 		default:
@@ -276,18 +260,6 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 				zap.Any("switch", mySwitch))
 		}
 	}
-
-	// Generate Cabinets
-	// for _, cabinetMaps := range []map[string]SLSCabinetTemplate{g.inputState.RiverCabinets, g.inputState.HillCabinets, g.inputState.MountainCabinets} {
-	// 	for xname, cabinetTemplate := range cabinetMaps {
-	// 		cabinet, err := cabinetTemplate.ToSLS()
-	// 		if err != nil {
-	// 			g.logger.Fatal("Failed to create SLS representation of provided cabinet", zap.Any("cabinetTemplate", cabinetTemplate))
-	// 		}
-
-	// 		cabinetHardwareMap[xname] = cabinet
-	// 	}
-	// }
 
 	//
 	// First off lets, build up the river hardware
@@ -320,11 +292,12 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 		}
 
 		// Ensure that the cabinet exists
-		if _, ok := g.inputState.RiverCabinets[row.SourceRack]; !ok {
-			logger.Fatal("Parent river cabinet does not exist",
+		if _, err := g.canCabinetContainAirCooledHardware(row.SourceRack); err != nil {
+			logger.Fatal("Parent cabinet can not contain air-cooled hardware",
 				zap.Any("row", row),
 				zap.String("parentCabinet", row.SourceRack), // This value is normally used to construct the xname
 				zap.String("xname", nodeHardware.Xname),
+				zap.Error(err),
 			)
 		}
 
@@ -415,6 +388,31 @@ func (g *SLSStateGenerator) getSortedCabinetXNames(cabinets map[string]SLSCabine
 	sort.Strings(xnames)
 
 	return xnames
+}
+
+func (g *SLSStateGenerator) canCabinetContainAirCooledHardware(cabinetXname string) (bool, error) {
+	if _, ok := g.inputState.RiverCabinets[cabinetXname]; ok {
+		// River Cabinets can of course hold air-cooled hardware
+		return true, nil
+	} else if cabinetTemplate, ok := g.inputState.HillCabinets[cabinetXname]; ok {
+		if cabinetTemplate.Model == "EX2500" {
+			if len(cabinetTemplate.AirCooledChassisList) >= 1 {
+				// This is an EX2500 cabinet with a air cooled chassis in it
+				return true, nil
+			}
+
+			// This ia an EX2500 cabinet with no air-cooled chassis
+			return false, fmt.Errorf("hill cabinet (EX2500) %s does not contain any air-cooled chassis", cabinetXname)
+		}
+
+		// Traditional Hill cabinet
+		return false, fmt.Errorf("hill cabinet (non EX2500) %s cannot contain air-cooled hardware", cabinetXname)
+
+	} else if _, ok := g.inputState.MountainCabinets[cabinetXname]; ok {
+		return false, fmt.Errorf("mountain cabinet %s cannot contain air-cooled hardware", cabinetXname)
+	} else {
+		return false, fmt.Errorf("unknown cabinet %s", cabinetXname)
+	}
 }
 
 //
@@ -782,17 +780,8 @@ func (g *SLSStateGenerator) getNodeHardwareFromRow(row shcd_parser.HMNRow) (hard
 
 func (g *SLSStateGenerator) getConnectionForNode(node sls_common.GenericHardware, row shcd_parser.HMNRow) (
 	connection sls_common.GenericHardware) {
-	destinationUString := strings.TrimPrefix(row.DestinationLocation, "u")
 
-	// Because of "reasons" the port/jack string is either prefixed with a `j` or a `p`. To combat this, use regex.
-	portSubmatches := portRegex.FindStringSubmatch(row.DestinationPort)
-	if len(portSubmatches) < 2 {
-		g.logger.Fatal("Attempted to run regex on destination port but did not find port number!",
-			zap.Any("portSubmatches", portSubmatches),
-			zap.Any("row", row))
-	}
-	destinationJackString := portSubmatches[1]
-
+	// Determine the xname of the device that this MgmtSwitchConnector will connect to
 	var destinationXname string
 	if strings.HasSuffix(string(node.Type), "bmc") || node.Type == sls_common.CabinetPDUController {
 		// This this type *IS* the BMC or PDU, then don't use the parent, use the xname.
@@ -801,32 +790,88 @@ func (g *SLSStateGenerator) getConnectionForNode(node sls_common.GenericHardware
 		destinationXname = node.Parent
 	}
 
-	// Determine Switch and MgmtSwitchConnector xnames
-	switchName := fmt.Sprintf("%sc0w%s", row.DestinationRack, destinationUString)
-	connectorXname := fmt.Sprintf("%sc0w%sj%s", row.DestinationRack, destinationUString, destinationJackString)
+	//
+	// Build up the xname for the MgmtSwitchConnector
+	//
+
+	// Determine the cabinet integer
+	cabinetString := strings.TrimPrefix(strings.ToLower(row.DestinationRack), "x")
+	cabinetInteger, err := strconv.Atoi(cabinetString)
+	if err != nil {
+		g.logger.Fatal("Failed to parse destination cabinet number string to integer!",
+			zap.Error(err),
+			zap.String("cabinetString", cabinetString),
+			zap.Any("row", row),
+		)
+	}
+
+	cabinet := xnames.Cabinet{Cabinet: cabinetInteger}
+
+	// Determine the chassis
+	chassisInteger := 0
+	_, hillCabinetExists := g.inputState.HillCabinets[cabinet.String()]
+	if ok, _ := g.canCabinetContainAirCooledHardware(cabinet.String()); ok && hillCabinetExists {
+		// This is a EX2500 cabinet with a air cooled chassis
+		chassisInteger = 3
+	}
+
+	chassis := cabinet.Chassis(chassisInteger)
+
+	// Determine the slot/rack u
+	destinationUString := strings.TrimPrefix(strings.ToLower(row.DestinationLocation), "u")
+	destinationUInteger, err := strconv.Atoi(destinationUString)
+	if err != nil {
+		g.logger.Fatal("Failed to parse destination location number string to integer!",
+			zap.Error(err),
+			zap.String("destinationUInteger", destinationUString),
+			zap.Any("row", row),
+		)
+	}
+
+	mgmtSwitch := chassis.MgmtSwitch(destinationUInteger)
+
+	// Because of "reasons" the port/jack string is either prefixed with a `j` or a `p`. To combat this, use regex.
+	portSubmatches := portRegex.FindStringSubmatch(row.DestinationPort)
+	if len(portSubmatches) < 2 {
+		g.logger.Fatal("Attempted to run regex on destination port but did not find port number!",
+			zap.Any("portSubmatches", portSubmatches),
+			zap.Any("row", row))
+	}
+	destinationPortString := portSubmatches[1]
+
+	destinationPortInteger, err := strconv.Atoi(destinationPortString)
+	if err != nil {
+		g.logger.Fatal("Failed to parse destination port number string to integer!",
+			zap.Error(err),
+			zap.String("destinationPortString", destinationPortString),
+			zap.Any("row", row),
+		)
+	}
+
+	mgmtSwitchConnector := mgmtSwitch.MgmtSwitchConnector(destinationPortInteger)
 
 	// Get the brand for this switch
-	mgmtSwitch, ok := g.inputState.ManagementSwitches[switchName]
+	slsMgmtSwitch, ok := g.inputState.ManagementSwitches[mgmtSwitch.String()]
 	if !ok {
 		g.logger.Fatal("Unable to find management switch",
-			zap.String("switchName", switchName),
-			zap.String("connectorXname", switchName),
+			zap.String("switchName", mgmtSwitch.String()),
+			zap.String("connectorXname", mgmtSwitchConnector.String()),
 			zap.String("destinationXname", destinationXname))
 	}
 
-	ep, ok := mgmtSwitch.ExtraPropertiesRaw.(sls_common.ComptypeMgmtSwitch)
+	ep, ok := slsMgmtSwitch.ExtraPropertiesRaw.(sls_common.ComptypeMgmtSwitch)
 	if !ok {
 		g.logger.Fatal("Unable to get management switch extra properties",
-			zap.String("switchName", switchName),
-			zap.String("connectorXname", switchName),
+			zap.String("switchName", mgmtSwitch.String()),
+			zap.String("connectorXname", mgmtSwitchConnector.String()),
 			zap.String("destinationXname", destinationXname))
 	}
 	switchBrand := ep.Brand
 
 	if switchBrand == "" {
 		g.logger.Fatal("Management Switch brand found not provided for switch",
-			zap.String("switchName", switchName),
-			zap.String("connectorXname", switchName),
+			zap.String("switchName", mgmtSwitch.String()),
+			zap.String("connectorXname", mgmtSwitchConnector.String()),
 			zap.String("destinationXname", destinationXname))
 	}
 
@@ -836,28 +881,28 @@ func (g *SLSStateGenerator) getConnectionForNode(node sls_common.GenericHardware
 	var vendorName string
 	switch switchBrand {
 	case ManagementSwitchBrandDell.String():
-		vendorName = fmt.Sprintf("ethernet1/1/%s", destinationJackString)
+		vendorName = fmt.Sprintf("ethernet1/1/%d", destinationPortInteger)
 	case ManagementSwitchBrandAruba.String():
-		vendorName = fmt.Sprintf("1/1/%s", destinationJackString)
+		vendorName = fmt.Sprintf("1/1/%d", destinationPortInteger)
 	case ManagementSwitchBrandMellanox.String():
 		// This should only occur when the HMN connections says that a BMC is connected to the
 		// spine/leaf switch. Which should not happen.
 		g.logger.Fatal("Currently do no support MgmtSwitchConnector for Mellanox switches",
 			zap.Any("switchBrand", switchBrand),
-			zap.String("switchName", switchName),
-			zap.String("connectorXname", switchName),
+			zap.String("switchName", mgmtSwitch.String()),
+			zap.String("connectorXname", mgmtSwitchConnector.String()),
 			zap.String("destinationXname", destinationXname))
 	default:
 		g.logger.Fatal("Unknown Management Switch brand found for switch",
 			zap.Any("switchBrand", switchBrand),
-			zap.String("switchName", switchName),
-			zap.String("connectorXname", switchName),
+			zap.String("switchName", mgmtSwitch.String()),
+			zap.String("connectorXname", mgmtSwitchConnector.String()),
 			zap.String("destinationXname", destinationXname))
 	}
 
 	connection = sls_common.GenericHardware{
-		Parent:     switchName,
-		Xname:      connectorXname,
+		Parent:     mgmtSwitchConnector.Parent().String(),
+		Xname:      mgmtSwitchConnector.String(),
 		Type:       "comptype_mgmt_switch_connector",
 		Class:      "River",
 		TypeString: "MgmtSwitchConnector",
