@@ -415,6 +415,35 @@ func (g *SLSStateGenerator) canCabinetContainAirCooledHardware(cabinetXname stri
 	}
 }
 
+func (g *SLSStateGenerator) determineRiverChassis(cabinetXname string) (int, error) {
+	// Check to see if this is even a cabinet that can have river hardware
+	_, err := g.canCabinetContainAirCooledHardware(cabinetXname)
+	if err != nil {
+		return -1, err
+	}
+
+	// Next, determine if this is a standard river cabinet for a EX2500 cabinet
+	_, hillCabinetExists := g.inputState.HillCabinets[cabinetXname]
+
+	chassisInteger := 0
+	if hillCabinetExists {
+		// This is a EX2500 cabinet with a air cooled chassis
+		chassisInteger = 3
+	}
+
+	return chassisInteger, nil
+}
+
+func (g *SLSStateGenerator) parseSourceCabinetFromRow(row shcd_parser.HMNRow) (xnames.Cabinet, error) {
+	cabinetString := strings.TrimPrefix(strings.ToLower(row.DestinationRack), "x")
+	cabinetInteger, err := strconv.Atoi(cabinetString)
+	if err != nil {
+		return xnames.Cabinet{}, err
+	}
+
+	return xnames.Cabinet{Cabinet: cabinetInteger}, nil
+}
+
 //
 // River hardware
 //
@@ -454,9 +483,26 @@ func (g *SLSStateGenerator) getRiverHardwareFromRow(row shcd_parser.HMNRow) (har
 func (g *SLSStateGenerator) getTORHardwareFromRow(row shcd_parser.HMNRow) (hardware sls_common.GenericHardware) {
 	logger := g.logger
 
-	var uInteger int
-	bmcNumber := 0
+	// First determine the cabinet
+	cabinet, err := g.parseSourceCabinetFromRow(row)
+	if err != nil {
+		g.logger.Fatal("Failed to parse source cabinet from row!",
+			zap.Error(err),
+			zap.Any("row", row),
+		)
+	}
 
+	// Determine the chassis
+	chassisInteger, err := g.determineRiverChassis(cabinet.String())
+	if err != nil {
+		g.logger.Fatal("Failed to determine the chassis integer for rosetta!", // Find a better name for this
+			zap.Error(err),
+			zap.String("row.SourceRack", row.SourceRack),
+			zap.Any("row", row),
+		)
+	}
+
+	// Determine the rack U and BMC ordinals
 	uSubmatches := uRegex.FindStringSubmatch(row.SourceLocation)
 	if len(uSubmatches) < 2 {
 		logger.Fatal("Attempted to run regex on source location but did not find U number!",
@@ -473,30 +519,32 @@ func (g *SLSStateGenerator) getTORHardwareFromRow(row shcd_parser.HMNRow) (hardw
 
 	// This is also a hack, but to prevent a sheet that doesn't have parent information from messing things up,
 	// look to the sublocation for offset.
+	bmcNumber := 0
 	if strings.ToLower(row.SourceSubLocation) == "l" || danglingUBits == "l" {
 		bmcNumber = 1
 	} else if strings.ToLower(row.SourceSubLocation) == "r" || danglingUBits == "r" {
 		bmcNumber = 2
 	}
 
-	var err error
-	uInteger, err = strconv.Atoi(uString)
+	// Determine the rack U of the rosetta
+	uInteger, err := strconv.Atoi(uString)
 	if err != nil {
 		logger.Fatal("Failed to parse U number string to integer!",
 			zap.Error(err), zap.String("uString", uString))
 	}
 
-	torXname := fmt.Sprintf("%sc0r%db%d", row.SourceRack, uInteger, bmcNumber)
+	// Finally build up the xname!
+	tor := cabinet.Chassis(chassisInteger).RouterModule(uInteger).RouterBMC(bmcNumber)
 
 	hardware = sls_common.GenericHardware{
-		Parent:     row.SourceRack,
-		Xname:      torXname,
+		Parent:     tor.Parent().String(),
+		Xname:      tor.String(),
 		Type:       "comptype_rtr_bmc",
 		Class:      "River",
 		TypeString: "RouterBMC",
 		ExtraPropertiesRaw: sls_common.ComptypeRtrBmc{
-			Username: fmt.Sprintf("vault://hms-creds/%s", torXname),
-			Password: fmt.Sprintf("vault://hms-creds/%s", torXname),
+			Username: fmt.Sprintf("vault://hms-creds/%s", tor.String()),
+			Password: fmt.Sprintf("vault://hms-creds/%s", tor.String()),
 		},
 	}
 
@@ -749,12 +797,13 @@ func (g *SLSStateGenerator) getNodeHardwareFromRow(row shcd_parser.HMNRow) (hard
 	_, isAParent := g.nodeParents[row.Source]
 	if isAParent {
 		// If it is, then the type is actually comptype_chassis_bmc.
+		cmcXname := fmt.Sprintf("%sc0s%db999", row.SourceRack, uInteger)
 		hardware = sls_common.GenericHardware{
-			Parent:     row.SourceRack,
-			Xname:      fmt.Sprintf("%sc0s%db999", row.SourceRack, uInteger),
-			Type:       "comptype_chassis_bmc",
+			Parent:     xnametypes.GetHMSCompParent(cmcXname),
+			Xname:      cmcXname,
+			Type:       "comptype_ncard",
 			Class:      "River",
-			TypeString: "ChassisBMC",
+			TypeString: "NodeBMC",
 		}
 	} else {
 		nodeXname := fmt.Sprintf("%sc0s%db%dn0", row.SourceRack, uInteger, bmcNumber)
@@ -807,12 +856,14 @@ func (g *SLSStateGenerator) getConnectionForNode(node sls_common.GenericHardware
 
 	cabinet := xnames.Cabinet{Cabinet: cabinetInteger}
 
-	// Determine the chassis
-	chassisInteger := 0
-	_, hillCabinetExists := g.inputState.HillCabinets[cabinet.String()]
-	if ok, _ := g.canCabinetContainAirCooledHardware(cabinet.String()); ok && hillCabinetExists {
-		// This is a EX2500 cabinet with a air cooled chassis
-		chassisInteger = 3
+	// Determine the chassis integer
+	chassisInteger, err := g.determineRiverChassis(cabinet.String())
+	if err != nil {
+		g.logger.Fatal("Failed to determine the chassis integer for node!",
+			zap.Error(err),
+			zap.String("cabinet", cabinet.String()),
+			zap.Any("row", row),
+		)
 	}
 
 	chassis := cabinet.Chassis(chassisInteger)
