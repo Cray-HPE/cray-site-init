@@ -1007,21 +1007,21 @@ func (suite *ConfigGeneratorTestSuite) TestCompute_SwitchDifferentCabinet() {
 func (suite *ConfigGeneratorTestSuite) TestCompute_CMC() {
 	/*
 	  "x3000c0s19b999": {
-	    "Parent": "x3000",
+	    "Parent": "x3000c0s19",
 	    "Xname": "x3000c0s19b999",
-	    "Type": "comptype_chassis_bmc",
+	    "Type": "comptype_ncard",
 	    "Class": "River",
-	    "TypeString": "ChassisBMC"
+	    "TypeString": "NodeBMC"
 	  },
 	*/
 	hardware, ok := suite.allHardware["x3000c0s19b999"]
 	suite.True(ok, "Unable to find xname.")
 
-	suite.Equal(hardware.Parent, "x3000")
+	suite.Equal(hardware.Parent, "x3000c0s19")
 	suite.Equal(hardware.Xname, "x3000c0s19b999")
-	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_chassis_bmc"))
+	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_ncard"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
-	suite.Equal(hardware.TypeString, xnametypes.HMSType("ChassisBMC"))
+	suite.Equal(hardware.TypeString, xnametypes.HMSType("NodeBMC"))
 }
 
 func (suite *ConfigGeneratorTestSuite) TestUAN() {
@@ -1301,7 +1301,7 @@ func (suite *ConfigGeneratorTestSuite) TestManagementSwitch() {
 func (suite *ConfigGeneratorTestSuite) TestHSNSwitch_HSN() {
 	/*
 	  "x3000c0r22b0": {
-	    "Parent": "x3000",
+	    "Parent": "x3000c0r22",
 	    "Xname": "x3000c0r22b0",
 	    "Type": "comptype_rtr_bmc",
 	    "Class": "River",
@@ -1315,7 +1315,7 @@ func (suite *ConfigGeneratorTestSuite) TestHSNSwitch_HSN() {
 	hardware, ok := suite.allHardware["x3000c0r22b0"]
 	suite.True(ok, "Unable to find xname.")
 
-	suite.Equal(hardware.Parent, "x3000")
+	suite.Equal(hardware.Parent, "x3000c0r22")
 	suite.Equal(hardware.Xname, "x3000c0r22b0")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_rtr_bmc"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
@@ -1331,7 +1331,7 @@ func (suite *ConfigGeneratorTestSuite) TestHSNSwitch_HSN() {
 func (suite *ConfigGeneratorTestSuite) TestHSNSwitch_Columbia() {
 	/*
 	  "x3000c0r24b0": {
-	    "Parent": "x3000",
+	    "Parent": "x3000c0r24",
 	    "Xname": "x3000c0r24b0",
 	    "Type": "comptype_rtr_bmc",
 	    "Class": "River",
@@ -1345,7 +1345,7 @@ func (suite *ConfigGeneratorTestSuite) TestHSNSwitch_Columbia() {
 	hardware, ok := suite.allHardware["x3000c0r24b0"]
 	suite.True(ok, "Unable to find xname.")
 
-	suite.Equal(hardware.Parent, "x3000")
+	suite.Equal(hardware.Parent, "x3000c0r24")
 	suite.Equal(hardware.Xname, "x3000c0r24b0")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_rtr_bmc"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
@@ -1811,7 +1811,7 @@ func (suite *ConfigGeneratorTestSuite) TestVerifyComputeNodes_Mountain() {
 		"x1000c7",
 	}
 
-	hillCabinetOffset := 64 // Nids for Mountain Hardware are generated after Hill
+	hillCabinetOffset := 288 // Nids for Mountain Hardware are generated after Hill
 	startingNID := TestSLSInputState.MountainStartingNid + hillCabinetOffset
 
 	// Verify Mountain Compute Nodes
@@ -2374,8 +2374,8 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverRosetta() {
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeRtrBmc)
 	suite.True(ok, "ExtraProperties type is not expected type.")
 
-	suite.Equal(hardwareExtraProperties.Username, "vault://hms-creds/x3000c0r22b0")
-	suite.Equal(hardwareExtraProperties.Password, "vault://hms-creds/x3000c0r22b0")
+	suite.Equal(hardwareExtraProperties.Username, "vault://hms-creds/x5004c3r1b0")
+	suite.Equal(hardwareExtraProperties.Password, "vault://hms-creds/x5004c3r1b0")
 }
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverRosetta_MgmtSwitchConnector() {
@@ -2609,27 +2609,27 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_VerifyChassisBMC() {
 }
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_VerifyComputeNodes_5001() {
-	startingNID := TestSLSInputState.MountainStartingNid // TODO Fix
+	startingNID := TestSLSInputState.MountainStartingNid + 64
 
-	suite.verifyLiquidCooledComputeNodes([]string{"x5000c0"}, startingNID, sls_common.ClassHill)
+	suite.verifyLiquidCooledComputeNodes([]string{"x5001c0"}, startingNID, sls_common.ClassHill)
 }
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_VerifyComputeNodes_5002() {
-	startingNID := TestSLSInputState.MountainStartingNid // TODO Fix
+	startingNID := TestSLSInputState.MountainStartingNid + 96
 
-	suite.verifyLiquidCooledComputeNodes([]string{"x5000c0", "x5000c1"}, startingNID, sls_common.ClassHill)
+	suite.verifyLiquidCooledComputeNodes([]string{"x5002c0", "x5002c1"}, startingNID, sls_common.ClassHill)
 }
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_VerifyComputeNodes_5003() {
-	startingNID := TestSLSInputState.MountainStartingNid // TODO Fix
+	startingNID := TestSLSInputState.MountainStartingNid + 160
 
-	suite.verifyLiquidCooledComputeNodes([]string{"x5000c0", "x5000c1", "x5000c2"}, startingNID, sls_common.ClassHill)
+	suite.verifyLiquidCooledComputeNodes([]string{"x5003c0", "x5003c1", "x5003c2"}, startingNID, sls_common.ClassHill)
 }
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_VerifyComputeNodes_5004() {
-	startingNID := TestSLSInputState.MountainStartingNid // TODO Fix
+	startingNID := TestSLSInputState.MountainStartingNid + 256
 
-	suite.verifyLiquidCooledComputeNodes([]string{"x5000c0"}, startingNID, sls_common.ClassHill)
+	suite.verifyLiquidCooledComputeNodes([]string{"x5004c0"}, startingNID, sls_common.ClassHill)
 }
 
 // verifyLiquidCooledComputeNodes is a helper function to verify the liquid cooled nodes in a given chassis
@@ -2716,14 +2716,14 @@ func (suite *ConfigGeneratorTestSuite) TestVerifyNoUnexpectedLiquidCooledChassis
 	expectedChassis["x5002c1"] = true
 
 	// 3 Liquid-cooled chassis
-	expectedChassis["x5002c0"] = true
-	expectedChassis["x5002c1"] = true
-	expectedChassis["x5002c2"] = true
+	expectedChassis["x5003c0"] = true
+	expectedChassis["x5003c1"] = true
+	expectedChassis["x5003c2"] = true
 
 	// 1 Liquid-cooled chassis and 1 air cooled chassis
 	// do not expect to see a chassis bmc for c3
 	// TODO should there be a "River" chassis within the cabinet?
-	expectedChassis["x5001c0"] = true
+	expectedChassis["x5004c0"] = true
 
 	// Mountain
 	expectedChassis["x1000c0"] = true
@@ -2762,13 +2762,13 @@ func (suite *ConfigGeneratorTestSuite) TestVerifyNoUnexpectedLiquidCooledChassis
 	expectedChassis["x5002c1b0"] = true
 
 	// 3 Liquid-cooled chassis
-	expectedChassis["x5002c0b0"] = true
-	expectedChassis["x5002c1b0"] = true
-	expectedChassis["x5002c2b0"] = true
+	expectedChassis["x5003c0b0"] = true
+	expectedChassis["x5003c1b0"] = true
+	expectedChassis["x5003c2b0"] = true
 
 	// 1 Liquid-cooled chassis and 1 air cooled chassis
 	// do not expect to see a chassis bmc for c4
-	expectedChassis["x5001c0b0"] = true
+	expectedChassis["x5004c0b0"] = true
 
 	// Mountain
 	expectedChassis["x1000c0b0"] = true
