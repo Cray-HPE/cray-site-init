@@ -23,10 +23,22 @@
 //
 //go:generate go run ./generator
 
-package xname
+package xnames
 
-// Validator is implemted by any value that has a Validate() function.
+import "github.com/Cray-HPE/hms-xname/xnametypes"
+
+// Validator is implemented by any value that has a Validate() function.
 // All of the xnames structures in this package implement this interface.
 type Validator interface {
 	Validate() error
+}
+
+// GenericXname is an interface that is implemented by all xnames structures.
+// It is meant to provide a generic way to store or pass a xnames structure, such as to a function that can handle
+// multiple different xnames types.
+type GenericXname interface {
+	String() string
+	Type() xnametypes.HMSType
+	ParentGeneric() GenericXname
+	IsController() bool
 }
