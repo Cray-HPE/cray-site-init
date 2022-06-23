@@ -63,6 +63,7 @@ help:
 	@echo '    clean              Remove binaries, artifacts and releases.'
 	@echo '    clean-artifacts    Remove build artifacts only.'
 	@echo '    clean-releases     Remove releases only.'
+	@echo '    tools              Install tools needed by the project.'
 	@echo '    test               Run unit tests.'
 	@echo '    vet                Run go vet.'
 	@echo '    lint               Run golint.'
@@ -112,6 +113,11 @@ integrate:
 
 shcds:
 	go test ./cmd/... ./internal/... ./pkg/... -tags=integration,shcd -v
+
+tools:
+	go install golang.org/x/lint/golint@latest
+	go install github.com/t-yuki/gocover-cobertura@latest
+	go install github.com/jstemmer/go-junit-report@latest
 
 vet: version
 	go vet -v ./...
