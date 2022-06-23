@@ -784,7 +784,7 @@ func (g *SLSStateGenerator) getNodeHardwareFromRow(row shcd_parser.HMNRow) (hard
 	// Next determine the chassis
 	chassis, err := g.determineRiverChassis(cabinet)
 	if err != nil {
-		g.logger.Fatal("Failed to determine the chassis integer for rosetta!", // Find a better name for this
+		g.logger.Fatal("Failed to determine the chassis integer for node!",
 			zap.Error(err),
 			zap.String("row.SourceRack", row.SourceRack),
 			zap.Any("row", row),

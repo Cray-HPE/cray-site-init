@@ -97,8 +97,6 @@ func genCabinetMap(cd []csi.CabinetGroupDetail, shastaNetworks map[string]*csi.I
 				},
 			}
 
-			// TODO handle models correctly
-
 			// Do the stuff specific to each kind (within the context of a single cabinet)
 			switch kind {
 			case "river":
@@ -111,19 +109,37 @@ func genCabinetMap(cd []csi.CabinetGroupDetail, shastaNetworks map[string]*csi.I
 					log.Fatalf("Overriding air or liquid cooled chassis counts is not permitted for river cabinets (%s). Refusing to continue", cabinetTemplate.Xname.String())
 				}
 			case "hill":
+				// Start with a EX2000 Hill cabinet as the default
 				cabinetTemplate.Class = sls_common.ClassHill
 				cabinetTemplate.AirCooledChassisList = []int{}
 				cabinetTemplate.LiquidCooledChassisList = csi.DefaultHillChassisList
 
-				if cabinetDetail, present := cabinetDetails[kind][id]; present {
-					if cabinetDetail.Model != "EX2500" {
+				// Find any cabinet specific overrides
+				if cabinetDetail, present := cabinetDetails[kind][id]; present && cabinetDetail.Model != "EX2500" {
+					// This is a normal EX2000 hill cabinet
+					if cabinetDetail.ChassisCount != nil {
 						log.Fatalf("Overriding air or liquid cooled chassis counts is not permitted for hill (EX2000) cabinets (%s). Refusing to continue", cabinetTemplate.Xname.String())
 					}
-
+				} else if cabinetDetail, present := cabinetDetails[kind][id]; present && cabinetDetail.Model == "EX2500" {
 					// So we have a EX2500 Cabinet, as chassis overrides has been specified
 					// Here are following allowed configurations for it to be considered a hill cabinet
 					// - 0 air-cooled chassis, with 1, 2, or 3 liquid cooled chassis
 					// - 1 air-cooled chassis, with 1 liquid-cooled chassis
+					if cabinetDetail.ChassisCount == nil {
+						msg := "EX2500 cabinets require chassis counts to be specified via cabinets.yaml\n"
+						msg += "The following is an example how to specify chassis counts in cabinets.yaml:\n"
+						msg += "    - id: 9001\n"
+						msg += "      hmn-vlan: 3001\n"
+						msg += "      nmn-vlan: 2001\n"
+						msg += "      model: EX2500\n"
+						msg += "      chassis-count:\n"
+						msg += "          air-cooled: 0\n"
+						msg += "          liquid-cooled: 3"
+						log.Fatal(msg)
+					}
+
+					cabinetTemplate.Model = cabinetDetail.Model
+
 					switch cabinetDetail.ChassisCount.AirCooled {
 					case 0:
 						if cabinetDetail.ChassisCount.LiquidCooled < 1 || 3 < cabinetDetail.ChassisCount.LiquidCooled {
@@ -151,7 +167,7 @@ func genCabinetMap(cd []csi.CabinetGroupDetail, shastaNetworks map[string]*csi.I
 							cabinetTemplate.LiquidCooledChassisList = []int{0}
 						default:
 							// Invalid configuration
-							log.Fatalf("Invalid liquid-cooled chassis count specified for hill (EX2500) cabinet %s. Given %d, expected 1.  Refusing to continue", cabinetTemplate.Xname.String(), cabinetDetail.ChassisCount.LiquidCooled)
+							log.Fatalf("Invalid liquid-cooled chassis count specified for hill (EX2500) cabinet %s. Given %d, expected 1. EX2500 cabinets with 1 air-cooled chassis can only have 1 liquid-cooled chassis.  Refusing to continue", cabinetTemplate.Xname.String(), cabinetDetail.ChassisCount.LiquidCooled)
 						}
 					default:
 						log.Fatalf("Invalid air-cooled chassis count specified for hill (EX2500) cabinet %s. Given %d, expected 0 or 1. Refusing to continue", cabinetTemplate.Xname.String(), cabinetDetail.ChassisCount.AirCooled)

@@ -100,3 +100,26 @@ func LoadCabinetDetailFile(path string) (CabinetDetailFile, error) {
 	err := csiFiles.ReadYAMLConfig(path, &cabDetailFile)
 	return cabDetailFile, err
 }
+
+// CabinetFilterFunc is a function type that functions can implement to define rules if a cabinet with its its
+// CabinetGroupDetail and CabinetDetail should be filtered out or not.
+type CabinetFilterFunc func(CabinetGroupDetail, CabinetDetail) bool
+
+// CabinetKindFilter returns true when a CabinetGroupDetail is of the specified kind.
+// For example, CabinetKindSelector("river") would match for river cabinets.
+func CabinetKindFilter(kind string) CabinetFilterFunc {
+	return func(groupDetail CabinetGroupDetail, cabinetDetail CabinetDetail) bool {
+		return groupDetail.Kind == kind
+	}
+}
+
+// CabinetEX2500AirCooledChassisFilter returns true for EX2500 cabinets with a air cooled chassis
+func CabinetEX2500AirCooledChassisFilter() CabinetFilterFunc {
+	return func(groupDetail CabinetGroupDetail, cabinetDetail CabinetDetail) bool {
+		if cabinetDetail.ChassisCount != nil {
+			return groupDetail.Kind == "hill" && cabinetDetail.Model == "EX2500" && cabinetDetail.ChassisCount.AirCooled > 0
+		}
+
+		return false
+	}
+}

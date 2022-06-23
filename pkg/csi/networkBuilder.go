@@ -370,18 +370,19 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 
 	if conf.GroupNetworksByCabinetType && conf.SubdivideByCabinet {
 		if strings.HasSuffix(conf.Template.Name, "RVR") {
-			tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, "river")
+			tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, CabinetKindFilter("river"))
+			tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, CabinetEX2500AirCooledChassisFilter())
 		}
 		if strings.HasSuffix(conf.Template.Name, "MTN") {
-			tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, "mountain")
-			tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, "hill")
+			tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, CabinetKindFilter("mountain"))
+			tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, CabinetKindFilter("hill"))
 		}
 		// Otherwise do both
 	}
 	if conf.SubdivideByCabinet && !conf.GroupNetworksByCabinetType {
-		tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, "river")
-		tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, "mountain")
-		tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, "hill")
+		tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, CabinetKindFilter("river"))
+		tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, CabinetKindFilter("mountain"))
+		tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, CabinetKindFilter("hill"))
 	}
 
 	// Apply the Supernet Hack
