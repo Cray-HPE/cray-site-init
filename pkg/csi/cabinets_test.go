@@ -108,7 +108,7 @@ type CabinetFilterFuncTestSuite struct {
 	mountainCabinetDetail                       CabinetDetail
 }
 
-func (suite *CabinetFilterFunc) SetupSuite() {
+func (suite *CabinetFilterFuncTestSuite) SetupSuite() {
 	suite.riverGroupDetail = CabinetGroupDetail{Kind: "river"}
 	suite.hillGroupDetail = CabinetGroupDetail{Kind: "hill"}
 	suite.mountainGroupDetail = CabinetGroupDetail{Kind: "mountain"}

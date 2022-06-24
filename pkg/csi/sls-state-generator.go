@@ -412,12 +412,12 @@ func (g *SLSStateGenerator) determineRiverChassis(cabinet xnames.Cabinet) (xname
 	}
 
 	// Next, determine if this is a standard river cabinet for a EX2500 cabinet
-	_, hillCabinetExists := g.inputState.HillCabinets[cabinet.String()]
+	hillCabinetTemplate, hillCabinetExists := g.inputState.HillCabinets[cabinet.String()]
 
 	chassisInteger := 0
 	if hillCabinetExists {
 		// This is a EX2500 cabinet with a air cooled chassis
-		chassisInteger = 3
+		chassisInteger = hillCabinetTemplate.AirCooledChassisList[0]
 	}
 
 	return cabinet.Chassis(chassisInteger), nil
@@ -1001,13 +1001,13 @@ func (g *SLSStateGenerator) getLiquidCooledHardwareForCabinet(cabinetTemplate SL
 	return
 }
 
-func (g *SLSStateGenerator) buildSLSHardware(xname xnames.GenericXname, class sls_common.CabinetType, extraProperties interface{}) sls_common.GenericHardware {
+func (g *SLSStateGenerator) buildSLSHardware(xname xnames.Xname, class sls_common.CabinetType, extraProperties interface{}) sls_common.GenericHardware {
 	if xname == nil {
 		panic("nil xname provided")
 	}
 
 	return sls_common.GenericHardware{
-		Parent:             xname.ParentGeneric().String(),
+		Parent:             xname.ParentInterface().String(),
 		Xname:              xname.String(),
 		Type:               sls_common.HMSTypeToHMSStringType(xname.Type()),
 		Class:              class,

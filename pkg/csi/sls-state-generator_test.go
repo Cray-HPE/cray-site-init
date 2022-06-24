@@ -398,8 +398,8 @@ var TestSLSInputState = SLSGeneratorInputState{
 			"x3000c0s30b0n0": {"lnet-01"},
 			"x3000c0s31b0n0": {"lnet-02"},
 			"x3000c0s32b0n0": {"uan-02"},
-			"x5004c3s20b0n0": {"uan-50"},
-			"x5004c3s21b0n0": {"lnet-50"},
+			"x5004c4s20b0n0": {"uan-50"},
+			"x5004c4s21b0n0": {"lnet-50"},
 		},
 	},
 
@@ -408,7 +408,7 @@ var TestSLSInputState = SLSGeneratorInputState{
 		"x3000c0w38": buildMgmtSwitch("x3000c0w38", "sw-leaf-bmc-02", "10.254.0.3", ManagementSwitchBrandDell),
 		"x3001c0w21": buildMgmtSwitch("x3001c0w21", "sw-leaf-bmc-03", "10.254.0.4", ManagementSwitchBrandDell),
 		"x3001c0w42": buildMgmtSwitch("x3001c0w42", "sw-leaf-bmc-04", "10.254.0.42", ManagementSwitchBrandAruba),
-		"x5004c3w16": buildMgmtSwitch("x5004c3w16", "sw-leaf-bmc-05", "10.254.0.43", ManagementSwitchBrandAruba),
+		"x5004c4w16": buildMgmtSwitch("x5004c4w16", "sw-leaf-bmc-05", "10.254.0.43", ManagementSwitchBrandAruba),
 	},
 
 	RiverCabinets: map[string]SLSCabinetTemplate{
@@ -546,7 +546,7 @@ var TestSLSInputState = SLSGeneratorInputState{
 			},
 			Class:                   sls_common.ClassHill,
 			Model:                   "EX2500",
-			AirCooledChassisList:    []int{3},
+			AirCooledChassisList:    []int{4},
 			LiquidCooledChassisList: []int{0},
 		},
 	},
@@ -1820,7 +1820,7 @@ func (suite *ConfigGeneratorTestSuite) TestVerifyComputeNodes_Mountain() {
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_NID101() {
 	/*
-	  "x5004c3s17b1n0": {
+	  "x5004c4s17b1n0": {
 	    "Parent": "x50004c3s17b1",
 	    "Xname": "x50004c3s17b1n0",
 	    "Type": "comptype_node",
@@ -1836,11 +1836,11 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_NID101() {
 	  },
 	*/
 
-	hardware, ok := suite.allHardware["x5004c3s17b1n0"]
+	hardware, ok := suite.allHardware["x5004c4s17b1n0"]
 	suite.True(ok, "Unable to find xname.")
 
-	suite.Equal(hardware.Parent, "x5004c3s17b1")
-	suite.Equal(hardware.Xname, "x5004c3s17b1n0")
+	suite.Equal(hardware.Parent, "x5004c4s17b1")
+	suite.Equal(hardware.Xname, "x5004c4s17b1n0")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_node"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
 	suite.Equal(hardware.TypeString, xnametypes.HMSType("Node"))
@@ -1857,9 +1857,9 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_NID101() {
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_NID101_MgmtSwitchConnector() {
 	/*
-		  "x5004c3w16j31": {
-			"Parent": "x5004c3w16",
-			"Xname": "x5004c3w16j31",
+		  "x5004c4w16j31": {
+			"Parent": "x5004c4w16",
+			"Xname": "x5004c4w16j31",
 			"Type": "comptype_mgmt_switch_connector",
 			"Class": "River",
 			"TypeString": "MgmtSwitchConnector",
@@ -1871,11 +1871,11 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_NID101_MgmtSw
 			}
 		  }
 	*/
-	hardware, ok := suite.allHardware["x5004c3w16j31"]
+	hardware, ok := suite.allHardware["x5004c4w16j31"]
 	suite.True(ok, "Unable to find xname.")
 
-	suite.Equal(hardware.Parent, "x5004c3w16")
-	suite.Equal(hardware.Xname, "x5004c3w16j31")
+	suite.Equal(hardware.Parent, "x5004c4w16")
+	suite.Equal(hardware.Xname, "x5004c4w16j31")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_mgmt_switch_connector"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
 	suite.Equal(hardware.TypeString, xnametypes.HMSType("MgmtSwitchConnector"))
@@ -1883,7 +1883,7 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_NID101_MgmtSw
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeMgmtSwitchConnector)
 	suite.True(ok, "ExtraProperties type is not expected type.")
 
-	suite.Equal(hardwareExtraProperties.NodeNics, []string{"x5004c3s17b1"})
+	suite.Equal(hardwareExtraProperties.NodeNics, []string{"x5004c4s17b1"})
 	suite.Equal(hardwareExtraProperties.VendorName, "1/1/31")
 }
 
@@ -1905,11 +1905,11 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_NID102() {
 	  },
 	*/
 
-	hardware, ok := suite.allHardware["x5004c3s17b2n0"]
+	hardware, ok := suite.allHardware["x5004c4s17b2n0"]
 	suite.True(ok, "Unable to find xname.")
 
-	suite.Equal(hardware.Parent, "x5004c3s17b2")
-	suite.Equal(hardware.Xname, "x5004c3s17b2n0")
+	suite.Equal(hardware.Parent, "x5004c4s17b2")
+	suite.Equal(hardware.Xname, "x5004c4s17b2n0")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_node"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
 	suite.Equal(hardware.TypeString, xnametypes.HMSType("Node"))
@@ -1925,9 +1925,9 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_NID102() {
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_NID102_MgmtSwitchConnector() {
 	/*
-		  "x5004c3w16j32": {
-			"Parent": "x5004c3w16",
-			"Xname": "x5004c3w16j32",
+		  "x5004c4w16j32": {
+			"Parent": "x5004c4w16",
+			"Xname": "x5004c4w16j32",
 			"Type": "comptype_mgmt_switch_connector",
 			"Class": "River",
 			"TypeString": "MgmtSwitchConnector",
@@ -1939,11 +1939,11 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_NID102_MgmtSw
 			}
 		  }
 	*/
-	hardware, ok := suite.allHardware["x5004c3w16j32"]
+	hardware, ok := suite.allHardware["x5004c4w16j32"]
 	suite.True(ok, "Unable to find xname.")
 
-	suite.Equal(hardware.Parent, "x5004c3w16")
-	suite.Equal(hardware.Xname, "x5004c3w16j32")
+	suite.Equal(hardware.Parent, "x5004c4w16")
+	suite.Equal(hardware.Xname, "x5004c4w16j32")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_mgmt_switch_connector"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
 	suite.Equal(hardware.TypeString, xnametypes.HMSType("MgmtSwitchConnector"))
@@ -1951,7 +1951,7 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_NID102_MgmtSw
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeMgmtSwitchConnector)
 	suite.True(ok, "ExtraProperties type is not expected type.")
 
-	suite.Equal(hardwareExtraProperties.NodeNics, []string{"x5004c3s17b2"})
+	suite.Equal(hardwareExtraProperties.NodeNics, []string{"x5004c4s17b2"})
 	suite.Equal(hardwareExtraProperties.VendorName, "1/1/32")
 }
 
@@ -1972,11 +1972,11 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_NID103() {
 	    }
 	  },
 	*/
-	hardware, ok := suite.allHardware["x5004c3s17b3n0"]
+	hardware, ok := suite.allHardware["x5004c4s17b3n0"]
 	suite.True(ok, "Unable to find xname.")
 
-	suite.Equal(hardware.Parent, "x5004c3s17b3")
-	suite.Equal(hardware.Xname, "x5004c3s17b3n0")
+	suite.Equal(hardware.Parent, "x5004c4s17b3")
+	suite.Equal(hardware.Xname, "x5004c4s17b3n0")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_node"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
 	suite.Equal(hardware.TypeString, xnametypes.HMSType("Node"))
@@ -1992,9 +1992,9 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_NID103() {
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_NID103_MgmtSwitchConnector() {
 	/*
-		  "x5004c3w16j33": {
-			"Parent": "x5004c3w16",
-			"Xname": "x5004c3w16j33",
+		  "x5004c4w16j33": {
+			"Parent": "x5004c4w16",
+			"Xname": "x5004c4w16j33",
 			"Type": "comptype_mgmt_switch_connector",
 			"Class": "River",
 			"TypeString": "MgmtSwitchConnector",
@@ -2006,11 +2006,11 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_NID103_MgmtSw
 			}
 		  }
 	*/
-	hardware, ok := suite.allHardware["x5004c3w16j33"]
+	hardware, ok := suite.allHardware["x5004c4w16j33"]
 	suite.True(ok, "Unable to find xname.")
 
-	suite.Equal(hardware.Parent, "x5004c3w16")
-	suite.Equal(hardware.Xname, "x5004c3w16j33")
+	suite.Equal(hardware.Parent, "x5004c4w16")
+	suite.Equal(hardware.Xname, "x5004c4w16j33")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_mgmt_switch_connector"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
 	suite.Equal(hardware.TypeString, xnametypes.HMSType("MgmtSwitchConnector"))
@@ -2018,13 +2018,13 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_NID103_MgmtSw
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeMgmtSwitchConnector)
 	suite.True(ok, "ExtraProperties type is not expected type.")
 
-	suite.Equal(hardwareExtraProperties.NodeNics, []string{"x5004c3s17b3"})
+	suite.Equal(hardwareExtraProperties.NodeNics, []string{"x5004c4s17b3"})
 	suite.Equal(hardwareExtraProperties.VendorName, "1/1/33")
 }
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_NID104() {
 	/*
-	  "x5004c3s17b4n0": {
+	  "x5004c4s17b4n0": {
 	    "Parent": "x50004c3s17b4",
 	    "Xname": "x50004c3s17b4n0",
 	    "Type": "comptype_node",
@@ -2039,11 +2039,11 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_NID104() {
 	    }
 	  },
 	*/
-	hardware, ok := suite.allHardware["x5004c3s17b4n0"]
+	hardware, ok := suite.allHardware["x5004c4s17b4n0"]
 	suite.True(ok, "Unable to find xname.")
 
-	suite.Equal(hardware.Parent, "x5004c3s17b4")
-	suite.Equal(hardware.Xname, "x5004c3s17b4n0")
+	suite.Equal(hardware.Parent, "x5004c4s17b4")
+	suite.Equal(hardware.Xname, "x5004c4s17b4n0")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_node"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
 	suite.Equal(hardware.TypeString, xnametypes.HMSType("Node"))
@@ -2059,9 +2059,9 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_NID104() {
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_NID104_MgmtSwitchConnector() {
 	/*
-		  "x5004c3w16j34": {
-			"Parent": "x5004c3w16",
-			"Xname": "x5004c3w16j34",
+		  "x5004c4w16j34": {
+			"Parent": "x5004c4w16",
+			"Xname": "x5004c4w16j34",
 			"Type": "comptype_mgmt_switch_connector",
 			"Class": "River",
 			"TypeString": "MgmtSwitchConnector",
@@ -2073,11 +2073,11 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_NID104_MgmtSw
 			}
 		  }
 	*/
-	hardware, ok := suite.allHardware["x5004c3w16j34"]
+	hardware, ok := suite.allHardware["x5004c4w16j34"]
 	suite.True(ok, "Unable to find xname.")
 
-	suite.Equal(hardware.Parent, "x5004c3w16")
-	suite.Equal(hardware.Xname, "x5004c3w16j34")
+	suite.Equal(hardware.Parent, "x5004c4w16")
+	suite.Equal(hardware.Xname, "x5004c4w16j34")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_mgmt_switch_connector"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
 	suite.Equal(hardware.TypeString, xnametypes.HMSType("MgmtSwitchConnector"))
@@ -2085,7 +2085,7 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_NID104_MgmtSw
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeMgmtSwitchConnector)
 	suite.True(ok, "ExtraProperties type is not expected type.")
 
-	suite.Equal(hardwareExtraProperties.NodeNics, []string{"x5004c3s17b4"})
+	suite.Equal(hardwareExtraProperties.NodeNics, []string{"x5004c4s17b4"})
 	suite.Equal(hardwareExtraProperties.VendorName, "1/1/34")
 }
 
@@ -2099,11 +2099,11 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_CMC() {
 	    "TypeString": "NodeBMC"
 	  },
 	*/
-	hardware, ok := suite.allHardware["x5004c3s17b999"]
+	hardware, ok := suite.allHardware["x5004c4s17b999"]
 	suite.True(ok, "Unable to find xname.")
 
-	suite.Equal(hardware.Parent, "x5004c3s17")
-	suite.Equal(hardware.Xname, "x5004c3s17b999")
+	suite.Equal(hardware.Parent, "x5004c4s17")
+	suite.Equal(hardware.Xname, "x5004c4s17b999")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_ncard"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
 	suite.Equal(hardware.TypeString, xnametypes.HMSType("NodeBMC"))
@@ -2113,9 +2113,9 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_CMC() {
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_CMC_MgmtSwitchConnector() {
 	/*
-		  "x5004c3w16j30": {
-			"Parent": "x5004c3w16",
-			"Xname": "x5004c3w16j30",
+		  "x5004c4w16j30": {
+			"Parent": "x5004c4w16",
+			"Xname": "x5004c4w16j30",
 			"Type": "comptype_mgmt_switch_connector",
 			"Class": "River",
 			"TypeString": "MgmtSwitchConnector",
@@ -2127,11 +2127,11 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_CMC_MgmtSwitc
 			}
 		  }
 	*/
-	hardware, ok := suite.allHardware["x5004c3w16j30"]
+	hardware, ok := suite.allHardware["x5004c4w16j30"]
 	suite.True(ok, "Unable to find xname.")
 
-	suite.Equal(hardware.Parent, "x5004c3w16")
-	suite.Equal(hardware.Xname, "x5004c3w16j30")
+	suite.Equal(hardware.Parent, "x5004c4w16")
+	suite.Equal(hardware.Xname, "x5004c4w16j30")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_mgmt_switch_connector"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
 	suite.Equal(hardware.TypeString, xnametypes.HMSType("MgmtSwitchConnector"))
@@ -2139,15 +2139,15 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverComputeNode_CMC_MgmtSwitc
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeMgmtSwitchConnector)
 	suite.True(ok, "ExtraProperties type is not expected type.")
 
-	suite.Equal(hardwareExtraProperties.NodeNics, []string{"x5004c3s17b999"})
+	suite.Equal(hardwareExtraProperties.NodeNics, []string{"x5004c4s17b999"})
 	suite.Equal(hardwareExtraProperties.VendorName, "1/1/30")
 }
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverWorkerNode() {
 	/*
-	  "x5004c3s19b0n0": {
-	    "Parent": "x5004c3s19b0",
-	    "Xname": "x5004c3s19b0n0",
+	  "x5004c4s19b0n0": {
+	    "Parent": "x5004c4s19b0",
+	    "Xname": "x5004c4s19b0n0",
 	    "Type": "comptype_node",
 	    "Class": "River",
 	    "TypeString": "Node",
@@ -2161,11 +2161,11 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverWorkerNode() {
 	    }
 	  },
 	*/
-	hardware, ok := suite.allHardware["x5004c3s19b0n0"]
+	hardware, ok := suite.allHardware["x5004c4s19b0n0"]
 	suite.True(ok, "Unable to find xname.")
 
-	suite.Equal(hardware.Parent, "x5004c3s19b0")
-	suite.Equal(hardware.Xname, "x5004c3s19b0n0")
+	suite.Equal(hardware.Parent, "x5004c4s19b0")
+	suite.Equal(hardware.Xname, "x5004c4s19b0n0")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_node"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
 	suite.Equal(hardware.TypeString, xnametypes.HMSType("Node"))
@@ -2180,25 +2180,25 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverWorkerNode() {
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverWorkerNode_MgmtSwitchConnector() {
 	/*
-		  "x5004c3w16j35": {
-			"Parent": "x5004c3w16",
-			"Xname": "x5004c3w16j35",
+		  "x5004c4w16j35": {
+			"Parent": "x5004c4w16",
+			"Xname": "x5004c4w16j35",
 			"Type": "comptype_mgmt_switch_connector",
 			"Class": "River",
 			"TypeString": "MgmtSwitchConnector",
 			"ExtraProperties": {
 				"NodeNics": [
-					"x5004c3s19b0"
+					"x5004c4s19b0"
 				],
 				"VendorName": "ethernet1/1/35"
 			}
 		  }
 	*/
-	hardware, ok := suite.allHardware["x5004c3w16j35"]
+	hardware, ok := suite.allHardware["x5004c4w16j35"]
 	suite.True(ok, "Unable to find xname.")
 
-	suite.Equal(hardware.Parent, "x5004c3w16")
-	suite.Equal(hardware.Xname, "x5004c3w16j35")
+	suite.Equal(hardware.Parent, "x5004c4w16")
+	suite.Equal(hardware.Xname, "x5004c4w16j35")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_mgmt_switch_connector"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
 	suite.Equal(hardware.TypeString, xnametypes.HMSType("MgmtSwitchConnector"))
@@ -2206,15 +2206,15 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverWorkerNode_MgmtSwitchConn
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeMgmtSwitchConnector)
 	suite.True(ok, "ExtraProperties type is not expected type.")
 
-	suite.Equal(hardwareExtraProperties.NodeNics, []string{"x5004c3s19b0"})
+	suite.Equal(hardwareExtraProperties.NodeNics, []string{"x5004c4s19b0"})
 	suite.Equal(hardwareExtraProperties.VendorName, "1/1/35")
 }
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverApplicationNode_UAN() {
 	/*
-		  "x5004c3s20b0n0": {
-		    "Parent": "x5004c3s20b0",
-		    "Xname": "x5004c3s20b0n0",
+		  "x5004c4s20b0n0": {
+		    "Parent": "x5004c4s20b0",
+		    "Xname": "x5004c4s20b0n0",
 		    "Type": "comptype_node",
 		    "Class": "River",
 		    "TypeString": "Node",
@@ -2227,11 +2227,11 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverApplicationNode_UAN() {
 		    }
 		  },
 	*/
-	hardware, ok := suite.allHardware["x5004c3s20b0n0"]
+	hardware, ok := suite.allHardware["x5004c4s20b0n0"]
 	suite.True(ok, "Unable to find xname.")
 
-	suite.Equal(hardware.Parent, "x5004c3s20b0")
-	suite.Equal(hardware.Xname, "x5004c3s20b0n0")
+	suite.Equal(hardware.Parent, "x5004c4s20b0")
+	suite.Equal(hardware.Xname, "x5004c4s20b0n0")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_node"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
 	suite.Equal(hardware.TypeString, xnametypes.HMSType("Node"))
@@ -2248,25 +2248,25 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverApplicationNode_UAN() {
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverApplicationNode_UAN_MgmtSwitchConnector() {
 	/*
-		  "x5004c3w16j36": {
-			"Parent": "x5004c3w16",
-			"Xname": "x5004c3w16j36",
+		  "x5004c4w16j36": {
+			"Parent": "x5004c4w16",
+			"Xname": "x5004c4w16j36",
 			"Type": "comptype_mgmt_switch_connector",
 			"Class": "River",
 			"TypeString": "MgmtSwitchConnector",
 			"ExtraProperties": {
 				"NodeNics": [
-					"x5004c3s20b0"
+					"x5004c4s20b0"
 				],
 				"VendorName": "ethernet1/1/36"
 			}
 		  }
 	*/
-	hardware, ok := suite.allHardware["x5004c3w16j36"]
+	hardware, ok := suite.allHardware["x5004c4w16j36"]
 	suite.True(ok, "Unable to find xname.")
 
-	suite.Equal(hardware.Parent, "x5004c3w16")
-	suite.Equal(hardware.Xname, "x5004c3w16j36")
+	suite.Equal(hardware.Parent, "x5004c4w16")
+	suite.Equal(hardware.Xname, "x5004c4w16j36")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_mgmt_switch_connector"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
 	suite.Equal(hardware.TypeString, xnametypes.HMSType("MgmtSwitchConnector"))
@@ -2274,15 +2274,15 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverApplicationNode_UAN_MgmtS
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeMgmtSwitchConnector)
 	suite.True(ok, "ExtraProperties type is not expected type.")
 
-	suite.Equal(hardwareExtraProperties.NodeNics, []string{"x5004c3s20b0"})
+	suite.Equal(hardwareExtraProperties.NodeNics, []string{"x5004c4s20b0"})
 	suite.Equal(hardwareExtraProperties.VendorName, "1/1/36")
 }
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverApplicationNode_LNetRouter() {
 	/*
-		  "x5004c3s21b0n0": {
-		    "Parent": "x5004c3s21b0",
-		    "Xname": "x5004c3s21b0n0",
+		  "x5004c4s21b0n0": {
+		    "Parent": "x5004c4s21b0",
+		    "Xname": "x5004c4s21b0n0",
 		    "Type": "comptype_node",
 		    "Class": "River",
 		    "TypeString": "Node",
@@ -2295,11 +2295,11 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverApplicationNode_LNetRoute
 		    }
 		  },
 	*/
-	hardware, ok := suite.allHardware["x5004c3s21b0n0"]
+	hardware, ok := suite.allHardware["x5004c4s21b0n0"]
 	suite.True(ok, "Unable to find xname.")
 
-	suite.Equal(hardware.Parent, "x5004c3s21b0")
-	suite.Equal(hardware.Xname, "x5004c3s21b0n0")
+	suite.Equal(hardware.Parent, "x5004c4s21b0")
+	suite.Equal(hardware.Xname, "x5004c4s21b0n0")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_node"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
 	suite.Equal(hardware.TypeString, xnametypes.HMSType("Node"))
@@ -2326,7 +2326,7 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverApplicationNode_LNetRoute
 			"TypeString": "MgmtSwitchConnector",
 			"ExtraProperties": {
 				"NodeNics": [
-					"x5004c3s21b0"
+					"x5004c4s21b0"
 				],
 				"VendorName": "ethernet1/1/20"
 			}
@@ -2344,29 +2344,29 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverApplicationNode_LNetRoute
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeMgmtSwitchConnector)
 	suite.True(ok, "ExtraProperties type is not expected type.")
 
-	suite.Equal(hardwareExtraProperties.NodeNics, []string{"x5004c3s21b0"})
+	suite.Equal(hardwareExtraProperties.NodeNics, []string{"x5004c4s21b0"})
 	suite.Equal(hardwareExtraProperties.VendorName, "1/1/20")
 }
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverRosetta() {
 	/*
-	  "x5004c3r1b0": {
-	    "Parent": "x5004c3r1",
-	    "Xname": "x5004c3r1b0",
+	  "x5004c4r1b0": {
+	    "Parent": "x5004c4r1",
+	    "Xname": "x5004c4r1b0",
 	    "Type": "comptype_rtr_bmc",
 	    "Class": "River",
 	    "TypeString": "RouterBMC",
 	    "ExtraProperties": {
-	      "Username": "vault://hms-creds/x5004c3r1b0",
-	      "Password": "vault://hms-creds/x5004c3r1b0"
+	      "Username": "vault://hms-creds/x5004c4r1b0",
+	      "Password": "vault://hms-creds/x5004c4r1b0"
 	    }
 	  },
 	*/
-	hardware, ok := suite.allHardware["x5004c3r1b0"]
+	hardware, ok := suite.allHardware["x5004c4r1b0"]
 	suite.True(ok, "Unable to find xname.")
 
-	suite.Equal(hardware.Parent, "x5004c3r1")
-	suite.Equal(hardware.Xname, "x5004c3r1b0")
+	suite.Equal(hardware.Parent, "x5004c4r1")
+	suite.Equal(hardware.Xname, "x5004c4r1b0")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_rtr_bmc"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
 	suite.Equal(hardware.TypeString, xnametypes.HMSType("RouterBMC"))
@@ -2374,31 +2374,31 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverRosetta() {
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeRtrBmc)
 	suite.True(ok, "ExtraProperties type is not expected type.")
 
-	suite.Equal(hardwareExtraProperties.Username, "vault://hms-creds/x5004c3r1b0")
-	suite.Equal(hardwareExtraProperties.Password, "vault://hms-creds/x5004c3r1b0")
+	suite.Equal(hardwareExtraProperties.Username, "vault://hms-creds/x5004c4r1b0")
+	suite.Equal(hardwareExtraProperties.Password, "vault://hms-creds/x5004c4r1b0")
 }
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverRosetta_MgmtSwitchConnector() {
 	/*
-		  "x5004c3w16j37": {
-			"Parent": "x5004c3w16",
-			"Xname": "x5004c3w16j37",
+		  "x5004c4w16j37": {
+			"Parent": "x5004c4w16",
+			"Xname": "x5004c4w16j37",
 			"Type": "comptype_mgmt_switch_connector",
 			"Class": "River",
 			"TypeString": "MgmtSwitchConnector",
 			"ExtraProperties": {
 				"NodeNics": [
-					"x5004c3s19b0"
+					"x5004c4s19b0"
 				],
 				"VendorName": "ethernet1/1/35"
 			}
 		  }
 	*/
-	hardware, ok := suite.allHardware["x5004c3w16j37"]
+	hardware, ok := suite.allHardware["x5004c4w16j37"]
 	suite.True(ok, "Unable to find xname.")
 
-	suite.Equal(hardware.Parent, "x5004c3w16")
-	suite.Equal(hardware.Xname, "x5004c3w16j37")
+	suite.Equal(hardware.Parent, "x5004c4w16")
+	suite.Equal(hardware.Xname, "x5004c4w16j37")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_mgmt_switch_connector"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
 	suite.Equal(hardware.TypeString, xnametypes.HMSType("MgmtSwitchConnector"))
@@ -2406,7 +2406,7 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_RiverRosetta_MgmtSwitchConnect
 	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(sls_common.ComptypeMgmtSwitchConnector)
 	suite.True(ok, "ExtraProperties type is not expected type.")
 
-	suite.Equal(hardwareExtraProperties.NodeNics, []string{"x5004c3r1b0"})
+	suite.Equal(hardwareExtraProperties.NodeNics, []string{"x5004c4r1b0"})
 	suite.Equal(hardwareExtraProperties.VendorName, "1/1/37")
 }
 
@@ -2435,9 +2435,9 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_PDU0() {
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_PDU0_MgmtSwitchConnector() {
 	/*
-		  "x5004c3w16j38": {
-			"Parent": "x5004c3w16",
-			"Xname": "x5004c3w16j38",
+		  "x5004c4w16j38": {
+			"Parent": "x5004c4w16",
+			"Xname": "x5004c4w16j38",
 			"Type": "comptype_mgmt_switch_connector",
 			"Class": "River",
 			"TypeString": "MgmtSwitchConnector",
@@ -2449,11 +2449,11 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_PDU0_MgmtSwitchConnector() {
 			}
 		  }
 	*/
-	hardware, ok := suite.allHardware["x5004c3w16j38"]
+	hardware, ok := suite.allHardware["x5004c4w16j38"]
 	suite.True(ok, "Unable to find xname.")
 
-	suite.Equal(hardware.Parent, "x5004c3w16")
-	suite.Equal(hardware.Xname, "x5004c3w16j38")
+	suite.Equal(hardware.Parent, "x5004c4w16")
+	suite.Equal(hardware.Xname, "x5004c4w16j38")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_mgmt_switch_connector"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
 	suite.Equal(hardware.TypeString, xnametypes.HMSType("MgmtSwitchConnector"))
@@ -2490,9 +2490,9 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_PDU1() {
 
 func (suite *ConfigGeneratorTestSuite) TestEX2500_PDU1_MgmtSwitchConnector() {
 	/*
-		  "x5004c3w16j39": {
-			"Parent": "x5004c3w16",
-			"Xname": "x5004c3w16j39",
+		  "x5004c4w16j39": {
+			"Parent": "x5004c4w16",
+			"Xname": "x5004c4w16j39",
 			"Type": "comptype_mgmt_switch_connector",
 			"Class": "River",
 			"TypeString": "MgmtSwitchConnector",
@@ -2504,11 +2504,11 @@ func (suite *ConfigGeneratorTestSuite) TestEX2500_PDU1_MgmtSwitchConnector() {
 			}
 		  }
 	*/
-	hardware, ok := suite.allHardware["x5004c3w16j39"]
+	hardware, ok := suite.allHardware["x5004c4w16j39"]
 	suite.True(ok, "Unable to find xname.")
 
-	suite.Equal(hardware.Parent, "x5004c3w16")
-	suite.Equal(hardware.Xname, "x5004c3w16j39")
+	suite.Equal(hardware.Parent, "x5004c4w16")
+	suite.Equal(hardware.Xname, "x5004c4w16j39")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_mgmt_switch_connector"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
 	suite.Equal(hardware.TypeString, xnametypes.HMSType("MgmtSwitchConnector"))
@@ -3135,7 +3135,7 @@ func (suite *GetNodeHardwareFromRowTestSuite) SetupSuite() {
 }
 
 func (suite *GetNodeHardwareFromRowTestSuite) TestEX2500_UAN() {
-	expectedXname := "x5004c3s20b0n0"
+	expectedXname := "x5004c4s20b0n0"
 
 	// As a sanity check, lets see if we can get the expected node alias
 	suite.Equal([]string{"uan-50"}, suite.generator.getApplicationNodeAlias(expectedXname))
@@ -3154,8 +3154,8 @@ func (suite *GetNodeHardwareFromRowTestSuite) TestEX2500_UAN() {
 	hardware := suite.generator.getNodeHardwareFromRow(row)
 	suite.NotEmpty(hardware)
 
-	suite.Equal("x5004c3s20b0", hardware.Parent)
-	suite.Equal("x5004c3s20b0n0", hardware.Xname)
+	suite.Equal("x5004c4s20b0", hardware.Parent)
+	suite.Equal("x5004c4s20b0n0", hardware.Xname)
 	suite.Equal(sls_common.Node, hardware.Type)
 	suite.Equal(sls_common.ClassRiver, hardware.Class)
 	suite.Equal(xnametypes.Node, hardware.TypeString)
@@ -3169,7 +3169,7 @@ func (suite *GetNodeHardwareFromRowTestSuite) TestEX2500_UAN() {
 }
 
 func (suite *GetNodeHardwareFromRowTestSuite) TestEX2500_LNETRouter() {
-	expectedXname := "x5004c3s21b0n0"
+	expectedXname := "x5004c4s21b0n0"
 
 	// As a sanity check, lets see if we can get the expected node alias
 	suite.Equal([]string{"lnet-50"}, suite.generator.getApplicationNodeAlias(expectedXname))
@@ -3188,8 +3188,8 @@ func (suite *GetNodeHardwareFromRowTestSuite) TestEX2500_LNETRouter() {
 	hardware := suite.generator.getNodeHardwareFromRow(row)
 	suite.NotEmpty(hardware)
 
-	suite.Equal("x5004c3s21b0", hardware.Parent)
-	suite.Equal("x5004c3s21b0n0", hardware.Xname)
+	suite.Equal("x5004c4s21b0", hardware.Parent)
+	suite.Equal("x5004c4s21b0n0", hardware.Xname)
 	suite.Equal(sls_common.Node, hardware.Type)
 	suite.Equal(sls_common.ClassRiver, hardware.Class)
 	suite.Equal(xnametypes.Node, hardware.TypeString)
@@ -3350,12 +3350,12 @@ func (suite *GetSwitchConnectionForHardwareTestSuite) TestEXCabinet_CMC() {
 		DestinationPort:     "j30",
 	}
 
-	hardware := suite.generator.buildSLSHardware(xnames.FromString("x5004c3s17b999"), sls_common.ClassRiver, nil)
+	hardware := suite.generator.buildSLSHardware(xnames.FromString("x5004c4s17b999"), sls_common.ClassRiver, nil)
 
 	connection := suite.generator.getSwitchConnectionForHardware(hardware, row)
 
-	suite.Equal("x5004c3w16", connection.Parent)
-	suite.Equal("x5004c3w16j30", connection.Xname)
+	suite.Equal("x5004c4w16", connection.Parent)
+	suite.Equal("x5004c4w16j30", connection.Xname)
 	suite.Equal(sls_common.MgmtSwitchConnector, connection.Type)
 	suite.Equal(sls_common.ClassRiver, connection.Class)
 	suite.Equal(xnametypes.MgmtSwitchConnector, connection.TypeString)
@@ -3363,7 +3363,7 @@ func (suite *GetSwitchConnectionForHardwareTestSuite) TestEXCabinet_CMC() {
 	connectionExtraProperties, ok := connection.ExtraPropertiesRaw.(sls_common.ComptypeMgmtSwitchConnector)
 	suite.True(ok, "ExtraProperties type is not expected type.")
 
-	suite.Equal(connectionExtraProperties.NodeNics, []string{"x5004c3s17b999"})
+	suite.Equal(connectionExtraProperties.NodeNics, []string{"x5004c4s17b999"})
 	suite.Equal(connectionExtraProperties.VendorName, "1/1/30")
 }
 
@@ -3381,8 +3381,8 @@ func (suite *GetSwitchConnectionForHardwareTestSuite) TestEXCabinet_PDU() {
 
 	connection := suite.generator.getSwitchConnectionForHardware(hardware, row)
 
-	suite.Equal("x5004c3w16", connection.Parent)
-	suite.Equal("x5004c3w16j38", connection.Xname)
+	suite.Equal("x5004c4w16", connection.Parent)
+	suite.Equal("x5004c4w16j38", connection.Xname)
 	suite.Equal(sls_common.MgmtSwitchConnector, connection.Type)
 	suite.Equal(sls_common.ClassRiver, connection.Class)
 	suite.Equal(xnametypes.MgmtSwitchConnector, connection.TypeString)
@@ -3403,12 +3403,12 @@ func (suite *GetSwitchConnectionForHardwareTestSuite) TestEXCabinet_NodeBMC() {
 		DestinationPort:     "j35",
 	}
 
-	hardware := suite.generator.buildSLSHardware(xnames.FromString("x5004c3s19b0n0"), sls_common.ClassRiver, nil)
+	hardware := suite.generator.buildSLSHardware(xnames.FromString("x5004c4s19b0n0"), sls_common.ClassRiver, nil)
 
 	connection := suite.generator.getSwitchConnectionForHardware(hardware, row)
 
-	suite.Equal("x5004c3w16", connection.Parent)
-	suite.Equal("x5004c3w16j35", connection.Xname)
+	suite.Equal("x5004c4w16", connection.Parent)
+	suite.Equal("x5004c4w16j35", connection.Xname)
 	suite.Equal(sls_common.MgmtSwitchConnector, connection.Type)
 	suite.Equal(sls_common.ClassRiver, connection.Class)
 	suite.Equal(xnametypes.MgmtSwitchConnector, connection.TypeString)
@@ -3416,7 +3416,7 @@ func (suite *GetSwitchConnectionForHardwareTestSuite) TestEXCabinet_NodeBMC() {
 	connectionExtraProperties, ok := connection.ExtraPropertiesRaw.(sls_common.ComptypeMgmtSwitchConnector)
 	suite.True(ok, "ExtraProperties type is not expected type.")
 
-	suite.Equal(connectionExtraProperties.NodeNics, []string{"x5004c3s19b0"})
+	suite.Equal(connectionExtraProperties.NodeNics, []string{"x5004c4s19b0"})
 	suite.Equal(connectionExtraProperties.VendorName, "1/1/35")
 }
 
@@ -3430,12 +3430,12 @@ func (suite *GetSwitchConnectionForHardwareTestSuite) TestEXCabinet_RouterBMC() 
 		DestinationPort:     "j37",
 	}
 
-	hardware := suite.generator.buildSLSHardware(xnames.FromString("x5004c3r1b0"), sls_common.ClassRiver, nil)
+	hardware := suite.generator.buildSLSHardware(xnames.FromString("x5004c4r1b0"), sls_common.ClassRiver, nil)
 
 	connection := suite.generator.getSwitchConnectionForHardware(hardware, row)
 
-	suite.Equal("x5004c3w16", connection.Parent)
-	suite.Equal("x5004c3w16j37", connection.Xname)
+	suite.Equal("x5004c4w16", connection.Parent)
+	suite.Equal("x5004c4w16j37", connection.Xname)
 	suite.Equal(sls_common.MgmtSwitchConnector, connection.Type)
 	suite.Equal(sls_common.ClassRiver, connection.Class)
 	suite.Equal(xnametypes.MgmtSwitchConnector, connection.TypeString)
@@ -3443,7 +3443,7 @@ func (suite *GetSwitchConnectionForHardwareTestSuite) TestEXCabinet_RouterBMC() 
 	connectionExtraProperties, ok := connection.ExtraPropertiesRaw.(sls_common.ComptypeMgmtSwitchConnector)
 	suite.True(ok, "ExtraProperties type is not expected type.")
 
-	suite.Equal(connectionExtraProperties.NodeNics, []string{"x5004c3r1b0"})
+	suite.Equal(connectionExtraProperties.NodeNics, []string{"x5004c4r1b0"})
 	suite.Equal(connectionExtraProperties.VendorName, "1/1/37")
 }
 
@@ -3703,7 +3703,7 @@ func (suite *CabinetHelpersTestSuite) TestDetermineRiverChassis_HillCabinet() {
 func (suite *CabinetHelpersTestSuite) TestDetermineRiverChassis_EX2500Cabinet() {
 	chassis, err := suite.generator.determineRiverChassis(xnames.Cabinet{Cabinet: 5004})
 	suite.NoError(err)
-	suite.Equal(xnames.FromString("x5004c3"), chassis)
+	suite.Equal(xnames.FromString("x5004c4"), chassis)
 }
 
 func (suite *CabinetHelpersTestSuite) TestDetermineRiverChassis_MountainCabinet() {

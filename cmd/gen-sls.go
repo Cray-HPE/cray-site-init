@@ -163,7 +163,7 @@ func genCabinetMap(cd []csi.CabinetGroupDetail, shastaNetworks map[string]*csi.I
 							log.Fatalf("A EX2000 (hill) cabinet %s with 1 air-cooled chassis and 0 liquid-cooled chassis provided. This cabinet should be treated a standard river cabinet, and not hill. Refusing to continue", cabinetTemplate.Xname.String())
 						case 1:
 							// Valid configuration
-							cabinetTemplate.AirCooledChassisList = []int{3}
+							cabinetTemplate.AirCooledChassisList = []int{4}
 							cabinetTemplate.LiquidCooledChassisList = []int{0}
 						default:
 							// Invalid configuration
