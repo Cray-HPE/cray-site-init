@@ -33,12 +33,11 @@ type Validator interface {
 	Validate() error
 }
 
-// GenericXname is an interface that is implemented by all xnames structures.
+// Xname is an interface that is implemented by all xnames structures.
 // It is meant to provide a generic way to store or pass a xnames structure, such as to a function that can handle
 // multiple different xnames types.
-type GenericXname interface {
+type Xname interface {
 	String() string
 	Type() xnametypes.HMSType
-	ParentGeneric() GenericXname
-	IsController() bool
+	ParentInterface() Xname
 }

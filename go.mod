@@ -12,6 +12,7 @@ require (
 	github.com/Cray-HPE/hms-shcd-parser v1.8.0
 	github.com/Cray-HPE/hms-sls v1.19.0
 	github.com/Cray-HPE/hms-smd v1.51.0
+	github.com/Cray-HPE/hms-xname v1.1.0
 	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef
 	github.com/aws/aws-sdk-go v1.40.14
 	github.com/evanphx/json-patch v4.11.0+incompatible
@@ -33,12 +34,12 @@ require (
 	k8s.io/kubectl v0.22.2
 )
 
+require github.com/Cray-HPE/hms-base v1.15.0 // indirect
+
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
-	github.com/Cray-HPE/hms-base v1.15.0
 	github.com/Cray-HPE/hms-certs v1.3.2 // indirect
 	github.com/Cray-HPE/hms-securestorage v1.12.2 // indirect
-	github.com/Cray-HPE/hms-xname v1.0.2
 	github.com/MakeNowJust/heredoc v0.0.0-20170808103936-bb23615498cd // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect

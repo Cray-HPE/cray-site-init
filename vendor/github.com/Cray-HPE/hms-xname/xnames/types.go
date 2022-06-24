@@ -44,8 +44,8 @@ func (x System) String() string {
 	)
 }
 
-// ParentGeneric will determine the parent of this System, and return it as a GenericXname interface
-func (x System) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this System, and return it as a Xname interface
+func (x System) ParentInterface() Xname {
 
 	return nil
 }
@@ -74,12 +74,6 @@ func (x System) Validate() error {
 	return nil
 }
 
-// IsController returns whether System is a controller type, i.e. that
-// would host a Redfish entry point
-func (x System) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
-}
-
 // CDU - dD
 type CDU struct {
 	CDU int // dD
@@ -103,8 +97,8 @@ func (x CDU) Parent() System {
 	return System{}
 }
 
-// ParentGeneric will determine the parent of this CDU, and return it as a GenericXname interface
-func (x CDU) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this CDU, and return it as a Xname interface
+func (x CDU) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -125,12 +119,6 @@ func (x CDU) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether CDU is a controller type, i.e. that
-// would host a Redfish entry point
-func (x CDU) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // CDUMgmtSwitch - dDwW
@@ -160,8 +148,8 @@ func (x CDUMgmtSwitch) Parent() CDU {
 	}
 }
 
-// ParentGeneric will determine the parent of this CDUMgmtSwitch, and return it as a GenericXname interface
-func (x CDUMgmtSwitch) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this CDUMgmtSwitch, and return it as a Xname interface
+func (x CDUMgmtSwitch) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -174,12 +162,6 @@ func (x CDUMgmtSwitch) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether CDUMgmtSwitch is a controller type, i.e. that
-// would host a Redfish entry point
-func (x CDUMgmtSwitch) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // Cabinet - xX
@@ -205,8 +187,8 @@ func (x Cabinet) Parent() System {
 	return System{}
 }
 
-// ParentGeneric will determine the parent of this Cabinet, and return it as a GenericXname interface
-func (x Cabinet) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this Cabinet, and return it as a Xname interface
+func (x Cabinet) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -261,12 +243,6 @@ func (x Cabinet) Validate() error {
 	return nil
 }
 
-// IsController returns whether Cabinet is a controller type, i.e. that
-// would host a Redfish entry point
-func (x Cabinet) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
-}
-
 // CEC - xXeE
 type CEC struct {
 	Cabinet int // xX
@@ -294,8 +270,8 @@ func (x CEC) Parent() Cabinet {
 	}
 }
 
-// ParentGeneric will determine the parent of this CEC, and return it as a GenericXname interface
-func (x CEC) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this CEC, and return it as a Xname interface
+func (x CEC) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -308,12 +284,6 @@ func (x CEC) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether CEC is a controller type, i.e. that
-// would host a Redfish entry point
-func (x CEC) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // CabinetBMC - xXbB
@@ -343,8 +313,8 @@ func (x CabinetBMC) Parent() Cabinet {
 	}
 }
 
-// ParentGeneric will determine the parent of this CabinetBMC, and return it as a GenericXname interface
-func (x CabinetBMC) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this CabinetBMC, and return it as a Xname interface
+func (x CabinetBMC) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -357,12 +327,6 @@ func (x CabinetBMC) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether CabinetBMC is a controller type, i.e. that
-// would host a Redfish entry point
-func (x CabinetBMC) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // CabinetCDU - xXdD
@@ -392,8 +356,8 @@ func (x CabinetCDU) Parent() Cabinet {
 	}
 }
 
-// ParentGeneric will determine the parent of this CabinetCDU, and return it as a GenericXname interface
-func (x CabinetCDU) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this CabinetCDU, and return it as a Xname interface
+func (x CabinetCDU) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -406,12 +370,6 @@ func (x CabinetCDU) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether CabinetCDU is a controller type, i.e. that
-// would host a Redfish entry point
-func (x CabinetCDU) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // CabinetPDUController - xXmM
@@ -441,8 +399,8 @@ func (x CabinetPDUController) Parent() Cabinet {
 	}
 }
 
-// ParentGeneric will determine the parent of this CabinetPDUController, and return it as a GenericXname interface
-func (x CabinetPDUController) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this CabinetPDUController, and return it as a Xname interface
+func (x CabinetPDUController) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -475,12 +433,6 @@ func (x CabinetPDUController) Validate() error {
 	return nil
 }
 
-// IsController returns whether CabinetPDUController is a controller type, i.e. that
-// would host a Redfish entry point
-func (x CabinetPDUController) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
-}
-
 // CabinetPDU - xXmMpP
 type CabinetPDU struct {
 	Cabinet              int // xX
@@ -511,8 +463,8 @@ func (x CabinetPDU) Parent() CabinetPDUController {
 	}
 }
 
-// ParentGeneric will determine the parent of this CabinetPDU, and return it as a GenericXname interface
-func (x CabinetPDU) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this CabinetPDU, and return it as a Xname interface
+func (x CabinetPDU) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -545,12 +497,6 @@ func (x CabinetPDU) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether CabinetPDU is a controller type, i.e. that
-// would host a Redfish entry point
-func (x CabinetPDU) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // CabinetPDUOutlet - xXmMpPjJ
@@ -586,8 +532,8 @@ func (x CabinetPDUOutlet) Parent() CabinetPDU {
 	}
 }
 
-// ParentGeneric will determine the parent of this CabinetPDUOutlet, and return it as a GenericXname interface
-func (x CabinetPDUOutlet) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this CabinetPDUOutlet, and return it as a Xname interface
+func (x CabinetPDUOutlet) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -600,12 +546,6 @@ func (x CabinetPDUOutlet) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether CabinetPDUOutlet is a controller type, i.e. that
-// would host a Redfish entry point
-func (x CabinetPDUOutlet) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // CabinetPDUPowerConnector - xXmMpPvV
@@ -641,8 +581,8 @@ func (x CabinetPDUPowerConnector) Parent() CabinetPDU {
 	}
 }
 
-// ParentGeneric will determine the parent of this CabinetPDUPowerConnector, and return it as a GenericXname interface
-func (x CabinetPDUPowerConnector) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this CabinetPDUPowerConnector, and return it as a Xname interface
+func (x CabinetPDUPowerConnector) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -655,12 +595,6 @@ func (x CabinetPDUPowerConnector) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether CabinetPDUPowerConnector is a controller type, i.e. that
-// would host a Redfish entry point
-func (x CabinetPDUPowerConnector) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // CabinetPDUNic - xXmMpPiI
@@ -693,8 +627,8 @@ func (x CabinetPDUNic) Parent() CabinetPDUController {
 	}
 }
 
-// ParentGeneric will determine the parent of this CabinetPDUNic, and return it as a GenericXname interface
-func (x CabinetPDUNic) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this CabinetPDUNic, and return it as a Xname interface
+func (x CabinetPDUNic) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -707,12 +641,6 @@ func (x CabinetPDUNic) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether CabinetPDUNic is a controller type, i.e. that
-// would host a Redfish entry point
-func (x CabinetPDUNic) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // Chassis - xXcC
@@ -742,8 +670,8 @@ func (x Chassis) Parent() Cabinet {
 	}
 }
 
-// ParentGeneric will determine the parent of this Chassis, and return it as a GenericXname interface
-func (x Chassis) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this Chassis, and return it as a Xname interface
+func (x Chassis) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -821,12 +749,6 @@ func (x Chassis) Validate() error {
 	return nil
 }
 
-// IsController returns whether Chassis is a controller type, i.e. that
-// would host a Redfish entry point
-func (x Chassis) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
-}
-
 // CMMFpga - xXcCfF
 type CMMFpga struct {
 	Cabinet int // xX
@@ -857,8 +779,8 @@ func (x CMMFpga) Parent() Chassis {
 	}
 }
 
-// ParentGeneric will determine the parent of this CMMFpga, and return it as a GenericXname interface
-func (x CMMFpga) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this CMMFpga, and return it as a Xname interface
+func (x CMMFpga) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -871,12 +793,6 @@ func (x CMMFpga) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether CMMFpga is a controller type, i.e. that
-// would host a Redfish entry point
-func (x CMMFpga) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // CMMRectifier - xXcCtT
@@ -909,8 +825,8 @@ func (x CMMRectifier) Parent() Chassis {
 	}
 }
 
-// ParentGeneric will determine the parent of this CMMRectifier, and return it as a GenericXname interface
-func (x CMMRectifier) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this CMMRectifier, and return it as a Xname interface
+func (x CMMRectifier) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -923,12 +839,6 @@ func (x CMMRectifier) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether CMMRectifier is a controller type, i.e. that
-// would host a Redfish entry point
-func (x CMMRectifier) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // ChassisBMC - xXcCbB
@@ -961,8 +871,8 @@ func (x ChassisBMC) Parent() Chassis {
 	}
 }
 
-// ParentGeneric will determine the parent of this ChassisBMC, and return it as a GenericXname interface
-func (x ChassisBMC) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this ChassisBMC, and return it as a Xname interface
+func (x ChassisBMC) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -985,12 +895,6 @@ func (x ChassisBMC) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether ChassisBMC is a controller type, i.e. that
-// would host a Redfish entry point
-func (x ChassisBMC) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // ChassisBMCNic - xXcCbBiI
@@ -1026,8 +930,8 @@ func (x ChassisBMCNic) Parent() ChassisBMC {
 	}
 }
 
-// ParentGeneric will determine the parent of this ChassisBMCNic, and return it as a GenericXname interface
-func (x ChassisBMCNic) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this ChassisBMCNic, and return it as a Xname interface
+func (x ChassisBMCNic) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -1040,12 +944,6 @@ func (x ChassisBMCNic) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether ChassisBMCNic is a controller type, i.e. that
-// would host a Redfish entry point
-func (x ChassisBMCNic) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // ComputeModule - xXcCsS
@@ -1078,8 +976,8 @@ func (x ComputeModule) Parent() Chassis {
 	}
 }
 
-// ParentGeneric will determine the parent of this ComputeModule, and return it as a GenericXname interface
-func (x ComputeModule) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this ComputeModule, and return it as a Xname interface
+func (x ComputeModule) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -1124,12 +1022,6 @@ func (x ComputeModule) Validate() error {
 	return nil
 }
 
-// IsController returns whether ComputeModule is a controller type, i.e. that
-// would host a Redfish entry point
-func (x ComputeModule) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
-}
-
 // NodeBMC - xXcCsSbB
 type NodeBMC struct {
 	Cabinet       int // xX
@@ -1163,8 +1055,8 @@ func (x NodeBMC) Parent() ComputeModule {
 	}
 }
 
-// ParentGeneric will determine the parent of this NodeBMC, and return it as a GenericXname interface
-func (x NodeBMC) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this NodeBMC, and return it as a Xname interface
+func (x NodeBMC) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -1199,12 +1091,6 @@ func (x NodeBMC) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether NodeBMC is a controller type, i.e. that
-// would host a Redfish entry point
-func (x NodeBMC) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // Node - xXcCsSbBnN
@@ -1243,8 +1129,8 @@ func (x Node) Parent() NodeBMC {
 	}
 }
 
-// ParentGeneric will determine the parent of this Node, and return it as a GenericXname interface
-func (x Node) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this Node, and return it as a Xname interface
+func (x Node) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -1343,12 +1229,6 @@ func (x Node) Validate() error {
 	return nil
 }
 
-// IsController returns whether Node is a controller type, i.e. that
-// would host a Redfish entry point
-func (x Node) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
-}
-
 // Memory - xXcCsSbBnNdD
 type Memory struct {
 	Cabinet       int // xX
@@ -1388,8 +1268,8 @@ func (x Memory) Parent() Node {
 	}
 }
 
-// ParentGeneric will determine the parent of this Memory, and return it as a GenericXname interface
-func (x Memory) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this Memory, and return it as a Xname interface
+func (x Memory) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -1402,12 +1282,6 @@ func (x Memory) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether Memory is a controller type, i.e. that
-// would host a Redfish entry point
-func (x Memory) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // NodeAccel - xXcCsSbBnNaA
@@ -1449,8 +1323,8 @@ func (x NodeAccel) Parent() Node {
 	}
 }
 
-// ParentGeneric will determine the parent of this NodeAccel, and return it as a GenericXname interface
-func (x NodeAccel) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this NodeAccel, and return it as a Xname interface
+func (x NodeAccel) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -1463,12 +1337,6 @@ func (x NodeAccel) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether NodeAccel is a controller type, i.e. that
-// would host a Redfish entry point
-func (x NodeAccel) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // NodeAccelRiser - xXcCsSbBnNrR
@@ -1510,8 +1378,8 @@ func (x NodeAccelRiser) Parent() Node {
 	}
 }
 
-// ParentGeneric will determine the parent of this NodeAccelRiser, and return it as a GenericXname interface
-func (x NodeAccelRiser) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this NodeAccelRiser, and return it as a Xname interface
+func (x NodeAccelRiser) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -1524,12 +1392,6 @@ func (x NodeAccelRiser) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether NodeAccelRiser is a controller type, i.e. that
-// would host a Redfish entry point
-func (x NodeAccelRiser) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // NodeHsnNic - xXcCsSbBnNhH
@@ -1571,8 +1433,8 @@ func (x NodeHsnNic) Parent() Node {
 	}
 }
 
-// ParentGeneric will determine the parent of this NodeHsnNic, and return it as a GenericXname interface
-func (x NodeHsnNic) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this NodeHsnNic, and return it as a Xname interface
+func (x NodeHsnNic) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -1585,12 +1447,6 @@ func (x NodeHsnNic) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether NodeHsnNic is a controller type, i.e. that
-// would host a Redfish entry point
-func (x NodeHsnNic) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // NodeNic - xXcCsSbBnNiI
@@ -1632,8 +1488,8 @@ func (x NodeNic) Parent() Node {
 	}
 }
 
-// ParentGeneric will determine the parent of this NodeNic, and return it as a GenericXname interface
-func (x NodeNic) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this NodeNic, and return it as a Xname interface
+func (x NodeNic) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -1646,12 +1502,6 @@ func (x NodeNic) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether NodeNic is a controller type, i.e. that
-// would host a Redfish entry point
-func (x NodeNic) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // Processor - xXcCsSbBnNpP
@@ -1693,8 +1543,8 @@ func (x Processor) Parent() Node {
 	}
 }
 
-// ParentGeneric will determine the parent of this Processor, and return it as a GenericXname interface
-func (x Processor) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this Processor, and return it as a Xname interface
+func (x Processor) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -1707,12 +1557,6 @@ func (x Processor) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether Processor is a controller type, i.e. that
-// would host a Redfish entry point
-func (x Processor) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // StorageGroup - xXcCsSbBnNgG
@@ -1754,8 +1598,8 @@ func (x StorageGroup) Parent() Node {
 	}
 }
 
-// ParentGeneric will determine the parent of this StorageGroup, and return it as a GenericXname interface
-func (x StorageGroup) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this StorageGroup, and return it as a Xname interface
+func (x StorageGroup) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -1781,12 +1625,6 @@ func (x StorageGroup) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether StorageGroup is a controller type, i.e. that
-// would host a Redfish entry point
-func (x StorageGroup) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // Drive - xXcCsSbBnNgGkK
@@ -1831,8 +1669,8 @@ func (x Drive) Parent() StorageGroup {
 	}
 }
 
-// ParentGeneric will determine the parent of this Drive, and return it as a GenericXname interface
-func (x Drive) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this Drive, and return it as a Xname interface
+func (x Drive) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -1845,12 +1683,6 @@ func (x Drive) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether Drive is a controller type, i.e. that
-// would host a Redfish entry point
-func (x Drive) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // NodeBMCNic - xXcCsSbBiI
@@ -1889,8 +1721,8 @@ func (x NodeBMCNic) Parent() NodeBMC {
 	}
 }
 
-// ParentGeneric will determine the parent of this NodeBMCNic, and return it as a GenericXname interface
-func (x NodeBMCNic) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this NodeBMCNic, and return it as a Xname interface
+func (x NodeBMCNic) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -1903,12 +1735,6 @@ func (x NodeBMCNic) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether NodeBMCNic is a controller type, i.e. that
-// would host a Redfish entry point
-func (x NodeBMCNic) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // NodeEnclosure - xXcCsSbBeE
@@ -1944,8 +1770,8 @@ func (x NodeEnclosure) Parent() ComputeModule {
 	}
 }
 
-// ParentGeneric will determine the parent of this NodeEnclosure, and return it as a GenericXname interface
-func (x NodeEnclosure) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this NodeEnclosure, and return it as a Xname interface
+func (x NodeEnclosure) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -1980,12 +1806,6 @@ func (x NodeEnclosure) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether NodeEnclosure is a controller type, i.e. that
-// would host a Redfish entry point
-func (x NodeEnclosure) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // NodeEnclosurePowerSupply - xXcCsSbBeEtT
@@ -2024,8 +1844,8 @@ func (x NodeEnclosurePowerSupply) Parent() NodeEnclosure {
 	}
 }
 
-// ParentGeneric will determine the parent of this NodeEnclosurePowerSupply, and return it as a GenericXname interface
-func (x NodeEnclosurePowerSupply) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this NodeEnclosurePowerSupply, and return it as a Xname interface
+func (x NodeEnclosurePowerSupply) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -2038,12 +1858,6 @@ func (x NodeEnclosurePowerSupply) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether NodeEnclosurePowerSupply is a controller type, i.e. that
-// would host a Redfish entry point
-func (x NodeEnclosurePowerSupply) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // NodeFpga - xXcCsSbBfF
@@ -2082,8 +1896,8 @@ func (x NodeFpga) Parent() NodeEnclosure {
 	}
 }
 
-// ParentGeneric will determine the parent of this NodeFpga, and return it as a GenericXname interface
-func (x NodeFpga) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this NodeFpga, and return it as a Xname interface
+func (x NodeFpga) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -2096,12 +1910,6 @@ func (x NodeFpga) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether NodeFpga is a controller type, i.e. that
-// would host a Redfish entry point
-func (x NodeFpga) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // NodePowerConnector - xXcCsSv
@@ -2137,8 +1945,8 @@ func (x NodePowerConnector) Parent() ComputeModule {
 	}
 }
 
-// ParentGeneric will determine the parent of this NodePowerConnector, and return it as a GenericXname interface
-func (x NodePowerConnector) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this NodePowerConnector, and return it as a Xname interface
+func (x NodePowerConnector) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -2151,12 +1959,6 @@ func (x NodePowerConnector) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether NodePowerConnector is a controller type, i.e. that
-// would host a Redfish entry point
-func (x NodePowerConnector) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // MgmtHLSwitchEnclosure - xXcChH
@@ -2189,8 +1991,8 @@ func (x MgmtHLSwitchEnclosure) Parent() Chassis {
 	}
 }
 
-// ParentGeneric will determine the parent of this MgmtHLSwitchEnclosure, and return it as a GenericXname interface
-func (x MgmtHLSwitchEnclosure) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this MgmtHLSwitchEnclosure, and return it as a Xname interface
+func (x MgmtHLSwitchEnclosure) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -2213,12 +2015,6 @@ func (x MgmtHLSwitchEnclosure) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether MgmtHLSwitchEnclosure is a controller type, i.e. that
-// would host a Redfish entry point
-func (x MgmtHLSwitchEnclosure) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // MgmtHLSwitch - xXcChHsS
@@ -2254,8 +2050,8 @@ func (x MgmtHLSwitch) Parent() MgmtHLSwitchEnclosure {
 	}
 }
 
-// ParentGeneric will determine the parent of this MgmtHLSwitch, and return it as a GenericXname interface
-func (x MgmtHLSwitch) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this MgmtHLSwitch, and return it as a Xname interface
+func (x MgmtHLSwitch) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -2268,12 +2064,6 @@ func (x MgmtHLSwitch) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether MgmtHLSwitch is a controller type, i.e. that
-// would host a Redfish entry point
-func (x MgmtHLSwitch) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // MgmtSwitch - xXcCwW
@@ -2306,8 +2096,8 @@ func (x MgmtSwitch) Parent() Chassis {
 	}
 }
 
-// ParentGeneric will determine the parent of this MgmtSwitch, and return it as a GenericXname interface
-func (x MgmtSwitch) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this MgmtSwitch, and return it as a Xname interface
+func (x MgmtSwitch) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -2330,12 +2120,6 @@ func (x MgmtSwitch) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether MgmtSwitch is a controller type, i.e. that
-// would host a Redfish entry point
-func (x MgmtSwitch) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // MgmtSwitchConnector - xXcCwWjJ
@@ -2371,8 +2155,8 @@ func (x MgmtSwitchConnector) Parent() MgmtSwitch {
 	}
 }
 
-// ParentGeneric will determine the parent of this MgmtSwitchConnector, and return it as a GenericXname interface
-func (x MgmtSwitchConnector) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this MgmtSwitchConnector, and return it as a Xname interface
+func (x MgmtSwitchConnector) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -2385,12 +2169,6 @@ func (x MgmtSwitchConnector) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether MgmtSwitchConnector is a controller type, i.e. that
-// would host a Redfish entry point
-func (x MgmtSwitchConnector) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // RouterModule - xXcCrR
@@ -2423,8 +2201,8 @@ func (x RouterModule) Parent() Chassis {
 	}
 }
 
-// ParentGeneric will determine the parent of this RouterModule, and return it as a GenericXname interface
-func (x RouterModule) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this RouterModule, and return it as a Xname interface
+func (x RouterModule) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -2509,12 +2287,6 @@ func (x RouterModule) Validate() error {
 	return nil
 }
 
-// IsController returns whether RouterModule is a controller type, i.e. that
-// would host a Redfish entry point
-func (x RouterModule) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
-}
-
 // HSNAsic - xXcCrRaA
 type HSNAsic struct {
 	Cabinet      int // xX
@@ -2548,8 +2320,8 @@ func (x HSNAsic) Parent() RouterModule {
 	}
 }
 
-// ParentGeneric will determine the parent of this HSNAsic, and return it as a GenericXname interface
-func (x HSNAsic) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this HSNAsic, and return it as a Xname interface
+func (x HSNAsic) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -2573,12 +2345,6 @@ func (x HSNAsic) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether HSNAsic is a controller type, i.e. that
-// would host a Redfish entry point
-func (x HSNAsic) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // HSNLink - xXcCrRaAlL
@@ -2617,8 +2383,8 @@ func (x HSNLink) Parent() HSNAsic {
 	}
 }
 
-// ParentGeneric will determine the parent of this HSNLink, and return it as a GenericXname interface
-func (x HSNLink) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this HSNLink, and return it as a Xname interface
+func (x HSNLink) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -2631,12 +2397,6 @@ func (x HSNLink) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether HSNLink is a controller type, i.e. that
-// would host a Redfish entry point
-func (x HSNLink) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // HSNBoard - xXcCrReE
@@ -2672,8 +2432,8 @@ func (x HSNBoard) Parent() RouterModule {
 	}
 }
 
-// ParentGeneric will determine the parent of this HSNBoard, and return it as a GenericXname interface
-func (x HSNBoard) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this HSNBoard, and return it as a Xname interface
+func (x HSNBoard) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -2686,12 +2446,6 @@ func (x HSNBoard) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether HSNBoard is a controller type, i.e. that
-// would host a Redfish entry point
-func (x HSNBoard) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // HSNConnector - xXcCrRjJ
@@ -2727,8 +2481,8 @@ func (x HSNConnector) Parent() RouterModule {
 	}
 }
 
-// ParentGeneric will determine the parent of this HSNConnector, and return it as a GenericXname interface
-func (x HSNConnector) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this HSNConnector, and return it as a Xname interface
+func (x HSNConnector) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -2752,12 +2506,6 @@ func (x HSNConnector) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether HSNConnector is a controller type, i.e. that
-// would host a Redfish entry point
-func (x HSNConnector) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // HSNConnectorPort - xXcCrRjJpP
@@ -2796,8 +2544,8 @@ func (x HSNConnectorPort) Parent() HSNConnector {
 	}
 }
 
-// ParentGeneric will determine the parent of this HSNConnectorPort, and return it as a GenericXname interface
-func (x HSNConnectorPort) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this HSNConnectorPort, and return it as a Xname interface
+func (x HSNConnectorPort) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -2810,12 +2558,6 @@ func (x HSNConnectorPort) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether HSNConnectorPort is a controller type, i.e. that
-// would host a Redfish entry point
-func (x HSNConnectorPort) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // RouterBMC - xXcCrRbB
@@ -2851,8 +2593,8 @@ func (x RouterBMC) Parent() RouterModule {
 	}
 }
 
-// ParentGeneric will determine the parent of this RouterBMC, and return it as a GenericXname interface
-func (x RouterBMC) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this RouterBMC, and return it as a Xname interface
+func (x RouterBMC) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -2876,12 +2618,6 @@ func (x RouterBMC) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether RouterBMC is a controller type, i.e. that
-// would host a Redfish entry point
-func (x RouterBMC) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // RouterBMCNic - xXcCrRbBiI
@@ -2920,8 +2656,8 @@ func (x RouterBMCNic) Parent() RouterBMC {
 	}
 }
 
-// ParentGeneric will determine the parent of this RouterBMCNic, and return it as a GenericXname interface
-func (x RouterBMCNic) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this RouterBMCNic, and return it as a Xname interface
+func (x RouterBMCNic) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -2934,12 +2670,6 @@ func (x RouterBMCNic) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether RouterBMCNic is a controller type, i.e. that
-// would host a Redfish entry point
-func (x RouterBMCNic) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // RouterFpga - xXcCrRfF
@@ -2975,8 +2705,8 @@ func (x RouterFpga) Parent() RouterModule {
 	}
 }
 
-// ParentGeneric will determine the parent of this RouterFpga, and return it as a GenericXname interface
-func (x RouterFpga) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this RouterFpga, and return it as a Xname interface
+func (x RouterFpga) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -2989,12 +2719,6 @@ func (x RouterFpga) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether RouterFpga is a controller type, i.e. that
-// would host a Redfish entry point
-func (x RouterFpga) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // RouterPowerConnector - xXcCrRvV
@@ -3030,8 +2754,8 @@ func (x RouterPowerConnector) Parent() RouterModule {
 	}
 }
 
-// ParentGeneric will determine the parent of this RouterPowerConnector, and return it as a GenericXname interface
-func (x RouterPowerConnector) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this RouterPowerConnector, and return it as a Xname interface
+func (x RouterPowerConnector) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -3044,12 +2768,6 @@ func (x RouterPowerConnector) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether RouterPowerConnector is a controller type, i.e. that
-// would host a Redfish entry point
-func (x RouterPowerConnector) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // RouterTOR - xXcCrRtT
@@ -3085,8 +2803,8 @@ func (x RouterTOR) Parent() RouterModule {
 	}
 }
 
-// ParentGeneric will determine the parent of this RouterTOR, and return it as a GenericXname interface
-func (x RouterTOR) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this RouterTOR, and return it as a Xname interface
+func (x RouterTOR) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -3110,12 +2828,6 @@ func (x RouterTOR) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether RouterTOR is a controller type, i.e. that
-// would host a Redfish entry point
-func (x RouterTOR) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }
 
 // RouterTORFpga - xXcCrRtTfF
@@ -3154,8 +2866,8 @@ func (x RouterTORFpga) Parent() RouterTOR {
 	}
 }
 
-// ParentGeneric will determine the parent of this RouterTORFpga, and return it as a GenericXname interface
-func (x RouterTORFpga) ParentGeneric() GenericXname {
+// ParentGeneric will determine the parent of this RouterTORFpga, and return it as a Xname interface
+func (x RouterTORFpga) ParentInterface() Xname {
 	return x.Parent()
 
 }
@@ -3168,10 +2880,4 @@ func (x RouterTORFpga) Validate() error {
 	}
 
 	return nil
-}
-
-// IsController returns whether RouterTORFpga is a controller type, i.e. that
-// would host a Redfish entry point
-func (x RouterTORFpga) IsController() bool {
-	return xnametypes.IsHMSTypeController(x.Type())
 }

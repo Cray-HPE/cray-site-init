@@ -141,7 +141,7 @@ func GetHMSType(obj interface{}) (xnametypes.HMSType, error) {
 
 // FromString will convert the string representation of a xname into a xname structure
 // If the string is not a valid xname, then nil and HMSTypeInvalid will be returned.
-func FromString(xname string) GenericXname {
+func FromString(xname string) Xname {
 	hmsType := xnametypes.GetHMSType(xname)
 	if hmsType == xnametypes.HMSTypeInvalid {
 		return nil
@@ -174,7 +174,7 @@ func FromString(xname string) GenericXname {
 		matches = append(matches, match)
 	}
 
-	var component GenericXname
+	var component Xname
 
 	switch hmsType {
 	case xnametypes.System:
