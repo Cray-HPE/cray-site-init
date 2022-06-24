@@ -35,10 +35,9 @@
 ### Risks and Mitigations
  
 <!--- What is less risky, or more risky now - or if your mod fails is there a new risk? -->
-<!---
-    Example:
-    
-    This introduces some risk since this change also brings in a newer version of X, but otherwise the original bugfix
-    is resolved and the overall risk of fatal failures is reduced.
-    
-    -->
+<!--- Example:
+
+This introduces some risk since this change also brings in a newer version of X, but otherwise the original bugfix
+is resolved and the overall risk of fatal failures is reduced.
+
+-->
