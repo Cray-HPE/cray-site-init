@@ -5,12 +5,61 @@ Copyright 2021 Hewlett Packard Enterprise Development LP
 package csi
 
 import (
+	"fmt"
+
 	csiFiles "github.com/Cray-HPE/cray-site-init/internal/files"
+	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 )
+
+// CabinetKind is the type of the cabinet. This can either be a generic identifier like river,
+// hill, or mountain. It can also be a cabinet model number like EX2000, EX25000, EX3000, or EX4000.
+type CabinetKind string
+
+// Enumerations of CabinetKinds for valid cabinet types.
+const (
+	CabinetKindRiver    = "river"
+	CabinetKindHill     = "hill"
+	CabinetKindMountain = "mountain"
+	CabinetKindEX2000   = "EX2000"
+	CabinetKindEX2500   = "EX2500"
+	CabinetKindEX3000   = "EX3000"
+	CabinetKindEX4000   = "EX4000"
+)
+
+// IsModel will return true if this cabinet type is the actual model of the cabinet.
+func (ck CabinetKind) IsModel() bool {
+	if ck == CabinetKindRiver || ck == CabinetKindHill || ck == CabinetKindMountain {
+		return false
+	}
+
+	return true
+}
+
+// Class will determine the SLS cabinet class of this Cabinet group
+func (ck CabinetKind) Class() (sls_common.CabinetType, error) {
+	switch ck {
+	case CabinetKindRiver:
+		return sls_common.ClassRiver, nil
+	case CabinetKindEX2000:
+		fallthrough
+	case CabinetKindEX2500:
+		fallthrough
+	case CabinetKindHill:
+		return sls_common.ClassHill, nil
+	case CabinetKindEX3000:
+		fallthrough
+	case CabinetKindEX4000:
+		fallthrough
+	case CabinetKindMountain:
+		return sls_common.ClassMountain, nil
+	default:
+		return "", fmt.Errorf("unknown cabinet kind (%s)", ck)
+	}
+}
 
 // CabinetGroupDetail stores information that can only come from Manufacturing
 type CabinetGroupDetail struct {
-	Kind            string          `mapstructure:"cabinet-type" yaml:"type" valid:"-"`
+	Kind            CabinetKind     `mapstructure:"cabinet-type" yaml:"type" valid:"-"`
 	Cabinets        int             `mapstructure:"number" yaml:"total_number" valid:"-"`
 	StartingCabinet int             `mapstructure:"starting-cabinet" yaml:"starting_id" valid:"-"`
 	CabinetDetails  []CabinetDetail `mapstructure:"cabinets" yaml:"cabinets" valid:"-"`
@@ -19,7 +68,6 @@ type CabinetGroupDetail struct {
 // CabinetDetail stores information about individual cabinets
 type CabinetDetail struct {
 	ID           int           `mapstructure:"id" yaml:"id" valid:"numeric"`
-	Model        string        `mapstructure:"model" yaml:"model" valid:"-"`
 	ChassisCount *ChassisCount `mapstructure:"chassis-count" yaml:"chassis-count" valid:"-"` // TODO this is an optional field, if not provided defaults will take presendence
 	NMNSubnet    string        `mapstructure:"nmn-subnet" yaml:"nmn-subnet" valid:"-"`
 	NMNVlanID    int16         `mapstructure:"nmn-vlan" yaml:"nmn-vlan" valid:"numeric"`
@@ -80,14 +128,14 @@ func (cgd *CabinetGroupDetail) Length() int {
 	return len(cgd.CabinetDetails)
 }
 
-// CabinetTypes returns a list of cabinet types from the file
-func (cdf *CabinetDetailFile) CabinetTypes() []string {
-	var out []string
-	for _, cd := range cdf.Cabinets {
-		out = append(out, cd.Kind)
-	}
-	return out
-}
+// // CabinetTypes returns a list of cabinet types from the file
+// func (cdf *CabinetDetailFile) CabinetTypes() []CabinetKind {
+// 	var out []CabinetKind
+// 	for _, cd := range cdf.Cabinets {
+// 		out = append(out, cd.Kind)
+// 	}
+// 	return out
+// }
 
 // CabinetDetailFile is a struct that matches the syntax of the configuration file for non-sequential cabinet ids
 type CabinetDetailFile struct {
@@ -106,20 +154,47 @@ func LoadCabinetDetailFile(path string) (CabinetDetailFile, error) {
 type CabinetFilterFunc func(CabinetGroupDetail, CabinetDetail) bool
 
 // CabinetKindFilter returns true when a CabinetGroupDetail is of the specified kind.
-// For example, CabinetKindSelector("river") would match for river cabinets.
-func CabinetKindFilter(kind string) CabinetFilterFunc {
+// For example, CabinetKindSelector(CabinetKindRiver) would match for river cabinets.
+func CabinetKindFilter(kind CabinetKind) CabinetFilterFunc {
 	return func(groupDetail CabinetGroupDetail, cabinetDetail CabinetDetail) bool {
 		return groupDetail.Kind == kind
 	}
 }
 
-// CabinetEX2500AirCooledChassisFilter returns true for EX2500 cabinets with a air cooled chassis
-func CabinetEX2500AirCooledChassisFilter() CabinetFilterFunc {
+// CabinetClassFilter returns true when a CabinetGroupDetail is of the specified kind.
+// For example, CabinetClassFilter(sls_common.ClassRiver) would match for river cabinets.
+func CabinetClassFilter(expectedClass sls_common.CabinetType) CabinetFilterFunc {
+	return func(groupDetail CabinetGroupDetail, cabinetDetail CabinetDetail) bool {
+		class, _ := groupDetail.Kind.Class()
+		return class == expectedClass
+	}
+}
+
+// CabinetChassisCountsFilter TODO
+func CabinetChassisCountsFilter(expectedChassisCounts ChassisCount) CabinetFilterFunc {
 	return func(groupDetail CabinetGroupDetail, cabinetDetail CabinetDetail) bool {
 		if cabinetDetail.ChassisCount != nil {
-			return groupDetail.Kind == "hill" && cabinetDetail.Model == "EX2500" && cabinetDetail.ChassisCount.AirCooled > 0
+			return cabinetDetail.ChassisCount.LiquidCooled == expectedChassisCounts.LiquidCooled &&
+				cabinetDetail.ChassisCount.AirCooled == expectedChassisCounts.AirCooled
 		}
 
 		return false
+	}
+}
+
+// CompositeCabinetFilter allows for multiple cabinets filters to be chained together.
+func CompositeCabinetFilter(cabinetFilters ...CabinetFilterFunc) CabinetFilterFunc {
+	return func(groupDetail CabinetGroupDetail, cabinetDetail CabinetDetail) bool {
+
+		// Loop through the cabinet filters in the order they were provided an perform the test
+		for _, cabinetFilter := range cabinetFilters {
+			if !cabinetFilter(groupDetail, cabinetDetail) {
+				// This filter does not match
+				return false
+			}
+		}
+
+		// All of the filters have passed, this must be a match!
+		return true
 	}
 }

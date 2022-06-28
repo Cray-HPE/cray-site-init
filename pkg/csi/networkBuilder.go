@@ -31,6 +31,7 @@ import (
 	"strings"
 
 	"github.com/Cray-HPE/cray-site-init/pkg/ipam"
+	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 	"github.com/spf13/viper"
 )
 
@@ -370,19 +371,27 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 
 	if conf.GroupNetworksByCabinetType && conf.SubdivideByCabinet {
 		if strings.HasSuffix(conf.Template.Name, "RVR") {
-			tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, CabinetKindFilter("river"))
-			tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, CabinetEX2500AirCooledChassisFilter())
+			tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, CabinetClassFilter(sls_common.ClassRiver))
+
+			// The following is a special case for EX2500 cabinets with both liquid and air cooled chassis
+			tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, CompositeCabinetFilter(
+				CabinetKindFilter(CabinetKindEX2500),
+				CabinetChassisCountsFilter(ChassisCount{
+					LiquidCooled: 1,
+					AirCooled:    1,
+				}),
+			))
 		}
 		if strings.HasSuffix(conf.Template.Name, "MTN") {
-			tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, CabinetKindFilter("mountain"))
-			tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, CabinetKindFilter("hill"))
+			tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, CabinetClassFilter(sls_common.ClassMountain))
+			tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, CabinetClassFilter(sls_common.ClassHill))
 		}
 		// Otherwise do both
 	}
 	if conf.SubdivideByCabinet && !conf.GroupNetworksByCabinetType {
-		tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, CabinetKindFilter("river"))
-		tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, CabinetKindFilter("mountain"))
-		tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, CabinetKindFilter("hill"))
+		tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, CabinetClassFilter(sls_common.ClassRiver))
+		tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, CabinetClassFilter(sls_common.ClassHill))
+		tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, CabinetClassFilter(sls_common.ClassMountain))
 	}
 
 	// Apply the Supernet Hack

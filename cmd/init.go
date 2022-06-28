@@ -114,18 +114,25 @@ var initCmd = &cobra.Command{
 		hmnRows, logicalNcns, switches, applicationNodeConfig, cabinetDetailList := collectInput(v)
 
 		var riverCabinetCount, mountainCabinetCount, hillCabinetCount int
+		log.Printf("Cabinet type counts:")
 		for _, cab := range cabinetDetailList {
-
+			// TODO thoughts
+			// How should a "EXlite cabinet" with only river hardware be counted as?
 			log.Printf("\t%v: %d\n", cab.Kind, len(cab.CabinetIDs()))
-			switch cab.Kind {
-			case "river":
-				riverCabinetCount = len(cab.CabinetIDs())
-			case "mountain":
-				mountainCabinetCount = len(cab.CabinetIDs())
-			case "hill":
-				hillCabinetCount = len(cab.CabinetIDs())
+			switch class, _ := cab.Kind.Class(); class {
+			case sls_common.ClassRiver:
+				riverCabinetCount += len(cab.CabinetIDs())
+			case sls_common.ClassMountain:
+				mountainCabinetCount += len(cab.CabinetIDs())
+			case sls_common.ClassHill:
+				hillCabinetCount += len(cab.CabinetIDs())
 			}
 		}
+
+		log.Printf("Cabinet class counts:\n")
+		log.Printf("\tClass River: %d\n", riverCabinetCount)
+		log.Printf("\tClass Hill: %d\n", hillCabinetCount)
+		log.Printf("\tClass Mountain: %d\n", mountainCabinetCount)
 
 		// Prepare the network layout configs for generating the networks
 		var internalNetConfigs = make(map[string]csi.NetworkLayoutConfiguration)
@@ -663,12 +670,20 @@ func prepareAndGenerateSLS(cd []csi.CabinetGroupDetail, shastaNetworks map[strin
 	// Convert shastaNetwork information to SLS Style Networking
 	_, slsNetworks := prepareNetworkSLS(shastaNetworks)
 
+	log.Printf("SLS Cabinet Map\n")
+	for class, cabinets := range slsCabinetMap {
+		log.Printf("\t Class %v", class)
+		for xname, cabinet := range cabinets {
+			log.Printf("\t\t%v - Model %v\n", xname, cabinet.Model)
+		}
+	}
+
 	inputState := csi.SLSGeneratorInputState{
 		ApplicationNodeConfig: applicationNodeConfig,
 		ManagementSwitches:    slsSwitches,
-		RiverCabinets:         slsCabinetMap["river"],
-		HillCabinets:          slsCabinetMap["hill"],
-		MountainCabinets:      slsCabinetMap["mountain"],
+		RiverCabinets:         slsCabinetMap[sls_common.ClassRiver],
+		HillCabinets:          slsCabinetMap[sls_common.ClassHill],
+		MountainCabinets:      slsCabinetMap[sls_common.ClassMountain],
 		MountainStartingNid:   startingNid,
 		Networks:              slsNetworks,
 	}

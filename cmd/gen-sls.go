@@ -57,22 +57,29 @@ func init() {
 	genSLSCmd.Flags().Int("hill-cabinets", 0, "Number of River cabinets")
 }
 
-func genCabinetMap(cd []csi.CabinetGroupDetail, shastaNetworks map[string]*csi.IPV4Network) map[string]map[string]csi.SLSCabinetTemplate {
+func genCabinetMap(cd []csi.CabinetGroupDetail, shastaNetworks map[string]*csi.IPV4Network) map[sls_common.CabinetType]map[string]csi.SLSCabinetTemplate {
 	// Use information from CabinetGroupDetails and shastaNetworks to generate
 	// Cabinet information for SLS
-	cabinets := make(map[string][]int) // key => kind, value => list of cabinet_ids
-	cabinetDetails := make(map[string]map[int]csi.CabinetDetail)
-	for _, cab := range cd {
-		kind := strings.ToLower(cab.Kind)
-		cabinets[kind] = cab.CabinetIDs()
-		cabinetDetails[kind] = cab.GetCabinetDetails()
+	cabinets := make(map[csi.CabinetKind][]int) // key => kind, value => list of cabinet_ids
+	cabinetDetails := make(map[csi.CabinetKind]map[int]csi.CabinetDetail)
+	for _, cabinetGroup := range cd {
+		cabinetIDs := cabinetGroup.CabinetIDs()
+		cabinets[cabinetGroup.Kind] = cabinetIDs
+		cabinetDetails[cabinetGroup.Kind] = cabinetGroup.GetCabinetDetails()
 	}
 
 	// Iterate through the cabinets of each kind and build structures that work for SLS Generation
-	slsCabinetMap := make(map[string]map[string]csi.SLSCabinetTemplate)
-	for kind, cabIds := range cabinets {
+	slsCabinetMap := make(map[csi.CabinetKind]map[string]csi.SLSCabinetTemplate)
+	for cabinetKind, cabIds := range cabinets {
+		class, err := cabinetKind.Class()
+		if err != nil {
+			log.Fatalf("Unable to determine cabinet class for cabinet kind (%v)", cabinetKind)
+		}
+
 		tmpCabinets := make(map[string]csi.SLSCabinetTemplate)
 		for _, id := range cabIds {
+			log.Printf("genCabinetMap - kind (%v), class (%v), id (%v)", cabinetKind, class, id)
+
 			// Find the NMN and HMN networks for each cabinet
 			networks := make(map[string]sls_common.CabinetNetworks)
 			for _, netName := range []string{"NMN", "HMN", "NMN_MTN", "HMN_MTN", "NMN_RVR", "HMN_RVR"} {
@@ -92,35 +99,40 @@ func genCabinetMap(cd []csi.CabinetGroupDetail, shastaNetworks map[string]*csi.I
 				Xname: xnames.Cabinet{
 					Cabinet: id,
 				},
+				Class: class,
 				CabinetNetworks: map[string]map[string]sls_common.CabinetNetworks{
 					"cn": networks,
 				},
 			}
 
+			// If the cabinet kind is actually a special model of cabinet, add it to the template.
+			if cabinetKind.IsModel() {
+				cabinetTemplate.Model = string(cabinetKind)
+			}
+
 			// Do the stuff specific to each kind (within the context of a single cabinet)
-			switch kind {
-			case "river":
-				cabinetTemplate.Class = sls_common.ClassRiver
+			switch class {
+			case sls_common.ClassRiver:
 				cabinetTemplate.CabinetNetworks["ncn"] = networks
 				cabinetTemplate.AirCooledChassisList = csi.DefaultRiverChassisList
 				cabinetTemplate.LiquidCooledChassisList = []int{}
 
-				if cabinetDetail, present := cabinetDetails[kind][id]; present && cabinetDetail.ChassisCount != nil {
+				if cabinetDetail, present := cabinetDetails[cabinetKind][id]; present && cabinetDetail.ChassisCount != nil {
 					log.Fatalf("Overriding air or liquid cooled chassis counts is not permitted for river cabinets (%s). Refusing to continue", cabinetTemplate.Xname.String())
 				}
-			case "hill":
+			case sls_common.ClassHill:
 				// Start with a EX2000 Hill cabinet as the default
 				cabinetTemplate.Class = sls_common.ClassHill
 				cabinetTemplate.AirCooledChassisList = []int{}
 				cabinetTemplate.LiquidCooledChassisList = csi.DefaultHillChassisList
 
 				// Find any cabinet specific overrides
-				if cabinetDetail, present := cabinetDetails[kind][id]; present && cabinetDetail.Model != "EX2500" {
+				if cabinetDetail, present := cabinetDetails[cabinetKind][id]; present && cabinetKind != csi.CabinetKindEX2500 {
 					// This is a normal EX2000 hill cabinet
 					if cabinetDetail.ChassisCount != nil {
 						log.Fatalf("Overriding air or liquid cooled chassis counts is not permitted for hill (EX2000) cabinets (%s). Refusing to continue", cabinetTemplate.Xname.String())
 					}
-				} else if cabinetDetail, present := cabinetDetails[kind][id]; present && cabinetDetail.Model == "EX2500" {
+				} else if cabinetDetail, present := cabinetDetails[cabinetKind][id]; present && cabinetKind == csi.CabinetKindEX2500 {
 					// So we have a EX2500 Cabinet, as chassis overrides has been specified
 					// Here are following allowed configurations for it to be considered a hill cabinet
 					// - 0 air-cooled chassis, with 1, 2, or 3 liquid cooled chassis
@@ -128,17 +140,14 @@ func genCabinetMap(cd []csi.CabinetGroupDetail, shastaNetworks map[string]*csi.I
 					if cabinetDetail.ChassisCount == nil {
 						msg := "EX2500 cabinets require chassis counts to be specified via cabinets.yaml\n"
 						msg += "The following is an example how to specify chassis counts in cabinets.yaml:\n"
-						msg += "    - id: 9001\n"
+						msg += "    - id: 8001\n"
 						msg += "      hmn-vlan: 3001\n"
 						msg += "      nmn-vlan: 2001\n"
-						msg += "      model: EX2500\n"
 						msg += "      chassis-count:\n"
 						msg += "          air-cooled: 0\n"
 						msg += "          liquid-cooled: 3"
 						log.Fatal(msg)
 					}
-
-					cabinetTemplate.Model = cabinetDetail.Model
 
 					switch cabinetDetail.ChassisCount.AirCooled {
 					case 0:
@@ -174,14 +183,16 @@ func genCabinetMap(cd []csi.CabinetGroupDetail, shastaNetworks map[string]*csi.I
 					}
 				}
 
-			case "mountain":
+			case sls_common.ClassMountain:
 				cabinetTemplate.Class = sls_common.ClassMountain
 				cabinetTemplate.AirCooledChassisList = []int{}
 				cabinetTemplate.LiquidCooledChassisList = csi.DefaultMountainChassisList
 
-				if cabinetDetail, present := cabinetDetails[kind][id]; present && cabinetDetail.ChassisCount != nil {
+				if cabinetDetail, present := cabinetDetails[cabinetKind][id]; present && cabinetDetail.ChassisCount != nil {
 					log.Fatalf("Overriding air or liquid cooled chassis counts is not permitted for mountain cabinets (%s). Refusing to continue", cabinetTemplate.Xname.String())
 				}
+			default:
+				log.Fatalf("Unknown cabinet class (%v) for cabinet x%v with cabient kind %v", class, id, cabinetKind)
 			}
 			// Validate that our cabinet will be addressable as a valid Xname
 			if err := cabinetTemplate.Xname.Validate(); err != nil {
@@ -189,9 +200,28 @@ func genCabinetMap(cd []csi.CabinetGroupDetail, shastaNetworks map[string]*csi.I
 			}
 			tmpCabinets[cabinetTemplate.Xname.String()] = cabinetTemplate
 		}
-		slsCabinetMap[kind] = tmpCabinets
+		slsCabinetMap[cabinetKind] = tmpCabinets
 	}
-	return slsCabinetMap
+
+	// Build up the result map, by sorting cabinets by their class
+	log.Println("Building result map")
+	result := map[sls_common.CabinetType]map[string]csi.SLSCabinetTemplate{}
+	for kind, cabinets := range slsCabinetMap {
+		log.Printf("\tkind: %v\n", kind)
+		for xname, template := range cabinets {
+			class := template.Class
+
+			if _, present := result[class]; !present {
+				result[class] = map[string]csi.SLSCabinetTemplate{}
+			}
+
+			log.Printf("\t\tClass %v, xname: %v\n", class, xname)
+
+			result[class][xname] = template
+		}
+	}
+
+	return result
 }
 
 func convertManagementSwitchToSLS(s *csi.ManagementSwitch) (sls_common.GenericHardware, error) {

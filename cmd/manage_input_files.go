@@ -107,13 +107,25 @@ func collectCabinets(v *viper.Viper) []csi.CabinetGroupDetail {
 		}
 	}
 
-	cabDefinitions := make(map[string]cabinetDefinition)
+	cabDefinitions := make(map[csi.CabinetKind]cabinetDefinition)
 	for _, cabType := range csi.ValidCabinetTypes {
 		cabDefinitions[cabType] = cabinetDefinition{
 			count:      v.GetInt(fmt.Sprintf("%s-cabinets", cabType)),
 			startingID: v.GetInt(fmt.Sprintf("starting-%s-cabinet", cabType))}
 	}
 	cabinetDetailList := buildCabinetDetails(cabDefinitions, cabDetailFile)
+
+	// Verify no duplicate cabinet ids are present
+	knownCabinetIDs := map[int]bool{}
+	for _, cabinetGroupDetail := range cabinetDetailList {
+		for _, id := range cabinetGroupDetail.CabinetIDs() {
+			if knownCabinetIDs[id] {
+				log.Fatalf("Found duplicate cabinet id: %v", id) // TODO rephase
+			}
+
+			knownCabinetIDs[id] = true
+		}
+	}
 
 	return cabinetDetailList
 }
@@ -195,7 +207,7 @@ func validateNCNInput(ncns []*csi.LogicalNCN) error {
 	return nil
 }
 
-func buildCabinetDetails(cabinetDefinitions map[string]cabinetDefinition, cabDetailFile csi.CabinetDetailFile) []csi.CabinetGroupDetail {
+func buildCabinetDetails(cabinetDefinitions map[csi.CabinetKind]cabinetDefinition, cabDetailFile csi.CabinetDetailFile) []csi.CabinetGroupDetail {
 	for _, cabType := range csi.ValidCabinetTypes {
 		pos, err := positionInCabinetList(cabType, cabDetailFile.Cabinets)
 		if err != nil {
@@ -213,7 +225,7 @@ func buildCabinetDetails(cabinetDefinitions map[string]cabinetDefinition, cabDet
 	return cabDetailFile.Cabinets
 }
 
-func positionInCabinetList(kind string, cabs []csi.CabinetGroupDetail) (int, error) {
+func positionInCabinetList(kind csi.CabinetKind, cabs []csi.CabinetGroupDetail) (int, error) {
 	for i, cab := range cabs {
 		if cab.Kind == kind {
 			return i, nil

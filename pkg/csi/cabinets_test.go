@@ -13,6 +13,7 @@ import (
 	"math/rand"
 	"testing"
 
+	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 	"github.com/stretchr/testify/suite"
 	"gopkg.in/yaml.v2"
 )
@@ -66,7 +67,7 @@ func genRandomCabinetDetailStruct() CabinetDetailFile {
 		startingCabinet := rand.Intn(200)
 		numCabinets := rand.Intn(20)
 		tmpCab := CabinetGroupDetail{
-			Kind:            fmt.Sprintf("kind_%v", i),
+			Kind:            CabinetKind(fmt.Sprintf("kind_%v", i)),
 			Cabinets:        numCabinets,
 			StartingCabinet: startingCabinet,
 		}
@@ -97,9 +98,7 @@ func TestUnMarshalCabinetsFile(t *testing.T) {
 type CabinetFilterFuncTestSuite struct {
 	suite.Suite
 
-	riverGroupDetail    CabinetGroupDetail
-	hillGroupDetail     CabinetGroupDetail
-	mountainGroupDetail CabinetGroupDetail
+	groupDetails map[CabinetKind]CabinetGroupDetail
 
 	riverCabinetDetail                          CabinetDetail
 	hillCabinetDetail                           CabinetDetail
@@ -109,23 +108,32 @@ type CabinetFilterFuncTestSuite struct {
 }
 
 func (suite *CabinetFilterFuncTestSuite) SetupSuite() {
-	suite.riverGroupDetail = CabinetGroupDetail{Kind: "river"}
-	suite.hillGroupDetail = CabinetGroupDetail{Kind: "hill"}
-	suite.mountainGroupDetail = CabinetGroupDetail{Kind: "mountain"}
+	cabinetKinds := []CabinetKind{
+		CabinetKindRiver,
+		CabinetKindHill,
+		CabinetKindMountain,
+		CabinetKindEX2000,
+		CabinetKindEX2500,
+		CabinetKindEX3000,
+		CabinetKindEX4000,
+	}
+
+	suite.groupDetails = map[CabinetKind]CabinetGroupDetail{}
+	for _, cabinetKind := range cabinetKinds {
+		suite.groupDetails[cabinetKind] = CabinetGroupDetail{Kind: cabinetKind}
+	}
 
 	suite.riverCabinetDetail = CabinetDetail{ID: 3000}
 	suite.hillCabinetDetail = CabinetDetail{ID: 9000}
 	suite.hillEX2500CabinetDetail = CabinetDetail{
-		ID:    9001,
-		Model: "EX2500",
+		ID: 9001,
 		ChassisCount: &ChassisCount{
 			LiquidCooled: 3,
 			AirCooled:    0,
 		},
 	}
 	suite.hillEX2500CabinetWithAirCooledChassisDetail = CabinetDetail{
-		ID:    9002,
-		Model: "EX2500",
+		ID: 9002,
 		ChassisCount: &ChassisCount{
 			LiquidCooled: 1,
 			AirCooled:    1,
@@ -136,45 +144,180 @@ func (suite *CabinetFilterFuncTestSuite) SetupSuite() {
 }
 
 func (suite *CabinetFilterFuncTestSuite) TestCabinetKindSelector_River() {
-	cabinetSelector := CabinetKindFilter("river")
+	cabinetFilter := CabinetKindFilter(CabinetKindRiver)
 
-	suite.True(cabinetSelector(suite.riverGroupDetail, suite.riverCabinetDetail))
-	suite.False(cabinetSelector(suite.hillGroupDetail, suite.hillCabinetDetail))
-	suite.False(cabinetSelector(suite.hillGroupDetail, suite.hillEX2500CabinetDetail))
-	suite.False(cabinetSelector(suite.hillGroupDetail, suite.hillEX2500CabinetWithAirCooledChassisDetail))
-	suite.False(cabinetSelector(suite.mountainGroupDetail, suite.mountainCabinetDetail))
+	suite.True(cabinetFilter(suite.groupDetails[CabinetKindRiver], suite.riverCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindHill], suite.hillCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindMountain], suite.mountainCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX2500], suite.hillEX2500CabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX2500], suite.hillEX2500CabinetWithAirCooledChassisDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX3000], suite.mountainCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX4000], suite.mountainCabinetDetail))
 }
 
 func (suite *CabinetFilterFuncTestSuite) TestCabinetKindSelector_Hill() {
-	cabinetSelector := CabinetKindFilter("hill")
+	cabinetFilter := CabinetKindFilter(CabinetKindHill)
 
-	suite.False(cabinetSelector(suite.riverGroupDetail, suite.riverCabinetDetail))
-	suite.True(cabinetSelector(suite.hillGroupDetail, suite.hillCabinetDetail))
-	suite.True(cabinetSelector(suite.hillGroupDetail, suite.hillEX2500CabinetDetail))
-	suite.True(cabinetSelector(suite.hillGroupDetail, suite.hillEX2500CabinetWithAirCooledChassisDetail))
-	suite.False(cabinetSelector(suite.mountainGroupDetail, suite.mountainCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindRiver], suite.riverCabinetDetail))
+	suite.True(cabinetFilter(suite.groupDetails[CabinetKindHill], suite.hillCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindMountain], suite.mountainCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX2500], suite.hillEX2500CabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX2500], suite.hillEX2500CabinetWithAirCooledChassisDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX3000], suite.mountainCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX4000], suite.mountainCabinetDetail))
 }
 
 func (suite *CabinetFilterFuncTestSuite) TestCabinetKindSelector_Mountain() {
-	cabinetSelector := CabinetKindFilter("mountain")
+	cabinetFilter := CabinetKindFilter(CabinetKindMountain)
 
-	suite.False(cabinetSelector(suite.riverGroupDetail, suite.riverCabinetDetail))
-	suite.False(cabinetSelector(suite.hillGroupDetail, suite.hillCabinetDetail))
-	suite.False(cabinetSelector(suite.hillGroupDetail, suite.hillEX2500CabinetDetail))
-	suite.False(cabinetSelector(suite.hillGroupDetail, suite.hillEX2500CabinetWithAirCooledChassisDetail))
-	suite.True(cabinetSelector(suite.mountainGroupDetail, suite.mountainCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindRiver], suite.riverCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindHill], suite.hillCabinetDetail))
+	suite.True(cabinetFilter(suite.groupDetails[CabinetKindMountain], suite.mountainCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX2500], suite.hillEX2500CabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX2500], suite.hillEX2500CabinetWithAirCooledChassisDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX3000], suite.mountainCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX4000], suite.mountainCabinetDetail))
 }
 
-func (suite *CabinetFilterFuncTestSuite) TestCabinetEX2500AirCooledChassisSelector_Hill_EX2500() {
-	cabinetSelector := CabinetEX2500AirCooledChassisFilter()
+func (suite *CabinetFilterFuncTestSuite) TestCabinetClassFilter_River() {
+	cabinetFilter := CabinetClassFilter(sls_common.ClassRiver)
 
-	suite.False(cabinetSelector(suite.riverGroupDetail, suite.riverCabinetDetail))
-	suite.False(cabinetSelector(suite.hillGroupDetail, suite.hillCabinetDetail))
-	suite.False(cabinetSelector(suite.hillGroupDetail, suite.hillEX2500CabinetDetail))
-	suite.True(cabinetSelector(suite.hillGroupDetail, suite.hillEX2500CabinetWithAirCooledChassisDetail))
-	suite.False(cabinetSelector(suite.mountainGroupDetail, suite.mountainCabinetDetail))
+	suite.True(cabinetFilter(suite.groupDetails[CabinetKindRiver], suite.riverCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindHill], suite.hillCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindMountain], suite.mountainCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX2500], suite.hillEX2500CabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX2500], suite.hillEX2500CabinetWithAirCooledChassisDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX3000], suite.mountainCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX4000], suite.mountainCabinetDetail))
+}
+
+func (suite *CabinetFilterFuncTestSuite) TestCabinetClassFilter_Hill() {
+	cabinetFilter := CabinetClassFilter(sls_common.ClassHill)
+
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindRiver], suite.riverCabinetDetail))
+	suite.True(cabinetFilter(suite.groupDetails[CabinetKindHill], suite.hillCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindMountain], suite.mountainCabinetDetail))
+	suite.True(cabinetFilter(suite.groupDetails[CabinetKindEX2500], suite.hillEX2500CabinetDetail))
+	suite.True(cabinetFilter(suite.groupDetails[CabinetKindEX2500], suite.hillEX2500CabinetWithAirCooledChassisDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX3000], suite.mountainCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX4000], suite.mountainCabinetDetail))
+}
+
+func (suite *CabinetFilterFuncTestSuite) TestCabinetClassFilter_Mountain() {
+	cabinetFilter := CabinetClassFilter(sls_common.ClassMountain)
+
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindRiver], suite.riverCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindHill], suite.hillCabinetDetail))
+	suite.True(cabinetFilter(suite.groupDetails[CabinetKindMountain], suite.mountainCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX2500], suite.hillEX2500CabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX2500], suite.hillEX2500CabinetWithAirCooledChassisDetail))
+	suite.True(cabinetFilter(suite.groupDetails[CabinetKindEX3000], suite.mountainCabinetDetail))
+	suite.True(cabinetFilter(suite.groupDetails[CabinetKindEX4000], suite.mountainCabinetDetail))
+}
+
+func (suite *CabinetFilterFuncTestSuite) TestCabinetChassisCountsFilter() {
+	cabinetFilter := CabinetChassisCountsFilter(ChassisCount{LiquidCooled: 1, AirCooled: 1})
+
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindRiver], suite.riverCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindHill], suite.hillCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindMountain], suite.mountainCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX2500], suite.hillEX2500CabinetDetail))
+	suite.True(cabinetFilter(suite.groupDetails[CabinetKindEX2500], suite.hillEX2500CabinetWithAirCooledChassisDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX3000], suite.mountainCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX4000], suite.mountainCabinetDetail))
+}
+
+func (suite *CabinetFilterFuncTestSuite) TestCompositeCabinetFilter_EX2500CabinetWithAirCooledChassis() {
+	cabinetFilter := CompositeCabinetFilter(
+		CabinetKindFilter(CabinetKindEX2500),
+		CabinetChassisCountsFilter(ChassisCount{
+			LiquidCooled: 1,
+			AirCooled:    1,
+		}),
+	)
+
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindRiver], suite.riverCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindHill], suite.hillCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindMountain], suite.mountainCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX2500], suite.hillEX2500CabinetDetail))
+	suite.True(cabinetFilter(suite.groupDetails[CabinetKindEX2500], suite.hillEX2500CabinetWithAirCooledChassisDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX3000], suite.mountainCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX4000], suite.mountainCabinetDetail))
+}
+
+func (suite *CabinetFilterFuncTestSuite) TestCompositeCabinetFilter_EX2500CabinetWith3LiquidCooledChassis() {
+	cabinetFilter := CompositeCabinetFilter(
+		CabinetKindFilter(CabinetKindEX2500),
+		CabinetChassisCountsFilter(ChassisCount{
+			LiquidCooled: 3,
+			AirCooled:    0,
+		}),
+	)
+
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindRiver], suite.riverCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindHill], suite.hillCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindMountain], suite.mountainCabinetDetail))
+	suite.True(cabinetFilter(suite.groupDetails[CabinetKindEX2500], suite.hillEX2500CabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX2500], suite.hillEX2500CabinetWithAirCooledChassisDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX3000], suite.mountainCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX4000], suite.mountainCabinetDetail))
 }
 
 func TestCabinetFilter(t *testing.T) {
 	suite.Run(t, new(CabinetFilterFuncTestSuite))
+}
+
+type CabinetGroupDetailTestSuite struct {
+	suite.Suite
+}
+
+func (suite *CabinetGroupDetailTestSuite) TestCabinetClassRiver() {
+	cgd := CabinetGroupDetail{Kind: CabinetKindRiver}
+
+	class, err := cgd.Kind.Class()
+	suite.NoError(err)
+	suite.Equal(sls_common.ClassRiver, class)
+}
+
+func (suite *CabinetGroupDetailTestSuite) TestCabinetClassHill() {
+	kinds := []CabinetKind{
+		CabinetKindHill,
+		CabinetKindEX2000,
+		CabinetKindEX2500,
+	}
+
+	for _, kind := range kinds {
+		cgd := CabinetGroupDetail{Kind: kind}
+
+		class, err := cgd.Kind.Class()
+		suite.NoError(err)
+		suite.Equal(sls_common.ClassHill, class)
+	}
+}
+
+func (suite *CabinetGroupDetailTestSuite) TestCabinetClassMountain() {
+	kinds := []CabinetKind{
+		CabinetKindMountain,
+		CabinetKindEX3000,
+		CabinetKindEX4000,
+	}
+
+	for _, kind := range kinds {
+		cgd := CabinetGroupDetail{Kind: kind}
+
+		class, err := cgd.Kind.Class()
+		suite.NoError(err)
+		suite.Equal(sls_common.ClassMountain, class)
+	}
+}
+
+func (suite *CabinetGroupDetailTestSuite) TestCabinetClassInvalidKind() {
+	cgd := CabinetGroupDetail{Kind: "foobar"}
+
+	_, err := cgd.Kind.Class()
+	suite.EqualError(err, "unknown cabinet kind (foobar)")
+}
+
+func TestCabinetGroupDetail(t *testing.T) {
+	suite.Run(t, new(CabinetGroupDetailTestSuite))
 }

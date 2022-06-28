@@ -77,7 +77,7 @@ type IPReservation struct {
 }
 
 // GenSubnets subdivides a network into a set of subnets
-func (iNet *IPV4Network) GenSubnets(cabinetDetails []CabinetGroupDetail, mask net.IPMask, cabinetSelector func(CabinetGroupDetail, CabinetDetail) bool) error {
+func (iNet *IPV4Network) GenSubnets(cabinetDetails []CabinetGroupDetail, mask net.IPMask, cabinetFilter CabinetFilterFunc) error {
 	// log.Printf("Generating Subnets for %s\ncabinetType: %v,\n", iNet.Name, cabinetType)
 	_, myNet, _ := net.ParseCIDR(iNet.CIDR)
 	mySubnets := iNet.AllocatedSubnets()
@@ -86,7 +86,7 @@ func (iNet *IPV4Network) GenSubnets(cabinetDetails []CabinetGroupDetail, mask ne
 
 	for _, cabinetDetail := range cabinetDetails {
 		for j, i := range cabinetDetail.CabinetDetails {
-			if cabinetSelector(cabinetDetail, i) {
+			if cabinetFilter(cabinetDetail, i) {
 				newSubnet, err := ipam.Free(*myNet, mask, mySubnets)
 				mySubnets = append(mySubnets, newSubnet)
 				if err != nil {

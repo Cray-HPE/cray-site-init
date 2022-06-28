@@ -46,7 +46,7 @@ type SLSCabinetTemplate struct {
 
 func (ct *SLSCabinetTemplate) buildExtraProperties() sls_common.ComptypeCabinet {
 	return sls_common.ComptypeCabinet{
-		// Model:    Model, // TODO
+		Model:    ct.Model,
 		Networks: ct.CabinetNetworks,
 	}
 }
