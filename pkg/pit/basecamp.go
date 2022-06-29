@@ -459,9 +459,14 @@ func MakeBaseCampfromNCNs(v *viper.Viper, ncns []csi.LogicalNCN, shastaNetworks 
 
 		// ntp allowed networks should be a list of NMN and HMN CIDRS
 		var nmnNets []string
-		for _, netNetwork := range ncn.Networks {
-			// get this for ntp:
-			nmnNets = append(nmnNets, netNetwork.CIDR)
+
+		// Need to exclude the BICAN toggle network and the NMNLB/HMNLB networks.
+		for _, netNetwork := range shastaNetworks {
+			if (strings.Contains(netNetwork.Name, "HMN") ||
+				strings.Contains(netNetwork.Name, "NMN")) &&
+				!strings.Contains(netNetwork.Name, "LB") {
+				nmnNets = append(nmnNets, netNetwork.CIDR)
+			}
 		}
 
 		// for use with the timezone cloud-init module
