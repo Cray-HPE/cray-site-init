@@ -23,10 +23,6 @@ var versionCmd = &cobra.Command{
 		v := viper.GetViper()
 		v.BindPFlags(cmd.Flags())
 		clientVersion := version.Get()
-		if v.GetBool("simple") {
-			fmt.Printf("%v.%v\n", clientVersion.Major, clientVersion.Minor)
-			os.Exit(0)
-		}
 		if v.GetBool("git") {
 			fmt.Println(clientVersion.GitCommit)
 			os.Exit(0)
@@ -37,9 +33,8 @@ var versionCmd = &cobra.Command{
 			fmt.Printf("%-15s: %s\n", "Build Commit", clientVersion.GitCommit)
 			fmt.Printf("%-15s: %s\n", "Build Time", clientVersion.BuildDate)
 			fmt.Printf("%-15s: %s\n", "Go Version", clientVersion.GoVersion)
-			fmt.Printf("%-15s: %s\n", "Git Version", clientVersion.GitVersion)
+			fmt.Printf("%-15s: %s\n", "Version", clientVersion.Version)
 			fmt.Printf("%-15s: %s\n", "Platform", clientVersion.Platform)
-			fmt.Printf("%-15s: %v.%v.%v\n", "App. Version", clientVersion.Major, clientVersion.Minor, clientVersion.FixVr)
 		case "json":
 			b, err := json.Marshal(clientVersion)
 			if err != nil {
@@ -55,6 +50,5 @@ func init() {
 	rootCmd.AddCommand(versionCmd)
 	versionCmd.DisableAutoGenTag = true
 	versionCmd.Flags().StringP("output", "o", "pretty", "output format pretty,json")
-	versionCmd.Flags().BoolP("simple", "s", false, "Simple version on a single line")
 	versionCmd.Flags().BoolP("git", "g", false, "Simple commit sha of the source tree on a single line. \"-dirty\" added to the end if uncommitted changes present")
 }

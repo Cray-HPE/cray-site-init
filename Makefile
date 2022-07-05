@@ -10,7 +10,6 @@ TAG?=latest
 .GIT_BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 .GIT_COMMIT_AND_BRANCH=$(.GIT_COMMIT)-$(subst /,-,$(.GIT_BRANCH))
 .GIT_VERSION=$(shell git describe --tags 2>/dev/null || echo "$(.GIT_COMMIT)")
-.FS_VERSION=$(shell cat .version)
 .BUILDTIME=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 CHANGELOG_VERSION_ORIG=$(grep -m1 \## CHANGELOG.MD | sed -e "s/\].*\$//" |sed -e "s/^.*\[//")
 CHANGELOG_VERSION=$(shell grep -m1 \ \[[0-9]*.[0-9]*.[0-9]*\] CHANGELOG.MD | sed -e "s/\].*$$//" |sed -e "s/^.*\[//")
@@ -146,8 +145,7 @@ reset:
 
 build: fmt
 	go build -o bin/csi -ldflags "\
-	-X github.com/Cray-HPE/cray-site-init/pkg/version.gitVersion=${.GIT_VERSION} \
-	-X github.com/Cray-HPE/cray-site-init/pkg/version.fsVersion=${.FS_VERSION} \
+	-X github.com/Cray-HPE/cray-site-init/pkg/version.version=${.GIT_VERSION} \
 	-X github.com/Cray-HPE/cray-site-init/pkg/version.buildDate=${.BUILDTIME} \
 	-X github.com/Cray-HPE/cray-site-init/pkg/version.sha1ver=${.GIT_COMMIT_AND_BRANCH}"
 	bin/csi version
