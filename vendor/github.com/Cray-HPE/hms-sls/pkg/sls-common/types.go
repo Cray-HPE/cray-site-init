@@ -127,6 +127,8 @@ ComptypeCabinet represents an object of type comptype_cabinet.
     },
 */
 type ComptypeCabinet struct {
+	Model string `json:"Model,omitempty"`
+
 	// Networks has at the top the hardware type, then inside of that the network ID, then inside of that the object.
 	Networks          map[string]map[string]CabinetNetworks
 	DHCPRelaySwitches []string `json:",omitempty"`
@@ -376,14 +378,3 @@ type IPV4Subnet struct {
 }
 
 type NetworkArray []Network
-
-// SLSGeneratorInputState is given to the SLS config generator in order to generator the SLS config file
-type SLSGeneratorInputState struct {
-	ManagementSwitches  map[string]GenericHardware `json:"ManagementSwitches"` // SLS Type: comptype_mgmt_switch
-	RiverCabinets       map[string]GenericHardware `json:"RiverCabinets"`      // SLS Type: comptype_cabinet
-	HillCabinets        map[string]GenericHardware `json:"HillCabinets"`       // SLS Type: comptype_cabinet
-	MountainCabinets    map[string]GenericHardware `json:"MountainCabinets"`   // SLS Type: comptype_cabinet
-	MountainStartingNid int                        `json:"MountainStartingNid"`
-
-	Networks map[string]Network `json:"Networks"`
-}

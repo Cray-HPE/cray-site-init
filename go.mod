@@ -10,7 +10,7 @@ require (
 	github.com/Cray-HPE/hms-bss v1.16.0
 	github.com/Cray-HPE/hms-s3 v1.10.1
 	github.com/Cray-HPE/hms-shcd-parser v1.8.0
-	github.com/Cray-HPE/hms-sls v1.19.0
+	github.com/Cray-HPE/hms-sls v1.20.1-0.20220624200540-532203ff78e8
 	github.com/Cray-HPE/hms-smd v1.51.0
 	github.com/Cray-HPE/hms-xname v1.1.0
 	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef
