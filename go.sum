@@ -75,6 +75,8 @@ github.com/Cray-HPE/hms-sls v1.19.0 h1:o6YECLm7yUR6MCD2jCO1ZFRC/1EqUf8HWQ+WdkJua
 github.com/Cray-HPE/hms-sls v1.19.0/go.mod h1:CbBCBXEhoJyWCGahFajUgDcqOtAnbIY+Atl8WITz3L8=
 github.com/Cray-HPE/hms-sls v1.20.1-0.20220624200540-532203ff78e8 h1:5SSy7OMp+wG4qmTQ4VocH7W5wEq7pW+9Zri0fs5iXtE=
 github.com/Cray-HPE/hms-sls v1.20.1-0.20220624200540-532203ff78e8/go.mod h1:uuUZbTkzMX9/EDydZ82c2BztdeWvPEPjJmcJNsJB3l0=
+github.com/Cray-HPE/hms-sls v1.21.0 h1:GvW7fxJahcYje/pIDtxW9ZNbTdr2jWipp3NlqrbnSYI=
+github.com/Cray-HPE/hms-sls v1.21.0/go.mod h1:uuUZbTkzMX9/EDydZ82c2BztdeWvPEPjJmcJNsJB3l0=
 github.com/Cray-HPE/hms-smd v1.30.9/go.mod h1:9TFpxIiPnmgBphq0QfFt1BmKiuSZ8VXu5N7A5EJz6L4=
 github.com/Cray-HPE/hms-smd v1.51.0 h1:ZnbM5uALWSKdn8mcOy/J49yuh3XtvL+tvraCE5QsgKA=
 github.com/Cray-HPE/hms-smd v1.51.0/go.mod h1:7J7taeRXmceyLPHdKlLbucb10lqTrJxTUo3RhaTGMhs=
