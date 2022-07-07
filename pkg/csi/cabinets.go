@@ -68,7 +68,7 @@ type CabinetGroupDetail struct {
 // CabinetDetail stores information about individual cabinets
 type CabinetDetail struct {
 	ID           int           `mapstructure:"id" yaml:"id" valid:"numeric"`
-	ChassisCount *ChassisCount `mapstructure:"chassis-count" yaml:"chassis-count" valid:"-"` // TODO this is an optional field, if not provided defaults will take presendence
+	ChassisCount *ChassisCount `mapstructure:"chassis-count" yaml:"chassis-count" valid:"-"` // This field is only respected for EX2500 cabinets with variable chassis counts
 	NMNSubnet    string        `mapstructure:"nmn-subnet" yaml:"nmn-subnet" valid:"-"`
 	NMNVlanID    int16         `mapstructure:"nmn-vlan" yaml:"nmn-vlan" valid:"numeric"`
 	HMNSubnet    string        `mapstructure:"hmn-subnet" yaml:"hmn-subnet" valid:"-"`
@@ -128,14 +128,14 @@ func (cgd *CabinetGroupDetail) Length() int {
 	return len(cgd.CabinetDetails)
 }
 
-// // CabinetTypes returns a list of cabinet types from the file
-// func (cdf *CabinetDetailFile) CabinetTypes() []CabinetKind {
-// 	var out []CabinetKind
-// 	for _, cd := range cdf.Cabinets {
-// 		out = append(out, cd.Kind)
-// 	}
-// 	return out
-// }
+// CabinetTypes returns a list of cabinet types from the file
+func (cdf *CabinetDetailFile) CabinetTypes() []CabinetKind {
+	var out []CabinetKind
+	for _, cd := range cdf.Cabinets {
+		out = append(out, cd.Kind)
+	}
+	return out
+}
 
 // CabinetDetailFile is a struct that matches the syntax of the configuration file for non-sequential cabinet ids
 type CabinetDetailFile struct {
@@ -170,7 +170,7 @@ func CabinetClassFilter(expectedClass sls_common.CabinetType) CabinetFilterFunc 
 	}
 }
 
-// CabinetChassisCountsFilter TODO
+// CabinetChassisCountsFilter returns true when a CabinetDetail has a matching ChassisCount structure.
 func CabinetChassisCountsFilter(expectedChassisCounts ChassisCount) CabinetFilterFunc {
 	return func(groupDetail CabinetGroupDetail, cabinetDetail CabinetDetail) bool {
 		if cabinetDetail.ChassisCount != nil {

@@ -158,7 +158,7 @@ func genCabinetMap(cd []csi.CabinetGroupDetail, shastaNetworks map[string]*csi.I
 						// We are assuming the following chassis configuration
 						// 1 Chassis - c0
 						// 2 Chassis - c0, c1
-						// 3 Chassis - c0, c1, c3
+						// 3 Chassis - c0, c1, c2
 						liquidCooledChassisList := []int{}
 						for i := 0; i < cabinetDetail.ChassisCount.LiquidCooled; i++ {
 							liquidCooledChassisList = append(liquidCooledChassisList, i)
@@ -169,7 +169,9 @@ func genCabinetMap(cd []csi.CabinetGroupDetail, shastaNetworks map[string]*csi.I
 						switch cabinetDetail.ChassisCount.LiquidCooled {
 						case 0:
 							// The EX2500 cabinet can also be like a standard 19 inch server rack. In that case it should be treated like a normal river cabinet
-							log.Fatalf("A EX2000 (hill) cabinet %s with 1 air-cooled chassis and 0 liquid-cooled chassis provided. This cabinet should be treated a standard river cabinet, and not hill. Refusing to continue", cabinetTemplate.Xname.String())
+							// This is for compatibility with Slingshot tooling that a river chassis in a EX2500 cabinet are always c4.
+							cabinetTemplate.AirCooledChassisList = []int{4}
+							cabinetTemplate.LiquidCooledChassisList = []int{}
 						case 1:
 							// Valid configuration
 							cabinetTemplate.AirCooledChassisList = []int{4}

@@ -116,9 +116,7 @@ const SubrolePlaceHolder = "~fixme~"
 var ValidNetNames = []string{"BICAN", "CAN", "CHN", "CMN", "HMN", "HMN_MTN", "HMN_RVR", "MTL", "NMN", "NMN_MTN", "NMN_RVR"}
 
 // ValidCabinetTypes is the list of strings that enumerate valid cabinet types
-// TODO what should we do about the EX* types?
-// If this is only for the CLI, then I don't want to expose the EX types. Should keep them only in cabinets.yaml
-var ValidCabinetTypes = []CabinetKind{CabinetKindRiver, CabinetKindHill, CabinetKindMountain}
+var ValidCabinetTypes = []CabinetKind{CabinetKindRiver, CabinetKindHill, CabinetKindMountain, CabinetKindEX2000, CabinetKindEX2500, CabinetKindEX3000, CabinetKindEX4000}
 
 // InstallerDefaults holds all of our defaults
 var InstallerDefaults = SystemConfig{

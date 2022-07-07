@@ -120,7 +120,7 @@ func collectCabinets(v *viper.Viper) []csi.CabinetGroupDetail {
 	for _, cabinetGroupDetail := range cabinetDetailList {
 		for _, id := range cabinetGroupDetail.CabinetIDs() {
 			if knownCabinetIDs[id] {
-				log.Fatalf("Found duplicate cabinet id: %v", id) // TODO rephase
+				log.Fatalf("Found duplicate cabinet id: %v", id)
 			}
 
 			knownCabinetIDs[id] = true

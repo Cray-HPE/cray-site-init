@@ -116,8 +116,6 @@ var initCmd = &cobra.Command{
 		var riverCabinetCount, mountainCabinetCount, hillCabinetCount int
 		log.Printf("Cabinet type counts:")
 		for _, cab := range cabinetDetailList {
-			// TODO thoughts
-			// How should a "EXlite cabinet" with only river hardware be counted as?
 			log.Printf("\t%v: %d\n", cab.Kind, len(cab.CabinetIDs()))
 			switch class, _ := cab.Kind.Class(); class {
 			case sls_common.ClassRiver:
