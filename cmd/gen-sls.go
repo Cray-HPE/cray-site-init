@@ -78,8 +78,6 @@ func genCabinetMap(cd []csi.CabinetGroupDetail, shastaNetworks map[string]*csi.I
 
 		tmpCabinets := make(map[string]csi.SLSCabinetTemplate)
 		for _, id := range cabIds {
-			log.Printf("genCabinetMap - kind (%v), class (%v), id (%v)", cabinetKind, class, id)
-
 			// Find the NMN and HMN networks for each cabinet
 			networks := make(map[string]sls_common.CabinetNetworks)
 			for _, netName := range []string{"NMN", "HMN", "NMN_MTN", "HMN_MTN", "NMN_RVR", "HMN_RVR"} {
@@ -206,18 +204,14 @@ func genCabinetMap(cd []csi.CabinetGroupDetail, shastaNetworks map[string]*csi.I
 	}
 
 	// Build up the result map, by sorting cabinets by their class
-	log.Println("Building result map")
 	result := map[sls_common.CabinetType]map[string]csi.SLSCabinetTemplate{}
-	for kind, cabinets := range slsCabinetMap {
-		log.Printf("\tkind: %v\n", kind)
+	for _, cabinets := range slsCabinetMap {
 		for xname, template := range cabinets {
 			class := template.Class
 
 			if _, present := result[class]; !present {
 				result[class] = map[string]csi.SLSCabinetTemplate{}
 			}
-
-			log.Printf("\t\tClass %v, xname: %v\n", class, xname)
 
 			result[class][xname] = template
 		}

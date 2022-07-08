@@ -114,9 +114,7 @@ var initCmd = &cobra.Command{
 		hmnRows, logicalNcns, switches, applicationNodeConfig, cabinetDetailList := collectInput(v)
 
 		var riverCabinetCount, mountainCabinetCount, hillCabinetCount int
-		log.Printf("Cabinet type counts:")
 		for _, cab := range cabinetDetailList {
-			log.Printf("\t%v: %d\n", cab.Kind, len(cab.CabinetIDs()))
 			switch class, _ := cab.Kind.Class(); class {
 			case sls_common.ClassRiver:
 				riverCabinetCount += len(cab.CabinetIDs())
@@ -126,11 +124,6 @@ var initCmd = &cobra.Command{
 				hillCabinetCount += len(cab.CabinetIDs())
 			}
 		}
-
-		log.Printf("Cabinet class counts:\n")
-		log.Printf("\tClass River: %d\n", riverCabinetCount)
-		log.Printf("\tClass Hill: %d\n", hillCabinetCount)
-		log.Printf("\tClass Mountain: %d\n", mountainCabinetCount)
 
 		// Prepare the network layout configs for generating the networks
 		var internalNetConfigs = make(map[string]csi.NetworkLayoutConfiguration)
@@ -672,7 +665,11 @@ func prepareAndGenerateSLS(cd []csi.CabinetGroupDetail, shastaNetworks map[strin
 	for class, cabinets := range slsCabinetMap {
 		log.Printf("\t Class %v", class)
 		for xname, cabinet := range cabinets {
-			log.Printf("\t\t%v - Model %v\n", xname, cabinet.Model)
+			if cabinet.Model == "" {
+				log.Printf("\t\t%v\n", xname)
+			} else {
+				log.Printf("\t\t%v - Model %v\n", xname, cabinet.Model)
+			}
 		}
 	}
 
