@@ -371,15 +371,15 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 
 	if conf.GroupNetworksByCabinetType && conf.SubdivideByCabinet {
 		if strings.HasSuffix(conf.Template.Name, "RVR") {
-			tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, CabinetClassFilter(sls_common.ClassRiver))
+			tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, OrCabinetFilter(
+				// Standard River Cabinet
+				CabinetClassFilter(sls_common.ClassRiver),
 
-			// The following is a special case for EX2500 cabinets with both liquid and air cooled chassis
-			tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, CompositeCabinetFilter(
-				CabinetKindFilter(CabinetKindEX2500),
-				CabinetChassisCountsFilter(ChassisCount{
-					LiquidCooled: 1,
-					AirCooled:    1,
-				}),
+				// Or the special case where special case for EX2500 cabinets with both liquid and air cooled chassis
+				AndCabinetFilter(
+					CabinetKindFilter(CabinetKindEX2500),
+					CabinetAirCooledChassisCountFilter(1),
+				),
 			))
 		}
 		if strings.HasSuffix(conf.Template.Name, "MTN") {

@@ -40,16 +40,16 @@ func testProcessWithHill(t *testing.T) csi.CabinetDetailFile {
 
 func TestCabinetDefinitionWithHill(t *testing.T) {
 	cabDetailFile := testProcessWithHill(t)
-	cabDefinitions := make(map[string]cabinetDefinition)
-	cabDefinitions["hill"] = cabinetDefinition{
+	cabDefinitions := make(map[csi.CabinetKind]cabinetDefinition)
+	cabDefinitions[csi.CabinetKindHill] = cabinetDefinition{
 		count:      20,
 		startingID: 100,
 	}
-	cabDefinitions["mountain"] = cabinetDefinition{
+	cabDefinitions[csi.CabinetKindMountain] = cabinetDefinition{
 		count:      20,
 		startingID: 200,
 	}
-	cabDefinitions["river"] = cabinetDefinition{
+	cabDefinitions[csi.CabinetKindRiver] = cabinetDefinition{
 		count:      20,
 		startingID: 300,
 	}

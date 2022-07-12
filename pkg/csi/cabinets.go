@@ -170,20 +170,32 @@ func CabinetClassFilter(expectedClass sls_common.CabinetType) CabinetFilterFunc 
 	}
 }
 
-// CabinetChassisCountsFilter returns true when a CabinetDetail has a matching ChassisCount structure.
-func CabinetChassisCountsFilter(expectedChassisCounts ChassisCount) CabinetFilterFunc {
+// CabinetAirCooledChassisCountFilter returns true when a CabinetDetail has a matching number of air-cooled
+// chassis in a ChassisCount structure.
+func CabinetAirCooledChassisCountFilter(airCooledChassisCount int) CabinetFilterFunc {
 	return func(groupDetail CabinetGroupDetail, cabinetDetail CabinetDetail) bool {
 		if cabinetDetail.ChassisCount != nil {
-			return cabinetDetail.ChassisCount.LiquidCooled == expectedChassisCounts.LiquidCooled &&
-				cabinetDetail.ChassisCount.AirCooled == expectedChassisCounts.AirCooled
+			return cabinetDetail.ChassisCount.AirCooled == airCooledChassisCount
 		}
 
 		return false
 	}
 }
 
-// CompositeCabinetFilter allows for multiple cabinets filters to be chained together.
-func CompositeCabinetFilter(cabinetFilters ...CabinetFilterFunc) CabinetFilterFunc {
+// CabinetLiquidCooledChassisCountFilter returns true when a CabinetDetail has a matching number of liquid-cooled
+// chassis in a ChassisCount structure.
+func CabinetLiquidCooledChassisCountFilter(liquidCooledChassisCount int) CabinetFilterFunc {
+	return func(groupDetail CabinetGroupDetail, cabinetDetail CabinetDetail) bool {
+		if cabinetDetail.ChassisCount != nil {
+			return cabinetDetail.ChassisCount.LiquidCooled == liquidCooledChassisCount
+		}
+
+		return false
+	}
+}
+
+// AndCabinetFilter allows for multiple cabinets filters to be chained together, and all must pass.
+func AndCabinetFilter(cabinetFilters ...CabinetFilterFunc) CabinetFilterFunc {
 	return func(groupDetail CabinetGroupDetail, cabinetDetail CabinetDetail) bool {
 
 		// Loop through the cabinet filters in the order they were provided an perform the test
@@ -196,5 +208,22 @@ func CompositeCabinetFilter(cabinetFilters ...CabinetFilterFunc) CabinetFilterFu
 
 		// All of the filters have passed, this must be a match!
 		return true
+	}
+}
+
+// OrCabinetFilter allows for multiple cabinets filters to be chained together, and all must pass.
+func OrCabinetFilter(cabinetFilters ...CabinetFilterFunc) CabinetFilterFunc {
+	return func(groupDetail CabinetGroupDetail, cabinetDetail CabinetDetail) bool {
+
+		// Loop through the cabinet filters in the order they were provided and perform the test
+		for _, cabinetFilter := range cabinetFilters {
+			if cabinetFilter(groupDetail, cabinetDetail) {
+				// This filter matches!
+				return true
+			}
+		}
+
+		// None of the filters have passed, this is not a match.
+		return false
 	}
 }

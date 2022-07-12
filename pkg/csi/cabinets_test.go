@@ -216,7 +216,7 @@ func (suite *CabinetFilterFuncTestSuite) TestCabinetClassFilter_Mountain() {
 }
 
 func (suite *CabinetFilterFuncTestSuite) TestCabinetChassisCountsFilter() {
-	cabinetFilter := CabinetChassisCountsFilter(ChassisCount{LiquidCooled: 1, AirCooled: 1})
+	cabinetFilter := CabinetAirCooledChassisCountFilter(1)
 
 	suite.False(cabinetFilter(suite.groupDetails[CabinetKindRiver], suite.riverCabinetDetail))
 	suite.False(cabinetFilter(suite.groupDetails[CabinetKindHill], suite.hillCabinetDetail))
@@ -227,13 +227,10 @@ func (suite *CabinetFilterFuncTestSuite) TestCabinetChassisCountsFilter() {
 	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX4000], suite.mountainCabinetDetail))
 }
 
-func (suite *CabinetFilterFuncTestSuite) TestCompositeCabinetFilter_EX2500CabinetWithAirCooledChassis() {
-	cabinetFilter := CompositeCabinetFilter(
+func (suite *CabinetFilterFuncTestSuite) TestAndCabinetFilter_EX2500CabinetWithAirCooledChassis() {
+	cabinetFilter := AndCabinetFilter(
 		CabinetKindFilter(CabinetKindEX2500),
-		CabinetChassisCountsFilter(ChassisCount{
-			LiquidCooled: 1,
-			AirCooled:    1,
-		}),
+		CabinetAirCooledChassisCountFilter(1),
 	)
 
 	suite.False(cabinetFilter(suite.groupDetails[CabinetKindRiver], suite.riverCabinetDetail))
@@ -245,13 +242,11 @@ func (suite *CabinetFilterFuncTestSuite) TestCompositeCabinetFilter_EX2500Cabine
 	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX4000], suite.mountainCabinetDetail))
 }
 
-func (suite *CabinetFilterFuncTestSuite) TestCompositeCabinetFilter_EX2500CabinetWith3LiquidCooledChassis() {
-	cabinetFilter := CompositeCabinetFilter(
+func (suite *CabinetFilterFuncTestSuite) TestAndCabinetFilter_EX2500CabinetWith3LiquidCooledChassis() {
+	cabinetFilter := AndCabinetFilter(
 		CabinetKindFilter(CabinetKindEX2500),
-		CabinetChassisCountsFilter(ChassisCount{
-			LiquidCooled: 3,
-			AirCooled:    0,
-		}),
+		CabinetAirCooledChassisCountFilter(0),
+		CabinetLiquidCooledChassisCountFilter(3),
 	)
 
 	suite.False(cabinetFilter(suite.groupDetails[CabinetKindRiver], suite.riverCabinetDetail))
@@ -259,6 +254,27 @@ func (suite *CabinetFilterFuncTestSuite) TestCompositeCabinetFilter_EX2500Cabine
 	suite.False(cabinetFilter(suite.groupDetails[CabinetKindMountain], suite.mountainCabinetDetail))
 	suite.True(cabinetFilter(suite.groupDetails[CabinetKindEX2500], suite.hillEX2500CabinetDetail))
 	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX2500], suite.hillEX2500CabinetWithAirCooledChassisDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX3000], suite.mountainCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX4000], suite.mountainCabinetDetail))
+}
+
+func (suite *CabinetFilterFuncTestSuite) TEstOrCabinetFilter() {
+	cabinetFilter := OrCabinetFilter(
+		// Standard River Cabinet
+		CabinetClassFilter(sls_common.ClassRiver),
+
+		// Or the special case where special case for EX2500 cabinets with both liquid and air cooled chassis
+		AndCabinetFilter(
+			CabinetKindFilter(CabinetKindEX2500),
+			CabinetAirCooledChassisCountFilter(1),
+		),
+	)
+
+	suite.True(cabinetFilter(suite.groupDetails[CabinetKindRiver], suite.riverCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindHill], suite.hillCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindMountain], suite.mountainCabinetDetail))
+	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX2500], suite.hillEX2500CabinetDetail))
+	suite.True(cabinetFilter(suite.groupDetails[CabinetKindEX2500], suite.hillEX2500CabinetWithAirCooledChassisDetail))
 	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX3000], suite.mountainCabinetDetail))
 	suite.False(cabinetFilter(suite.groupDetails[CabinetKindEX4000], suite.mountainCabinetDetail))
 }
