@@ -1,4 +1,4 @@
-SHELL := /bin/bash
+SHELL := /bin/bash -o pipefail
 ifeq ($(VERSION),)
 VERSION := $(shell git describe --tags | tr -s '-' '~' | tr -d '^v')
 endif
