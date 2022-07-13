@@ -1,6 +1,7 @@
+#! /bin/bash
 # MIT License
 #
-# (C) Copyright [2019-2021] Hewlett Packard Enterprise Development LP
+# (C) Copyright [2021] Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -19,21 +20,28 @@
 # OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
+set -ex
+SNYK_OPTS="--dev --show-vulnerable-paths=all --fail-on=all --severity-threshold=${SEVERITY:-high} --skip-unresolved=true --json"
 
-# Dockerfile for creating a base image that can be used
-# for other images to do testing, coverage, and building.
+OUT=$(set -x; snyk test --all-projects --detection-depth=999 $SNYK_OPTS)
 
-# Build base just has the packages installed we need.
-FROM arti.dev.cray.com/baseos-docker-master-local/golang:1.16-alpine3.13 AS build-base
+PROJ_CHECK=OK
+jq .[].ok <<<"$OUT" | grep -q false && PROJ_CHECK=FAIL
 
-RUN set -ex \
-    && apk update \
-    && apk add build-base
+echo Snyk project check: $PROJ_CHECK
 
-# Copy the files in for the next stages to use.
-FROM build-base
+DOCKER_CHECK=
+if [ -f Dockerfile ]; then
+    DOCKER_IMAGE=${PWD/*\//}:$(cat .version)
+    docker build --tag $DOCKER_IMAGE .
+    OUT=$(set -x; snyk test --docker $DOCKER_IMAGE --file=${PWD}/Dockerfile $SNYK_OPTS)
+    DOCKER_CHECK=OK
+    jq .ok <<<"$OUT" | grep -q false && DOCKER_CHECK=FAIL
+fi
 
-RUN go env -w GO111MODULE=auto
+echo
+echo Snyk project check: $PROJ_CHECK
+echo Snyk docker check: $DOCKER_CHECK
 
-COPY *.go $GOPATH/src/github.com/Cray-HPE/hms-base/
-COPY vendor $GOPATH/src/github.com/Cray-HPE/hms-base/vendor
+test "$PROJ_CHECK" == OK -a "$DOCKER_CHECK" == OK
+exit $?

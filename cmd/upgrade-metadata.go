@@ -32,8 +32,8 @@ import (
 
 	"github.com/Cray-HPE/cray-site-init/pkg/bss"
 	"github.com/Cray-HPE/cray-site-init/pkg/sls"
-	base "github.com/Cray-HPE/hms-base"
 	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
+	"github.com/Cray-HPE/hms-xname/xnametypes"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 )
@@ -376,7 +376,7 @@ func getBSSGlobalHostRecords(managementNCNs []sls_common.GenericHardware, networ
 		}
 
 		// Next add the NCN BMC host record
-		bmcXname := base.GetHMSCompParent(managementNCN.Xname)
+		bmcXname := xnametypes.GetHMSCompParent(managementNCN.Xname)
 		globalHostRecords = append(globalHostRecords,
 			buildBSSHostRecords(networkEPs, "HMN", "bootstrap_dhcp", bmcXname, []string{fmt.Sprintf("%s-mgmt", ncnAlias)}),
 		)

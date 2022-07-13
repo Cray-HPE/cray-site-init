@@ -35,7 +35,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	xnames "github.com/Cray-HPE/hms-xname/xnames"
+	"github.com/Cray-HPE/hms-xname/xnames"
 )
 
 // The Shcd type represents the entire machine-readable SHCD inside a go struct

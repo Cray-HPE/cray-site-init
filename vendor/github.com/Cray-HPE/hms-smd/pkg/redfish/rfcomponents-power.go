@@ -167,6 +167,11 @@ func (pdu *EpPDU) discoverRemotePhase1() {
 			pdu.LastStatus = EPResponseFailedDecode
 		}
 
+		// HPE PDUs use Outlets instead of Members, so copy to Members
+		if len(outInfo.Outlets) > 0 {
+			outInfo.Members = outInfo.Outlets
+		}
+
 		// The count is typically given as "Members@odata.count", but
 		// older versions drop the "Members" identifier
 		if outInfo.MembersOCount > 0 && outInfo.MembersOCount != len(outInfo.Members) {
@@ -401,6 +406,10 @@ func (out *EpOutlet) discoverRemotePhase1() {
 	out.RedfishSubtype = out.OutletRF.OutletType
 	if out.OutletRF.Actions != nil {
 		out.Actions = out.OutletRF.Actions
+		// HPE PDUs do not supply Allowable Values, so add them
+		if out.Actions.PowerControl != nil && len(out.Actions.PowerControl.AllowableValues) == 0 {
+			out.Actions.PowerControl.AllowableValues = append(out.Actions.PowerControl.AllowableValues, "On", "Off")
+		}
 	}
 	out.Name = out.OutletRF.Name
 	if rfVerbose > 0 {

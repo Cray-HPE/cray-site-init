@@ -38,7 +38,7 @@ import (
 	"syscall"
 
 	csiFiles "github.com/Cray-HPE/cray-site-init/internal/files"
-	base "github.com/Cray-HPE/hms-base"
+	base "github.com/Cray-HPE/hms-base/v2"
 	"github.com/Cray-HPE/hms-bss/pkg/bssTypes"
 	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 	"github.com/Cray-HPE/hms-smd/pkg/sm"

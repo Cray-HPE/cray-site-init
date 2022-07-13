@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [2.0.1] - 2022-01-21
+
+### Changed
+
+- repatriated HMSError types from hms-xname
+- updated arti link to artifactory.algol60.net
+
+## [2.0.0] - 2021-12-13
+
+### Changed
+
+- CASMHMS-5180: Moved HMSTypes and related functions to the new hms-xname repo under the xnametypes package.
+
+## [1.15.1] - 2021-08-09
+
+### Changed
+
+- Added GitHub configuration files and fixed snyk warning.
+
 ## [1.15.0] - 2021-07-16
 
 ### Changed

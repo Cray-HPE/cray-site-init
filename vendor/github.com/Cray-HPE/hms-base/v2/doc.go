@@ -1,7 +1,6 @@
-//
 // MIT License
 //
-// (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP
+// (C) Copyright [2018, 2021] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -20,24 +19,19 @@
 // OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
+
+// This package contains shared utility functions for HMS Go code.
 //
-//go:generate go run ./generator
-
-package xnames
-
-import "github.com/Cray-HPE/hms-xname/xnametypes"
-
-// Validator is implemented by any value that has a Validate() function.
-// All of the xnames structures in this package implement this interface.
-type Validator interface {
-	Validate() error
-}
-
-// Xname is an interface that is implemented by all xnames structures.
-// It is meant to provide a generic way to store or pass a xnames structure, such as to a function that can handle
-// multiple different xnames types.
-type Xname interface {
-	String() string
-	Type() xnametypes.HMSType
-	ParentInterface() Xname
-}
+// HMS Type and Component Definitions
+//
+// These are functions that define common types that are used to describe HMS
+// component data that represents system components and valid values for that
+// data.
+//
+// HMS Errors and RFC 7807 ProblemDetails
+//
+// These are common methods for defining a custom HMS error type and producing
+// RFC 7807-compliant ProblemDetails payloads for reporting problems that occur
+// during HMS API calls.
+//
+package base

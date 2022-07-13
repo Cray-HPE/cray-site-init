@@ -31,8 +31,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/Cray-HPE/cray-site-init/pkg/csi"
-	base "github.com/Cray-HPE/hms-base"
 	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
+	"github.com/Cray-HPE/hms-xname/xnames"
+	"github.com/Cray-HPE/hms-xname/xnametypes"
 )
 
 // initCmd represents the init command
@@ -56,18 +57,26 @@ func init() {
 	genSLSCmd.Flags().Int("hill-cabinets", 0, "Number of River cabinets")
 }
 
-func genCabinetMap(cd []csi.CabinetGroupDetail, shastaNetworks map[string]*csi.IPV4Network) map[string]map[string]sls_common.GenericHardware {
+func genCabinetMap(cd []csi.CabinetGroupDetail, shastaNetworks map[string]*csi.IPV4Network) map[sls_common.CabinetType]map[string]csi.SLSCabinetTemplate {
 	// Use information from CabinetGroupDetails and shastaNetworks to generate
 	// Cabinet information for SLS
-	cabinets := make(map[string][]int) // key => kind, value => list of cabinet_ids
-	for _, cab := range cd {
-		cabinets[strings.ToLower(cab.Kind)] = cab.CabinetIDs()
+	cabinets := make(map[csi.CabinetKind][]int) // key => kind, value => list of cabinet_ids
+	cabinetDetails := make(map[csi.CabinetKind]map[int]csi.CabinetDetail)
+	for _, cabinetGroup := range cd {
+		cabinetIDs := cabinetGroup.CabinetIDs()
+		cabinets[cabinetGroup.Kind] = cabinetIDs
+		cabinetDetails[cabinetGroup.Kind] = cabinetGroup.GetCabinetDetails()
 	}
 
 	// Iterate through the cabinets of each kind and build structures that work for SLS Generation
-	slsCabinetMap := make(map[string]map[string]sls_common.GenericHardware)
-	for kind, cabIds := range cabinets {
-		tmpCabinets := make(map[string]sls_common.GenericHardware)
+	slsCabinetMap := make(map[csi.CabinetKind]map[string]csi.SLSCabinetTemplate)
+	for cabinetKind, cabIds := range cabinets {
+		class, err := cabinetKind.Class()
+		if err != nil {
+			log.Fatalf("Unable to determine cabinet class for cabinet kind (%v)", cabinetKind)
+		}
+
+		tmpCabinets := make(map[string]csi.SLSCabinetTemplate)
 		for _, id := range cabIds {
 			// Find the NMN and HMN networks for each cabinet
 			networks := make(map[string]sls_common.CabinetNetworks)
@@ -84,45 +93,141 @@ func genCabinetMap(cd []csi.CabinetGroupDetail, shastaNetworks map[string]*csi.I
 				}
 			}
 			// Build out the sls cabinet structure
-			cabinet := sls_common.GenericHardware{
-				Parent:     "s0",
-				Xname:      fmt.Sprintf("x%d", id),
-				Type:       sls_common.Cabinet,
-				TypeString: base.Cabinet,
-				ExtraPropertiesRaw: sls_common.ComptypeCabinet{
-					Networks: map[string]map[string]sls_common.CabinetNetworks{"cn": networks},
+			cabinetTemplate := csi.SLSCabinetTemplate{
+				Xname: xnames.Cabinet{
+					Cabinet: id,
+				},
+				Class: class,
+				CabinetNetworks: map[string]map[string]sls_common.CabinetNetworks{
+					"cn": networks,
 				},
 			}
+
+			// If the cabinet kind is actually a special model of cabinet, add it to the template.
+			if cabinetKind.IsModel() {
+				cabinetTemplate.Model = string(cabinetKind)
+			}
+
 			// Do the stuff specific to each kind (within the context of a single cabinet)
-			if kind == "river" {
-				cabinet.Class = sls_common.ClassRiver
-				cabinet.ExtraPropertiesRaw.(sls_common.ComptypeCabinet).Networks["ncn"] = networks
-			}
-			if kind == "hill" {
-				cabinet.Class = sls_common.ClassHill
-			}
-			if kind == "mountain" {
-				cabinet.Class = sls_common.ClassMountain
+			switch class {
+			case sls_common.ClassRiver:
+				cabinetTemplate.CabinetNetworks["ncn"] = networks
+				cabinetTemplate.AirCooledChassisList = csi.DefaultRiverChassisList
+				cabinetTemplate.LiquidCooledChassisList = []int{}
+
+				if cabinetDetail, present := cabinetDetails[cabinetKind][id]; present && cabinetDetail.ChassisCount != nil {
+					log.Fatalf("Overriding air or liquid cooled chassis counts is not permitted for river cabinets (%s). Refusing to continue", cabinetTemplate.Xname.String())
+				}
+			case sls_common.ClassHill:
+				// Start with a EX2000 Hill cabinet as the default
+				cabinetTemplate.Class = sls_common.ClassHill
+				cabinetTemplate.AirCooledChassisList = []int{}
+				cabinetTemplate.LiquidCooledChassisList = csi.DefaultHillChassisList
+
+				// Find any cabinet specific overrides
+				if cabinetDetail, present := cabinetDetails[cabinetKind][id]; present && cabinetKind != csi.CabinetKindEX2500 {
+					// This is a normal EX2000 hill cabinet
+					if cabinetDetail.ChassisCount != nil {
+						log.Fatalf("Overriding air or liquid cooled chassis counts is not permitted for hill (EX2000) cabinets (%s). Refusing to continue", cabinetTemplate.Xname.String())
+					}
+				} else if cabinetDetail, present := cabinetDetails[cabinetKind][id]; present && cabinetKind == csi.CabinetKindEX2500 {
+					// So we have a EX2500 Cabinet, as chassis overrides has been specified
+					// Here are following allowed configurations for it to be considered a hill cabinet
+					// - 0 air-cooled chassis, with 1, 2, or 3 liquid cooled chassis
+					// - 1 air-cooled chassis, with 1 liquid-cooled chassis
+					if cabinetDetail.ChassisCount == nil {
+						msg := "EX2500 cabinets require chassis counts to be specified via cabinets.yaml\n"
+						msg += "The following is an example how to specify chassis counts in cabinets.yaml:\n"
+						msg += "    - id: 8001\n"
+						msg += "      hmn-vlan: 3001\n"
+						msg += "      nmn-vlan: 2001\n"
+						msg += "      chassis-count:\n"
+						msg += "          air-cooled: 0\n"
+						msg += "          liquid-cooled: 3"
+						log.Fatal(msg)
+					}
+
+					switch cabinetDetail.ChassisCount.AirCooled {
+					case 0:
+						if cabinetDetail.ChassisCount.LiquidCooled < 1 || 3 < cabinetDetail.ChassisCount.LiquidCooled {
+							log.Fatalf("Invalid liquid-cooled chassis count specified for hill (EX2500) cabinet %s. Given %d, expected between 1 and 3. Refusing to continue", cabinetTemplate.Xname.String(), cabinetDetail.ChassisCount.AirCooled)
+						}
+
+						// We are assuming the following chassis configuration
+						// 1 Chassis - c0
+						// 2 Chassis - c0, c1
+						// 3 Chassis - c0, c1, c2
+						liquidCooledChassisList := []int{}
+						for i := 0; i < cabinetDetail.ChassisCount.LiquidCooled; i++ {
+							liquidCooledChassisList = append(liquidCooledChassisList, i)
+						}
+						cabinetTemplate.LiquidCooledChassisList = liquidCooledChassisList
+
+					case 1:
+						switch cabinetDetail.ChassisCount.LiquidCooled {
+						case 0:
+							// The EX2500 cabinet can also be like a standard 19 inch server rack. In that case it should be treated like a normal river cabinet
+							// This is for compatibility with Slingshot tooling that a river chassis in a EX2500 cabinet are always c4.
+							cabinetTemplate.AirCooledChassisList = []int{4}
+							cabinetTemplate.LiquidCooledChassisList = []int{}
+						case 1:
+							// Valid configuration
+							cabinetTemplate.AirCooledChassisList = []int{4}
+							cabinetTemplate.LiquidCooledChassisList = []int{0}
+						default:
+							// Invalid configuration
+							log.Fatalf("Invalid liquid-cooled chassis count specified for hill (EX2500) cabinet %s. Given %d, expected 1. EX2500 cabinets with 1 air-cooled chassis can only have 1 liquid-cooled chassis.  Refusing to continue", cabinetTemplate.Xname.String(), cabinetDetail.ChassisCount.LiquidCooled)
+						}
+					default:
+						log.Fatalf("Invalid air-cooled chassis count specified for hill (EX2500) cabinet %s. Given %d, expected 0 or 1. Refusing to continue", cabinetTemplate.Xname.String(), cabinetDetail.ChassisCount.AirCooled)
+					}
+				}
+
+			case sls_common.ClassMountain:
+				cabinetTemplate.Class = sls_common.ClassMountain
+				cabinetTemplate.AirCooledChassisList = []int{}
+				cabinetTemplate.LiquidCooledChassisList = csi.DefaultMountainChassisList
+
+				if cabinetDetail, present := cabinetDetails[cabinetKind][id]; present && cabinetDetail.ChassisCount != nil {
+					log.Fatalf("Overriding air or liquid cooled chassis counts is not permitted for mountain cabinets (%s). Refusing to continue", cabinetTemplate.Xname.String())
+				}
+			default:
+				log.Fatalf("Unknown cabinet class (%v) for cabinet x%v with cabient kind %v", class, id, cabinetKind)
 			}
 			// Validate that our cabinet will be addressable as a valid Xname
-			if base.GetHMSType(cabinet.Xname) != base.Cabinet {
-				log.Fatalf("%s is not a valid Xname for a cabinet.  Refusing to continue.", cabinet.Xname)
+			if err := cabinetTemplate.Xname.Validate(); err != nil {
+				log.Fatalf("%s is not a valid Xname for a cabinet. Error %v.  Refusing to continue.", cabinetTemplate.Xname.String(), err)
 			}
-			tmpCabinets[cabinet.Xname] = cabinet
+			tmpCabinets[cabinetTemplate.Xname.String()] = cabinetTemplate
 		}
-		slsCabinetMap[kind] = tmpCabinets
+		slsCabinetMap[cabinetKind] = tmpCabinets
 	}
-	return slsCabinetMap
+
+	// Build up the result map, by sorting cabinets by their class
+	result := map[sls_common.CabinetType]map[string]csi.SLSCabinetTemplate{}
+	for _, cabinets := range slsCabinetMap {
+		for xname, template := range cabinets {
+			class := template.Class
+
+			if _, present := result[class]; !present {
+				result[class] = map[string]csi.SLSCabinetTemplate{}
+			}
+
+			result[class][xname] = template
+		}
+	}
+
+	return result
 }
 
 func convertManagementSwitchToSLS(s *csi.ManagementSwitch) (sls_common.GenericHardware, error) {
 	switch s.SwitchType {
 	case csi.ManagementSwitchTypeLeafBMC:
 		return sls_common.GenericHardware{
-			Parent:     base.GetHMSCompParent(s.Xname),
+			Parent:     xnametypes.GetHMSCompParent(s.Xname),
 			Xname:      s.Xname,
 			Type:       sls_common.MgmtSwitch,
-			TypeString: base.MgmtSwitch,
+			TypeString: xnametypes.MgmtSwitch,
 			Class:      sls_common.ClassRiver,
 			ExtraPropertiesRaw: sls_common.ComptypeMgmtSwitch{
 				IP4Addr:          s.ManagementInterface.String(),
@@ -141,10 +246,10 @@ func convertManagementSwitchToSLS(s *csi.ManagementSwitch) (sls_common.GenericHa
 		fallthrough
 	case csi.ManagementSwitchTypeSpine:
 		return sls_common.GenericHardware{
-			Parent:     base.GetHMSCompParent(s.Xname),
+			Parent:     xnametypes.GetHMSCompParent(s.Xname),
 			Xname:      s.Xname,
 			Type:       sls_common.MgmtHLSwitch,
-			TypeString: base.MgmtHLSwitch,
+			TypeString: xnametypes.MgmtHLSwitch,
 			Class:      sls_common.ClassRiver,
 			ExtraPropertiesRaw: sls_common.ComptypeMgmtHLSwitch{
 				IP4Addr: s.ManagementInterface.String(),
@@ -155,13 +260,13 @@ func convertManagementSwitchToSLS(s *csi.ManagementSwitch) (sls_common.GenericHa
 		}, nil
 
 	case csi.ManagementSwitchTypeCDU:
-		if base.GetHMSType(s.Xname) == base.MgmtHLSwitch {
+		if xnametypes.GetHMSType(s.Xname) == xnametypes.MgmtHLSwitch {
 			// This is a CDU switch in the River cabinet that is adjacent to the Hill cabinet. Use the MgmtHLSwitch type instead
 			return sls_common.GenericHardware{
-				Parent:     base.GetHMSCompParent(s.Xname),
+				Parent:     xnametypes.GetHMSCompParent(s.Xname),
 				Xname:      s.Xname,
 				Type:       sls_common.MgmtHLSwitch,
-				TypeString: base.MgmtHLSwitch,
+				TypeString: xnametypes.MgmtHLSwitch,
 				Class:      sls_common.ClassRiver,
 				ExtraPropertiesRaw: sls_common.ComptypeMgmtHLSwitch{
 					IP4Addr: s.ManagementInterface.String(),
@@ -173,10 +278,10 @@ func convertManagementSwitchToSLS(s *csi.ManagementSwitch) (sls_common.GenericHa
 		}
 
 		return sls_common.GenericHardware{
-			Parent:     base.GetHMSCompParent(s.Xname),
+			Parent:     xnametypes.GetHMSCompParent(s.Xname),
 			Xname:      s.Xname,
 			Type:       sls_common.CDUMgmtSwitch,
-			TypeString: base.CDUMgmtSwitch,
+			TypeString: xnametypes.CDUMgmtSwitch,
 			Class:      sls_common.ClassMountain,
 			ExtraPropertiesRaw: sls_common.ComptypeCDUMgmtSwitch{
 				Brand:   s.Brand.String(),

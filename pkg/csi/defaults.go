@@ -116,7 +116,7 @@ const SubrolePlaceHolder = "~fixme~"
 var ValidNetNames = []string{"BICAN", "CAN", "CHN", "CMN", "HMN", "HMN_MTN", "HMN_RVR", "MTL", "NMN", "NMN_MTN", "NMN_RVR"}
 
 // ValidCabinetTypes is the list of strings that enumerate valid cabinet types
-var ValidCabinetTypes = []string{"mountain", "river", "hill"}
+var ValidCabinetTypes = []CabinetKind{CabinetKindRiver, CabinetKindHill, CabinetKindMountain, CabinetKindEX2000, CabinetKindEX2500, CabinetKindEX3000, CabinetKindEX4000}
 
 // InstallerDefaults holds all of our defaults
 var InstallerDefaults = SystemConfig{

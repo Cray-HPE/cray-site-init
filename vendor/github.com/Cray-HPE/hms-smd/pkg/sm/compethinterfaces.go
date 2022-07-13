@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2020-2021] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2020-2022] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -138,6 +138,10 @@ func NewCompEthInterfaceV2(desc, macAddr, compID string, ipAddrs []IPAddressMapp
 	cei.ID = strings.ReplaceAll(cei.MACAddr, ":", "")
 	if cei.ID == "" {
 		return nil, ErrCompEthInterfaceBadMAC
+	}
+	// Initialize empty slices
+	if ipAddrs == nil {
+		ipAddrs = []IPAddressMapping{}
 	}
 	cei.IPAddrs = ipAddrs
 	for _, ipm := range cei.IPAddrs {

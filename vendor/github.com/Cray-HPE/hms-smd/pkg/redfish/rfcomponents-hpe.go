@@ -134,6 +134,16 @@ func (d *EpHpeDevice) discoverRemotePhase1() {
 	}
 	d.RedfishSubtype = d.DeviceRF.DeviceType
 
+	// Workaround CASMHMS-4951 GPUs missing Model and Partnumber.
+	// Use Name in place of Model and ProductPartNumber in place
+	// of PartNumber.
+	if d.DeviceRF.PartNumber == "" {
+		d.DeviceRF.PartNumber = d.DeviceRF.ProductPartNumber
+	}
+	if d.DeviceRF.Model == "" {
+		d.DeviceRF.Model = d.DeviceRF.Name
+	}
+
 	if rfVerbose > 0 {
 		jout, _ := json.MarshalIndent(d, "", "   ")
 		errlog.Printf("%s: %s\n", url, jout)

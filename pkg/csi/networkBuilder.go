@@ -31,6 +31,7 @@ import (
 	"strings"
 
 	"github.com/Cray-HPE/cray-site-init/pkg/ipam"
+	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
 	"github.com/spf13/viper"
 )
 
@@ -370,18 +371,27 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 
 	if conf.GroupNetworksByCabinetType && conf.SubdivideByCabinet {
 		if strings.HasSuffix(conf.Template.Name, "RVR") {
-			tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, "river")
+			tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, OrCabinetFilter(
+				// Standard River Cabinet
+				CabinetClassFilter(sls_common.ClassRiver),
+
+				// Or the special case where special case for EX2500 cabinets with both liquid and air cooled chassis
+				AndCabinetFilter(
+					CabinetKindFilter(CabinetKindEX2500),
+					CabinetAirCooledChassisCountFilter(1),
+				),
+			))
 		}
 		if strings.HasSuffix(conf.Template.Name, "MTN") {
-			tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, "mountain")
-			tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, "hill")
+			tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, CabinetClassFilter(sls_common.ClassMountain))
+			tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, CabinetClassFilter(sls_common.ClassHill))
 		}
 		// Otherwise do both
 	}
 	if conf.SubdivideByCabinet && !conf.GroupNetworksByCabinetType {
-		tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, "river")
-		tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, "mountain")
-		tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, "hill")
+		tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, CabinetClassFilter(sls_common.ClassRiver))
+		tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, CabinetClassFilter(sls_common.ClassHill))
+		tempNet.GenSubnets(conf.CabinetDetails, conf.CabinetCIDR, CabinetClassFilter(sls_common.ClassMountain))
 	}
 
 	// Apply the Supernet Hack

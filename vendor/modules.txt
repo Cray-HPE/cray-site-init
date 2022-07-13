@@ -2,32 +2,35 @@
 ## explicit; go 1.16
 github.com/Azure/go-ansiterm
 github.com/Azure/go-ansiterm/winterm
-# github.com/Cray-HPE/hms-base v1.15.2-0.20210928201115-8d9f61f26219
+# github.com/Cray-HPE/hms-base v1.15.0
 ## explicit; go 1.16
 github.com/Cray-HPE/hms-base
-# github.com/Cray-HPE/hms-bss v1.9.5
+# github.com/Cray-HPE/hms-base/v2 v2.0.1
+## explicit; go 1.16
+github.com/Cray-HPE/hms-base/v2
+# github.com/Cray-HPE/hms-bss v1.16.0
 ## explicit; go 1.16
 github.com/Cray-HPE/hms-bss/pkg/bssTypes
 # github.com/Cray-HPE/hms-certs v1.3.2
 ## explicit; go 1.16
 github.com/Cray-HPE/hms-certs/pkg/hms_certs
-# github.com/Cray-HPE/hms-s3 v1.10.0
+# github.com/Cray-HPE/hms-s3 v1.10.1
 ## explicit; go 1.16
 github.com/Cray-HPE/hms-s3
 # github.com/Cray-HPE/hms-securestorage v1.12.2
 ## explicit; go 1.16
 github.com/Cray-HPE/hms-securestorage
-# github.com/Cray-HPE/hms-shcd-parser v1.6.2
+# github.com/Cray-HPE/hms-shcd-parser v1.8.0
 ## explicit; go 1.16
 github.com/Cray-HPE/hms-shcd-parser/pkg/shcd-parser
-# github.com/Cray-HPE/hms-sls v1.13.0
+# github.com/Cray-HPE/hms-sls v1.21.0
 ## explicit; go 1.16
 github.com/Cray-HPE/hms-sls/pkg/sls-common
-# github.com/Cray-HPE/hms-smd v1.30.9
+# github.com/Cray-HPE/hms-smd v1.51.0
 ## explicit; go 1.16
 github.com/Cray-HPE/hms-smd/pkg/redfish
 github.com/Cray-HPE/hms-smd/pkg/sm
-# github.com/Cray-HPE/hms-xname v1.0.2
+# github.com/Cray-HPE/hms-xname v1.1.0
 ## explicit; go 1.17
 github.com/Cray-HPE/hms-xname/xnames
 github.com/Cray-HPE/hms-xname/xnametypes

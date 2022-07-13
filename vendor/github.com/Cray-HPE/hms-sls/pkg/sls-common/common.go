@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2019, 2021] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2019, 2021-2022] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -25,7 +25,7 @@ package sls_common
 import (
 	"strings"
 
-	base "github.com/Cray-HPE/hms-base"
+	"github.com/Cray-HPE/hms-xname/xnametypes"
 )
 
 type SLSVersion struct {
@@ -56,7 +56,7 @@ const (
 var hmsHWClassMap = map[string]CabinetType{
 	"river":    ClassRiver,
 	"mountain": ClassMountain,
-	"Hill":     ClassHill,
+	"hill":     ClassHill,
 }
 
 /*
@@ -149,239 +149,239 @@ const (
 
 type hmsTypeConverter struct {
 	Name          string
-	HMSType       base.HMSType
+	HMSType       xnametypes.HMSType
 	HMSStringType HMSStringType
 }
 
 var hmsTypeHMSStringTypeTable = map[string]hmsTypeConverter{
 	"invalid": {
 		"invalid",
-		base.HMSTypeInvalid,
+		xnametypes.HMSTypeInvalid,
 		HMSTypeInvalid,
 	},
 	"hmstypeall": {
 		"hmstypeall",
-		base.HMSTypeAll,
+		xnametypes.HMSTypeAll,
 		HMSTypeAll,
 	},
 	"hmstypeallsvc": {
 		"hmstypeallsvc",
-		base.HMSTypeAllSvc,
+		xnametypes.HMSTypeAllSvc,
 		HMSTypeAllSvc,
 	},
 	"hmstypeallcomp": {
 		"hmstypeallcomp",
-		base.HMSTypeAllComp,
+		xnametypes.HMSTypeAllComp,
 		HMSTypeAllComp,
 	},
 	"partition": {
 		"partition",
-		base.Partition,
+		xnametypes.Partition,
 		Partition,
 	},
 	"system": {
 		"system",
-		base.System,
+		xnametypes.System,
 		System,
 	},
 	"smsbox": {
 		"smsbox",
-		base.SMSBox,
+		xnametypes.SMSBox,
 		SMSBox,
 	},
 	"cdu": {
 		"cdu",
-		base.CDU,
+		xnametypes.CDU,
 		CDU,
 	},
 	"cdumgmtswitch": {
 		"cdumgmtswitch",
-		base.CDUMgmtSwitch,
+		xnametypes.CDUMgmtSwitch,
 		CDUMgmtSwitch,
 	},
 	"cabinetcdu": {
 		"cabinetcdu",
-		base.CabinetCDU,
+		xnametypes.CabinetCDU,
 		CabinetCDU,
 	},
 	"cabinetpducontroller": {
 		"cabinetpducontroller",
-		base.CabinetPDUController,
+		xnametypes.CabinetPDUController,
 		CabinetPDUController,
 	},
 	"cabinetpdu": {
 		"cabinetpdu",
-		base.CabinetPDU,
+		xnametypes.CabinetPDU,
 		CabinetPDU,
 	},
 	"cabinetpdunic": {
 		"cabinetpdunic",
-		base.CabinetPDUNic,
+		xnametypes.CabinetPDUNic,
 		CabinetPDUNic,
 	},
 	"cabinetpduoutlet": {
 		"cabinetpduoutlet",
-		base.CabinetPDUOutlet,
+		xnametypes.CabinetPDUOutlet,
 		CabinetPDUOutlet,
 	},
 	"cabinetpdupowerconnector": {
 		"cabinetpdupowerconnector",
-		base.CabinetPDUPowerConnector,
+		xnametypes.CabinetPDUPowerConnector,
 		CabinetPDUPowerConnector,
 	},
 	"cec": {
 		"cec",
-		base.CEC,
+		xnametypes.CEC,
 		CEC,
 	},
 	"cabinet": {
 		"cabinet",
-		base.Cabinet,
+		xnametypes.Cabinet,
 		Cabinet,
 	},
 	"chassis": {
 		"chassis",
-		base.Chassis,
+		xnametypes.Chassis,
 		Chassis,
 	},
 	"chassisbmc": {
 		"chassisbmc",
-		base.ChassisBMC,
+		xnametypes.ChassisBMC,
 		ChassisBMC,
 	},
 	"cmmfpga": {
 		"cmmfpga",
-		base.CMMFpga,
+		xnametypes.CMMFpga,
 		CMMFpga,
 	},
 	"cmmrectifier": {
 		"cmmrectifier",
-		base.CMMRectifier,
+		xnametypes.CMMRectifier,
 		CMMRectifier,
 	},
 	"computemodule": {
 		"computemodule",
-		base.ComputeModule,
+		xnametypes.ComputeModule,
 		ComputeModule,
 	},
 	"nodefpga": {
 		"nodefpga",
-		base.NodeFpga,
+		xnametypes.NodeFpga,
 		NodeFpga,
 	},
 	"nodebmc": {
 		"nodebmc",
-		base.NodeBMC,
+		xnametypes.NodeBMC,
 		NodeBMC,
 	},
 	"nodebmcnic": {
 		"nodebmcnic",
-		base.NodeBMCNic,
+		xnametypes.NodeBMCNic,
 		NodeBMCNic,
 	},
 	"nodeenclosure": {
 		"nodeenclosure",
-		base.NodeEnclosure,
+		xnametypes.NodeEnclosure,
 		NodeEnclosure,
 	},
 	"nodepowerconnector": {
 		"nodepowerconnector",
-		base.NodePowerConnector,
+		xnametypes.NodePowerConnector,
 		NodePowerConnector,
 	},
 	"hsnboard": {
 		"hsnboard",
-		base.HSNBoard,
+		xnametypes.HSNBoard,
 		HSNBoard,
 	},
 	"node": {
 		"node",
-		base.Node,
+		xnametypes.Node,
 		Node,
 	},
 	"nodenic": {
 		"nodenic",
-		base.NodeNic,
+		xnametypes.NodeNic,
 		NodeNIC,
 	},
 	"nodehsnnic": {
 		"nodehsnnic",
-		base.NodeHsnNic,
+		xnametypes.NodeHsnNic,
 		NodeHsnNIC,
 	},
 	"nodeaccel": {
 		"nodeaccel",
-		base.NodeAccel,
+		xnametypes.NodeAccel,
 		NodeAccel,
 	},
 	"memory": {
 		"memory",
-		base.Memory,
+		xnametypes.Memory,
 		Memory,
 	},
 	"processor": {
 		"processor",
-		base.Processor,
+		xnametypes.Processor,
 		Processor,
 	},
 	"routermodule": {
 		"routermodule",
-		base.RouterModule,
+		xnametypes.RouterModule,
 		RouterModule,
 	},
 	"routerfpga": {
 		"routerfpga",
-		base.RouterFpga,
+		xnametypes.RouterFpga,
 		RouterFpga,
 	},
 	"routertorfpga": {
 		"routertorfpga",
-		base.RouterTORFpga,
+		xnametypes.RouterTORFpga,
 		RouterTORFpga,
 	},
 	"routerbmc": {
 		"routerbmc",
-		base.RouterBMC,
+		xnametypes.RouterBMC,
 		RouterBMC,
 	},
 	"routerbmcnic": {
 		"routerbmcnic",
-		base.RouterBMCNic,
+		xnametypes.RouterBMCNic,
 		RouterBMCNic,
 	},
 	"hsnasic": {
 		"hsnasic",
-		base.HSNAsic,
+		xnametypes.HSNAsic,
 		HSNAsic,
 	},
 	"hsnconnector": {
 		"hsnconnector",
-		base.HSNConnector,
+		xnametypes.HSNConnector,
 		HSNConnector,
 	},
 	"hsnconnectorport": {
 		"hsnconnectorport",
-		base.HSNConnectorPort,
+		xnametypes.HSNConnectorPort,
 		HSNConnectorPort,
 	},
 	"hsnlink": {
 		"hsnlink",
-		base.HSNLink,
+		xnametypes.HSNLink,
 		HSNLink,
 	},
 	"mgmtswitch": {
 		"mgmtswitch",
-		base.MgmtSwitch,
+		xnametypes.MgmtSwitch,
 		MgmtSwitch,
 	},
 	"mgmtswitchconnector": {
 		"mgmtswitchconnector",
-		base.MgmtSwitchConnector,
+		xnametypes.MgmtSwitchConnector,
 		MgmtSwitchConnector,
 	},
 	"mgmthlswitch": {
 		"mgmthlswitch",
-		base.MgmtHLSwitch,
+		xnametypes.MgmtHLSwitch,
 		MgmtHLSwitch,
 	},
 }
@@ -389,7 +389,7 @@ var hmsTypeHMSStringTypeTable = map[string]hmsTypeConverter{
 /*
 HMSStringTypeToHMSType converts an HMSStringType (from this module) into an HMSType (from hmstypes.go)
 */
-func HMSStringTypeToHMSType(str HMSStringType) base.HMSType {
+func HMSStringTypeToHMSType(str HMSStringType) xnametypes.HMSType {
 	for _, tabEntry := range hmsTypeHMSStringTypeTable {
 		if str == tabEntry.HMSStringType {
 			return tabEntry.HMSType
@@ -402,7 +402,7 @@ func HMSStringTypeToHMSType(str HMSStringType) base.HMSType {
 /*
 HMSTypeToHMSStringType converts an HMSType (from hmstypes.go) into an HMSStringType (from this module)
 */
-func HMSTypeToHMSStringType(str base.HMSType) HMSStringType {
+func HMSTypeToHMSStringType(str xnametypes.HMSType) HMSStringType {
 	for _, tabEntry := range hmsTypeHMSStringTypeTable {
 		if str == tabEntry.HMSType {
 			return tabEntry.HMSStringType

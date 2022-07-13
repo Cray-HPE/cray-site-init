@@ -68,6 +68,7 @@ type HpeDeviceLocationInfoRF struct {
 type HpeDeviceFRUInfoRF struct {
 	// Redfish pass-through from rf.HpeDevice
 	Manufacturer      string `json:"Manufacturer"`
+	Model             string `json:"Model"`
 	SerialNumber      string `json:"SerialNumber"`
 	PartNumber        string `json:"PartNumber"`
 	DeviceType        string `json:"DeviceType"`

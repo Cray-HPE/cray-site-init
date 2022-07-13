@@ -1,6 +1,7 @@
+#
 # MIT License
 #
-# (C) Copyright [2019-2021] Hewlett Packard Enterprise Development LP
+# (C) Copyright [2018-2022] Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -19,21 +20,10 @@
 # OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
+#
 
-# Dockerfile for creating a base image that can be used
-# for other images to do testing, coverage, and building.
+all:  unittest
+.PHONY:  unittest
 
-# Build base just has the packages installed we need.
-FROM arti.dev.cray.com/baseos-docker-master-local/golang:1.16-alpine3.13 AS build-base
-
-RUN set -ex \
-    && apk update \
-    && apk add build-base
-
-# Copy the files in for the next stages to use.
-FROM build-base
-
-RUN go env -w GO111MODULE=auto
-
-COPY *.go $GOPATH/src/github.com/Cray-HPE/hms-base/
-COPY vendor $GOPATH/src/github.com/Cray-HPE/hms-base/vendor
+unittest:
+	go test ./... -cover

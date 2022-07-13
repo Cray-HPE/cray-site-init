@@ -10,16 +10,21 @@ import (
 	"strconv"
 	"strings"
 
-	base "github.com/Cray-HPE/hms-base"
 	shcd_parser "github.com/Cray-HPE/hms-shcd-parser/pkg/shcd-parser"
 	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
+	xnames "github.com/Cray-HPE/hms-xname/xnames"
+	"github.com/Cray-HPE/hms-xname/xnametypes"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
 var (
-	mountainChassisList = []string{"c0", "c1", "c2", "c3", "c4", "c5", "c6", "c7"}
-	tdsChassisList      = []string{"c1", "c3"}
+	// DefaultMountainChassisList contains the default list of liquid cooled chassis for a TODO MODEL cabinet
+	DefaultMountainChassisList = []int{0, 1, 2, 3, 4, 5, 6, 7}
+	// DefaultHillChassisList contains the default list of liquid cooled chassis for a TODO MODEL cabinet
+	DefaultHillChassisList = []int{1, 3}
+	// DefaultRiverChassisList contains the default list of air cooled chassis for standard 19 inch rack
+	DefaultRiverChassisList = []int{0}
 
 	// Regular expressions to get around humans.
 	portRegex        = regexp.MustCompile(`[a-zA-Z]*(\d+)`)
@@ -28,14 +33,32 @@ var (
 	pduuRegex        = regexp.MustCompile(`(x\d+p|pdu)(\d+)`) // Match on x3000p0 and pdu0
 )
 
+// SLSCabinetTemplate Should this be merged with Cabinet detail?
+type SLSCabinetTemplate struct {
+	Xname           xnames.Cabinet
+	Model           string
+	Class           sls_common.CabinetType
+	CabinetNetworks map[string]map[string]sls_common.CabinetNetworks
+
+	LiquidCooledChassisList []int
+	AirCooledChassisList    []int
+}
+
+func (ct *SLSCabinetTemplate) buildExtraProperties() sls_common.ComptypeCabinet {
+	return sls_common.ComptypeCabinet{
+		Model:    ct.Model,
+		Networks: ct.CabinetNetworks,
+	}
+}
+
 // SLSGeneratorInputState is given to the SLS config generator in order to generate the SLS config file
 type SLSGeneratorInputState struct {
 	ApplicationNodeConfig SLSGeneratorApplicationNodeConfig `json:"ApplicationNodeConfig"`
 
 	ManagementSwitches  map[string]sls_common.GenericHardware `json:"ManagementSwitches"` // SLS Type: comptype_mgmt_switch
-	RiverCabinets       map[string]sls_common.GenericHardware `json:"RiverCabinets"`      // SLS Type: comptype_cabinet
-	HillCabinets        map[string]sls_common.GenericHardware `json:"HillCabinets"`       // SLS Type: comptype_cabinet
-	MountainCabinets    map[string]sls_common.GenericHardware `json:"MountainCabinets"`   // SLS Type: comptype_cabinet
+	RiverCabinets       map[string]SLSCabinetTemplate         `json:"RiverCabinets"`      // SLS Type: comptype_cabinet
+	HillCabinets        map[string]SLSCabinetTemplate         `json:"HillCabinets"`       // SLS Type: comptype_cabinet
+	MountainCabinets    map[string]SLSCabinetTemplate         `json:"MountainCabinets"`   // SLS Type: comptype_cabinet
 	MountainStartingNid int                                   `json:"MountainStartingNid"`
 
 	Networks map[string]sls_common.Network `json:"Networks"`
@@ -54,13 +77,13 @@ func (applicationNodeConfig *SLSGeneratorApplicationNodeConfig) Validate() error
 	// Verify that all keys in the Alias map are valid xnames
 	for xname := range applicationNodeConfig.Aliases {
 		// First off verify that this is valid xname
-		if !base.IsHMSCompIDValid(xname) {
+		if !xnametypes.IsHMSCompIDValid(xname) {
 			return fmt.Errorf("invalid xname for application node used as key in Aliases map: %s", xname)
 		}
 
 		// Next, verify that the xname is type of node
-		if base.GetHMSType(xname) != base.Node {
-			return fmt.Errorf("invalid type %s for Application xname in Aliases map: %s", base.GetHMSTypeString(xname), xname)
+		if xnametypes.GetHMSType(xname) != xnametypes.Node {
+			return fmt.Errorf("invalid type %s for Application xname in Aliases map: %s", xnametypes.GetHMSTypeString(xname), xname)
 		}
 	}
 
@@ -115,7 +138,7 @@ func (applicationNodeConfig *SLSGeneratorApplicationNodeConfig) Normalize() erro
 	// Normalize xnames in the Aliases map
 	normalizedAliases := map[string][]string{}
 	for xname, aliases := range applicationNodeConfig.Aliases {
-		normalizedXname := base.NormalizeHMSCompID(xname)
+		normalizedXname := xnametypes.NormalizeHMSCompID(xname)
 
 		if _, present := normalizedAliases[normalizedXname]; present {
 			// Found a duplicate xname, after normalization
@@ -201,23 +224,27 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 		switch mySwitch.Type {
 		case sls_common.MgmtSwitch:
 			// xname: xXcCwW
-			parentCabinet := base.GetHMSCompParent(mySwitch.Parent)
-			if _, ok := g.inputState.RiverCabinets[parentCabinet]; !ok {
-				logger.Fatal("Parent river cabinet does not exist for MgmtSwitch",
+			parentCabinet := xnametypes.GetHMSCompParent(mySwitch.Parent)
+
+			if _, err := g.canCabinetContainAirCooledHardware(parentCabinet); err != nil {
+				logger.Fatal("Parent cabinet for MgmtHLSwitch can not contain air-cooled hardware",
 					zap.Any("switch", mySwitch),
 					zap.String("parentCabinet", parentCabinet),
 					zap.String("xname", mySwitch.Xname),
+					zap.Error(err),
 				)
 			}
 		case sls_common.MgmtHLSwitch:
 			// xname: xXcChHsS
-			parentChassis := base.GetHMSCompParent(mySwitch.Parent)
-			parentCabinet := base.GetHMSCompParent(parentChassis)
-			if _, ok := g.inputState.RiverCabinets[parentCabinet]; !ok {
-				logger.Fatal("Parent river cabinet does not exist for MgmtHLSwitch",
+			parentChassis := xnametypes.GetHMSCompParent(mySwitch.Parent)
+			parentCabinet := xnametypes.GetHMSCompParent(parentChassis)
+
+			if _, err := g.canCabinetContainAirCooledHardware(parentCabinet); err != nil {
+				logger.Fatal("Parent cabinet for MgmtHLSwitch can not contain air-cooled hardware",
 					zap.Any("switch", mySwitch),
 					zap.String("parentCabinet", parentCabinet),
 					zap.String("xname", mySwitch.Xname),
+					zap.Error(err),
 				)
 			}
 		default:
@@ -229,6 +256,13 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 	//
 	// First off lets, build up the river hardware
 	//
+
+	// Create River Cabinets
+	for _, cabinetTemplate := range g.inputState.RiverCabinets {
+		riverCabinet := g.buildSLSHardware(cabinetTemplate.Xname, cabinetTemplate.Class, cabinetTemplate.buildExtraProperties())
+
+		cabinetHardwareMap[cabinetTemplate.Xname.String()] = riverCabinet
+	}
 
 	// We need to run through the HMN connections file and build up the list of parents first.
 	g.nodeParents = map[string]int{}
@@ -250,11 +284,12 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 		}
 
 		// Ensure that the cabinet exists
-		if _, ok := g.inputState.RiverCabinets[row.SourceRack]; !ok {
-			logger.Fatal("Parent river cabinet does not exist",
+		if _, err := g.canCabinetContainAirCooledHardware(row.SourceRack); err != nil {
+			logger.Fatal("Parent cabinet can not contain air-cooled hardware",
 				zap.Any("row", row),
 				zap.String("parentCabinet", row.SourceRack), // This value is normally used to construct the xname
 				zap.String("xname", nodeHardware.Xname),
+				zap.Error(err),
 			)
 		}
 
@@ -262,25 +297,17 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 
 		// Finally generate the network connection if there is one.
 		if strings.TrimSpace(row.DestinationPort) != "" && strings.TrimSpace(row.DestinationPort) != "0" {
-			nodeConnection := g.getConnectionForNode(nodeHardware, row)
+			nodeConnection := g.getSwitchConnectionForHardware(nodeHardware, row)
 			connectionHardwareMap[nodeConnection.Xname] = nodeConnection
 
 			// Make sure the switch exists.
 			_, switchExists := switchHardwareMap[nodeConnection.Parent]
 			if !switchExists {
-				destinationUString := strings.TrimPrefix(row.DestinationLocation, "u")
-				switchXname := fmt.Sprintf("%sc0w%s", row.SourceRack, destinationUString)
-
 				logger.Fatal("Failed to find switch in SLS Input State!",
-					zap.String("switchXname", switchXname),
+					zap.String("switchXname", nodeConnection.Parent),
 				)
 			}
 		}
-	}
-
-	// Lastly add the River Cabinets
-	for xname, cab := range g.inputState.RiverCabinets {
-		cabinetHardwareMap[xname] = cab
 	}
 
 	//
@@ -289,10 +316,10 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 	g.currentMountainNID = g.inputState.MountainStartingNid
 	hillCabinets := g.getSortedCabinetXNames(g.inputState.HillCabinets)
 	for _, xname := range hillCabinets {
-		cab := g.inputState.HillCabinets[xname]
+		cabinetTemplate := g.inputState.HillCabinets[xname]
 
-		cabinetHardwareMap[cab.Xname] = cab
-		hillHardware := g.getHardwareForMountainCab(cab.Xname, sls_common.ClassHill)
+		hillHardware := g.getLiquidCooledHardwareForCabinet(cabinetTemplate)
+
 		for _, hardware := range hillHardware {
 			nodeHardwareMap[hardware.Xname] = hardware
 		}
@@ -303,10 +330,9 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 	//
 	mountainCabinets := g.getSortedCabinetXNames(g.inputState.MountainCabinets)
 	for _, xname := range mountainCabinets {
-		cab := g.inputState.MountainCabinets[xname]
-		cabinetHardwareMap[xname] = cab
+		cabinetTemplate := g.inputState.MountainCabinets[xname]
 
-		mountainHardware := g.getHardwareForMountainCab(cab.Xname, sls_common.ClassMountain)
+		mountainHardware := g.getLiquidCooledHardwareForCabinet(cabinetTemplate)
 		for _, hardware := range mountainHardware {
 			nodeHardwareMap[hardware.Xname] = hardware
 		}
@@ -342,15 +368,69 @@ func (g *SLSStateGenerator) buildHardwareSection() (allHardware map[string]sls_c
 	return
 }
 
-func (g *SLSStateGenerator) getSortedCabinetXNames(cabinets map[string]sls_common.GenericHardware) []string {
+func (g *SLSStateGenerator) getSortedCabinetXNames(cabinets map[string]SLSCabinetTemplate) []string {
 	xnames := []string{}
 	for _, cab := range cabinets {
-		xnames = append(xnames, cab.Xname)
+		xnames = append(xnames, cab.Xname.String())
 	}
 
 	sort.Strings(xnames)
 
 	return xnames
+}
+
+func (g *SLSStateGenerator) canCabinetContainAirCooledHardware(cabinetXname string) (bool, error) {
+	if _, ok := g.inputState.RiverCabinets[cabinetXname]; ok {
+		// River Cabinets can of course hold air-cooled hardware
+		return true, nil
+	} else if cabinetTemplate, ok := g.inputState.HillCabinets[cabinetXname]; ok {
+		if cabinetTemplate.Model == "EX2500" {
+			if len(cabinetTemplate.AirCooledChassisList) >= 1 {
+				// This is an EX2500 cabinet with a air cooled chassis in it
+				return true, nil
+			}
+
+			// This ia an EX2500 cabinet with no air-cooled chassis
+			return false, fmt.Errorf("hill cabinet (EX2500) %s does not contain any air-cooled chassis", cabinetXname)
+		}
+
+		// Traditional Hill cabinet
+		return false, fmt.Errorf("hill cabinet (non EX2500) %s cannot contain air-cooled hardware", cabinetXname)
+
+	} else if _, ok := g.inputState.MountainCabinets[cabinetXname]; ok {
+		return false, fmt.Errorf("mountain cabinet %s cannot contain air-cooled hardware", cabinetXname)
+	} else {
+		return false, fmt.Errorf("unknown cabinet %s", cabinetXname)
+	}
+}
+
+func (g *SLSStateGenerator) determineRiverChassis(cabinet xnames.Cabinet) (xnames.Chassis, error) {
+	// Check to see if this is even a cabinet that can have river hardware
+	_, err := g.canCabinetContainAirCooledHardware(cabinet.String())
+	if err != nil {
+		return xnames.Chassis{}, err
+	}
+
+	// Next, determine if this is a standard river cabinet for a EX2500 cabinet
+	hillCabinetTemplate, hillCabinetExists := g.inputState.HillCabinets[cabinet.String()]
+
+	chassisInteger := 0
+	if hillCabinetExists {
+		// This is a EX2500 cabinet with a air cooled chassis
+		chassisInteger = hillCabinetTemplate.AirCooledChassisList[0]
+	}
+
+	return cabinet.Chassis(chassisInteger), nil
+}
+
+func (g *SLSStateGenerator) parseSourceCabinetFromRow(row shcd_parser.HMNRow) (xnames.Cabinet, error) {
+	cabinetString := strings.TrimPrefix(strings.ToLower(row.SourceRack), "x")
+	cabinetInteger, err := strconv.Atoi(cabinetString)
+	if err != nil {
+		return xnames.Cabinet{}, err
+	}
+
+	return xnames.Cabinet{Cabinet: cabinetInteger}, nil
 }
 
 //
@@ -392,9 +472,26 @@ func (g *SLSStateGenerator) getRiverHardwareFromRow(row shcd_parser.HMNRow) (har
 func (g *SLSStateGenerator) getTORHardwareFromRow(row shcd_parser.HMNRow) (hardware sls_common.GenericHardware) {
 	logger := g.logger
 
-	var uInteger int
-	bmcNumber := 0
+	// First determine the cabinet
+	cabinet, err := g.parseSourceCabinetFromRow(row)
+	if err != nil {
+		g.logger.Fatal("Failed to parse source cabinet from row!",
+			zap.Error(err),
+			zap.Any("row", row),
+		)
+	}
 
+	// Determine the chassis
+	chassis, err := g.determineRiverChassis(cabinet)
+	if err != nil {
+		g.logger.Fatal("Failed to determine the chassis integer for rosetta!", // Find a better name for this
+			zap.Error(err),
+			zap.String("row.SourceRack", row.SourceRack),
+			zap.Any("row", row),
+		)
+	}
+
+	// Determine the rack U and BMC ordinals
 	uSubmatches := uRegex.FindStringSubmatch(row.SourceLocation)
 	if len(uSubmatches) < 2 {
 		logger.Fatal("Attempted to run regex on source location but did not find U number!",
@@ -411,32 +508,27 @@ func (g *SLSStateGenerator) getTORHardwareFromRow(row shcd_parser.HMNRow) (hardw
 
 	// This is also a hack, but to prevent a sheet that doesn't have parent information from messing things up,
 	// look to the sublocation for offset.
+	bmcNumber := 0
 	if strings.ToLower(row.SourceSubLocation) == "l" || danglingUBits == "l" {
 		bmcNumber = 1
 	} else if strings.ToLower(row.SourceSubLocation) == "r" || danglingUBits == "r" {
 		bmcNumber = 2
 	}
 
-	var err error
-	uInteger, err = strconv.Atoi(uString)
+	// Determine the rack U of the rosetta
+	uInteger, err := strconv.Atoi(uString)
 	if err != nil {
 		logger.Fatal("Failed to parse U number string to integer!",
 			zap.Error(err), zap.String("uString", uString))
 	}
 
-	torXname := fmt.Sprintf("%sc0r%db%d", row.SourceRack, uInteger, bmcNumber)
+	// Finally build up the xname!
+	tor := chassis.RouterModule(uInteger).RouterBMC(bmcNumber)
 
-	hardware = sls_common.GenericHardware{
-		Parent:     row.SourceRack,
-		Xname:      torXname,
-		Type:       "comptype_rtr_bmc",
-		Class:      "River",
-		TypeString: "RouterBMC",
-		ExtraPropertiesRaw: sls_common.ComptypeRtrBmc{
-			Username: fmt.Sprintf("vault://hms-creds/%s", torXname),
-			Password: fmt.Sprintf("vault://hms-creds/%s", torXname),
-		},
-	}
+	hardware = g.buildSLSHardware(tor, sls_common.ClassRiver, sls_common.ComptypeRtrBmc{
+		Username: fmt.Sprintf("vault://hms-creds/%s", tor.String()),
+		Password: fmt.Sprintf("vault://hms-creds/%s", tor.String()),
+	})
 
 	return
 }
@@ -459,7 +551,7 @@ func (g *SLSStateGenerator) getPDUControllerHardwareFromRow(row shcd_parser.HMNR
 		Xname:      pduXname,
 		Type:       sls_common.CabinetPDUController,
 		Class:      sls_common.ClassRiver,
-		TypeString: base.CabinetPDUController,
+		TypeString: xnametypes.CabinetPDUController,
 	}
 
 	return
@@ -680,6 +772,25 @@ func (g *SLSStateGenerator) getNodeHardwareFromRow(row shcd_parser.HMNRow) (hard
 		}
 	}
 
+	// Now we need to determine
+	cabinet, err := g.parseSourceCabinetFromRow(row)
+	if err != nil {
+		g.logger.Fatal("Failed to parse source cabinet from row!",
+			zap.Error(err),
+			zap.Any("row", row),
+		)
+	}
+
+	// Next determine the chassis
+	chassis, err := g.determineRiverChassis(cabinet)
+	if err != nil {
+		g.logger.Fatal("Failed to determine the chassis integer for node!",
+			zap.Error(err),
+			zap.String("row.SourceRack", row.SourceRack),
+			zap.Any("row", row),
+		)
+	}
+
 	// At this point we either have a genuine node or we have a parent of some sort (i.e., a CMC for a Gigabyte node).
 	// We need to distinguish that as it has an impact on the type. We also want to make sure it's actually plugged in.
 
@@ -687,38 +798,75 @@ func (g *SLSStateGenerator) getNodeHardwareFromRow(row shcd_parser.HMNRow) (hard
 	_, isAParent := g.nodeParents[row.Source]
 	if isAParent {
 		// If it is, then the type is actually comptype_chassis_bmc.
-		hardware = sls_common.GenericHardware{
-			Parent:     row.SourceRack,
-			Xname:      fmt.Sprintf("%sc0s%db999", row.SourceRack, uInteger),
-			Type:       "comptype_chassis_bmc",
-			Class:      "River",
-			TypeString: "ChassisBMC",
-		}
+		cmc := chassis.ComputeModule(uInteger).NodeBMC(999)
+
+		hardware = g.buildSLSHardware(cmc, sls_common.ClassRiver, nil)
 	} else {
-		nodeXname := fmt.Sprintf("%sc0s%db%dn0", row.SourceRack, uInteger, bmcNumber)
+		node := chassis.ComputeModule(uInteger).NodeBMC(bmcNumber).Node(0)
 
 		if thisNodeExtraProperties.Role == "Application" {
 			// If this is an Application node lets get its aliases of it (if they exist)
-			aliases := g.getApplicationNodeAlias(nodeXname)
+			aliases := g.getApplicationNodeAlias(node.String())
 			thisNodeExtraProperties.Aliases = append(thisNodeExtraProperties.Aliases, aliases...)
 		}
 
-		hardware = sls_common.GenericHardware{
-			Parent:             fmt.Sprintf("%sc0s%db%d", row.SourceRack, uInteger, bmcNumber),
-			Xname:              nodeXname,
-			Type:               "comptype_node",
-			Class:              "River",
-			TypeString:         "Node",
-			ExtraPropertiesRaw: thisNodeExtraProperties,
-		}
+		hardware = g.buildSLSHardware(node, sls_common.ClassRiver, thisNodeExtraProperties)
 	}
 
 	return
 }
 
-func (g *SLSStateGenerator) getConnectionForNode(node sls_common.GenericHardware, row shcd_parser.HMNRow) (
+func (g *SLSStateGenerator) getSwitchConnectionForHardware(hardware sls_common.GenericHardware, row shcd_parser.HMNRow) (
 	connection sls_common.GenericHardware) {
-	destinationUString := strings.TrimPrefix(row.DestinationLocation, "u")
+
+	// Determine the xname of the device that this MgmtSwitchConnector will connect to
+	var destinationXname string
+	if xnametypes.IsHMSTypeController(hardware.TypeString) {
+		// This this type *IS* the BMC or PDU, then don't use the parent, use the xname.
+		destinationXname = hardware.Xname
+	} else {
+		destinationXname = hardware.Parent
+	}
+
+	//
+	// Build up the xname for the MgmtSwitchConnector
+	//
+
+	// Determine the cabinet integer
+	cabinetString := strings.TrimPrefix(strings.ToLower(row.DestinationRack), "x")
+	cabinetInteger, err := strconv.Atoi(cabinetString)
+	if err != nil {
+		g.logger.Fatal("Failed to parse destination cabinet number string to integer!",
+			zap.Error(err),
+			zap.String("cabinetString", cabinetString),
+			zap.Any("row", row),
+		)
+	}
+
+	cabinet := xnames.Cabinet{Cabinet: cabinetInteger}
+
+	// Determine the chassis integer
+	chassis, err := g.determineRiverChassis(cabinet)
+	if err != nil {
+		g.logger.Fatal("Failed to determine the chassis integer for node!",
+			zap.Error(err),
+			zap.String("cabinet", cabinet.String()),
+			zap.Any("row", row),
+		)
+	}
+
+	// Determine the slot/rack u
+	destinationUString := strings.TrimPrefix(strings.ToLower(row.DestinationLocation), "u")
+	destinationUInteger, err := strconv.Atoi(destinationUString)
+	if err != nil {
+		g.logger.Fatal("Failed to parse destination location number string to integer!",
+			zap.Error(err),
+			zap.String("destinationUInteger", destinationUString),
+			zap.Any("row", row),
+		)
+	}
+
+	mgmtSwitch := chassis.MgmtSwitch(destinationUInteger)
 
 	// Because of "reasons" the port/jack string is either prefixed with a `j` or a `p`. To combat this, use regex.
 	portSubmatches := portRegex.FindStringSubmatch(row.DestinationPort)
@@ -727,42 +875,41 @@ func (g *SLSStateGenerator) getConnectionForNode(node sls_common.GenericHardware
 			zap.Any("portSubmatches", portSubmatches),
 			zap.Any("row", row))
 	}
-	destinationJackString := portSubmatches[1]
+	destinationPortString := portSubmatches[1]
 
-	var destinationXname string
-	if strings.HasSuffix(string(node.Type), "bmc") || node.Type == sls_common.CabinetPDUController {
-		// This this type *IS* the BMC or PDU, then don't use the parent, use the xname.
-		destinationXname = node.Xname
-	} else {
-		destinationXname = node.Parent
+	destinationPortInteger, err := strconv.Atoi(destinationPortString)
+	if err != nil {
+		g.logger.Fatal("Failed to parse destination port number string to integer!",
+			zap.Error(err),
+			zap.String("destinationPortString", destinationPortString),
+			zap.Any("row", row),
+		)
 	}
 
-	// Determine Switch and MgmtSwitchConnector xnames
-	switchName := fmt.Sprintf("%sc0w%s", row.DestinationRack, destinationUString)
-	connectorXname := fmt.Sprintf("%sc0w%sj%s", row.DestinationRack, destinationUString, destinationJackString)
+	mgmtSwitchConnector := mgmtSwitch.MgmtSwitchConnector(destinationPortInteger)
 
 	// Get the brand for this switch
-	mgmtSwitch, ok := g.inputState.ManagementSwitches[switchName]
+	slsMgmtSwitch, ok := g.inputState.ManagementSwitches[mgmtSwitch.String()]
 	if !ok {
 		g.logger.Fatal("Unable to find management switch",
-			zap.String("switchName", switchName),
-			zap.String("connectorXname", switchName),
+			zap.String("switchName", mgmtSwitch.String()),
+			zap.String("connectorXname", mgmtSwitchConnector.String()),
 			zap.String("destinationXname", destinationXname))
 	}
 
-	ep, ok := mgmtSwitch.ExtraPropertiesRaw.(sls_common.ComptypeMgmtSwitch)
+	ep, ok := slsMgmtSwitch.ExtraPropertiesRaw.(sls_common.ComptypeMgmtSwitch)
 	if !ok {
 		g.logger.Fatal("Unable to get management switch extra properties",
-			zap.String("switchName", switchName),
-			zap.String("connectorXname", switchName),
+			zap.String("switchName", mgmtSwitch.String()),
+			zap.String("connectorXname", mgmtSwitchConnector.String()),
 			zap.String("destinationXname", destinationXname))
 	}
 	switchBrand := ep.Brand
 
 	if switchBrand == "" {
 		g.logger.Fatal("Management Switch brand found not provided for switch",
-			zap.String("switchName", switchName),
-			zap.String("connectorXname", switchName),
+			zap.String("switchName", mgmtSwitch.String()),
+			zap.String("connectorXname", mgmtSwitchConnector.String()),
 			zap.String("destinationXname", destinationXname))
 	}
 
@@ -772,36 +919,29 @@ func (g *SLSStateGenerator) getConnectionForNode(node sls_common.GenericHardware
 	var vendorName string
 	switch switchBrand {
 	case ManagementSwitchBrandDell.String():
-		vendorName = fmt.Sprintf("ethernet1/1/%s", destinationJackString)
+		vendorName = fmt.Sprintf("ethernet1/1/%d", destinationPortInteger)
 	case ManagementSwitchBrandAruba.String():
-		vendorName = fmt.Sprintf("1/1/%s", destinationJackString)
+		vendorName = fmt.Sprintf("1/1/%d", destinationPortInteger)
 	case ManagementSwitchBrandMellanox.String():
 		// This should only occur when the HMN connections says that a BMC is connected to the
 		// spine/leaf switch. Which should not happen.
 		g.logger.Fatal("Currently do no support MgmtSwitchConnector for Mellanox switches",
 			zap.Any("switchBrand", switchBrand),
-			zap.String("switchName", switchName),
-			zap.String("connectorXname", switchName),
+			zap.String("switchName", mgmtSwitch.String()),
+			zap.String("connectorXname", mgmtSwitchConnector.String()),
 			zap.String("destinationXname", destinationXname))
 	default:
 		g.logger.Fatal("Unknown Management Switch brand found for switch",
 			zap.Any("switchBrand", switchBrand),
-			zap.String("switchName", switchName),
-			zap.String("connectorXname", switchName),
+			zap.String("switchName", mgmtSwitch.String()),
+			zap.String("connectorXname", mgmtSwitchConnector.String()),
 			zap.String("destinationXname", destinationXname))
 	}
 
-	connection = sls_common.GenericHardware{
-		Parent:     switchName,
-		Xname:      connectorXname,
-		Type:       "comptype_mgmt_switch_connector",
-		Class:      "River",
-		TypeString: "MgmtSwitchConnector",
-		ExtraPropertiesRaw: sls_common.ComptypeMgmtSwitchConnector{
-			NodeNics:   []string{destinationXname},
-			VendorName: vendorName,
-		},
-	}
+	connection = g.buildSLSHardware(mgmtSwitchConnector, sls_common.ClassRiver, sls_common.ComptypeMgmtSwitchConnector{
+		NodeNics:   []string{destinationXname},
+		VendorName: vendorName,
+	})
 
 	return
 }
@@ -820,49 +960,37 @@ func (g *SLSStateGenerator) findRowWithSource(sourceParent string) shcd_parser.H
 //
 // Mountain and Hill hardware
 //
-func (g *SLSStateGenerator) getHardwareForMountainCab(cabXname string, cabClass sls_common.CabinetType) (nodes []sls_common.GenericHardware) {
-	logger := g.logger
+func (g *SLSStateGenerator) getLiquidCooledHardwareForCabinet(cabinetTemplate SLSCabinetTemplate) (hardware []sls_common.GenericHardware) {
+	// Start with the Cabinet
+	cabinetXname := cabinetTemplate.Xname
 
-	var chassisList []string
-	switch cabClass {
-	case sls_common.ClassMountain:
-		chassisList = mountainChassisList
-	case sls_common.ClassHill:
-		chassisList = tdsChassisList
-	default:
-		logger.Fatal("Unable to genreate mountain hardware for cabinet class",
-			zap.Any("cabClass", cabClass),
-			zap.String("cabNname", cabXname),
-		)
-	}
+	slsCabinet := g.buildSLSHardware(cabinetXname, cabinetTemplate.Class, cabinetTemplate.buildExtraProperties())
+	hardware = append(hardware, slsCabinet)
 
-	for _, chassis := range chassisList {
-		// Start with the CMM
-		cmm := sls_common.GenericHardware{
-			Parent:     cabXname,
-			Xname:      fmt.Sprintf("%s%s", cabXname, chassis),
-			Type:       "comptype_chassis_bmc",
-			Class:      sls_common.CabinetType(cabClass),
-			TypeString: "ChassisBMC",
-		}
-		nodes = append(nodes, cmm)
+	for _, chassisOrdinal := range cabinetTemplate.LiquidCooledChassisList {
+		chassisXname := cabinetXname.Chassis(chassisOrdinal)
 
-		for slot := 0; slot < 8; slot++ {
-			for bmc := 0; bmc < 2; bmc++ {
-				for node := 0; node < 2; node++ {
-					newNode := sls_common.GenericHardware{
-						Parent:     fmt.Sprintf("%s%ss%db%d", cabXname, chassis, slot, bmc),
-						Xname:      fmt.Sprintf("%s%ss%db%dn%d", cabXname, chassis, slot, bmc, node),
-						Type:       "comptype_node",
-						Class:      sls_common.CabinetType(cabClass),
-						TypeString: "Node",
-						ExtraPropertiesRaw: sls_common.ComptypeNode{
-							NID:     g.currentMountainNID,
-							Role:    "Compute",
-							Aliases: []string{fmt.Sprintf("nid%06d", g.currentMountainNID)},
-						},
-					}
-					nodes = append(nodes, newNode)
+		// Start with the Chassis
+		slsChassis := g.buildSLSHardware(chassisXname, cabinetTemplate.Class, nil)
+		hardware = append(hardware, slsChassis)
+
+		// Next the CMM
+		slsChassisBMC := g.buildSLSHardware(chassisXname.ChassisBMC(0), cabinetTemplate.Class, nil)
+		hardware = append(hardware, slsChassisBMC)
+
+		for slotOrdinal := 0; slotOrdinal < 8; slotOrdinal++ {
+			for bmcOrdinal := 0; bmcOrdinal < 2; bmcOrdinal++ {
+				for nodeOrdinal := 0; nodeOrdinal < 2; nodeOrdinal++ {
+					// Construct the xname for the node
+					nodeXname := chassisXname.ComputeModule(slotOrdinal).NodeBMC(bmcOrdinal).Node(nodeOrdinal)
+
+					node := g.buildSLSHardware(nodeXname, cabinetTemplate.Class, sls_common.ComptypeNode{
+						NID:     g.currentMountainNID,
+						Role:    "Compute",
+						Aliases: []string{fmt.Sprintf("nid%06d", g.currentMountainNID)},
+					})
+
+					hardware = append(hardware, node)
 
 					g.currentMountainNID++
 				}
@@ -871,6 +999,21 @@ func (g *SLSStateGenerator) getHardwareForMountainCab(cabXname string, cabClass 
 	}
 
 	return
+}
+
+func (g *SLSStateGenerator) buildSLSHardware(xname xnames.Xname, class sls_common.CabinetType, extraProperties interface{}) sls_common.GenericHardware {
+	if xname == nil {
+		panic("nil xname provided")
+	}
+
+	return sls_common.GenericHardware{
+		Parent:             xname.ParentInterface().String(),
+		Xname:              xname.String(),
+		Type:               sls_common.HMSTypeToHMSStringType(xname.Type()),
+		Class:              class,
+		TypeString:         xname.Type(),
+		ExtraPropertiesRaw: extraProperties,
+	}
 }
 
 //

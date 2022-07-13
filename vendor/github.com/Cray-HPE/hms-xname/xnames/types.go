@@ -20,7 +20,7 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-package xname
+package xnames
 
 import (
 	"fmt"
@@ -32,11 +32,22 @@ import (
 type System struct {
 }
 
+// Type will return the corresponding HMSType
+func (x System) Type() xnametypes.HMSType {
+	return xnametypes.System
+}
+
 // String will stringify System into the format of sS
 func (x System) String() string {
 	return fmt.Sprintf(
 		"s0",
 	)
+}
+
+// ParentGeneric will determine the parent of this System, and return it as a Xname interface
+func (x System) ParentInterface() Xname {
+
+	return nil
 }
 
 // CDU will get a child component with the specified ordinal
@@ -68,6 +79,11 @@ type CDU struct {
 	CDU int // dD
 }
 
+// Type will return the corresponding HMSType
+func (x CDU) Type() xnametypes.HMSType {
+	return xnametypes.CDU
+}
+
 // String will stringify CDU into the format of dD
 func (x CDU) String() string {
 	return fmt.Sprintf(
@@ -79,6 +95,12 @@ func (x CDU) String() string {
 // Parent will determine the parent of this CDU
 func (x CDU) Parent() System {
 	return System{}
+}
+
+// ParentGeneric will determine the parent of this CDU, and return it as a Xname interface
+func (x CDU) ParentInterface() Xname {
+	return x.Parent()
+
 }
 
 // CDUMgmtSwitch will get a child component with the specified ordinal
@@ -105,6 +127,11 @@ type CDUMgmtSwitch struct {
 	CDUMgmtSwitch int // wW
 }
 
+// Type will return the corresponding HMSType
+func (x CDUMgmtSwitch) Type() xnametypes.HMSType {
+	return xnametypes.CDUMgmtSwitch
+}
+
 // String will stringify CDUMgmtSwitch into the format of dDwW
 func (x CDUMgmtSwitch) String() string {
 	return fmt.Sprintf(
@@ -119,6 +146,12 @@ func (x CDUMgmtSwitch) Parent() CDU {
 	return CDU{
 		CDU: x.CDU,
 	}
+}
+
+// ParentGeneric will determine the parent of this CDUMgmtSwitch, and return it as a Xname interface
+func (x CDUMgmtSwitch) ParentInterface() Xname {
+	return x.Parent()
+
 }
 
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
@@ -136,6 +169,11 @@ type Cabinet struct {
 	Cabinet int // xX
 }
 
+// Type will return the corresponding HMSType
+func (x Cabinet) Type() xnametypes.HMSType {
+	return xnametypes.Cabinet
+}
+
 // String will stringify Cabinet into the format of xX
 func (x Cabinet) String() string {
 	return fmt.Sprintf(
@@ -147,6 +185,12 @@ func (x Cabinet) String() string {
 // Parent will determine the parent of this Cabinet
 func (x Cabinet) Parent() System {
 	return System{}
+}
+
+// ParentGeneric will determine the parent of this Cabinet, and return it as a Xname interface
+func (x Cabinet) ParentInterface() Xname {
+	return x.Parent()
+
 }
 
 // CEC will get a child component with the specified ordinal
@@ -205,6 +249,11 @@ type CEC struct {
 	CEC     int // eE
 }
 
+// Type will return the corresponding HMSType
+func (x CEC) Type() xnametypes.HMSType {
+	return xnametypes.CEC
+}
+
 // String will stringify CEC into the format of xXeE
 func (x CEC) String() string {
 	return fmt.Sprintf(
@@ -219,6 +268,12 @@ func (x CEC) Parent() Cabinet {
 	return Cabinet{
 		Cabinet: x.Cabinet,
 	}
+}
+
+// ParentGeneric will determine the parent of this CEC, and return it as a Xname interface
+func (x CEC) ParentInterface() Xname {
+	return x.Parent()
+
 }
 
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
@@ -237,6 +292,11 @@ type CabinetBMC struct {
 	CabinetBMC int // bB
 }
 
+// Type will return the corresponding HMSType
+func (x CabinetBMC) Type() xnametypes.HMSType {
+	return xnametypes.CabinetBMC
+}
+
 // String will stringify CabinetBMC into the format of xXbB
 func (x CabinetBMC) String() string {
 	return fmt.Sprintf(
@@ -251,6 +311,12 @@ func (x CabinetBMC) Parent() Cabinet {
 	return Cabinet{
 		Cabinet: x.Cabinet,
 	}
+}
+
+// ParentGeneric will determine the parent of this CabinetBMC, and return it as a Xname interface
+func (x CabinetBMC) ParentInterface() Xname {
+	return x.Parent()
+
 }
 
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
@@ -269,6 +335,11 @@ type CabinetCDU struct {
 	CabinetCDU int // dD
 }
 
+// Type will return the corresponding HMSType
+func (x CabinetCDU) Type() xnametypes.HMSType {
+	return xnametypes.CabinetCDU
+}
+
 // String will stringify CabinetCDU into the format of xXdD
 func (x CabinetCDU) String() string {
 	return fmt.Sprintf(
@@ -283,6 +354,12 @@ func (x CabinetCDU) Parent() Cabinet {
 	return Cabinet{
 		Cabinet: x.Cabinet,
 	}
+}
+
+// ParentGeneric will determine the parent of this CabinetCDU, and return it as a Xname interface
+func (x CabinetCDU) ParentInterface() Xname {
+	return x.Parent()
+
 }
 
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
@@ -301,6 +378,11 @@ type CabinetPDUController struct {
 	CabinetPDUController int // mM
 }
 
+// Type will return the corresponding HMSType
+func (x CabinetPDUController) Type() xnametypes.HMSType {
+	return xnametypes.CabinetPDUController
+}
+
 // String will stringify CabinetPDUController into the format of xXmM
 func (x CabinetPDUController) String() string {
 	return fmt.Sprintf(
@@ -315,6 +397,12 @@ func (x CabinetPDUController) Parent() Cabinet {
 	return Cabinet{
 		Cabinet: x.Cabinet,
 	}
+}
+
+// ParentGeneric will determine the parent of this CabinetPDUController, and return it as a Xname interface
+func (x CabinetPDUController) ParentInterface() Xname {
+	return x.Parent()
+
 }
 
 // CabinetPDU will get a child component with the specified ordinal
@@ -352,6 +440,11 @@ type CabinetPDU struct {
 	CabinetPDU           int // pP
 }
 
+// Type will return the corresponding HMSType
+func (x CabinetPDU) Type() xnametypes.HMSType {
+	return xnametypes.CabinetPDU
+}
+
 // String will stringify CabinetPDU into the format of xXmMpP
 func (x CabinetPDU) String() string {
 	return fmt.Sprintf(
@@ -368,6 +461,12 @@ func (x CabinetPDU) Parent() CabinetPDUController {
 		Cabinet:              x.Cabinet,
 		CabinetPDUController: x.CabinetPDUController,
 	}
+}
+
+// ParentGeneric will determine the parent of this CabinetPDU, and return it as a Xname interface
+func (x CabinetPDU) ParentInterface() Xname {
+	return x.Parent()
+
 }
 
 // CabinetPDUOutlet will get a child component with the specified ordinal
@@ -408,6 +507,11 @@ type CabinetPDUOutlet struct {
 	CabinetPDUOutlet     int // jJ
 }
 
+// Type will return the corresponding HMSType
+func (x CabinetPDUOutlet) Type() xnametypes.HMSType {
+	return xnametypes.CabinetPDUOutlet
+}
+
 // String will stringify CabinetPDUOutlet into the format of xXmMpPjJ
 func (x CabinetPDUOutlet) String() string {
 	return fmt.Sprintf(
@@ -428,6 +532,12 @@ func (x CabinetPDUOutlet) Parent() CabinetPDU {
 	}
 }
 
+// ParentGeneric will determine the parent of this CabinetPDUOutlet, and return it as a Xname interface
+func (x CabinetPDUOutlet) ParentInterface() Xname {
+	return x.Parent()
+
+}
+
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
 func (x CabinetPDUOutlet) Validate() error {
 	xname := x.String()
@@ -444,6 +554,11 @@ type CabinetPDUPowerConnector struct {
 	CabinetPDUController     int // mM
 	CabinetPDU               int // pP
 	CabinetPDUPowerConnector int // vV
+}
+
+// Type will return the corresponding HMSType
+func (x CabinetPDUPowerConnector) Type() xnametypes.HMSType {
+	return xnametypes.CabinetPDUPowerConnector
 }
 
 // String will stringify CabinetPDUPowerConnector into the format of xXmMpPvV
@@ -466,6 +581,12 @@ func (x CabinetPDUPowerConnector) Parent() CabinetPDU {
 	}
 }
 
+// ParentGeneric will determine the parent of this CabinetPDUPowerConnector, and return it as a Xname interface
+func (x CabinetPDUPowerConnector) ParentInterface() Xname {
+	return x.Parent()
+
+}
+
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
 func (x CabinetPDUPowerConnector) Validate() error {
 	xname := x.String()
@@ -481,6 +602,11 @@ type CabinetPDUNic struct {
 	Cabinet              int // xX
 	CabinetPDUController int // mM
 	CabinetPDUNic        int // iI
+}
+
+// Type will return the corresponding HMSType
+func (x CabinetPDUNic) Type() xnametypes.HMSType {
+	return xnametypes.CabinetPDUNic
 }
 
 // String will stringify CabinetPDUNic into the format of xXmMpPiI
@@ -501,6 +627,12 @@ func (x CabinetPDUNic) Parent() CabinetPDUController {
 	}
 }
 
+// ParentGeneric will determine the parent of this CabinetPDUNic, and return it as a Xname interface
+func (x CabinetPDUNic) ParentInterface() Xname {
+	return x.Parent()
+
+}
+
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
 func (x CabinetPDUNic) Validate() error {
 	xname := x.String()
@@ -517,6 +649,11 @@ type Chassis struct {
 	Chassis int // cC
 }
 
+// Type will return the corresponding HMSType
+func (x Chassis) Type() xnametypes.HMSType {
+	return xnametypes.Chassis
+}
+
 // String will stringify Chassis into the format of xXcC
 func (x Chassis) String() string {
 	return fmt.Sprintf(
@@ -531,6 +668,12 @@ func (x Chassis) Parent() Cabinet {
 	return Cabinet{
 		Cabinet: x.Cabinet,
 	}
+}
+
+// ParentGeneric will determine the parent of this Chassis, and return it as a Xname interface
+func (x Chassis) ParentInterface() Xname {
+	return x.Parent()
+
 }
 
 // CMMFpga will get a child component with the specified ordinal
@@ -613,6 +756,11 @@ type CMMFpga struct {
 	CMMFpga int // fF
 }
 
+// Type will return the corresponding HMSType
+func (x CMMFpga) Type() xnametypes.HMSType {
+	return xnametypes.CMMFpga
+}
+
 // String will stringify CMMFpga into the format of xXcCfF
 func (x CMMFpga) String() string {
 	return fmt.Sprintf(
@@ -631,6 +779,12 @@ func (x CMMFpga) Parent() Chassis {
 	}
 }
 
+// ParentGeneric will determine the parent of this CMMFpga, and return it as a Xname interface
+func (x CMMFpga) ParentInterface() Xname {
+	return x.Parent()
+
+}
+
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
 func (x CMMFpga) Validate() error {
 	xname := x.String()
@@ -646,6 +800,11 @@ type CMMRectifier struct {
 	Cabinet      int // xX
 	Chassis      int // cC
 	CMMRectifier int // tT
+}
+
+// Type will return the corresponding HMSType
+func (x CMMRectifier) Type() xnametypes.HMSType {
+	return xnametypes.CMMRectifier
 }
 
 // String will stringify CMMRectifier into the format of xXcCtT
@@ -666,6 +825,12 @@ func (x CMMRectifier) Parent() Chassis {
 	}
 }
 
+// ParentGeneric will determine the parent of this CMMRectifier, and return it as a Xname interface
+func (x CMMRectifier) ParentInterface() Xname {
+	return x.Parent()
+
+}
+
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
 func (x CMMRectifier) Validate() error {
 	xname := x.String()
@@ -681,6 +846,11 @@ type ChassisBMC struct {
 	Cabinet    int // xX
 	Chassis    int // cC
 	ChassisBMC int // bB
+}
+
+// Type will return the corresponding HMSType
+func (x ChassisBMC) Type() xnametypes.HMSType {
+	return xnametypes.ChassisBMC
 }
 
 // String will stringify ChassisBMC into the format of xXcCbB
@@ -699,6 +869,12 @@ func (x ChassisBMC) Parent() Chassis {
 		Cabinet: x.Cabinet,
 		Chassis: x.Chassis,
 	}
+}
+
+// ParentGeneric will determine the parent of this ChassisBMC, and return it as a Xname interface
+func (x ChassisBMC) ParentInterface() Xname {
+	return x.Parent()
+
 }
 
 // ChassisBMCNic will get a child component with the specified ordinal
@@ -729,6 +905,11 @@ type ChassisBMCNic struct {
 	ChassisBMCNic int // iI
 }
 
+// Type will return the corresponding HMSType
+func (x ChassisBMCNic) Type() xnametypes.HMSType {
+	return xnametypes.ChassisBMCNic
+}
+
 // String will stringify ChassisBMCNic into the format of xXcCbBiI
 func (x ChassisBMCNic) String() string {
 	return fmt.Sprintf(
@@ -749,6 +930,12 @@ func (x ChassisBMCNic) Parent() ChassisBMC {
 	}
 }
 
+// ParentGeneric will determine the parent of this ChassisBMCNic, and return it as a Xname interface
+func (x ChassisBMCNic) ParentInterface() Xname {
+	return x.Parent()
+
+}
+
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
 func (x ChassisBMCNic) Validate() error {
 	xname := x.String()
@@ -764,6 +951,11 @@ type ComputeModule struct {
 	Cabinet       int // xX
 	Chassis       int // cC
 	ComputeModule int // sS
+}
+
+// Type will return the corresponding HMSType
+func (x ComputeModule) Type() xnametypes.HMSType {
+	return xnametypes.ComputeModule
 }
 
 // String will stringify ComputeModule into the format of xXcCsS
@@ -782,6 +974,12 @@ func (x ComputeModule) Parent() Chassis {
 		Cabinet: x.Cabinet,
 		Chassis: x.Chassis,
 	}
+}
+
+// ParentGeneric will determine the parent of this ComputeModule, and return it as a Xname interface
+func (x ComputeModule) ParentInterface() Xname {
+	return x.Parent()
+
 }
 
 // NodeBMC will get a child component with the specified ordinal
@@ -832,6 +1030,11 @@ type NodeBMC struct {
 	NodeBMC       int // bB
 }
 
+// Type will return the corresponding HMSType
+func (x NodeBMC) Type() xnametypes.HMSType {
+	return xnametypes.NodeBMC
+}
+
 // String will stringify NodeBMC into the format of xXcCsSbB
 func (x NodeBMC) String() string {
 	return fmt.Sprintf(
@@ -850,6 +1053,12 @@ func (x NodeBMC) Parent() ComputeModule {
 		Chassis:       x.Chassis,
 		ComputeModule: x.ComputeModule,
 	}
+}
+
+// ParentGeneric will determine the parent of this NodeBMC, and return it as a Xname interface
+func (x NodeBMC) ParentInterface() Xname {
+	return x.Parent()
+
 }
 
 // Node will get a child component with the specified ordinal
@@ -893,6 +1102,11 @@ type Node struct {
 	Node          int // nN
 }
 
+// Type will return the corresponding HMSType
+func (x Node) Type() xnametypes.HMSType {
+	return xnametypes.Node
+}
+
 // String will stringify Node into the format of xXcCsSbBnN
 func (x Node) String() string {
 	return fmt.Sprintf(
@@ -913,6 +1127,12 @@ func (x Node) Parent() NodeBMC {
 		ComputeModule: x.ComputeModule,
 		NodeBMC:       x.NodeBMC,
 	}
+}
+
+// ParentGeneric will determine the parent of this Node, and return it as a Xname interface
+func (x Node) ParentInterface() Xname {
+	return x.Parent()
+
 }
 
 // Memory will get a child component with the specified ordinal
@@ -1019,6 +1239,11 @@ type Memory struct {
 	Memory        int // dD
 }
 
+// Type will return the corresponding HMSType
+func (x Memory) Type() xnametypes.HMSType {
+	return xnametypes.Memory
+}
+
 // String will stringify Memory into the format of xXcCsSbBnNdD
 func (x Memory) String() string {
 	return fmt.Sprintf(
@@ -1043,6 +1268,12 @@ func (x Memory) Parent() Node {
 	}
 }
 
+// ParentGeneric will determine the parent of this Memory, and return it as a Xname interface
+func (x Memory) ParentInterface() Xname {
+	return x.Parent()
+
+}
+
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
 func (x Memory) Validate() error {
 	xname := x.String()
@@ -1061,6 +1292,11 @@ type NodeAccel struct {
 	NodeBMC       int // bB
 	Node          int // nN
 	NodeAccel     int // aA
+}
+
+// Type will return the corresponding HMSType
+func (x NodeAccel) Type() xnametypes.HMSType {
+	return xnametypes.NodeAccel
 }
 
 // String will stringify NodeAccel into the format of xXcCsSbBnNaA
@@ -1087,6 +1323,12 @@ func (x NodeAccel) Parent() Node {
 	}
 }
 
+// ParentGeneric will determine the parent of this NodeAccel, and return it as a Xname interface
+func (x NodeAccel) ParentInterface() Xname {
+	return x.Parent()
+
+}
+
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
 func (x NodeAccel) Validate() error {
 	xname := x.String()
@@ -1105,6 +1347,11 @@ type NodeAccelRiser struct {
 	NodeBMC        int // bB
 	Node           int // nN
 	NodeAccelRiser int // rR
+}
+
+// Type will return the corresponding HMSType
+func (x NodeAccelRiser) Type() xnametypes.HMSType {
+	return xnametypes.NodeAccelRiser
 }
 
 // String will stringify NodeAccelRiser into the format of xXcCsSbBnNrR
@@ -1131,6 +1378,12 @@ func (x NodeAccelRiser) Parent() Node {
 	}
 }
 
+// ParentGeneric will determine the parent of this NodeAccelRiser, and return it as a Xname interface
+func (x NodeAccelRiser) ParentInterface() Xname {
+	return x.Parent()
+
+}
+
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
 func (x NodeAccelRiser) Validate() error {
 	xname := x.String()
@@ -1149,6 +1402,11 @@ type NodeHsnNic struct {
 	NodeBMC       int // bB
 	Node          int // nN
 	NodeHsnNic    int // hH
+}
+
+// Type will return the corresponding HMSType
+func (x NodeHsnNic) Type() xnametypes.HMSType {
+	return xnametypes.NodeHsnNic
 }
 
 // String will stringify NodeHsnNic into the format of xXcCsSbBnNhH
@@ -1175,6 +1433,12 @@ func (x NodeHsnNic) Parent() Node {
 	}
 }
 
+// ParentGeneric will determine the parent of this NodeHsnNic, and return it as a Xname interface
+func (x NodeHsnNic) ParentInterface() Xname {
+	return x.Parent()
+
+}
+
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
 func (x NodeHsnNic) Validate() error {
 	xname := x.String()
@@ -1193,6 +1457,11 @@ type NodeNic struct {
 	NodeBMC       int // bB
 	Node          int // nN
 	NodeNic       int // iI
+}
+
+// Type will return the corresponding HMSType
+func (x NodeNic) Type() xnametypes.HMSType {
+	return xnametypes.NodeNic
 }
 
 // String will stringify NodeNic into the format of xXcCsSbBnNiI
@@ -1219,6 +1488,12 @@ func (x NodeNic) Parent() Node {
 	}
 }
 
+// ParentGeneric will determine the parent of this NodeNic, and return it as a Xname interface
+func (x NodeNic) ParentInterface() Xname {
+	return x.Parent()
+
+}
+
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
 func (x NodeNic) Validate() error {
 	xname := x.String()
@@ -1237,6 +1512,11 @@ type Processor struct {
 	NodeBMC       int // bB
 	Node          int // nN
 	Processor     int // pP
+}
+
+// Type will return the corresponding HMSType
+func (x Processor) Type() xnametypes.HMSType {
+	return xnametypes.Processor
 }
 
 // String will stringify Processor into the format of xXcCsSbBnNpP
@@ -1263,6 +1543,12 @@ func (x Processor) Parent() Node {
 	}
 }
 
+// ParentGeneric will determine the parent of this Processor, and return it as a Xname interface
+func (x Processor) ParentInterface() Xname {
+	return x.Parent()
+
+}
+
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
 func (x Processor) Validate() error {
 	xname := x.String()
@@ -1281,6 +1567,11 @@ type StorageGroup struct {
 	NodeBMC       int // bB
 	Node          int // nN
 	StorageGroup  int // gG
+}
+
+// Type will return the corresponding HMSType
+func (x StorageGroup) Type() xnametypes.HMSType {
+	return xnametypes.StorageGroup
 }
 
 // String will stringify StorageGroup into the format of xXcCsSbBnNgG
@@ -1305,6 +1596,12 @@ func (x StorageGroup) Parent() Node {
 		NodeBMC:       x.NodeBMC,
 		Node:          x.Node,
 	}
+}
+
+// ParentGeneric will determine the parent of this StorageGroup, and return it as a Xname interface
+func (x StorageGroup) ParentInterface() Xname {
+	return x.Parent()
+
 }
 
 // Drive will get a child component with the specified ordinal
@@ -1341,6 +1638,11 @@ type Drive struct {
 	Drive         int // kK
 }
 
+// Type will return the corresponding HMSType
+func (x Drive) Type() xnametypes.HMSType {
+	return xnametypes.Drive
+}
+
 // String will stringify Drive into the format of xXcCsSbBnNgGkK
 func (x Drive) String() string {
 	return fmt.Sprintf(
@@ -1367,6 +1669,12 @@ func (x Drive) Parent() StorageGroup {
 	}
 }
 
+// ParentGeneric will determine the parent of this Drive, and return it as a Xname interface
+func (x Drive) ParentInterface() Xname {
+	return x.Parent()
+
+}
+
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
 func (x Drive) Validate() error {
 	xname := x.String()
@@ -1384,6 +1692,11 @@ type NodeBMCNic struct {
 	ComputeModule int // sS
 	NodeBMC       int // bB
 	NodeBMCNic    int // iI
+}
+
+// Type will return the corresponding HMSType
+func (x NodeBMCNic) Type() xnametypes.HMSType {
+	return xnametypes.NodeBMCNic
 }
 
 // String will stringify NodeBMCNic into the format of xXcCsSbBiI
@@ -1408,6 +1721,12 @@ func (x NodeBMCNic) Parent() NodeBMC {
 	}
 }
 
+// ParentGeneric will determine the parent of this NodeBMCNic, and return it as a Xname interface
+func (x NodeBMCNic) ParentInterface() Xname {
+	return x.Parent()
+
+}
+
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
 func (x NodeBMCNic) Validate() error {
 	xname := x.String()
@@ -1424,6 +1743,11 @@ type NodeEnclosure struct {
 	Chassis       int // cC
 	ComputeModule int // sS
 	NodeEnclosure int // eE
+}
+
+// Type will return the corresponding HMSType
+func (x NodeEnclosure) Type() xnametypes.HMSType {
+	return xnametypes.NodeEnclosure
 }
 
 // String will stringify NodeEnclosure into the format of xXcCsSbBeE
@@ -1444,6 +1768,12 @@ func (x NodeEnclosure) Parent() ComputeModule {
 		Chassis:       x.Chassis,
 		ComputeModule: x.ComputeModule,
 	}
+}
+
+// ParentGeneric will determine the parent of this NodeEnclosure, and return it as a Xname interface
+func (x NodeEnclosure) ParentInterface() Xname {
+	return x.Parent()
+
 }
 
 // NodeEnclosurePowerSupply will get a child component with the specified ordinal
@@ -1487,6 +1817,11 @@ type NodeEnclosurePowerSupply struct {
 	NodeEnclosurePowerSupply int // tT
 }
 
+// Type will return the corresponding HMSType
+func (x NodeEnclosurePowerSupply) Type() xnametypes.HMSType {
+	return xnametypes.NodeEnclosurePowerSupply
+}
+
 // String will stringify NodeEnclosurePowerSupply into the format of xXcCsSbBeEtT
 func (x NodeEnclosurePowerSupply) String() string {
 	return fmt.Sprintf(
@@ -1509,6 +1844,12 @@ func (x NodeEnclosurePowerSupply) Parent() NodeEnclosure {
 	}
 }
 
+// ParentGeneric will determine the parent of this NodeEnclosurePowerSupply, and return it as a Xname interface
+func (x NodeEnclosurePowerSupply) ParentInterface() Xname {
+	return x.Parent()
+
+}
+
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
 func (x NodeEnclosurePowerSupply) Validate() error {
 	xname := x.String()
@@ -1526,6 +1867,11 @@ type NodeFpga struct {
 	ComputeModule int // sS
 	NodeEnclosure int // eE
 	NodeFpga      int // fF
+}
+
+// Type will return the corresponding HMSType
+func (x NodeFpga) Type() xnametypes.HMSType {
+	return xnametypes.NodeFpga
 }
 
 // String will stringify NodeFpga into the format of xXcCsSbBfF
@@ -1550,6 +1896,12 @@ func (x NodeFpga) Parent() NodeEnclosure {
 	}
 }
 
+// ParentGeneric will determine the parent of this NodeFpga, and return it as a Xname interface
+func (x NodeFpga) ParentInterface() Xname {
+	return x.Parent()
+
+}
+
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
 func (x NodeFpga) Validate() error {
 	xname := x.String()
@@ -1566,6 +1918,11 @@ type NodePowerConnector struct {
 	Chassis            int // cC
 	ComputeModule      int // sS
 	NodePowerConnector int // Sv
+}
+
+// Type will return the corresponding HMSType
+func (x NodePowerConnector) Type() xnametypes.HMSType {
+	return xnametypes.NodePowerConnector
 }
 
 // String will stringify NodePowerConnector into the format of xXcCsSv
@@ -1588,6 +1945,12 @@ func (x NodePowerConnector) Parent() ComputeModule {
 	}
 }
 
+// ParentGeneric will determine the parent of this NodePowerConnector, and return it as a Xname interface
+func (x NodePowerConnector) ParentInterface() Xname {
+	return x.Parent()
+
+}
+
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
 func (x NodePowerConnector) Validate() error {
 	xname := x.String()
@@ -1603,6 +1966,11 @@ type MgmtHLSwitchEnclosure struct {
 	Cabinet               int // xX
 	Chassis               int // cC
 	MgmtHLSwitchEnclosure int // hH
+}
+
+// Type will return the corresponding HMSType
+func (x MgmtHLSwitchEnclosure) Type() xnametypes.HMSType {
+	return xnametypes.MgmtHLSwitchEnclosure
 }
 
 // String will stringify MgmtHLSwitchEnclosure into the format of xXcChH
@@ -1621,6 +1989,12 @@ func (x MgmtHLSwitchEnclosure) Parent() Chassis {
 		Cabinet: x.Cabinet,
 		Chassis: x.Chassis,
 	}
+}
+
+// ParentGeneric will determine the parent of this MgmtHLSwitchEnclosure, and return it as a Xname interface
+func (x MgmtHLSwitchEnclosure) ParentInterface() Xname {
+	return x.Parent()
+
 }
 
 // MgmtHLSwitch will get a child component with the specified ordinal
@@ -1651,6 +2025,11 @@ type MgmtHLSwitch struct {
 	MgmtHLSwitch          int // sS
 }
 
+// Type will return the corresponding HMSType
+func (x MgmtHLSwitch) Type() xnametypes.HMSType {
+	return xnametypes.MgmtHLSwitch
+}
+
 // String will stringify MgmtHLSwitch into the format of xXcChHsS
 func (x MgmtHLSwitch) String() string {
 	return fmt.Sprintf(
@@ -1671,6 +2050,12 @@ func (x MgmtHLSwitch) Parent() MgmtHLSwitchEnclosure {
 	}
 }
 
+// ParentGeneric will determine the parent of this MgmtHLSwitch, and return it as a Xname interface
+func (x MgmtHLSwitch) ParentInterface() Xname {
+	return x.Parent()
+
+}
+
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
 func (x MgmtHLSwitch) Validate() error {
 	xname := x.String()
@@ -1686,6 +2071,11 @@ type MgmtSwitch struct {
 	Cabinet    int // xX
 	Chassis    int // cC
 	MgmtSwitch int // wW
+}
+
+// Type will return the corresponding HMSType
+func (x MgmtSwitch) Type() xnametypes.HMSType {
+	return xnametypes.MgmtSwitch
 }
 
 // String will stringify MgmtSwitch into the format of xXcCwW
@@ -1704,6 +2094,12 @@ func (x MgmtSwitch) Parent() Chassis {
 		Cabinet: x.Cabinet,
 		Chassis: x.Chassis,
 	}
+}
+
+// ParentGeneric will determine the parent of this MgmtSwitch, and return it as a Xname interface
+func (x MgmtSwitch) ParentInterface() Xname {
+	return x.Parent()
+
 }
 
 // MgmtSwitchConnector will get a child component with the specified ordinal
@@ -1734,6 +2130,11 @@ type MgmtSwitchConnector struct {
 	MgmtSwitchConnector int // jJ
 }
 
+// Type will return the corresponding HMSType
+func (x MgmtSwitchConnector) Type() xnametypes.HMSType {
+	return xnametypes.MgmtSwitchConnector
+}
+
 // String will stringify MgmtSwitchConnector into the format of xXcCwWjJ
 func (x MgmtSwitchConnector) String() string {
 	return fmt.Sprintf(
@@ -1754,6 +2155,12 @@ func (x MgmtSwitchConnector) Parent() MgmtSwitch {
 	}
 }
 
+// ParentGeneric will determine the parent of this MgmtSwitchConnector, and return it as a Xname interface
+func (x MgmtSwitchConnector) ParentInterface() Xname {
+	return x.Parent()
+
+}
+
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
 func (x MgmtSwitchConnector) Validate() error {
 	xname := x.String()
@@ -1769,6 +2176,11 @@ type RouterModule struct {
 	Cabinet      int // xX
 	Chassis      int // cC
 	RouterModule int // rR
+}
+
+// Type will return the corresponding HMSType
+func (x RouterModule) Type() xnametypes.HMSType {
+	return xnametypes.RouterModule
 }
 
 // String will stringify RouterModule into the format of xXcCrR
@@ -1787,6 +2199,12 @@ func (x RouterModule) Parent() Chassis {
 		Cabinet: x.Cabinet,
 		Chassis: x.Chassis,
 	}
+}
+
+// ParentGeneric will determine the parent of this RouterModule, and return it as a Xname interface
+func (x RouterModule) ParentInterface() Xname {
+	return x.Parent()
+
 }
 
 // HSNAsic will get a child component with the specified ordinal
@@ -1877,6 +2295,11 @@ type HSNAsic struct {
 	HSNAsic      int // aA
 }
 
+// Type will return the corresponding HMSType
+func (x HSNAsic) Type() xnametypes.HMSType {
+	return xnametypes.HSNAsic
+}
+
 // String will stringify HSNAsic into the format of xXcCrRaA
 func (x HSNAsic) String() string {
 	return fmt.Sprintf(
@@ -1895,6 +2318,12 @@ func (x HSNAsic) Parent() RouterModule {
 		Chassis:      x.Chassis,
 		RouterModule: x.RouterModule,
 	}
+}
+
+// ParentGeneric will determine the parent of this HSNAsic, and return it as a Xname interface
+func (x HSNAsic) ParentInterface() Xname {
+	return x.Parent()
+
 }
 
 // HSNLink will get a child component with the specified ordinal
@@ -1927,6 +2356,11 @@ type HSNLink struct {
 	HSNLink      int // lL
 }
 
+// Type will return the corresponding HMSType
+func (x HSNLink) Type() xnametypes.HMSType {
+	return xnametypes.HSNLink
+}
+
 // String will stringify HSNLink into the format of xXcCrRaAlL
 func (x HSNLink) String() string {
 	return fmt.Sprintf(
@@ -1949,6 +2383,12 @@ func (x HSNLink) Parent() HSNAsic {
 	}
 }
 
+// ParentGeneric will determine the parent of this HSNLink, and return it as a Xname interface
+func (x HSNLink) ParentInterface() Xname {
+	return x.Parent()
+
+}
+
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
 func (x HSNLink) Validate() error {
 	xname := x.String()
@@ -1965,6 +2405,11 @@ type HSNBoard struct {
 	Chassis      int // cC
 	RouterModule int // rR
 	HSNBoard     int // eE
+}
+
+// Type will return the corresponding HMSType
+func (x HSNBoard) Type() xnametypes.HMSType {
+	return xnametypes.HSNBoard
 }
 
 // String will stringify HSNBoard into the format of xXcCrReE
@@ -1987,6 +2432,12 @@ func (x HSNBoard) Parent() RouterModule {
 	}
 }
 
+// ParentGeneric will determine the parent of this HSNBoard, and return it as a Xname interface
+func (x HSNBoard) ParentInterface() Xname {
+	return x.Parent()
+
+}
+
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
 func (x HSNBoard) Validate() error {
 	xname := x.String()
@@ -2003,6 +2454,11 @@ type HSNConnector struct {
 	Chassis      int // cC
 	RouterModule int // rR
 	HSNConnector int // jJ
+}
+
+// Type will return the corresponding HMSType
+func (x HSNConnector) Type() xnametypes.HMSType {
+	return xnametypes.HSNConnector
 }
 
 // String will stringify HSNConnector into the format of xXcCrRjJ
@@ -2023,6 +2479,12 @@ func (x HSNConnector) Parent() RouterModule {
 		Chassis:      x.Chassis,
 		RouterModule: x.RouterModule,
 	}
+}
+
+// ParentGeneric will determine the parent of this HSNConnector, and return it as a Xname interface
+func (x HSNConnector) ParentInterface() Xname {
+	return x.Parent()
+
 }
 
 // HSNConnectorPort will get a child component with the specified ordinal
@@ -2055,6 +2517,11 @@ type HSNConnectorPort struct {
 	HSNConnectorPort int // pP
 }
 
+// Type will return the corresponding HMSType
+func (x HSNConnectorPort) Type() xnametypes.HMSType {
+	return xnametypes.HSNConnectorPort
+}
+
 // String will stringify HSNConnectorPort into the format of xXcCrRjJpP
 func (x HSNConnectorPort) String() string {
 	return fmt.Sprintf(
@@ -2077,6 +2544,12 @@ func (x HSNConnectorPort) Parent() HSNConnector {
 	}
 }
 
+// ParentGeneric will determine the parent of this HSNConnectorPort, and return it as a Xname interface
+func (x HSNConnectorPort) ParentInterface() Xname {
+	return x.Parent()
+
+}
+
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
 func (x HSNConnectorPort) Validate() error {
 	xname := x.String()
@@ -2093,6 +2566,11 @@ type RouterBMC struct {
 	Chassis      int // cC
 	RouterModule int // rR
 	RouterBMC    int // bB
+}
+
+// Type will return the corresponding HMSType
+func (x RouterBMC) Type() xnametypes.HMSType {
+	return xnametypes.RouterBMC
 }
 
 // String will stringify RouterBMC into the format of xXcCrRbB
@@ -2113,6 +2591,12 @@ func (x RouterBMC) Parent() RouterModule {
 		Chassis:      x.Chassis,
 		RouterModule: x.RouterModule,
 	}
+}
+
+// ParentGeneric will determine the parent of this RouterBMC, and return it as a Xname interface
+func (x RouterBMC) ParentInterface() Xname {
+	return x.Parent()
+
 }
 
 // RouterBMCNic will get a child component with the specified ordinal
@@ -2145,6 +2629,11 @@ type RouterBMCNic struct {
 	RouterBMCNic int // iI
 }
 
+// Type will return the corresponding HMSType
+func (x RouterBMCNic) Type() xnametypes.HMSType {
+	return xnametypes.RouterBMCNic
+}
+
 // String will stringify RouterBMCNic into the format of xXcCrRbBiI
 func (x RouterBMCNic) String() string {
 	return fmt.Sprintf(
@@ -2167,6 +2656,12 @@ func (x RouterBMCNic) Parent() RouterBMC {
 	}
 }
 
+// ParentGeneric will determine the parent of this RouterBMCNic, and return it as a Xname interface
+func (x RouterBMCNic) ParentInterface() Xname {
+	return x.Parent()
+
+}
+
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
 func (x RouterBMCNic) Validate() error {
 	xname := x.String()
@@ -2183,6 +2678,11 @@ type RouterFpga struct {
 	Chassis      int // cC
 	RouterModule int // rR
 	RouterFpga   int // fF
+}
+
+// Type will return the corresponding HMSType
+func (x RouterFpga) Type() xnametypes.HMSType {
+	return xnametypes.RouterFpga
 }
 
 // String will stringify RouterFpga into the format of xXcCrRfF
@@ -2205,6 +2705,12 @@ func (x RouterFpga) Parent() RouterModule {
 	}
 }
 
+// ParentGeneric will determine the parent of this RouterFpga, and return it as a Xname interface
+func (x RouterFpga) ParentInterface() Xname {
+	return x.Parent()
+
+}
+
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
 func (x RouterFpga) Validate() error {
 	xname := x.String()
@@ -2221,6 +2727,11 @@ type RouterPowerConnector struct {
 	Chassis              int // cC
 	RouterModule         int // rR
 	RouterPowerConnector int // vV
+}
+
+// Type will return the corresponding HMSType
+func (x RouterPowerConnector) Type() xnametypes.HMSType {
+	return xnametypes.RouterPowerConnector
 }
 
 // String will stringify RouterPowerConnector into the format of xXcCrRvV
@@ -2243,6 +2754,12 @@ func (x RouterPowerConnector) Parent() RouterModule {
 	}
 }
 
+// ParentGeneric will determine the parent of this RouterPowerConnector, and return it as a Xname interface
+func (x RouterPowerConnector) ParentInterface() Xname {
+	return x.Parent()
+
+}
+
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
 func (x RouterPowerConnector) Validate() error {
 	xname := x.String()
@@ -2259,6 +2776,11 @@ type RouterTOR struct {
 	Chassis      int // cC
 	RouterModule int // rR
 	RouterTOR    int // tT
+}
+
+// Type will return the corresponding HMSType
+func (x RouterTOR) Type() xnametypes.HMSType {
+	return xnametypes.RouterTOR
 }
 
 // String will stringify RouterTOR into the format of xXcCrRtT
@@ -2279,6 +2801,12 @@ func (x RouterTOR) Parent() RouterModule {
 		Chassis:      x.Chassis,
 		RouterModule: x.RouterModule,
 	}
+}
+
+// ParentGeneric will determine the parent of this RouterTOR, and return it as a Xname interface
+func (x RouterTOR) ParentInterface() Xname {
+	return x.Parent()
+
 }
 
 // RouterTORFpga will get a child component with the specified ordinal
@@ -2311,6 +2839,11 @@ type RouterTORFpga struct {
 	RouterTORFpga int // fF
 }
 
+// Type will return the corresponding HMSType
+func (x RouterTORFpga) Type() xnametypes.HMSType {
+	return xnametypes.RouterTORFpga
+}
+
 // String will stringify RouterTORFpga into the format of xXcCrRtTfF
 func (x RouterTORFpga) String() string {
 	return fmt.Sprintf(
@@ -2331,6 +2864,12 @@ func (x RouterTORFpga) Parent() RouterTOR {
 		RouterModule: x.RouterModule,
 		RouterTOR:    x.RouterTOR,
 	}
+}
+
+// ParentGeneric will determine the parent of this RouterTORFpga, and return it as a Xname interface
+func (x RouterTORFpga) ParentInterface() Xname {
+	return x.Parent()
+
 }
 
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()

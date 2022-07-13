@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2019-2021] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2019-2022] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -241,7 +241,7 @@ type CompLockV2 struct {
 }
 type CompLockV2Status struct {
 	Components []CompLockV2 `json:"Components"`
-	NotFound   []string     `json:"NotFound"`
+	NotFound   []string     `json:"NotFound,omitempty"`
 }
 
 //////////////////////////////////////////////
@@ -252,7 +252,7 @@ type CompLockV2Status struct {
 type CompLockV2Filter struct {
 	ID                  []string `json:"ComponentIDs"`
 	NID                 []string `json:"NID"`
-	Type                []string `json:"Sype"`
+	Type                []string `json:"Type"`
 	State               []string `json:"State"`
 	Flag                []string `json:"Flag"`
 	Enabled             []string `json:"Enabled"`
@@ -266,6 +266,9 @@ type CompLockV2Filter struct {
 	Partition           []string `json:"Partition"`
 	ProcessingModel     string   `json:"ProcessingModel"`
 	ReservationDuration int      `json:"ReservationDuration"`
+	Locked              []string `json:"Locked"`
+	Reserved            []string `json:"Reserved"`
+	ReservationDisabled []string `json:"ReservationDisabled"`
 }
 
 // Release Res, Release/Renew ServRes
@@ -273,6 +276,7 @@ type CompLockV2Key struct {
 	ID  string `json:"ID"`
 	Key string `json:"Key"`
 }
+
 type CompLockV2ReservationFilter struct {
 	ReservationKeys     []CompLockV2Key `json:"ReservationKeys"`
 	ProcessingModel     string          `json:"ProcessingModel"`
