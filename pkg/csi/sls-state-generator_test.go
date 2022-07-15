@@ -440,6 +440,7 @@ var TestSLSInputState = SLSGeneratorInputState{
 			Xname: xnames.Cabinet{
 				Cabinet: 3000,
 			},
+			Class: sls_common.ClassRiver,
 			// Model: , Not applicable???
 			AirCooledChassisList:    DefaultRiverChassisList,
 			LiquidCooledChassisList: []int{},
@@ -666,12 +667,12 @@ func (suite *ConfigGeneratorTestSuite) SetupSuite() {
 
 func (suite *ConfigGeneratorTestSuite) TestVerifyNoEmptyHardware() {
 	for xname, hardware := range suite.allHardware {
-		suite.NotEmpty(xname)
-		suite.NotEmpty(hardware.Xname)
-		suite.NotEmpty(hardware.Parent)
-		suite.NotEmpty(hardware.Type)
-		suite.NotEmpty(hardware.TypeString)
-		suite.NotEmpty(hardware.Class)
+		suite.NotEmpty(xname, "xname key is empty")
+		suite.NotEmpty(hardware.Xname, "Xname is empty for %s", xname)
+		suite.NotEmpty(hardware.Parent, "Parent is empty for %s", xname)
+		suite.NotEmpty(hardware.Type, "Type is empty for %s", xname)
+		suite.NotEmpty(hardware.TypeString, "TypeString is empty for %s", xname)
+		suite.NotEmpty(hardware.Class, "Class is empty for %s", xname)
 
 		// Note: The extra properties field maybe empty for some component types
 	}
