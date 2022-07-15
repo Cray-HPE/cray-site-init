@@ -23,4 +23,5 @@
 #
 add_exclude:
   - cmd/*_test.go
+  - testdata/expected/*
   - vendor
