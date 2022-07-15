@@ -448,7 +448,7 @@ var TestSLSInputState = SLSGeneratorInputState{
 		},
 		"x3001": SLSCabinetTemplate{
 			Xname: xnames.Cabinet{
-				Cabinet: 3000,
+				Cabinet: 3001,
 			},
 			Class: sls_common.ClassRiver,
 			// Model: , Not applicable???
@@ -1527,7 +1527,7 @@ func (suite *ConfigGeneratorTestSuite) TestCabinet_River() {
 	/*
 		{
 			"Parent": "s0",
-			"Xname": "x3000",
+			"Xname": "x3001",
 			"Type": "comptype_cabinet",
 			"Class": "River",
 			"TypeString": "Cabinet",
@@ -1535,11 +1535,11 @@ func (suite *ConfigGeneratorTestSuite) TestCabinet_River() {
 		}
 	*/
 
-	hardware, ok := suite.allHardware["x3000"]
+	hardware, ok := suite.allHardware["x3001"]
 	suite.True(ok, "Unable to find xname.")
 
 	suite.Equal(hardware.Parent, "s0")
-	suite.Equal(hardware.Xname, "x3000")
+	suite.Equal(hardware.Xname, "x3001")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_cabinet"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
 	suite.Equal(hardware.TypeString, xnametypes.HMSType("Cabinet"))
