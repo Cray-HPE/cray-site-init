@@ -1,10 +1,5 @@
 bin/
 coverage*
 build/
-cmd/*/*
 !cmd/embeded-files/*
 dist/
-cmd/application_node_config.yaml
-cmd/hmn_connections.json
-cmd/ncn_metadata.csv
-cmd/switch_metadata.csv

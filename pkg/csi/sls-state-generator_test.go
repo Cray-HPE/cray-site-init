@@ -1,7 +1,31 @@
 //go:build !integration && !shcd
 // +build !integration,!shcd
 
-// Copyright 2021 Hewlett Packard Enterprise Development LP
+/*
+ *
+ *  MIT License
+ *
+ *  (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a
+ *  copy of this software and associated documentation files (the "Software"),
+ *  to deal in the Software without restriction, including without limitation
+ *  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ *  and/or sell copies of the Software, and to permit persons to whom the
+ *  Software is furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included
+ *  in all copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ *  THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ *  OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ *  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ *  OTHER DEALINGS IN THE SOFTWARE.
+ *
+ */
 
 package csi
 
@@ -416,6 +440,7 @@ var TestSLSInputState = SLSGeneratorInputState{
 			Xname: xnames.Cabinet{
 				Cabinet: 3000,
 			},
+			Class: sls_common.ClassRiver,
 			// Model: , Not applicable???
 			AirCooledChassisList:    DefaultRiverChassisList,
 			LiquidCooledChassisList: []int{},
@@ -448,7 +473,7 @@ var TestSLSInputState = SLSGeneratorInputState{
 		},
 		"x3001": SLSCabinetTemplate{
 			Xname: xnames.Cabinet{
-				Cabinet: 3000,
+				Cabinet: 3001,
 			},
 			Class: sls_common.ClassRiver,
 			// Model: , Not applicable???
@@ -642,12 +667,12 @@ func (suite *ConfigGeneratorTestSuite) SetupSuite() {
 
 func (suite *ConfigGeneratorTestSuite) TestVerifyNoEmptyHardware() {
 	for xname, hardware := range suite.allHardware {
-		suite.NotEmpty(xname)
-		suite.NotEmpty(hardware.Xname)
-		suite.NotEmpty(hardware.Parent)
-		suite.NotEmpty(hardware.Type)
-		suite.NotEmpty(hardware.TypeString)
-		suite.NotEmpty(hardware.Class)
+		suite.NotEmpty(xname, "xname key is empty")
+		suite.NotEmpty(hardware.Xname, "Xname is empty for %s", xname)
+		suite.NotEmpty(hardware.Parent, "Parent is empty for %s", xname)
+		suite.NotEmpty(hardware.Type, "Type is empty for %s", xname)
+		suite.NotEmpty(hardware.TypeString, "TypeString is empty for %s", xname)
+		suite.NotEmpty(hardware.Class, "Class is empty for %s", xname)
 
 		// Note: The extra properties field maybe empty for some component types
 	}
@@ -1527,7 +1552,7 @@ func (suite *ConfigGeneratorTestSuite) TestCabinet_River() {
 	/*
 		{
 			"Parent": "s0",
-			"Xname": "x3000",
+			"Xname": "x3001",
 			"Type": "comptype_cabinet",
 			"Class": "River",
 			"TypeString": "Cabinet",
@@ -1535,11 +1560,11 @@ func (suite *ConfigGeneratorTestSuite) TestCabinet_River() {
 		}
 	*/
 
-	hardware, ok := suite.allHardware["x3000"]
+	hardware, ok := suite.allHardware["x3001"]
 	suite.True(ok, "Unable to find xname.")
 
 	suite.Equal(hardware.Parent, "s0")
-	suite.Equal(hardware.Xname, "x3000")
+	suite.Equal(hardware.Xname, "x3001")
 	suite.Equal(hardware.Type, sls_common.HMSStringType("comptype_cabinet"))
 	suite.Equal(hardware.Class, sls_common.CabinetType("River"))
 	suite.Equal(hardware.TypeString, xnametypes.HMSType("Cabinet"))
