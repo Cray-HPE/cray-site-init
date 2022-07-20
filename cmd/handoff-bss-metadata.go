@@ -545,7 +545,7 @@ func populateNCNMetadata() {
 
 			if compEthInterface == nil {
 				// MAC isn't in EthernetInterfaces, add it.
-				generateAndSendInterfaceForNCN(xname, "", macAddr, "CSI Handoff MAC")
+				generateAndSendInterfaceForNCN(xname, []sm.IPAddressMapping{}, macAddr, "CSI Handoff MAC")
 			} else {
 				// So the MAC exists, the only other thing we care about is the ComponentID being correct.
 				compEthInterface.CompID = xname
@@ -553,7 +553,7 @@ func populateNCNMetadata() {
 				// Be sure to normalize all the MACs.
 				macWithoutPunctuation := strings.ReplaceAll(macAddr, ":", "")
 
-				url := fmt.Sprintf("%s/hsm/v1/Inventory/EthernetInterfaces/%s",
+				url := fmt.Sprintf("%s/hsm/v2/Inventory/EthernetInterfaces/%s",
 					hsmBaseURL, macWithoutPunctuation)
 				response := uploadCompEthInterfaceToHSM(*compEthInterface, url, "PATCH")
 
@@ -579,11 +579,11 @@ func populateGlobalMetadata() {
 	uploadEntryToBSS(bssEntry, http.MethodPatch)
 }
 
-func getCompEthInterfaceForMAC(macAddr string) *sm.CompEthInterface {
+func getCompEthInterfaceForMAC(macAddr string) *sm.CompEthInterfaceV2 {
 	// Be sure to normalize all the MACs.
 	macWithoutPunctuation := strings.ReplaceAll(macAddr, ":", "")
 
-	url := fmt.Sprintf("%s/hsm/v1/Inventory/EthernetInterfaces/%s", hsmBaseURL, macWithoutPunctuation)
+	url := fmt.Sprintf("%s/hsm/v2/Inventory/EthernetInterfaces/%s", hsmBaseURL, macWithoutPunctuation)
 
 	request, requestErr := http.NewRequest(http.MethodGet, url, nil)
 	if requestErr != nil {
@@ -605,7 +605,7 @@ func getCompEthInterfaceForMAC(macAddr string) *sm.CompEthInterface {
 		log.Panicf("Failed to read response body: %s", readErr)
 	}
 
-	var compInterface sm.CompEthInterface
+	var compInterface sm.CompEthInterfaceV2
 	unmarshalErr := json.Unmarshal(responseBytes, &compInterface)
 	if unmarshalErr != nil {
 		log.Panicf("Failed to unmarshal response bytes: %s", unmarshalErr)
@@ -614,7 +614,7 @@ func getCompEthInterfaceForMAC(macAddr string) *sm.CompEthInterface {
 	return &compInterface
 }
 
-func uploadCompEthInterfaceToHSM(compInterface sm.CompEthInterface, url string,
+func uploadCompEthInterfaceToHSM(compInterface sm.CompEthInterfaceV2, url string,
 	method string) (response *http.Response) {
 	payloadBytes, marshalErr := json.Marshal(compInterface)
 	if marshalErr != nil {
@@ -641,17 +641,17 @@ func uploadCompEthInterfaceToHSM(compInterface sm.CompEthInterface, url string,
 	return
 }
 
-func generateAndSendInterfaceForNCN(xname string, ip string, macAddr string, description string) {
-	url := fmt.Sprintf("%s/hsm/v1/Inventory/EthernetInterfaces", hsmBaseURL)
+func generateAndSendInterfaceForNCN(xname string, ips []sm.IPAddressMapping, macAddr string, description string) {
+	url := fmt.Sprintf("%s/hsm/v2/Inventory/EthernetInterfaces", hsmBaseURL)
 
 	// Be sure to normalize all the MACs.
 	macWithoutPunctuation := strings.ReplaceAll(macAddr, ":", "")
 
-	componentEndpointInterfaces := sm.CompEthInterface{
+	componentEndpointInterfaces := sm.CompEthInterfaceV2{
 		ID:      macWithoutPunctuation,
 		Desc:    description,
 		MACAddr: macWithoutPunctuation,
-		IPAddr:  ip,
+		IPAddrs: ips,
 		CompID:  xname,
 		Type:    "Node",
 	}
@@ -695,11 +695,15 @@ func populateHSMEthernetInterface(xname string, ipString string, vlan string) {
 
 	description := fmt.Sprintf("Bond0 - %s", vlan)
 
-	generateAndSendInterfaceForNCN(xname, ip, mac, description)
+	ips := []sm.IPAddressMapping{{
+		IPAddr: ip,
+	}}
+
+	generateAndSendInterfaceForNCN(xname, ips, mac, description)
 }
 
 func uploadHSMComponents(array base.ComponentArray) {
-	url := fmt.Sprintf("%s/hsm/v1/State/Components", hsmBaseURL)
+	url := fmt.Sprintf("%s/hsm/v2/State/Components", hsmBaseURL)
 
 	payloadBytes, marshalErr := json.MarshalIndent(array, "", "\t")
 	if marshalErr != nil {
