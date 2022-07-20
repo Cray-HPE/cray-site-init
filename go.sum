@@ -71,16 +71,11 @@ github.com/Cray-HPE/hms-securestorage v1.12.2 h1:H5n0i6ldzewd5p7PI2Hktr/+9cYfSCu
 github.com/Cray-HPE/hms-securestorage v1.12.2/go.mod h1:P4CMKqQVlx/lv+AdyEjNQubZw2FKNyo/IAtFNgQ3VuI=
 github.com/Cray-HPE/hms-shcd-parser v1.8.0 h1:ICePBQgPUOz5dG0n26NPXZb+Y3imX+VAyMMWdJAnGAY=
 github.com/Cray-HPE/hms-shcd-parser v1.8.0/go.mod h1:PNCl00A2oQGUyEYkTiCHj40kUIGj8DJs9rM+vE6E/8E=
-github.com/Cray-HPE/hms-sls v1.19.0 h1:o6YECLm7yUR6MCD2jCO1ZFRC/1EqUf8HWQ+WdkJuaF8=
-github.com/Cray-HPE/hms-sls v1.19.0/go.mod h1:CbBCBXEhoJyWCGahFajUgDcqOtAnbIY+Atl8WITz3L8=
-github.com/Cray-HPE/hms-sls v1.20.1-0.20220624200540-532203ff78e8 h1:5SSy7OMp+wG4qmTQ4VocH7W5wEq7pW+9Zri0fs5iXtE=
-github.com/Cray-HPE/hms-sls v1.20.1-0.20220624200540-532203ff78e8/go.mod h1:uuUZbTkzMX9/EDydZ82c2BztdeWvPEPjJmcJNsJB3l0=
 github.com/Cray-HPE/hms-sls v1.21.0 h1:GvW7fxJahcYje/pIDtxW9ZNbTdr2jWipp3NlqrbnSYI=
 github.com/Cray-HPE/hms-sls v1.21.0/go.mod h1:uuUZbTkzMX9/EDydZ82c2BztdeWvPEPjJmcJNsJB3l0=
 github.com/Cray-HPE/hms-smd v1.30.9/go.mod h1:9TFpxIiPnmgBphq0QfFt1BmKiuSZ8VXu5N7A5EJz6L4=
 github.com/Cray-HPE/hms-smd v1.51.0 h1:ZnbM5uALWSKdn8mcOy/J49yuh3XtvL+tvraCE5QsgKA=
 github.com/Cray-HPE/hms-smd v1.51.0/go.mod h1:7J7taeRXmceyLPHdKlLbucb10lqTrJxTUo3RhaTGMhs=
-github.com/Cray-HPE/hms-xname v1.0.1/go.mod h1:3A70QF0ddmkt/nz0jis5o8UIB4zAmsgsUiN71dr97n4=
 github.com/Cray-HPE/hms-xname v1.1.0 h1:y/JEM2PbBaD8VbU7u85+/YIugf1Evji59z5IeSffeO8=
 github.com/Cray-HPE/hms-xname v1.1.0/go.mod h1:3A70QF0ddmkt/nz0jis5o8UIB4zAmsgsUiN71dr97n4=
 github.com/DATA-DOG/go-sqlmock v1.3.3/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
@@ -716,8 +711,9 @@ github.com/zenazn/goji v0.9.0/go.mod h1:7S9M489iMyHBNxwZnk9/EHS098H4/F6TATF2mIxt
 gitlab.com/nyarla/go-crypt v0.0.0-20160106005555-d9a5dc2b789b/go.mod h1:T3BPAOm2cqquPa0MKWeNkmOM5RQsRhkrwMWonFMN7fE=
 go.etcd.io/bbolt v1.3.2/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
 go.etcd.io/etcd v3.3.13+incompatible/go.mod h1:yaeTdrJi5lOmYerz05bd8+V7KubZs8YSFZfzsF9A6aI=
-go.etcd.io/etcd/api/v3 v3.5.1 h1:v28cktvBq+7vGyJXF8G+rWJmj+1XUmMtqcLnH8hDocM=
 go.etcd.io/etcd/api/v3 v3.5.1/go.mod h1:cbVKeC6lCfl7j/8jBhAK6aIYO9XOjdptoxU/nLQcPvs=
+go.etcd.io/etcd/api/v3 v3.5.4 h1:OHVyt3TopwtUQ2GKdd5wu3PmmipR4FTwCqoEjSyRdIc=
+go.etcd.io/etcd/api/v3 v3.5.4/go.mod h1:5GB2vv4A4AOn3yk7MftYGHkUfGtDHnEraIjym4dYz5A=
 go.etcd.io/etcd/client/pkg/v3 v3.5.1 h1:XIQcHCFSG53bJETYeRJtIxdLv2EWRGxcfzR8lSnTH4E=
 go.etcd.io/etcd/client/pkg/v3 v3.5.1/go.mod h1:IJHfcCEKxYu1Os13ZdwCwIUTUVGYTSAM3YSwc9/Ac1g=
 go.etcd.io/etcd/client/v3 v3.5.1 h1:oImGuV5LGKjCqXdjkMHCyWa5OO1gYKCnC/1sgdfj1Uk=
