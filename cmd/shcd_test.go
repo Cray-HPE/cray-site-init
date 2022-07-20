@@ -36,6 +36,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"syscall"
 	"testing"
 
 	"github.com/Cray-HPE/cray-site-init/pkg/shcd"
@@ -57,6 +58,7 @@ func TestCreateHMNConnections(t *testing.T) {
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
+	defer syscall.Unlink(filepath.Join(".", hmnConnections))
 	// Validate the file was created
 	_, err = os.Stat(filepath.Join(".", hmnConnections))
 	if err != nil {
@@ -102,6 +104,7 @@ func TestCreateSwitchMetadata(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer syscall.Unlink(filepath.Join(".", switchMetadata))
 	// Read the csv and validate it's contents
 	generated, err := os.Open(filepath.Join(".", switchMetadata))
 	if err != nil {
@@ -144,6 +147,7 @@ func TestCreateNCNMetadata(t *testing.T) {
 	if err != nil {
 		t.Fatal(err.Error())
 	}
+	defer syscall.Unlink(filepath.Join(".", ncnMetadata))
 	// Validate the file was created
 	_, err = os.Stat(filepath.Join(".", ncnMetadata))
 	if err != nil {
@@ -200,6 +204,7 @@ func TestCreateApplicationNodeConfig(t *testing.T) {
 	}
 	// Validate the file was created
 	_, err = os.Stat(filepath.Join(".", applicationNodeConfig))
+	defer syscall.Unlink(filepath.Join(".", applicationNodeConfig))
 	if err != nil {
 		t.Fatal(err)
 	}
