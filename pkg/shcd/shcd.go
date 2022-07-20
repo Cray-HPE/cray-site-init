@@ -149,7 +149,7 @@ func (id ID) GenerateXname() (xn string) {
 		// LeafBMC switches have their own needs
 	} else if strings.HasPrefix(id.CommonName, "sw-leaf-bmc-") {
 		// Get the just number of the elevation
-		i := strings.TrimPrefix(id.Location.Elevation, "u")
+		i := strings.TrimPrefix(strings.ToLower(id.Location.Elevation), "u")
 		// Convert it to an int
 		slot, err := strconv.Atoi(i)
 		if err != nil {
@@ -186,7 +186,7 @@ func (id ID) GenerateXname() (xn string) {
 			log.Fatalln(err)
 		}
 		// Strip the u
-		i := strings.TrimPrefix(id.Location.Elevation, "u")
+		i := strings.TrimPrefix(strings.ToLower(id.Location.Elevation), "u")
 		// Convert it to an int
 		slot, err := strconv.Atoi(i)
 		if err != nil {
@@ -223,7 +223,7 @@ func (id ID) GenerateXname() (xn string) {
 			log.Fatalln(err)
 		}
 		// Strip the u
-		i := strings.TrimPrefix(id.Location.Elevation, "u")
+		i := strings.TrimPrefix(strings.ToLower(id.Location.Elevation), "u")
 		// Convert it to an int
 		slot, err := strconv.Atoi(i)
 		if err != nil {
@@ -250,7 +250,7 @@ func (id ID) GenerateXname() (xn string) {
 			log.Fatalln(err)
 		}
 		// Strip the u
-		i := strings.TrimPrefix(id.Location.Elevation, "u")
+		i := strings.TrimPrefix(strings.ToLower(id.Location.Elevation), "u")
 		// Check if this is a dense 4 node chassis or dual node chassis as additional logic is needed for these to find the slot number
 		if strings.HasSuffix(i, "L") || strings.HasSuffix(i, "R") {
 			// Dense 4 node chassis - Gigabyte or Intel chassis --
