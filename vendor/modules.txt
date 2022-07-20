@@ -554,7 +554,7 @@ gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 ## explicit
 gopkg.in/yaml.v3
-# k8s.io/api v0.22.2
+# k8s.io/api v0.24.3
 ## explicit; go 1.16
 k8s.io/api/admission/v1
 k8s.io/api/admission/v1beta1
@@ -655,7 +655,7 @@ k8s.io/apimachinery/third_party/forked/golang/reflect
 k8s.io/cli-runtime/pkg/genericclioptions
 k8s.io/cli-runtime/pkg/printers
 k8s.io/cli-runtime/pkg/resource
-# k8s.io/client-go v0.22.2 => k8s.io/client-go v0.22.2
+# k8s.io/client-go v0.24.3 => k8s.io/client-go v0.22.2
 ## explicit; go 1.16
 k8s.io/client-go/applyconfigurations/admissionregistration/v1
 k8s.io/client-go/applyconfigurations/admissionregistration/v1beta1
@@ -799,7 +799,7 @@ k8s.io/kube-openapi/pkg/schemaconv
 k8s.io/kube-openapi/pkg/util/proto
 k8s.io/kube-openapi/pkg/util/proto/validation
 k8s.io/kube-openapi/pkg/validation/spec
-# k8s.io/kubectl v0.22.2 => k8s.io/kubectl v0.22.2
+# k8s.io/kubectl v0.24.3 => k8s.io/kubectl v0.22.2
 ## explicit; go 1.16
 k8s.io/kubectl/pkg/cmd/util
 k8s.io/kubectl/pkg/drain
