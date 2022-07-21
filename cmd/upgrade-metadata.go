@@ -422,14 +422,15 @@ func getBSSGlobalHostRecords(managementNCNs []sls_common.GenericHardware, networ
 }
 
 var (
-	oneToOneTwo bool
+	oneToOneTwo      bool
+	oneTwoToOneThree bool
 
 	k8sVersion     string
 	storageVersion string
 )
 
-// updateBSS pushes the changes to BSS.
-func updateBSS() (err error) {
+// updateBSS10to12 pushes the changes to BSS for 1.0 to 1.2 upgrade
+func updateBSS10to12() (err error) {
 	// Instead of hammering SLS some number of times for each NCN/network combination we just grab the entire
 	// network block and will later pull out the pieces we need.
 	networks, err := slsClient.GetNetworks()
@@ -586,16 +587,77 @@ func updateBSS() (err error) {
 	return
 }
 
+// updateBSS12to13 pushes the changes to BSS for 1.2 to 1.3 upgrade
+func updateBSS12to13() (err error) {
+	// Now we can loop through all the NCNs and update their metadata in BSS.
+	for _, managementNCN := range managementNCNs {
+		bootparameters := getBSSBootparametersForXname(managementNCN.Xname)
+
+		var ncnExtraProperties sls_common.ComptypeNode
+		err = mapstructure.Decode(managementNCN.ExtraPropertiesRaw, &ncnExtraProperties)
+		if err != nil {
+			log.Fatalf("Failed to decode raw NCN extra properties to correct structure: %s", err)
+		}
+
+		if len(ncnExtraProperties.Aliases) == 0 {
+			err = fmt.Errorf("NCN has no aliases defined in SLS: %+v", managementNCN)
+			log.Fatalf("NCN has no aliases defined in SLS: %+v", managementNCN)
+		}
+
+		// Params
+		params := strings.Split(bootparameters.Params, " ")
+
+		// Run-cmd
+		switch ncnExtraProperties.SubRole {
+		case "Storage":
+			bootparameters.CloudInit.UserData["runcmd"] = bss.StorageNCNRunCMD
+			if storageVersion != "" {
+				bootparameters.Initrd = fmt.Sprintf("s3://ncn-images/ceph/%s/initrd", storageVersion)
+				bootparameters.Kernel = fmt.Sprintf("s3://ncn-images/ceph/%s/kernel", storageVersion)
+				setMetalServerParam := paramTuple{
+					key:   "metal.server",
+					value: fmt.Sprintf("http://rgw-vip.nmn/ncn-images/ceph/%s", storageVersion),
+				}
+				UpgradeParamsToSet = append(UpgradeParamsToSet, setMetalServerParam)
+			}
+		case "Master", "Worker":
+			bootparameters.CloudInit.UserData["runcmd"] = bss.KubernetesNCNRunCMD
+			if k8sVersion != "" {
+				bootparameters.Initrd = fmt.Sprintf("s3://ncn-images/k8s/%s/initrd", k8sVersion)
+				bootparameters.Kernel = fmt.Sprintf("s3://ncn-images/k8s/%s/kernel", k8sVersion)
+				setMetalServerParam := paramTuple{
+					key:   "metal.server",
+					value: fmt.Sprintf("http://rgw-vip.nmn/ncn-images/k8s/%s", k8sVersion),
+				}
+				UpgradeParamsToSet = append(UpgradeParamsToSet, setMetalServerParam)
+			}
+		default:
+			err = fmt.Errorf("NCN has invalid SubRole: %+v", managementNCN)
+			log.Fatalf("NCN has invalid SubRole: %+v", managementNCN)
+		}
+
+		finalParams := updateParams(params, UpgradeParamsToSet, UpgradeParamsToAdd, UpgradeParamsToDelete)
+		bootparameters.Params = strings.Join(finalParams, " ")
+
+		uploadEntryToBSS(bootparameters, http.MethodPatch)
+	}
+
+	return
+}
+
 // metadataCmd represents the upgrade command.
 var metadataCmd = &cobra.Command{
 	Use:   "metadata",
 	Short: "Upgrades metadata",
 	Long:  "Upgrades cloud-init metadata and pushes it to BSS",
 	Run: func(cmd *cobra.Command, args []string) {
-		if oneToOneTwo {
-			setupCommon()
 
-			updateBSS()
+		setupCommon()
+
+		if oneToOneTwo {
+			updateBSS10to12()
+		} else if oneTwoToOneThree {
+			updateBSS12to13()
 		}
 	},
 }
@@ -607,6 +669,8 @@ func init() {
 	metadataCmd.Flags().SortFlags = true
 	metadataCmd.Flags().BoolVarP(&oneToOneTwo, "1-0-to-1-2", "", false,
 		"Upgrade CSM 1.0 metadata to 1.2 metadata")
+	metadataCmd.Flags().BoolVarP(&oneTwoToOneThree, "1-2-to-1-3", "", false,
+		"Upgrade CSM 1.2 metadata to 1.3 metadata")
 
 	metadataCmd.Flags().StringVar(&k8sVersion, "k8s-version", "",
 		"K8s nodes image version")
