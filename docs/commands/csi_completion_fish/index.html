@@ -6,7 +6,7 @@
 <meta name=description content="Cray Site Initializer documentation">
 <meta name=author content="Cray-HPE">
 <link rel=icon href=/cray-site-init/images/favicon.png type=image/png>
-<title>Running integration tests with canu and csi - Cray Site Init</title>
+<title>csi completion fish - Cray Site Init</title>
 <link href=/cray-site-init/css/nucleus.css?1658939552 rel=stylesheet>
 <link href=/cray-site-init/css/fontawesome-all.min.css?1658939552 rel=stylesheet>
 <link href=/cray-site-init/css/hybrid.css?1658939552 rel=stylesheet>
@@ -22,7 +22,7 @@
 <script src=/cray-site-init/js/jquery-3.3.1.min.js?1658939552></script>
 <style>:root #header+#content>#left>#rlblock_left{display:none!important}</style>
 </head>
-<body data-url=/cray-site-init/shcds/running_integration_tests/>
+<body data-url=/cray-site-init/commands/csi_completion_fish/>
 <nav id=sidebar class=showVisitedLinks>
 <div id=header-wrapper>
 <div id=header><svg viewBox="0 0 240 80" xmlns="http://www.w3.org/2000/svg"><style>.small{font:italic 13px sans-serif}.heavy{font:700 30px sans-serif}</style><text x="40" y="35" class="heavy">CSI</text><text x="55" y="55" class="small">Cray Site Initializer</text></svg>
@@ -39,7 +39,8 @@
 </div>
 <div class=highlightable>
 <ul class=topics>
-<li data-nav-id=/cray-site-init/commands/ title=Commands class=dd-item>
+<li data-nav-id=/cray-site-init/commands/ title=Commands class="dd-item
+parent">
 <a href=/cray-site-init/commands/>
 Commands
 <i class="fas fa-check read-icon"></i>
@@ -93,7 +94,7 @@ csi completion bash
 <i class="fas fa-check read-icon"></i>
 </a>
 </li>
-<li data-nav-id=/cray-site-init/commands/csi_completion_fish/ title="csi completion fish" class=dd-item>
+<li data-nav-id=/cray-site-init/commands/csi_completion_fish/ title="csi completion fish" class="dd-item active">
 <a href=/cray-site-init/commands/csi_completion_fish/>
 csi completion fish
 <i class="fas fa-check read-icon"></i>
@@ -275,14 +276,13 @@ csi version
 </li>
 </ul>
 </li>
-<li data-nav-id=/cray-site-init/shcds/ title=SHCDs class="dd-item
-parent">
+<li data-nav-id=/cray-site-init/shcds/ title=SHCDs class=dd-item>
 <a href=/cray-site-init/shcds/>
 SHCDs
 <i class="fas fa-check read-icon"></i>
 </a>
 <ul>
-<li data-nav-id=/cray-site-init/shcds/running_integration_tests/ title="Running integration tests with canu and csi" class="dd-item active">
+<li data-nav-id=/cray-site-init/shcds/running_integration_tests/ title="Running integration tests with canu and csi" class=dd-item>
 <a href=/cray-site-init/shcds/running_integration_tests/>
 Running integration tests with canu and csi
 <i class="fas fa-check read-icon"></i>
@@ -314,7 +314,7 @@ Using a canu-generated shcd.json with csi
 <div>
 <div id=top-bar>
 <div id=top-github-link>
-<a class=github-link title="Edit this page" href=https://github.com/Cray-HPE/cray-site-init/tree/main/hugo/content/shcds/running_integration_tests.md target=blank>
+<a class=github-link title="Edit this page" href=https://github.com/Cray-HPE/cray-site-init/tree/main/hugo/content/commands/csi_completion_fish.md target=blank>
 <i class="fas fa-code-branch"></i>
 <span id=top-github-link-text>Edit this page</span>
 </a>
@@ -327,17 +327,21 @@ Using a canu-generated shcd.json with csi
 </span>
 <span id=toc-menu><i class="fas fa-list-alt"></i></span>
 <span class=links>
-<a href=/cray-site-init/>Cray Site Init</a> > <a href=/cray-site-init/shcds/>SHCDs</a> > Running integration tests with canu and csi
+<a href=/cray-site-init/>Cray Site Init</a> > <a href=/cray-site-init/commands/>Commands</a> > csi completion fish
 </span>
 </div>
 <div class=progress>
 <div class=wrapper>
 <nav id=TableOfContents>
 <ul>
-<li><a href=#add-shcdxlsx-files-into-testdatashcds>Add <code>shcd.xlsx</code> files into <code>testdata/shcds</code></a></li>
-<li><a href=#add-testdata>Add testdata</a></li>
-<li><a href=#run-make-shcds>Run <code>make shcds</code></a></li>
-<li><a href=#watch-the-files-get-created-in-testdatashcds>Watch the files get created in <code>testdata/shcds</code></a></li>
+<li><a href=#csi-completion-fish>csi completion fish</a>
+<ul>
+<li><a href=#synopsis>Synopsis</a></li>
+<li><a href=#options>Options</a></li>
+<li><a href=#options-inherited-from-parent-commands>Options inherited from parent commands</a></li>
+<li><a href=#see-also>SEE ALSO</a></li>
+</ul>
+</li>
 </ul>
 </nav>
 </div>
@@ -348,70 +352,30 @@ Using a canu-generated shcd.json with csi
 </div>
 <div id=body-inner>
 <h1>
-Running integration tests with canu and csi
+csi completion fish
 </h1>
-<p>The SHCD is the beginning source-of-truth for how a system is laid out and connected. The information found there is used through several different tools throughout the install of CSM, so if changes are made to an SHCD, it can be beneficial in both development and production environments to see how those changes might propagate.</p>
-<p>To that end, there are some integration tests built in to <code>csi</code> that can test the flow mentioned above, which allow you to generate seed files for multiple systems at once.</p>
-<h1 id=high-level-overview>High-level overview</h1>
-<ol>
-<li>Add <code>shcd.xlsx</code> files into <code>testdata/shcds</code></li>
-<li>Add testdata</li>
-<li>Run <code>make shcds</code></li>
-<li>Watch the files get created in <code>testdata/shcds</code></li>
-</ol>
-<h2 id=add-shcdxlsx-files-into-testdatashcds>Add <code>shcd.xlsx</code> files into <code>testdata/shcds</code></h2>
-<p>Put a copy of each <code>shcd.xlsx</code> you want to generate files for into <code>testdata/shcds</code>.</p>
-<pre tabindex=0><code>~/cray-site-init $ ls -l testdata/shcds/
-total 68120
--rw-r--r--@ 1 seymour  12790  4957149 Oct 27 08:41 HPE System 598 Shasta River Odin_RevA22.xlsx
--rw-r--r--@ 1 seymour  12790  5177069 Nov  2 13:13 Hela.xlsx
--rw-r--r--@ 1 seymour  12790  3877457 Nov  1 12:35 Shasta River Drax CCD.xlsx
--rw-r--r--@ 1 seymour  12790  1684315 Nov  1 12:45 Shasta River Fanta CCD.xlsx
--rw-r--r--@ 1 seymour  12790  1672018 Nov  2 13:23 Shasta River Redbull SHCD.xlsx
--rw-r--r--@ 1 seymour  12790  3491609 Nov  2 13:39 Shasta River Rocket SHCD.xlsx
--rw-r--r--@ 1 seymour  12790  2669723 Nov  2 13:15 Shasta River System_Ego_CCD.xlsx
--rw-r--r--@ 1 seymour  12790  1677461 Nov  1 13:46 Shasta River Thanos SHCD.xlsx
--rw-r--r--@ 1 seymour  12790  3896541 Nov  1 15:05 System3 Baldar Shasta  River.xlsx
--rw-r--r--@ 1 seymour  12790  2744277 Nov  1 13:57 System4 Sif Shasta River.xlsx
--rw-r--r--@ 1 seymour  12790  3007754 Nov  1 15:36 System6 Loki Shasta  River  SHCD.xlsx
-</code></pre><h2 id=add-testdata>Add testdata</h2>
-<p><code>canu</code> requires several arguments in order to generate an <code>shcd.json</code>. The necessary arguments can be added to the <code>tests</code> struct in <code>cmd/shcd_integration_test.go</code> similar to the example below.</p>
-<pre tabindex=0><code>var canus = []struct {
-	systemName string
-	version    string
-	tabs       string
-	corners    string
-}{
-	{
-		systemName: &quot;mysupercomputer&quot;,
-		version:    &quot;V1&quot;,
-		tabs:       &quot;25G_10G,NMN,HMN&quot;,
-		corners:    &quot;I14,S65,J16,T23,J20,U46&quot;,
-	},
-</code></pre><h2 id=run-make-shcds>Run <code>make shcds</code></h2>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=color:#75715e># make sure canu is installed</span>
-make shcds
-</code></pre></div><h2 id=watch-the-files-get-created-in-testdatashcds>Watch the files get created in <code>testdata/shcds</code></h2>
-<p>On a successful test, you&rsquo;ll see output similar to:</p>
-<pre tabindex=0><code>=== RUN   TestConfigShcd_GenerateSeeds
-2021/11/02 12:47:54 Running canu to create shcd.json for baldar...
-2021/11/02 12:47:56 Using schema file: ../internal/files/shcd-schema.json
-2021/11/02 12:47:56 Created switch_metadata.csv from SHCD data
-2021/11/02 12:47:56 Created hmn_connections.json from SHCD data
-2021/11/02 12:47:56 Running canu to create shcd.json for drax...
-2021/11/02 12:47:58 Using schema file: ../internal/files/shcd-schema.json
-2021/11/02 12:47:58 Created switch_metadata.csv from SHCD data
-2021/11/02 12:47:56 Created hmn_connections.json from SHCD data
-2021/11/02 12:47:58 Running canu to create shcd.json for ego...
-...
-...
-</code></pre><p><code>testdata/shcds/</code> will also have folders matching each of the system names and contain the following files:</p>
+<h2 id=csi-completion-fish>csi completion fish</h2>
+<p>Generate the autocompletion script for fish</p>
+<h3 id=synopsis>Synopsis</h3>
+<p>Generate the autocompletion script for the fish shell.</p>
+<p>To load completions in your current shell session:</p>
+<pre><code>csi completion fish | source
+</code></pre>
+<p>To load completions for every new session, execute once:</p>
+<pre><code>csi completion fish &gt; ~/.config/fish/completions/csi.fish
+</code></pre>
+<p>You will need to start a new shell for this setup to take effect.</p>
+<pre tabindex=0><code>csi completion fish [flags]
+</code></pre><h3 id=options>Options</h3>
+<pre tabindex=0><code>  -h, --help              help for fish
+      --no-descriptions   disable completion descriptions
+</code></pre><h3 id=options-inherited-from-parent-commands>Options inherited from parent commands</h3>
+<pre tabindex=0><code>      --config string   config file
+</code></pre><h3 id=see-also>SEE ALSO</h3>
 <ul>
-<li><code>application_node_config.yaml</code></li>
-<li><code>shcd.json</code></li>
-<li><code>switch_metadata.csv</code></li>
-<li><code>hmn_connections.json</code></li>
+<li><a href=/commands/csi_completion/>csi completion</a> - Generate the autocompletion script for the specified shell</li>
 </ul>
+<h6 id=auto-generated-by-spf13cobra-on-27-jul-2022>Auto generated by spf13/cobra on 27-Jul-2022</h6>
 <footer class=footline>
 </footer>
 </div>
