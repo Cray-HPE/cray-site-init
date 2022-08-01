@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2021] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2022] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -190,7 +190,9 @@ func (d *EpHpeDevice) discoverLocalPhase2() {
 
 	// GPUs are under HPE devices on HPE hardware
 	d.Ordinal = d.epRF.getHpeDeviceOrdinal(d)
-	if strings.ToLower(d.RedfishSubtype) == "gpu" {
+	if strings.ToLower(d.RedfishSubtype) == "gpu" &&
+	   !strings.Contains(strings.ToLower(d.DeviceRF.Name), "switch") &&
+	   !strings.Contains(strings.ToLower(d.DeviceRF.Location), "baseboard") {
 		d.ID = d.systemRF.ID + "a" + strconv.Itoa(d.Ordinal)
 		d.Type = base.NodeAccel.String()
 	} else {

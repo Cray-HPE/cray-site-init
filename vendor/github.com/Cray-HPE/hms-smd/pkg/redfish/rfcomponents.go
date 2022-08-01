@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2019-2021] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2019-2022] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -1138,6 +1138,12 @@ func (s *EpSystem) discoverRemotePhase1() {
 	// but we associate it with nodes (systems). There will be a chassis URL
 	// with our system's id if there is info to get.
 	nodeChassis, ok := s.epRF.Chassis.OIDs[s.SystemRF.Id]
+	if !ok {
+		// Intel uses /Chassis/Rackmount/Baseboard instead of /Chassis/<sysid>.
+		// See if "Baseboard" exists.
+		nodeChassis, ok = s.epRF.Chassis.OIDs["Baseboard"]
+	}
+
 	if ok {
 
 		//
