@@ -32,7 +32,7 @@ var KubernetesNCNRunCMD = [...]string{
 	"/srv/cray/scripts/common/update_ca_certs.py",
 	"/srv/cray/scripts/metal/install.sh",
 	"/srv/cray/scripts/common/kubernetes-cloudinit.sh",
-	"/srv/cray/scripts/join-spire-on-storage.sh",
+	"/srv/cray/scripts/common/join-spire-on-storage.sh",
 	"touch /etc/cloud/cloud-init.disabled",
 }
 
