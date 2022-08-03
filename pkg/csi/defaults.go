@@ -65,8 +65,6 @@ const (
 	DefaultNMNString = "10.252.0.0/17"
 	// DefaultNMNVlan is the default NMN Bootstrap Vlan
 	DefaultNMNVlan = 2
-	// DefaultMacVlanVlan is the default MacVlan Bootstrap Vlan
-	DefaultMacVlanVlan = 2
 	// DefaultNMNMTNString is the default NMN Network for Mountain Cabinets with Grouped Configuration
 	DefaultNMNMTNString = "10.100.0.0/17"
 	// DefaultNMNRVRString is the default NMN Network for River Cabinets with Grouped Configuration
@@ -75,8 +73,6 @@ const (
 	DefaultNMNLBString = "10.92.100.0/24"
 	// DefaultHMNLBString is the default LoadBalancer CIDR for the HMN
 	DefaultHMNLBString = "10.94.100.0/24"
-	// DefaultMacVlanString is the default Macvlan cidr (shares vlan with NMN)
-	DefaultMacVlanString = "10.252.124.0/23"
 	// DefaultHSNString is the Default HSN String
 	DefaultHSNString = "10.253.0.0/16"
 	// DefaultCMNString is the Default CMN String (bond0.cmn0)

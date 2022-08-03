@@ -339,16 +339,16 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 		tempNet.MyASN = v.GetInt(myASN)
 	}
 
-	// Add the macvlan/uai subnet(s)
+	// Add the ipvlan/uai subnet(s)
 	if conf.IncludeUAISubnet {
-		// Use the NMN vlan for uai_macvlan
-		uaisubnet, err := tempNet.AddSubnet(net.CIDRMask(23, 32), "uai_macvlan", int16(v.GetInt("nmn-bootstrap-vlan")))
+		// Use the HSN vlan for uai_macvlan
+		uaisubnet, err := tempNet.AddSubnet(net.CIDRMask(23, 32), "uai_netattachdef", int16(v.GetInt("nmn-bootstrap-vlan")))
 		_, supernetNet, _ := net.ParseCIDR(tempNet.CIDR)
 		uaisubnet.Gateway = ipam.Add(supernetNet.IP, 1)
 		if err != nil {
 			log.Fatalf("Could not add the uai subnet to the %v Network: %v", tempNet.Name, err)
 		}
-		uaisubnet.FullName = "NMN UAIs"
+		uaisubnet.FullName = "HSN UAIs"
 
 		// Add the UAI reservations in order so they are consistent
 		var keys []string
@@ -364,7 +364,6 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*IPV4Network, e
 				reservation.AddReservationAlias(alias)
 			}
 		}
-		// log.Println("Added the MacVlan Subnet at ", uaisubnet.CIDR.String())
 	}
 	// Build out the per-cabinet subnets
 	// If the networks are intended to be grouped, only do the listed cabinet type

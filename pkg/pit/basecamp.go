@@ -385,10 +385,6 @@ func MakeBaseCampfromNCNs(v *viper.Viper, ncns []csi.LogicalNCN, shastaNetworks 
 	writeFiles := getNCNStaticRoutes(v, shastaNetworks)
 
 	for _, ncn := range ncns {
-		mac0Interface := make(map[string]interface{})
-		mac0Interface["ip"] = uaiReservations[ncn.Hostname].IPAddress
-		mac0Interface["mask"] = uaiMacvlanSubnet.CIDR.String()
-		mac0Interface["gateway"] = uaiMacvlanSubnet.Gateway
 		tempAvailabilityZone, err := csi.CabinetForXname(ncn.Xname)
 		if err != nil {
 			log.Printf("Couldn't generate cabinet name for %v: %v \n", ncn.Xname, err)
@@ -437,7 +433,6 @@ func MakeBaseCampfromNCNs(v *viper.Viper, ncns []csi.LogicalNCN, shastaNetworks 
 		}
 		userDataMap["hostname"] = ncn.Hostname
 		userDataMap["local_hostname"] = ncn.Hostname
-		userDataMap["mac0"] = mac0Interface
 		if ncn.Bond0Mac0 == "" && ncn.Bond0Mac1 == "" {
 			basecampConfig[ncn.NmnMac] = CloudInit{
 				MetaData: tempMetadata,

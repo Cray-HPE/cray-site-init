@@ -309,13 +309,13 @@ func (iSubnet *IPV4Subnet) UpdateDHCPRange(applySupernetHack bool) {
 	staticLimit := ipam.Add(iSubnet.CIDR.IP, 10)
 	dynamicLimit := ipam.Add(iSubnet.CIDR.IP, len(iSubnet.IPReservations)+2)
 	if ipam.IPLessThan(dynamicLimit, staticLimit) {
-		if iSubnet.Name == "uai_macvlan" {
+		if iSubnet.Name == "uai_netattachdef" {
 			iSubnet.ReservationStart = staticLimit
 		} else {
 			iSubnet.DHCPStart = staticLimit
 		}
 	} else {
-		if iSubnet.Name == "uai_macvlan" {
+		if iSubnet.Name == "uai_netattachdef" {
 			iSubnet.ReservationStart = dynamicLimit
 		} else {
 			iSubnet.DHCPStart = dynamicLimit
@@ -323,13 +323,13 @@ func (iSubnet *IPV4Subnet) UpdateDHCPRange(applySupernetHack bool) {
 	}
 
 	if applySupernetHack {
-		if iSubnet.Name == "uai_macvlan" {
+		if iSubnet.Name == "uai_netattachdef" {
 			iSubnet.ReservationEnd = ipam.Add(iSubnet.DHCPStart, 200)
 		} else {
 			iSubnet.DHCPEnd = ipam.Add(iSubnet.DHCPStart, 200) // In this strange world, we can't rely on the broadcast number to be accurate
 		}
 	} else {
-		if iSubnet.Name == "uai_macvlan" {
+		if iSubnet.Name == "uai_netattachdef" {
 			iSubnet.ReservationEnd = ipam.Add(ipam.Broadcast(iSubnet.CIDR), -1)
 		} else {
 			iSubnet.DHCPEnd = ipam.Add(ipam.Broadcast(iSubnet.CIDR), -1)
