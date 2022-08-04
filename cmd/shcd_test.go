@@ -117,7 +117,7 @@ func TestCreateSwitchMetadata(t *testing.T) {
 		log.Fatalf("Unable to read %s: %+v", filepath.Join(".", switchMetadata), err)
 	}
 	// Read the csv and validate it's contents
-	expected, err := os.Open(filepath.Join(".", switchMetadata))
+	expected, err := os.Open(filepath.Join("../testdata/expected/", switchMetadata))
 	if err != nil {
 		log.Fatalf("Unable to read %s: %+v", filepath.Join(".", switchMetadata), err)
 	}
