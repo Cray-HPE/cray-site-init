@@ -1,13 +1,13 @@
 Switch Xname,Type,Brand
 d0w1,CDU,Aruba
 d0w2,CDU,Aruba
-x3000c0h33s1,Aggregation,Aruba
-x3000c0h34s1,Aggregation,Aruba
-x3000c0h35s1,Aggregation,Aruba
-x3000c0h36s1,Aggregation,Aruba
+x3000c0h18s1,Edge,None
+x3000c0h19s1,Edge,None
+x3000c0h33s1,Leaf,Aruba
+x3000c0h34s1,Leaf,Aruba
+x3000c0h35s1,Leaf,Aruba
+x3000c0h36s1,Leaf,Aruba
 x3000c0h37s1,Spine,Aruba
 x3000c0h38s1,Spine,Aruba
-x3000c0w31,Leaf,Aruba
-x3000c0w32,Leaf,Aruba
-x3000c0h18s1,Edge,Arista
-x3000c0h10s1,Edge,Arista
+x3000c0w31,LeafBMC,Aruba
+x3000c0w32,LeafBMC,Aruba

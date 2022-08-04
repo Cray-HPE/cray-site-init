@@ -1,0 +1,4 @@
+Switch Xname,Type,Brand
+x3000c0h12s1,Spine,Aruba
+x3000c0h13s1,Spine,Aruba
+x3000c0w14,LeafBMC,Aruba
