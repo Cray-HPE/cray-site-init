@@ -89,7 +89,6 @@ func TestCreateHMNConnections(t *testing.T) {
 }
 
 func TestCreateSwitchMetadata(t *testing.T) {
-	t.Parallel()
 	jsonFilePath := "../testdata/fixtures/valid_shcd.json"
 	// Open the file without validating it since we know it is valid
 	shcdFile, err := ioutil.ReadFile(jsonFilePath)
@@ -126,6 +125,50 @@ func TestCreateSwitchMetadata(t *testing.T) {
 	smExpected, err := csvReader.ReadAll()
 	if err != nil {
 		log.Fatalf("Unable to parse %q as a CSV: %+v", filepath.Join(".", switchMetadata), err)
+	}
+	if !cmp.Equal(smExpected, actual) {
+		t.Fatal(cmp.Diff(smExpected, actual))
+	}
+}
+
+func TestCreateSwitchMetadataWithMalformedCCJ(t *testing.T) {
+	jsonFilePath := "../testdata/fixtures/surtur_valid_ccj.json"
+	// Open the file without validating it since we know it is valid
+	shcdFile, err := ioutil.ReadFile(jsonFilePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	shcd, err := shcd.ParseSHCD(shcdFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = createSwitchSeed(shcd.Topology)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer syscall.Unlink(filepath.Join(".", switchMetadata))
+	// Read the csv and validate it's contents
+	generated, err := os.Open(filepath.Join(".", switchMetadata))
+	if err != nil {
+		log.Fatalf("Unable to read %s: %+v", filepath.Join(".", switchMetadata), err)
+	}
+	defer generated.Close()
+	smGenerated := csv.NewReader(generated)
+	actual, err := smGenerated.ReadAll()
+	if err != nil {
+		log.Fatalf("Unable to read %s: %+v", filepath.Join(".", switchMetadata), err)
+	}
+	// Read the csv and validate it's contents
+	expectedSwitchMetadata := "surtur_switch_metadata.csv"
+	expected, err := os.Open(filepath.Join("../testdata/expected/", expectedSwitchMetadata))
+	if err != nil {
+		log.Fatalf("Unable to read %s: %+v", filepath.Join(".", expectedSwitchMetadata), err)
+	}
+	defer expected.Close()
+	csvReader := csv.NewReader(expected)
+	smExpected, err := csvReader.ReadAll()
+	if err != nil {
+		log.Fatalf("Unable to parse %q as a CSV: %+v", filepath.Join(".", expectedSwitchMetadata), err)
 	}
 	if !cmp.Equal(smExpected, actual) {
 		t.Fatal(cmp.Diff(smExpected, actual))
