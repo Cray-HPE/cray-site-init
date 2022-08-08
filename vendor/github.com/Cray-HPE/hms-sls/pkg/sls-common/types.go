@@ -48,6 +48,19 @@ type GenericHardware struct {
 
 type GenericHardwareArray []GenericHardware
 
+func NewGenericHardware(xname string, class CabinetType, extraProperties interface{}) GenericHardware {
+	return GenericHardware{
+		Xname:              xnametypes.NormalizeHMSCompID(xname),
+		Class:              class,
+		ExtraPropertiesRaw: extraProperties,
+
+		// Calculate derived fields
+		Parent:     xnametypes.GetHMSCompParent(xname),
+		TypeString: xnametypes.GetHMSType(xname),
+		Type:       HMSTypeToHMSStringType(xnametypes.GetHMSType(xname)),
+	}
+}
+
 /*
 GetParent returns the string xname of the parent of this object.
 */
