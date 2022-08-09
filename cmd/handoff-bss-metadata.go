@@ -1,25 +1,28 @@
-//
-//  MIT License
-//
-//  (C) Copyright 2020-2022 Hewlett Packard Enterprise Development LP
-//
-//  Permission is hereby granted, free of charge, to any person obtaining a
-//  copy of this software and associated documentation files (the "Software"),
-//  to deal in the Software without restriction, including without limitation
-//  the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//  and/or sell copies of the Software, and to permit persons to whom the
-//  Software is furnished to do so, subject to the following conditions:
-//
-//  The above copyright notice and this permission notice shall be included
-//  in all copies or substantial portions of the Software.
-//
-//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//  THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-//  OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-//  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-//  OTHER DEALINGS IN THE SOFTWARE.
+/*
+ *
+ *  MIT License
+ *
+ *  (C) Copyright 2020-2022 Hewlett Packard Enterprise Development LP
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a
+ *  copy of this software and associated documentation files (the "Software"),
+ *  to deal in the Software without restriction, including without limitation
+ *  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ *  and/or sell copies of the Software, and to permit persons to whom the
+ *  Software is furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included
+ *  in all copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ *  THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ *  OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ *  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ *  OTHER DEALINGS IN THE SOFTWARE.
+ *
+ */
 
 package cmd
 
@@ -31,8 +34,9 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"os"
 	"os/exec"
+	"path"
+	"regexp"
 	"strconv"
 	"strings"
 	"syscall"
@@ -54,6 +58,14 @@ const macGatherCommand = "for interface in /sys/class/net/*; do echo -n " +
 const bondMACGatherCommand = "grep \"Permanent HW addr: \" /proc/net/bonding/bond0"
 const vlanGatherCommand = "ip -j addr show "
 
+// We need these to be constant so that later when we do the BSS handoff we know the right value.
+const k8sPath = "k8s"
+const cephPath = "ceph"
+
+const kernelName = "kernel"
+const initrdName = "initrd"
+const rootfsName = "rootfs"
+
 // This structure definition here exists to allow the parsing of the JSON structure that comes from the `ip` command.
 type ipJSONStruct struct {
 	Link     string `json:"link"`
@@ -68,11 +80,12 @@ type ipJSONStruct struct {
 type ipJSONStructArray []ipJSONStruct
 
 var (
-	dataFile, csmVer string
-	cloudInitData    map[string]bssTypes.CloudInit
-	sshConfig        *ssh.ClientConfig
-	// default to the new interface name
-	vlansToGather = []string{"bond0.nmn0"}
+	dataFile, csmVer                      string
+	kubernetesFile, storageCephFile       string
+	kubernetesVersion, storageCephVersion string
+	cloudInitData                         map[string]bssTypes.CloudInit
+	sshConfig                             *ssh.ClientConfig
+	vlansToGather                         = []string{"bond0.nmn0"}
 )
 
 var handoffBSSMetadataCmd = &cobra.Command{
@@ -90,18 +103,54 @@ var handoffBSSMetadataCmd = &cobra.Command{
 
 		setupCommon()
 
-		desiredKubernetesVersion = os.Getenv("KUBERNETES_VERSION")
-		if desiredKubernetesVersion == "" {
-			log.Fatalf("ERROR: KUBERNETES_VERSION environment variable not set!")
+		/* Valid version formats:
+			- [COMMIT]-[TIMESTAMP] feature/unstable images.
+			- A.B.C-X (where A, B, C, and X are integers): pre-release/unstable images.
+		    - A.B.C : release/stable images.
+		*/
+
+		// Validate a given string is a valid version without extra characters prepended or appended.
+		versionRegex, err := regexp.Compile(`(^([0-9a-zA-Z.]+)+(-\d+)?$)`)
+		if err != nil {
+			fmt.Println(err)
 		}
 
-		desiredCEPHVersion = os.Getenv("CEPH_VERSION")
-		if desiredCEPHVersion == "" {
-			log.Fatalf("ERROR: CEPH_VERSION environment variable not set!")
+		// Validate the version in a given filename is valid without extra characters prepended or appended.
+		fileVersionRegex, err := regexp.Compile(`(([0-9a-zA-Z.]+)+(-\d+)?).squashfs`)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		if kubernetesVersion == "" {
+			kubernetes := path.Base(kubernetesFile)
+			desiredKubernetesVersion = fileVersionRegex.FindStringSubmatch(kubernetes)[1]
+			if desiredKubernetesVersion == "" {
+				log.Fatalf("ERROR: Could not determine version from [%s]", kubernetesFile)
+			}
+
+		} else {
+			desiredKubernetesVersion = versionRegex.FindStringSubmatch(kubernetesVersion)[1]
+			if desiredKubernetesVersion == "" {
+				log.Fatalf("ERROR: Could not determine version from [%s]", kubernetesVersion)
+			}
+
+		}
+		if storageCephVersion == "" {
+			storageCeph := path.Base(storageCephFile)
+			desiredCephVersion = fileVersionRegex.FindStringSubmatch(storageCeph)[1]
+			if desiredCephVersion == "" {
+				log.Fatalf("ERROR: Could not determine version from [%s]", storageCephFile)
+			}
+		} else {
+			// Validate the version input.
+			desiredCephVersion = versionRegex.FindStringSubmatch(storageCephVersion)[0]
+			if desiredCephVersion == "" {
+				log.Fatalf("ERROR: Could not determine version from [%s]", storageCephVersion)
+			}
 		}
 
 		// Parse the data.json file.
-		err := csiFiles.ReadJSONConfig(dataFile, &cloudInitData)
+		err = csiFiles.ReadJSONConfig(dataFile, &cloudInitData)
 		if err != nil {
 			log.Fatalln("Couldn't parse data file: ", err)
 		}
@@ -125,6 +174,23 @@ func init() {
 	handoffBSSMetadataCmd.Flags().StringVar(&csmVer, "csm-version",
 		"", "version of CSM that is currently running")
 	_ = handoffBSSMetadataCmd.MarkFlagRequired("data-file")
+
+	handoffBSSMetadataCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version",
+		"", "The version of the kubernetes image (provide this or --kubernetes-file)")
+	handoffBSSMetadataCmd.Flags().StringVar(&storageCephVersion, "storage-ceph-version",
+		"", "The version of the storage-ceph image (provide this or --storage-ceph-file)")
+
+	handoffBSSMetadataCmd.Flags().StringVar(&kubernetesFile, "kubernetes-file",
+		"", "The kubernetes squashFS file to parse version information from (provide this or --kubernetes-version)")
+	_ = handoffBSSMetadataCmd.MarkFlagFilename("kubernetes-file")
+	handoffBSSMetadataCmd.Flags().StringVar(&storageCephFile, "storage-ceph-file",
+		"", "The storage-ceph squashFS file to parse version information from (provide this or --storage-ceph-version)")
+	_ = handoffBSSMetadataCmd.MarkFlagFilename("storage-ceph-file")
+
+	handoffBSSMetadataCmd.MarkFlagsRequiredTogether("kubernetes-version", "storage-ceph-version")
+	handoffBSSMetadataCmd.MarkFlagsRequiredTogether("kubernetes-file", "storage-ceph-file")
+	handoffBSSMetadataCmd.MarkFlagsMutuallyExclusive("kubernetes-version", "kubernetes-file")
+	handoffBSSMetadataCmd.MarkFlagsMutuallyExclusive("storage-ceph-version", "storage-ceph-file")
 }
 
 func getKernelCommandlineArgs(ncn sls_common.GenericHardware, cmdline string) string {
@@ -143,17 +209,19 @@ func getKernelCommandlineArgs(ncn sls_common.GenericHardware, cmdline string) st
 			// Storage NCNs get different assets than masters/workers.
 			if extraProperties.SubRole == "Storage" {
 				path = cephPath
-				version = desiredCEPHVersion
+				version = desiredCephVersion
 			} else {
 				path = k8sPath
 				version = desiredKubernetesVersion
 			}
 
-			cmdlineParts[i] = fmt.Sprintf("metal.server=http://rgw-vip.nmn/ncn-images/%s/%s", path, version)
+			if version == "" {
+				log.Fatalf("ERROR: Could not determine version, version was empty.")
+			}
+
+			cmdlineParts[i] = fmt.Sprintf("metal.server=%s/%s/%s/%s", s3Prefix, path, version, rootfsName)
 		} else if strings.HasPrefix(part, "ds=nocloud-net") {
-			cmdlineParts[i] = fmt.Sprintf("ds=nocloud-net;s=http://10.92.100.81:8888/")
-		} else if strings.HasPrefix(part, "rd.live.squashimg") {
-			cmdlineParts[i] = fmt.Sprintf("rd.live.squashimg=%s", squashFSName)
+			cmdlineParts[i] = fmt.Sprintf("ds=nocloud-net;s=%s", dsEndpoint)
 		} else if strings.HasPrefix(part, "hostname") {
 			cmdlineParts[i] = fmt.Sprintf("hostname=%s", getNCNHostname(ncn))
 		} else if strings.HasPrefix(part, "xname") {
@@ -329,10 +397,14 @@ func getBSSEntryForNCN(ncn sls_common.GenericHardware) (bssEntry bssTypes.BootPa
 	// Storage NCNs get different assets than masters/workers.
 	if extraProperties.SubRole == "Storage" {
 		path = cephPath
-		version = desiredCEPHVersion
+		version = desiredCephVersion
 	} else {
 		path = k8sPath
 		version = desiredKubernetesVersion
+	}
+
+	if version == "" {
+		log.Fatalf("ERROR: Could not determine version, version was empty.")
 	}
 
 	// Now we can build the BSS structure.
