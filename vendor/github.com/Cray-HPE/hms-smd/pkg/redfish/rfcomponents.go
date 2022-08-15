@@ -1310,44 +1310,19 @@ func (s *EpSystem) discoverRemotePhase1() {
 			}
 		}
 
+		// The Proliant iLO redfish implementation puts GPUs and HSN NICs under
+		// '/redfish/v1/Chassis/<sysid>/Devices'.
 		//
-		// Get Chassis NetworkAdapter (HSN NIC) info if it exists
+		// They also put HSN NICs under '/redfish/v1/Chassis/<sysid>/NetworkAdapters'.
+		// However, not all of the HSN NICs always show up there and, when they
+		// do, they're missing PartNumber and Manufacturer FRU information.
+		// '/redfish/v1/Chassis/<sysid>/Devices' is a more comprehensive place
+		// to discover the HSN NICs FRU information from in the Proliant iLO
+		// redfish implementation.
 		//
-		if nodeChassis.ChassisRF.NetworkAdapters.Oid == "" {
-			//errlog.Printf("%s: No assembly obj found.\n", topURL)
-			s.NetworkAdapters.Num = 0
-			s.NetworkAdapters.OIDs = make(map[string]*EpNetworkAdapter)
-		} else {
-			path = nodeChassis.ChassisRF.NetworkAdapters.Oid
-			url = nodeChassis.epRF.FQDN + path
-			naJSON, err := s.epRF.GETRelative(path)
-			if err != nil || naJSON == nil {
-				s.LastStatus = HTTPsGetFailed
-				return
-			}
-			if rfDebug > 0 {
-				errlog.Printf("%s: %s\n", url, naJSON)
-			}
-			s.LastStatus = HTTPsGetOk
-
-			var naInfo NetworkAdapterCollection
-			if err := json.Unmarshal(naJSON, &naInfo); err != nil {
-				errlog.Printf("Failed to decode %s: %s\n", url, err)
-				s.LastStatus = EPResponseFailedDecode
-			}
-
-			s.NetworkAdapters.Num = len(naInfo.Members)
-			s.NetworkAdapters.OIDs = make(map[string]*EpNetworkAdapter)
-
-			sort.Sort(ResourceIDSlice(naInfo.Members))
-			for i, naoid := range naInfo.Members {
-				naid := naoid.Basename()
-				s.NetworkAdapters.OIDs[naid] = NewEpNetworkAdapter(s, s.OdataID, s.RedfishType, naoid, i)
-			}
-			s.NetworkAdapters.discoverRemotePhase1()
-		}
-
-		// Discover HPE devices to find GPUs
+		// Attempt to discover HSN NICs under '/redfish/v1/Chassis/<sysid>/Devices'
+		// before trying under '/redfish/v1/Chassis/<sysid>/NetworkAdapters' so they
+		// don't get duplicated.
 		if strings.ToLower(s.SystemRF.Manufacturer) == "hpe" &&
 			nodeChassis.ChassisRF.OEM != nil &&
 			nodeChassis.ChassisRF.OEM.Hpe != nil &&
@@ -1382,6 +1357,41 @@ func (s *EpSystem) discoverRemotePhase1() {
 		} else {
 			s.HpeDevices.Num = 0
 			s.HpeDevices.OIDs = make(map[string]*EpHpeDevice)
+
+			// Non-proliant iLO. Just get Chassis NetworkAdapter (HSN NIC) info if it exists
+			if nodeChassis.ChassisRF.NetworkAdapters.Oid == "" {
+				//errlog.Printf("%s: No assembly obj found.\n", topURL)
+				s.NetworkAdapters.Num = 0
+				s.NetworkAdapters.OIDs = make(map[string]*EpNetworkAdapter)
+			} else {
+				path = nodeChassis.ChassisRF.NetworkAdapters.Oid
+				url = nodeChassis.epRF.FQDN + path
+				naJSON, err := s.epRF.GETRelative(path)
+				if err != nil || naJSON == nil {
+					s.LastStatus = HTTPsGetFailed
+					return
+				}
+				if rfDebug > 0 {
+					errlog.Printf("%s: %s\n", url, naJSON)
+				}
+				s.LastStatus = HTTPsGetOk
+
+				var naInfo NetworkAdapterCollection
+				if err := json.Unmarshal(naJSON, &naInfo); err != nil {
+					errlog.Printf("Failed to decode %s: %s\n", url, err)
+					s.LastStatus = EPResponseFailedDecode
+				}
+
+				s.NetworkAdapters.Num = len(naInfo.Members)
+				s.NetworkAdapters.OIDs = make(map[string]*EpNetworkAdapter)
+
+				sort.Sort(ResourceIDSlice(naInfo.Members))
+				for i, naoid := range naInfo.Members {
+					naid := naoid.Basename()
+					s.NetworkAdapters.OIDs[naid] = NewEpNetworkAdapter(s, s.OdataID, s.RedfishType, naoid, i)
+				}
+				s.NetworkAdapters.discoverRemotePhase1()
+			}
 		}
 	}
 

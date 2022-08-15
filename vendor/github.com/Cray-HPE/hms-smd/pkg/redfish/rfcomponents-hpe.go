@@ -195,6 +195,16 @@ func (d *EpHpeDevice) discoverLocalPhase2() {
 	   !strings.Contains(strings.ToLower(d.DeviceRF.Location), "baseboard") {
 		d.ID = d.systemRF.ID + "a" + strconv.Itoa(d.Ordinal)
 		d.Type = base.NodeAccel.String()
+	} else if strings.Contains(strings.ToLower(d.RedfishSubtype), "nic") &&
+	          (strings.Contains(strings.ToLower(d.DeviceRF.Manufacturer), "mellanox") ||
+	           strings.Contains(strings.ToLower(d.DeviceRF.Manufacturer), "hpe") ||
+	           strings.Contains(strings.ToLower(d.DeviceRF.Manufacturer), "bei")) {
+		// Accept Mellanox or Cassini HSN NICs so we ignore non-HSN NICs.
+		// Cassini shows as HPE instead of BEI in Proliant iLO redfish
+		// implementations so we check for both just incase this changes
+		// in the future.
+		d.ID = d.systemRF.ID + "h" + strconv.Itoa(d.Ordinal)
+		d.Type = base.NodeHsnNic.String()
 	} else {
 		// What to do with non-GPUs, trash for now?
 		d.Type = base.HMSTypeInvalid.String()
@@ -218,7 +228,8 @@ func (d *EpHpeDevice) discoverLocalPhase2() {
 		d.Flag = base.FlagOK.String()
 	}
 	// Check if we have something valid to insert into the data store
-	if (base.GetHMSType(d.ID) != base.NodeAccel) || (d.Type != base.NodeAccel.String()) {
+	if (base.GetHMSType(d.ID) != base.NodeAccel || d.Type != base.NodeAccel.String()) &&
+	   (base.GetHMSType(d.ID) != base.NodeHsnNic || d.Type != base.NodeHsnNic.String()) {
 		errlog.Printf("Error: Bad xname ID ('%s') or Type ('%s') for: %s\n", d.ID, d.Type, d.DeviceURL)
 		d.LastStatus = VerificationFailed
 		return
