@@ -26,6 +26,7 @@ package pit
 import (
 	"fmt"
 	"net"
+	"regexp"
 	"strings"
 
 	"github.com/Cray-HPE/cray-site-init/pkg/csi"
@@ -73,6 +74,7 @@ type CustomizationsNetworking struct {
 		HmnAPIGateway      net.IP   `yaml:"hmn_api_gw" valid:"ipv4,required"`
 		NcnMasters         []net.IP `yaml:"nmn_ncn_masters" valid:"required"`
 		NcnStorage         []net.IP `yaml:"nmn_ncn_storage" valid:"required"`
+		NcnStorageMons     []net.IP `yaml:"nmn_ncn_storage_mons" valid:"required"`
 	}
 	DNS struct {
 		ExternalDomain    string `yaml:"external" valid:"host,required"`
@@ -121,9 +123,21 @@ func GenCustomizationsYaml(ncns []csi.LogicalNCN, shastaNetworks map[string]*csi
 	// nmnMacvlanSubnet, _ := shastaNetworks["NMN"].LookUpSubnet("uai_macvlan")
 	var masters []net.IP
 	var storage []net.IP
+	var storageMons []net.IP
+
+	//
+	// Only the first three storage nodes run ceph mgr daemon, so
+	// we need to have a separate list when passing list of IPs
+	// to the sysmgmt-health chart for the cephExporter endpoint
+	// list (CASMPET-5428).
+	//
+	monRegEx := regexp.MustCompile("ncn-s00([1-3])")
 	for _, ncn := range ncns {
 		if ncn.Subrole == "Storage" {
 			storage = append(storage, ncn.GetIP("NMN"))
+			if monRegEx.Match([]byte(ncn.Hostname)) {
+				storageMons = append(storageMons, ncn.GetIP("NMN"))
+			}
 		}
 		if ncn.Subrole == "Master" {
 			masters = append(masters, ncn.GetIP("NMN"))
@@ -155,6 +169,7 @@ func GenCustomizationsYaml(ncns []csi.LogicalNCN, shastaNetworks map[string]*csi
 			HmnAPIGateway      net.IP   "yaml:\"hmn_api_gw\" valid:\"ipv4,required\""
 			NcnMasters         []net.IP "yaml:\"nmn_ncn_masters\" valid:\"required\""
 			NcnStorage         []net.IP "yaml:\"nmn_ncn_storage\" valid:\"required\""
+			NcnStorageMons     []net.IP "yaml:\"nmn_ncn_storage_mons\" valid:\"required\""
 		}{
 			SiteToSystem:       cmnStaticNet.LookupReservation("external-dns").IPAddress,
 			SystemToSite:       net.ParseIP(strings.Split(v.GetString("site-dns"), ",")[0]),
@@ -166,6 +181,7 @@ func GenCustomizationsYaml(ncns []csi.LogicalNCN, shastaNetworks map[string]*csi
 			HmnAPIGateway:      hmnLBs.LookupReservation("istio-ingressgateway").IPAddress,
 			NcnMasters:         masters,
 			NcnStorage:         storage,
+			NcnStorageMons:     storageMons,
 		},
 		DNS: struct {
 			ExternalDomain    string "yaml:\"external\" valid:\"host,required\""
