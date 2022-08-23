@@ -1,51 +1,46 @@
-//
-//  MIT License
-//
-//  (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP
-//
-//  Permission is hereby granted, free of charge, to any person obtaining a
-//  copy of this software and associated documentation files (the "Software"),
-//  to deal in the Software without restriction, including without limitation
-//  the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//  and/or sell copies of the Software, and to permit persons to whom the
-//  Software is furnished to do so, subject to the following conditions:
-//
-//  The above copyright notice and this permission notice shall be included
-//  in all copies or substantial portions of the Software.
-//
-//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//  THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-//  OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-//  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-//  OTHER DEALINGS IN THE SOFTWARE.
+/*
+ *
+ *  MIT License
+ *
+ *  (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a
+ *  copy of this software and associated documentation files (the "Software"),
+ *  to deal in the Software without restriction, including without limitation
+ *  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ *  and/or sell copies of the Software, and to permit persons to whom the
+ *  Software is furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included
+ *  in all copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ *  THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ *  OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ *  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ *  OTHER DEALINGS IN THE SOFTWARE.
+ *
+ */
 
 package cmd
 
 import (
-	"context"
-	"crypto/tls"
 	"github.com/Cray-HPE/cray-site-init/pkg/bss"
 	"github.com/Cray-HPE/cray-site-init/pkg/sls"
 	"github.com/Cray-HPE/hms-bss/pkg/bssTypes"
 	hms_s3 "github.com/Cray-HPE/hms-s3"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
+	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
+	"github.com/spf13/cobra"
 	"log"
-	"net"
-	"net/http"
 	"os"
 	"strconv"
 	"strings"
-	"time"
-
-	sls_common "github.com/Cray-HPE/hms-sls/pkg/sls-common"
-	"github.com/spf13/cobra"
 )
 
-const s3Prefix = "s3://ncn-images"
+const s3Prefix = "s3://boot-images"
+const dsEndpoint = "http://10.92.100.81:8888/"
 
 type paramTuple struct {
 	key   string
@@ -61,7 +56,7 @@ var (
 	userDataJSON   string
 
 	desiredKubernetesVersion string
-	desiredCEPHVersion       string
+	desiredCephVersion       string
 
 	bssClient *bss.UtilsClient
 	slsClient *sls.UtilsClient
@@ -190,48 +185,4 @@ func setupHandoffCommon() (limitManagementNCNs []sls_common.GenericHardware, set
 	}
 
 	return
-}
-
-func setupS3(s3BucketName string) {
-	// Built kubeconfig.
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	// Create the clientset.
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	// Get the secret from Kubernetes.
-	s3Secret, err := clientset.CoreV1().Secrets("services").Get(context.TODO(), s3SecretName, v1.GetOptions{})
-	if err != nil {
-		log.Panic(err)
-	}
-
-	// Normally the HMS S3 library uses environment variables but since the vast majority are just arguments to this
-	// program manually create the object for connection info.
-	s3Connection := hms_s3.ConnectionInfo{
-		AccessKey: string(s3Secret.Data["access_key"]),
-		SecretKey: string(s3Secret.Data["secret_key"]),
-		Endpoint:  string(s3Secret.Data["s3_endpoint"]),
-		Bucket:    s3BucketName,
-		Region:    "default",
-	}
-
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		DialContext: (&net.Dialer{
-			// If the image is sufficiently large it's possible for the connection to go stale.
-			KeepAlive: 10 * time.Second,
-		}).DialContext,
-	}
-	httpClient := &http.Client{Transport: tr}
-
-	s3Client, err = hms_s3.NewS3Client(s3Connection, httpClient)
-	if err != nil {
-		log.Panic(err)
-	}
 }
