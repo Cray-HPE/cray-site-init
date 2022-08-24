@@ -612,22 +612,22 @@ func updateBSS12to13() (err error) {
 		case "Storage":
 			bootparameters.CloudInit.UserData["runcmd"] = bss.StorageNCNRunCMD
 			if storageVersion != "" {
-				bootparameters.Initrd = fmt.Sprintf("s3://ncn-images/ceph/%s/initrd", storageVersion)
-				bootparameters.Kernel = fmt.Sprintf("s3://ncn-images/ceph/%s/kernel", storageVersion)
+				bootparameters.Initrd = fmt.Sprintf("%s/%s/%s/%s", s3Prefix, cephPath, storageVersion, initrdName)
+				bootparameters.Kernel = fmt.Sprintf("%s/%s/%s/%s", s3Prefix, cephPath, storageVersion, kernelName)
 				setMetalServerParam := paramTuple{
 					key:   "metal.server",
-					value: fmt.Sprintf("http://rgw-vip.nmn/ncn-images/ceph/%s", storageVersion),
+					value: fmt.Sprintf("%s/%s/%s/%s", s3Prefix, cephPath, storageVersion, rootfsName),
 				}
 				UpgradeParamsToSet = append(UpgradeParamsToSet, setMetalServerParam)
 			}
 		case "Master", "Worker":
 			bootparameters.CloudInit.UserData["runcmd"] = bss.KubernetesNCNRunCMD
 			if k8sVersion != "" {
-				bootparameters.Initrd = fmt.Sprintf("s3://ncn-images/k8s/%s/initrd", k8sVersion)
-				bootparameters.Kernel = fmt.Sprintf("s3://ncn-images/k8s/%s/kernel", k8sVersion)
+				bootparameters.Initrd = fmt.Sprintf("%s/%s/%s/%s", s3Prefix, k8sPath, k8sVersion, initrdName)
+				bootparameters.Kernel = fmt.Sprintf("%s/%s/%s/%s", s3Prefix, k8sPath, k8sVersion, kernelName)
 				setMetalServerParam := paramTuple{
 					key:   "metal.server",
-					value: fmt.Sprintf("http://rgw-vip.nmn/ncn-images/k8s/%s", k8sVersion),
+					value: fmt.Sprintf("%s/%s/%s/%s", s3Prefix, k8sPath, k8sVersion, rootfsName),
 				}
 				UpgradeParamsToSet = append(UpgradeParamsToSet, setMetalServerParam)
 			}
