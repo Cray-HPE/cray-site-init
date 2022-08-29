@@ -74,6 +74,7 @@ Valid values for NetworkType
 */
 const (
 	NetworkTypeSS10       NetworkType = "slingshot10"
+	NetworkTypeSS11       NetworkType = "slingshot11"
 	NetworkTypeCassini    NetworkType = "cassini"
 	NetworkTypeEthernet   NetworkType = "ethernet"
 	NetworkTypeOPA        NetworkType = "opa"
