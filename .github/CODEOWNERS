@@ -16,6 +16,5 @@ write-livecd.sh                         @Cray-HPE/metal
 
 cmd/handoff.go                          @Cray-HPE/hardware-management
 cmd/handoff-bss-metadata.go             @Cray-HPE/hardware-management
-cmd/handoff-bss-update_cloud-init.go    @Cray-HPE/hardware-management
-cmd/handoff-bss-update_param.go         @Cray-HPE/hardware-management
-cmd/handoff-bss-update_param.go         @Cray-HPE/hardware-management
+cmd/handoff-bss-update-cloud-init.go    @Cray-HPE/hardware-management
+cmd/handoff-bss-update-param.go         @Cray-HPE/hardware-management
