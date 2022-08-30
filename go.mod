@@ -10,11 +10,10 @@ require (
 	github.com/Cray-HPE/hms-bss v1.20.0
 	github.com/Cray-HPE/hms-s3 v1.10.1
 	github.com/Cray-HPE/hms-shcd-parser v1.8.0
-	github.com/Cray-HPE/hms-sls v1.24.0
+	github.com/Cray-HPE/hms-sls v1.26.0
 	github.com/Cray-HPE/hms-smd v1.58.0
 	github.com/Cray-HPE/hms-xname v1.1.0
 	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef
-	github.com/aws/aws-sdk-go v1.44.79
 	github.com/evanphx/json-patch v5.6.0+incompatible
 	github.com/gocarina/gocsv v0.0.0-20200925213129-04be9ee2e1a2
 	github.com/mitchellh/mapstructure v1.5.0
@@ -36,6 +35,7 @@ require (
 
 require (
 	github.com/Cray-HPE/hms-base v1.15.0 // indirect
+	github.com/aws/aws-sdk-go v1.44.79 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.1 // indirect
 )
 

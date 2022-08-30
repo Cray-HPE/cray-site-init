@@ -76,8 +76,8 @@ github.com/Cray-HPE/hms-securestorage v1.12.2 h1:H5n0i6ldzewd5p7PI2Hktr/+9cYfSCu
 github.com/Cray-HPE/hms-securestorage v1.12.2/go.mod h1:P4CMKqQVlx/lv+AdyEjNQubZw2FKNyo/IAtFNgQ3VuI=
 github.com/Cray-HPE/hms-shcd-parser v1.8.0 h1:ICePBQgPUOz5dG0n26NPXZb+Y3imX+VAyMMWdJAnGAY=
 github.com/Cray-HPE/hms-shcd-parser v1.8.0/go.mod h1:PNCl00A2oQGUyEYkTiCHj40kUIGj8DJs9rM+vE6E/8E=
-github.com/Cray-HPE/hms-sls v1.24.0 h1:Sg3RM9VFpK7Fbgu4DS3zCilarcBSLciWXsOiLcRraSY=
-github.com/Cray-HPE/hms-sls v1.24.0/go.mod h1:XKGw18eCGS3oJwsYpw8B+QzNUhgHXLnbr2kgNUNUYrg=
+github.com/Cray-HPE/hms-sls v1.26.0 h1:F6MCkEl7UEuFYfYNvTXYWPSRas9SEGamIse1WUD6j4E=
+github.com/Cray-HPE/hms-sls v1.26.0/go.mod h1:XKGw18eCGS3oJwsYpw8B+QzNUhgHXLnbr2kgNUNUYrg=
 github.com/Cray-HPE/hms-smd v1.30.9/go.mod h1:9TFpxIiPnmgBphq0QfFt1BmKiuSZ8VXu5N7A5EJz6L4=
 github.com/Cray-HPE/hms-smd v1.58.0 h1:SwMUxqmjv9Ek6EKG7quuUi7mmMHGnGfh5ecFLWFIuiQ=
 github.com/Cray-HPE/hms-smd v1.58.0/go.mod h1:7J7taeRXmceyLPHdKlLbucb10lqTrJxTUo3RhaTGMhs=
