@@ -121,31 +121,43 @@ var handoffBSSMetadataCmd = &cobra.Command{
 			fmt.Println(err)
 		}
 
+		if kubernetesVersion == "" && kubernetesFile == "" && storageCephVersion == "" && storageCephFile == "" {
+			log.Fatalln("ERROR: Missing (--kubernetes-version && --storage-ceph-version) or (--kubernetes-file && --storage-ceph-file), either of the parameter groups needs to be specified.")
+		}
+
 		if kubernetesVersion == "" {
 			kubernetes := path.Base(kubernetesFile)
-			desiredKubernetesVersion = fileVersionRegex.FindStringSubmatch(kubernetes)[1]
-			if desiredKubernetesVersion == "" {
+			desiredKubernetesVersionMatch := fileVersionRegex.FindStringSubmatch(kubernetes)
+			if desiredKubernetesVersionMatch == nil {
 				log.Fatalf("ERROR: Could not determine version from [%s]", kubernetesFile)
+			} else {
+				desiredKubernetesVersion = desiredKubernetesVersionMatch[1]
 			}
 
 		} else {
-			desiredKubernetesVersion = versionRegex.FindStringSubmatch(kubernetesVersion)[1]
-			if desiredKubernetesVersion == "" {
+			desiredKubernetesVersionMatch := versionRegex.FindStringSubmatch(kubernetesVersion)
+			if desiredKubernetesVersionMatch == nil {
 				log.Fatalf("ERROR: Could not determine version from [%s]", kubernetesVersion)
+			} else {
+				desiredKubernetesVersion = desiredKubernetesVersionMatch[1]
 			}
 
 		}
 		if storageCephVersion == "" {
 			storageCeph := path.Base(storageCephFile)
-			desiredCephVersion = fileVersionRegex.FindStringSubmatch(storageCeph)[1]
-			if desiredCephVersion == "" {
+			desiredCephVersionMatch := fileVersionRegex.FindStringSubmatch(storageCeph)
+			if desiredCephVersionMatch == nil {
 				log.Fatalf("ERROR: Could not determine version from [%s]", storageCephFile)
+			} else {
+				desiredCephVersion = desiredCephVersionMatch[1]
 			}
 		} else {
 			// Validate the version input.
-			desiredCephVersion = versionRegex.FindStringSubmatch(storageCephVersion)[0]
-			if desiredCephVersion == "" {
+			desiredCephVersionMatch := versionRegex.FindStringSubmatch(storageCephVersion)
+			if desiredCephVersionMatch == nil {
 				log.Fatalf("ERROR: Could not determine version from [%s]", storageCephVersion)
+			} else {
+				desiredCephVersion = desiredCephVersionMatch[1]
 			}
 		}
 
