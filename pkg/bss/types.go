@@ -42,8 +42,8 @@ var StorageNCNRunCMD = [...]string{
 	"/srv/cray/scripts/common/update_ca_certs.py",
 	"/srv/cray/scripts/metal/install.sh",
 	"/srv/cray/scripts/common/pre-load-images.sh",
-	"touch /etc/cloud/cloud-init.disabled",
 	"/srv/cray/scripts/common/ceph-enable-services.sh",
+	"touch /etc/cloud/cloud-init.disabled",
 }
 
 // ALL of these should live in the hms-bss repo once the effort to give the cloud-init data a formal structure is done.
