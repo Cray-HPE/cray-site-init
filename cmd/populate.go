@@ -17,6 +17,8 @@ import (
 )
 
 // populateCmd moves csi files and node images onto the usb device
+// Deprecated: The USB path no longer uses this function since it is now completely identical to the
+// RemoteISO path for configuring the PIT.
 var populateCmd = &cobra.Command{
 	Use:   "populate",
 	Short: "Populates the LiveCD with configs",
@@ -24,6 +26,7 @@ var populateCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("populate called")
 	},
+	Deprecated: "No longer used for CSM 1.3 or newer CSM installations.",
 }
 
 // copyAllFiles copies ONLY files from one spot to another
