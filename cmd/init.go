@@ -403,7 +403,7 @@ func init() {
 
 	// System Configuration Flags based on previous system_config.yml and networks_derived.yml
 	initCmd.Flags().String("system-name", "sn-2024", "Name of the System")
-	initCmd.Flags().String("csm-version", "1.3", "Version of CSM being installed")
+	initCmd.Flags().String("csm-version", "1.4", "Version of CSM being installed")
 
 	initCmd.Flags().String("site-domain", "", "Site Domain Name")
 	initCmd.Flags().String("first-master-hostname", "ncn-m002", "Hostname of the first master node")
