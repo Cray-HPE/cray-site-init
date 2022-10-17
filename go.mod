@@ -18,7 +18,7 @@ require (
 	github.com/gocarina/gocsv v0.0.0-20200925213129-04be9ee2e1a2
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/pkg/errors v0.9.1
-	github.com/spf13/cobra v1.5.0
+	github.com/spf13/cobra v1.6.0
 	github.com/spf13/viper v1.13.0
 	github.com/stretchr/testify v1.8.0
 	go.etcd.io/etcd/api/v3 v3.5.5
@@ -77,7 +77,7 @@ require (
 	github.com/hashicorp/vault/api v1.0.4 // indirect
 	github.com/hashicorp/vault/sdk v0.1.13 // indirect
 	github.com/imdario/mergo v0.3.11 // indirect
-	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
