@@ -42,7 +42,6 @@ import (
 	"github.com/Cray-HPE/cray-site-init/pkg/csi"
 	"github.com/Cray-HPE/cray-site-init/pkg/shcd"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 )
 
@@ -77,31 +76,29 @@ var shcdCmd = &cobra.Command{
 	`,
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		v := viper.GetViper()
-		v.BindPFlags(cmd.Flags())
 		shcd, err := shcd.NewShcd(args[0])
 		if err != nil {
 			log.Fatal(err)
 		}
-		if v.IsSet("hmn-connections") {
+		if createHMN {
 			err := createHMNSeed(shcd.Topology)
 			if err != nil {
 				fmt.Printf("WARNING - Error creating hmn-connections: %+v", err)
 			}
 		}
-		if v.IsSet("switch-metadata") {
+		if createSM {
 			err := createSwitchSeed(shcd.Topology)
 			if err != nil {
 				fmt.Printf("WARNING - Error creating switch-metadata: %+v", err)
 			}
 		}
-		if v.IsSet("application-node-config") {
+		if createANC {
 			err := createANCSeed(shcd.Topology)
 			if err != nil {
 				fmt.Printf("WARNING - Error creating application-node-config: %+v", err)
 			}
 		}
-		if v.IsSet("ncn-metadata") {
+		if createNCN {
 			err := createNCNSeed(shcd.Topology)
 			if err != nil {
 				fmt.Printf("WARNING - Error creating ncn-metadata: %+v", err)
@@ -242,38 +239,39 @@ func createSwitchSeed(topology []shcd.ID) error {
 // createHMNSeed creates hmn_connections.json using information from the shcd
 func createHMNSeed(topology []shcd.ID) error {
 	var hmn shcd.HMNConnections
-	for i := range topology {
+	for _, i := range topology {
+		fmt.Println(i.CommonName, "---->", i.CommonName)
 		// instantiate a new HMNComponent
 		hmnConnection := shcd.HMNComponent{}
 		// This just aligns the names to better match existing hmn_connections.json's
 		// The SHCD and shcd.json all use different names, so why should csi be any different?
 		// nodeName := unNormalizeSemiStandardShcdNonName(topology[i].CommonName)
 		// Setting the source name, source rack, source location, is pretty straightforward here
-		hmnConnection.Source = topology[i].GenerateSourceName()
-		hmnConnection.SourceRack = topology[i].Location.Rack
-		hmnConnection.SourceLocation = topology[i].Location.Elevation
+		hmnConnection.Source = i.GenerateSourceName()
+		hmnConnection.SourceRack = i.Location.Rack
+		hmnConnection.SourceLocation = i.Location.Elevation
 		// Now it starts to get more complex.
 		// shcd.json has an array of ports that the device is connected to
 		// loop through the ports and find the destination id, which can be used
 		// to find the destination info
-		for p := range topology[i].Ports {
+		for _, p := range i.Ports {
 			// get the id of the destination node, so it can be easily used an an index
-			destID := topology[i].Ports[p].DestNodeID
+			// destID := p.DestNodeID
 			// Special to this hmn_connections.json file, we need this SubRack/dense node stuff
 			// if the node is a dense compute node--indicated by L or R in the location,
 			// we need to add the SourceSubLocation and SourceParent
 			// There should be a row in the shcd that has the SubRack name, which
 			// shares the same u location as the entries with the L or R in the location
-			if strings.HasSuffix(topology[i].Location.Elevation, "L") || strings.HasSuffix(topology[i].Location.Elevation, "R") {
+			if strings.HasSuffix(i.Location.Elevation, "L") || strings.HasSuffix(i.Location.Elevation, "R") {
 				// hmnConnection.SourceSubLocation = shcd[i].Location.Rack
 				hmnConnection.SourceParent = "FIXME INSERT SUBRACK HERE"
 				// FIXME: remove above and uncomment below when we have a way to get the subrack name
 				// hmnConnection.SourceParent = fmt.Sprint(shcd[destID].CommonName)
 			}
 			// Now use the destID again to set the destination info
-			hmnConnection.DestinationRack = topology[destID].Location.Rack
-			hmnConnection.DestinationLocation = topology[destID].Location.Elevation
-			hmnConnection.DestinationPort = fmt.Sprint("j", topology[i].Ports[p].DestPort)
+			hmnConnection.DestinationRack = i.Location.Rack
+			hmnConnection.DestinationLocation = i.Location.Elevation
+			hmnConnection.DestinationPort = fmt.Sprint("j", p.DestPort)
 		}
 		// finally, append the created HMNComponent to the HMNConnections slice
 		// This slice will be what is written to the file as hmn_connections.json
