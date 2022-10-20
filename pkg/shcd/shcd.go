@@ -107,7 +107,7 @@ func Prefixes(topology []ID) []string {
 	return items
 }
 
-// The ID type represents all of the information needed for
+// The ID type represents all of the information needed for each entry in the array
 type ID struct {
 	Architecture string   `json:"architecture"`
 	CommonName   string   `json:"common_name"`
@@ -347,7 +347,7 @@ func (id ID) GenerateSourceName() string {
 		matches := r.FindAllString(id.CommonName, -1)
 		src = "x3000p" + matches[0]
 	} else if strings.HasPrefix(id.CommonName, "cn") {
-		src = "cn" + matches[0]
+		src = "cn-" + matches[0]
 	} else if strings.HasPrefix(id.CommonName, "sw-hsn-") {
 		src = "sw-hsn" + matches[0]
 	} else if strings.HasPrefix(id.CommonName, "gateway") {
@@ -356,6 +356,51 @@ func (id ID) GenerateSourceName() string {
 		src = id.CommonName
 	}
 	return src
+}
+
+// DestSlot returns the slot object that is the destination of a specific port
+func (s *Shcd) DestSlot(p Port) (ds string) {
+	for _, j := range s.Topology[p.DestNodeID].Ports {
+		if j.Port == p.DestPort {
+			ds = j.Slot
+		}
+	}
+	return ds
+}
+
+// DestElevation returns the elevation object that is the destination of a specific port
+func (s *Shcd) DestElevation(p Port) (de string) {
+	for _, i := range s.Topology {
+		if i.ID == p.DestNodeID {
+			de = i.Location.Elevation
+		}
+	}
+	return de
+}
+
+// DestRack returns the rack object that is the destination of a specific port
+func (s *Shcd) DestRack(p Port) string {
+	return s.DestID(p).Location.Rack
+}
+
+// DestID returns the id object that is the destination of a specific port
+func (s *Shcd) DestID(p Port) (id ID) {
+	for _, i := range s.Topology {
+		if i.ID == p.DestNodeID {
+			id = i
+		}
+	}
+	return id
+}
+
+// DestCommonName returns the name object that is the destination of a specific port
+func (s *Shcd) DestCommonName(p Port) (dn string) {
+	for _, i := range s.Topology {
+		if i.ID == p.DestNodeID {
+			dn = i.CommonName
+		}
+	}
+	return dn
 }
 
 // The Port type defines where things are plugged in
@@ -370,8 +415,10 @@ type Port struct {
 
 // The Location type defines where the server physically exists in the datacenter.
 type Location struct {
-	Elevation string `json:"elevation"`
-	Rack      string `json:"rack"`
+	Elevation   string `json:"elevation"`
+	Rack        string `json:"rack"`
+	Parent      string `json:parent,omitempty`
+	SubLocation string `json:sub_location,omitempty`
 }
 
 // HMNConnections type is the go equivalent structure of hmn_connections.json
@@ -384,9 +431,9 @@ type HMNComponent struct {
 	SourceLocation      string `json:"SourceLocation"`
 	SourceParent        string `json:"SourceParent,omitempty"`
 	SourceSubLocation   string `json:"SourceSubLocation,omitempty"`
-	DestinationRack     string `json:"DestinationRack"`
-	DestinationLocation string `json:"DestinationLocation"`
-	DestinationPort     string `json:"DestinationPort"`
+	DestinationRack     string `json:"DestinationRack,omitempty"`
+	DestinationLocation string `json:"DestinationLocation,omitempty"`
+	DestinationPort     string `json:"DestinationPort,omitempty"`
 }
 
 // NCNMetadata type is the go equivalent structure of ncn_metadata.csv
@@ -411,4 +458,5 @@ type Switch struct {
 	Xname string
 	Type  string
 	Brand string
+	Model string
 }
