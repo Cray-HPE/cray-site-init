@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-#
 # MIT License
 #
 # (C) Copyright 2022 Hewlett Packard Enterprise Development LP
@@ -21,32 +20,6 @@
 # OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
-#
-# vim: et sw=4 ts=4 autoindent
-#
-# Copyright 2021 Hewlett Packard Enterprise Development LP
-#
-# Create a bootable pre-install-toolkit LiveCD USB drive.
-#
-# Script writes a hyrid ISO file to USB drive, creating two partitions
-# during the write. After the ISO is written, Two additional partitions
-# are then created: one for a copy-on-write (COW) data; second for
-# install data.
-#
-# The filesystem on the COW partition is used by the system booting the
-# ISO image as the overlayfs filesystem to store persistent changes to
-# the root filesystem.
-#
-# The filesystem on the install data partition is used to store
-# data needed to configure nodes as they are brought up and installed.
-#
-#   Partition   Description
-#   ---------   -----------
-#       1       CDROM partition with iso9660 filesystem
-#       2       EFI partition
-#       3       COW partition (ext4 filesystem, 'cow' label)
-#       4       Install Data partition (ext4 filesystem, 'PITDATA' label)
-#----------------------------------------------------------------------------
 name=$(basename $0)
 
 # Size in MB to use for cow partition
