@@ -1,0 +1,37 @@
+= Cray Site Initializer (`csi`)
+:toc:
+:toclevels: 3
+
+image:https://github.com/Cray-HPE/cray-site-init/actions/workflows/ci.yml/badge.svg[Continuous Integration,link=https://github.com/Cray-HPE/cray-site-init/actions/workflows/ci.yml]
+
+
+Cray Site Initializer (`csi`) is a high-performance computing as a service tool for initializing configuration
+with Cray System Management (CSM).
+
+== Getting Started
+
+See https://cray-hpe.github.io/cray-site-init/ and follow the Site Survey directions.
+
+== Usage
+
+See https://cray-hpe.github.io/cray-site-init/commands for details on each command.
+
+== Developing and contributing
+
+=== Build from source
+
+. Using the `makefile`
++
+[source,bash]
+----
+make
+./bin/csi --help
+----
+
+. Calling Go
++
+[source,bash]
+----
+go build -o csi ./main.go
+./csi --help
+----
