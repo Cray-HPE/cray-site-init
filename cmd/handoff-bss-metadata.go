@@ -279,7 +279,8 @@ func getSSHClientForHostname(hostname string) (sshClient *ssh.Client) {
 
 	sshClient, err = ssh.Dial("tcp", hostname+":22", sshConfig)
 	if err != nil {
-		log.Panic(err)
+		log.Printf("Unable to connect to %s. Was the supplied password correct?", hostname)
+		log.Fatal("Error detail: ", err)
 	}
 
 	return
