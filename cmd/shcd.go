@@ -83,25 +83,25 @@ var shcdCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
-		if v.IsSet("hmn-connections") {
-			err := createHMNSeed(shcd.Topology)
+		if createHMN {
+			err := createHMNSeed(shcd)
 			if err != nil {
 				fmt.Printf("WARNING - Error creating hmn-connections: %+v", err)
 			}
 		}
-		if v.IsSet("switch-metadata") {
+		if createSM {
 			err := createSwitchSeed(shcd.Topology)
 			if err != nil {
 				fmt.Printf("WARNING - Error creating switch-metadata: %+v", err)
 			}
 		}
-		if v.IsSet("application-node-config") {
+		if createANC {
 			err := createANCSeed(shcd.Topology)
 			if err != nil {
 				fmt.Printf("WARNING - Error creating application-node-config: %+v", err)
 			}
 		}
-		if v.IsSet("ncn-metadata") {
+		if createNCN {
 			err := createNCNSeed(shcd.Topology)
 			if err != nil {
 				fmt.Printf("WARNING - Error creating ncn-metadata: %+v", err)
@@ -196,21 +196,24 @@ func createSwitchSeed(topology []shcd.ID) error {
 		switchType := sw.GenerateSwitchType()
 		// The vendor just needs to be capitalized
 		switchVendor := strings.Title(sw.Vendor)
+		// Model does not need any extra manipulation, just put the string into place
+		switchModel := sw.Model
 		// Create a new Switch type and append it to the SwitchMetadata slice
 		sws = append(sws, shcd.Switch{
 			Xname: switchXname,
 			Type:  switchType,
 			Brand: switchVendor,
+			Model: switchModel,
 		})
 	}
 	// When writing to csv, the first row should be the headers
-	headers := []string{"Switch Xname", "Type", "Brand"}
+	headers := []string{"Switch Xname", "Type", "Brand", "Model"}
 	// Set up the records we need to write to the file
 	// To begin, this contains the headers
 	records := [][]string{headers}
 	// Then create a new slice with the three pieces of information needed
 	for _, sw := range sws {
-		records = append(records, []string{sw.Xname, sw.Type, sw.Brand})
+		records = append(records, []string{sw.Xname, sw.Type, sw.Brand, sw.Model})
 	}
 	// Create the file object
 	sm, err := os.Create(switchMetadata)
@@ -240,45 +243,77 @@ func createSwitchSeed(topology []shcd.ID) error {
 }
 
 // createHMNSeed creates hmn_connections.json using information from the shcd
-func createHMNSeed(topology []shcd.ID) error {
+func createHMNSeed(s *shcd.Shcd) error {
 	var hmn shcd.HMNConnections
-	for i := range topology {
+	for _, i := range s.Topology {
+		if i.Architecture == "river_bmc_leaf" && i.Type == "switch" {
+			// the leaf bmc is not needed in hmn_connections
+			continue
+		}
 		// instantiate a new HMNComponent
 		hmnConnection := shcd.HMNComponent{}
 		// This just aligns the names to better match existing hmn_connections.json's
 		// The SHCD and shcd.json all use different names, so why should csi be any different?
-		// nodeName := unNormalizeSemiStandardShcdNonName(topology[i].CommonName)
-		// Setting the source name, source rack, source location, is pretty straightforward here
-		hmnConnection.Source = topology[i].GenerateSourceName()
-		hmnConnection.SourceRack = topology[i].Location.Rack
-		hmnConnection.SourceLocation = topology[i].Location.Elevation
+		// nodeName := unNormalizeSemiStandardShcdNonName(i.CommonName)
+		hmnConnection.Source = i.GenerateSourceName()
+		// Setting the source rack and location is more straightforward then the name
+		hmnConnection.SourceRack = i.Location.Rack
+		hmnConnection.SourceLocation = i.Location.Elevation
+
 		// Now it starts to get more complex.
-		// shcd.json has an array of ports that the device is connected to
-		// loop through the ports and find the destination id, which can be used
-		// to find the destination info
-		for p := range topology[i].Ports {
-			// get the id of the destination node, so it can be easily used an an index
-			destID := topology[i].Ports[p].DestNodeID
+		// the paddle/ccj file has an array of ports that the device is connected to
+		// loop through the ports and set the items needed for hmn_connections.json
+		for _, p := range i.Ports {
 			// Special to this hmn_connections.json file, we need this SubRack/dense node stuff
-			// if the node is a dense compute node--indicated by L or R in the location,
-			// we need to add the SourceSubLocation and SourceParent
-			// There should be a row in the shcd that has the SubRack name, which
-			// shares the same u location as the entries with the L or R in the location
-			if strings.HasSuffix(topology[i].Location.Elevation, "L") || strings.HasSuffix(topology[i].Location.Elevation, "R") {
-				// hmnConnection.SourceSubLocation = shcd[i].Location.Rack
-				hmnConnection.SourceParent = "FIXME INSERT SUBRACK HERE"
-				// FIXME: remove above and uncomment below when we have a way to get the subrack name
-				// hmnConnection.SourceParent = fmt.Sprint(shcd[destID].CommonName)
+			// if the node is a dense compute node--we need to add the SourceSubLocation and SourceParent
+			// the paddle schema includes this subrack
+			// it is limited to the compute nodes
+			if i.Architecture == "river_compute_node" || i.Model == "river_compute_node" {
+				// the cmc slot points at the subrack ID, which becomes the SourceParent
+				if p.Slot == "cmc" {
+					hmnConnection.SourceParent = i.Location.Parent
+				}
+				// hmn_connections.json is only concerned with the BMC connections
+				if p.Slot == "bmc" {
+					// this will need human intervention
+					hmnConnection.SourceSubLocation = "FIXME-L-or-R"
+					// the subrack also needs the destination rack, which will be the cmc-subrack ID
+					hmnConnection.DestinationRack = s.DestRack(p)
+				}
+			} else {
+				if i.Type == "node" || i.Architecture == "subrack" || i.Vendor == "subrack" {
+					// skip the subrack ID as it is not needed in hmn_connections.json
+					continue
+				}
+				hmnConnection.DestinationRack = s.DestRack(p)
 			}
-			// Now use the destID again to set the destination info
-			hmnConnection.DestinationRack = topology[destID].Location.Rack
-			hmnConnection.DestinationLocation = topology[destID].Location.Elevation
-			hmnConnection.DestinationPort = fmt.Sprint("j", topology[i].Ports[p].DestPort)
+			// ncn-m001 is special and has a site connection
+			if i.CommonName == "ncn-m001" && i.Type == "server" {
+				hmnConnection.DestinationLocation = "SITE"
+				hmnConnection.DestinationRack = "SITE"
+			}
+			// as do the spines
+			if i.Architecture == "spine" && i.Type == "switch" {
+				hmnConnection.DestinationLocation = "SITE"
+				hmnConnection.DestinationRack = "SITE"
+			}
+			// hsn switch needs the rack as well
+			if i.Architecture == "slingshot_hsn_switch" && i.Type == "switch" {
+				hmnConnection.DestinationLocation = s.DestElevation(p)
+				hmnConnection.DestinationRack = s.DestRack(p)
+				hmnConnection.DestinationPort = fmt.Sprint(p.DestPort)
+			}
+			// hmn_connections.json is only concerned with the BMC connections
+			if p.Slot == "bmc" {
+				hmnConnection.DestinationLocation = s.DestElevation(p)
+				hmnConnection.DestinationPort = fmt.Sprint(p.DestPort)
+			}
 		}
 		// finally, append the created HMNComponent to the HMNConnections slice
 		// This slice will be what is written to the file as hmn_connections.json
 		hmn = append(hmn, hmnConnection)
 	}
+
 	// Indent the file for better human-readability
 	file, err := json.MarshalIndent(hmn, "", "    ")
 	if err != nil {

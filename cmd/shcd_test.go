@@ -49,7 +49,7 @@ func TestCreateHMNConnections(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 	// Create hmn_connections.json
-	err = createHMNSeed(shcd.Topology)
+	err = createHMNSeed(&shcd)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -313,9 +313,9 @@ func TestGenerateSourceName(t *testing.T) {
 			want:       "sw-hsn01",
 		},
 		{
-			desc:       "Common Name cn005 returns cn05",
+			desc:       "Common Name cn005 returns cn-05",
 			commonName: "cn005",
-			want:       "cn05",
+			want:       "cn-05",
 		},
 		{
 			desc:       "Common Name gateway001 returns gateway01",
