@@ -23,70 +23,66 @@
  */
 @Library('csm-shared-library') _
 
+def goImage = 'artifactory.algol60.net/csm-docker/stable/csm-docker-sle-go'
 def isStable = env.TAG_NAME != null ? true : false
 pipeline {
 
-  agent {
-    label "metal-gcp-builder"
-  }
+    agent {
+        label "metal-gcp-builder"
+    }
 
-  options {
-    buildDiscarder(logRotator(numToKeepStr: "10"))
-    disableConcurrentBuilds()
-    timeout(time: 20, unit: 'MINUTES')
-    timestamps()
-  }
+    options {
+        buildDiscarder(logRotator(numToKeepStr: "10"))
+        disableConcurrentBuilds()
+        timeout(time: 20, unit: 'MINUTES')
+        timestamps()
+    }
 
-  environment {
-    NAME = getRepoName()
-    GO_VERSION = sh(returnStdout: true, script: 'grep -Eo "^go .*" go.mod | cut -d " " -f2').trim()
-    VERSION = sh(returnStdout: true, script: "git describe --tags | tr -s '-' '~' | tr -d '^v'").trim()
-  }
+    environment {
+        NAME = getRepoName()
+        GO_VERSION = sh(returnStdout: true, script: 'grep -Eo "^go .*" go.mod | cut -d " " -f2').trim()
+        VERSION = sh(returnStdout: true, script: "git describe --tags | tr -s '-' '~' | tr -d '^v'").trim()
+    }
 
-  stages {
+    stages {
 
-    stage("Prepare: RPM") {
-      agent {
-        docker {
-          label 'docker'
-          reuseNode true
-          image "artifactory.algol60.net/csm-docker/stable/csm-docker-sle-go:${env.GO_VERSION}"
+        stage('Prepare: RPMs') {
+            agent {
+                docker {
+                    label 'docker'
+                    reuseNode true
+                    image "${goImage}:${env.GO_VERSION}"
+                }
+            }
+            steps {
+                runLibraryScript("addRpmMetaData.sh", "${env.NAME}.spec")
+                sh "make rpm_prepare"
+                sh "git update-index --assume-unchanged ${env.NAME}.spec"
+            }
         }
-      }
-      steps {
-        runLibraryScript("addRpmMetaData.sh", "${env.NAME}.spec")
-        sh "make rpm_prepare"
-      }
-    }
 
-    stage('Build: RPM') {
-      agent {
-        docker {
-		  label 'docker'
-          reuseNode true
-		  image "artifactory.algol60.net/csm-docker/stable/csm-docker-sle-go:${env.GO_VERSION}"
+        stage('Build: RPMs') {
+            agent {
+                docker {
+                    label 'docker'
+                    reuseNode true
+                    image "${goImage}:${env.GO_VERSION}"
+                }
+            }
+            steps {
+                sh "make rpm"
+            }
         }
-      }
-      steps {
-        sh "make rpm"
-      }
-    }
 
-    stage('Publish: RPM') {
-      steps {
-        script {
-          publishCsmRpms(component: env.NAME, pattern: "dist/rpmbuild/RPMS/x86_64/*.rpm", os: "sle-15sp2", arch: "x86_64", isStable: isStable)
-          publishCsmRpms(component: env.NAME, pattern: "dist/rpmbuild/RPMS/x86_64/*.rpm", os: "sle-15sp3", arch: "x86_64", isStable: isStable)
-          publishCsmRpms(component: env.NAME, pattern: "dist/rpmbuild/SRPMS/*.rpm", os: "sle-15sp2", arch: "src", isStable: isStable)
-          publishCsmRpms(component: env.NAME, pattern: "dist/rpmbuild/SRPMS/*.rpm", os: "sle-15sp3", arch: "src", isStable: isStable)
+        stage('Publish: RPMs') {
+            steps {
+                script {
+                    publishCsmRpms(component: env.NAME, pattern: "dist/rpmbuild/RPMS/x86_64/*.rpm", os: "sle-15sp2", arch: "x86_64", isStable: isStable)
+                    publishCsmRpms(component: env.NAME, pattern: "dist/rpmbuild/RPMS/x86_64/*.rpm", os: "sle-15sp3", arch: "x86_64", isStable: isStable)
+                    publishCsmRpms(component: env.NAME, pattern: "dist/rpmbuild/SRPMS/*.rpm", os: "sle-15sp2", arch: "src", isStable: isStable)
+                    publishCsmRpms(component: env.NAME, pattern: "dist/rpmbuild/SRPMS/*.rpm", os: "sle-15sp3", arch: "src", isStable: isStable)
+                }
+            }
         }
-      }
     }
-  }
-
-  post {
-    always {
-      postChownFiles()
-    }
-  }
 }
