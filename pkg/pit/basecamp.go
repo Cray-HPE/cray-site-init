@@ -104,11 +104,14 @@ type BaseCampGlobals struct {
 	// CanGateway  string `json:can-gw`   // dnsmasq should provide this
 
 	// Kubernetes Installation Globals
-	KubernetesVIP          string `json:"kubernetes-virtual-ip"`
-	KubernetesMaxPods      string `json:"kubernetes-max-pods-per-node"`
-	KubernetesPodCIDR      string `json:"kubernetes-pods-cidr"`     // "10.32.0.0/12"
-	KubernetesServicesCIDR string `json:"kubernetes-services-cidr"` // "10.16.0.0/12"
-	KubernetesWeaveMTU     string `json:"kubernetes-weave-mtu"`     // 1376
+	KubernetesVIP              string `json:"kubernetes-virtual-ip"`
+	KubernetesMaxPods          string `json:"kubernetes-max-pods-per-node"`
+	KubernetesPodCIDR          string `json:"kubernetes-pods-cidr"`     // "10.32.0.0/12"
+	KubernetesServicesCIDR     string `json:"kubernetes-services-cidr"` // "10.16.0.0/12"
+	KubernetesWeaveMTU         string `json:"kubernetes-weave-mtu"`     // 1376
+	KubernetesCiliumOpReplicas string `json:"cilium-operator-replicas"` // 1
+	KubernetesPrimaryCNI       string `json:"k8s-primary-cni"`          // weave
+	KubernetesKubeProxyReplace string `json:"kube-proxy-replacement"`   // strict
 
 	NumStorageNodes int `json:"num_storage_nodes"`
 }
@@ -161,13 +164,16 @@ var basecampGlobalString = `{
 	"kubernetes-pods-cidr": "10.32.0.0/12",
 	"kubernetes-services-cidr": "10.16.0.0/12",
 	"kubernetes-weave-mtu": "1376",
+	"cilium-operator-replicas": "1",
+	"k8s-primary-cni": "weave",
+	"kube-proxy-replacement": "strict",
 	"rgw-virtual-ip": "~FIXME~ e.g. 10.252.2.100",
 	"wipe-ceph-osds": "yes",
 	"system-name": "~FIXME~",
 	"site-domain": "~FIXME~",
 	"internal-domain": "~FIXME~",
 	"k8s-api-auditing-enabled": "~FIXME~",
-    "ncn-mgmt-node-auditing-enabled": "~FIXME~"
+	"ncn-mgmt-node-auditing-enabled": "~FIXME~"
 	}`
 
 // BasecampHostRecord is what we need for passing stuff to /etc/hosts
