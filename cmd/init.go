@@ -752,7 +752,7 @@ func writeOutput(v *viper.Viper, shastaNetworks map[string]*csi.IPV4Network, sls
 func validateFlags() []string {
 	var errors []string
 	v := viper.GetViper()
-	expectedCSMVersion := "1.3"
+	expectedCSMVersion := "1.4"
 
 	var requiredFlags = []string{
 		"system-name",
@@ -828,6 +828,44 @@ func validateFlags() []string {
 	}
 	if !validBican {
 		errors = append(errors, fmt.Sprintf("%v must be set to CAN, CHN or HSN. (HSN requires NAT device)", bicanFlag))
+	}
+
+	if v.IsSet("cilium-operator-replicas") {
+		validFlag := false
+		var cor int
+		cor = v.GetInt("cilium-operator-replicas")
+		if cor > 0 {
+			validFlag = true
+		}
+		if !validFlag {
+			errors = append(errors, fmt.Sprintf("cilium-operator-replicas must be an integer > 0"))
+		}
+	}
+
+	if v.IsSet("kube-proxy-replacement") {
+		validFlag := false
+		for _, value := range [3]string{"strict", "partial", "disabled"} {
+			if v.GetString("kube-proxy-replacement") == value {
+				validFlag = true
+				break
+			}
+		}
+		if !validFlag {
+			errors = append(errors, fmt.Sprintf("kube-proxy-replacement must be set to strict, partial, or disabled"))
+		}
+	}
+
+	if v.IsSet("k8s-primary-cni") {
+		validFlag := false
+		for _, value := range [3]string{"weave", "cilium"} {
+			if v.GetString("k8s-primary-cni") == value {
+				validFlag = true
+				break
+			}
+		}
+		if !validFlag {
+			errors = append(errors, fmt.Sprintf("k8s-primary-cni must be set to weave or cilium"))
+		}
 	}
 
 	return errors
