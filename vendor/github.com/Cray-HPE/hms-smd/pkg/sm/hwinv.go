@@ -908,9 +908,9 @@ func NewHWInvByLocs(hwlocs []HWInvByLoc) ([]*HWInvByLoc, error) {
 			c := new(rf.EpManager)
 			c.Type = hwloc.Type
 			c.ID = hwloc.ID
-			c.ManagerRF.Manufacturer = hwloc.PopulatedFRU.HMSNodeBMCFRUInfo.Manufacturer
-			c.ManagerRF.PartNumber = hwloc.PopulatedFRU.HMSNodeBMCFRUInfo.PartNumber
-			c.ManagerRF.SerialNumber = hwloc.PopulatedFRU.HMSNodeBMCFRUInfo.SerialNumber
+			c.ManagerRF.Manufacturer = hwloc.PopulatedFRU.HMSRouterBMCFRUInfo.Manufacturer
+			c.ManagerRF.PartNumber = hwloc.PopulatedFRU.HMSRouterBMCFRUInfo.PartNumber
+			c.ManagerRF.SerialNumber = hwloc.PopulatedFRU.HMSRouterBMCFRUInfo.SerialNumber
 			hwloc.PopulatedFRU.FRUID, err = rf.GetManagerFRUID(c)
 			if err != nil {
 				errlog.Printf("FRUID Error: %s\n", err.Error())
