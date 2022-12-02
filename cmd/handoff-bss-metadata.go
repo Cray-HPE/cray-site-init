@@ -33,7 +33,6 @@ import (
 	"net"
 	"net/http"
 	"os/exec"
-	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -56,10 +55,6 @@ const macGatherCommand = "for interface in /sys/class/net/*; do echo -n " +
 const bondMACGatherCommand = "grep \"Permanent HW addr: \" /proc/net/bonding/bond0"
 const vlanGatherCommand = "ip -j addr show "
 
-// We need these to be constant so that later when we do the BSS handoff we know the right value.
-const k8sPath = "k8s"
-const cephPath = "ceph"
-
 const kernelName = "kernel"
 const initrdName = "initrd"
 const rootfsName = "rootfs"
@@ -78,12 +73,12 @@ type ipJSONStruct struct {
 type ipJSONStructArray []ipJSONStruct
 
 var (
-	dataFile, csmVer                      string
-	kubernetesFile, storageCephFile       string
-	kubernetesVersion, storageCephVersion string
-	cloudInitData                         map[string]bssTypes.CloudInit
-	sshConfig                             *ssh.ClientConfig
-	vlansToGather                         = []string{"bond0.nmn0"}
+	dataFile, csmVer                        string
+	kubernetesImsImageID, storageImsImageID string
+	kubernetesUUID, storageUUID             string
+	cloudInitData                           map[string]bssTypes.CloudInit
+	sshConfig                               *ssh.ClientConfig
+	vlansToGather                           = []string{"bond0.nmn0"}
 )
 
 var handoffBSSMetadataCmd = &cobra.Command{
@@ -101,62 +96,30 @@ var handoffBSSMetadataCmd = &cobra.Command{
 
 		setupCommon()
 
-		/* Valid version formats:
-			- [COMMIT]-[TIMESTAMP] feature/unstable images.
-			- A.B.C-X (where A, B, C, and X are integers): pre-release/unstable images.
-		    - A.B.C : release/stable images.
-		*/
-
-		// Validate a given string is a valid version without extra characters prepended or appended.
-		versionRegex, err := regexp.Compile(`(^([0-9a-zA-Z.]+)+(-\d+)?$)`)
+		// Validate a given string is a valid UUID
+		versionRegex, err := regexp.Compile(`^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$`)
 		if err != nil {
 			fmt.Println(err)
 		}
 
-		// Validate the version in a given filename is valid without extra characters prepended or appended.
-		fileVersionRegex, err := regexp.Compile(`(([0-9a-zA-Z.]+)+(-\d+)?).squashfs`)
-		if err != nil {
-			fmt.Println(err)
+		if kubernetesUUID == "" || storageUUID == "" {
+			log.Fatalln("ERROR: Missing --kubernetes-ims-image-id or --storage-ims-image-id")
 		}
 
-		if kubernetesVersion == "" && kubernetesFile == "" && storageCephVersion == "" && storageCephFile == "" {
-			log.Fatalln("ERROR: Missing (--kubernetes-version && --storage-ceph-version) or (--kubernetes-file && --storage-ceph-file), either of the parameter groups needs to be specified.")
-		}
-
-		if kubernetesVersion == "" {
-			kubernetes := path.Base(kubernetesFile)
-			desiredKubernetesVersionMatch := fileVersionRegex.FindStringSubmatch(kubernetes)
-			if desiredKubernetesVersionMatch == nil {
-				log.Fatalf("ERROR: Could not determine version from [%s]", kubernetesFile)
-			} else {
-				desiredKubernetesVersion = desiredKubernetesVersionMatch[1]
-			}
-
+		// Validate the input is a valid UUID
+		kubernetesImageIDMatch := versionRegex.FindStringSubmatch(kubernetesUUID)
+		if kubernetesImageIDMatch == nil {
+			log.Fatalf("ERROR: Could not determine Kubernetes image ID from [%s]", kubernetesUUID)
 		} else {
-			desiredKubernetesVersionMatch := versionRegex.FindStringSubmatch(kubernetesVersion)
-			if desiredKubernetesVersionMatch == nil {
-				log.Fatalf("ERROR: Could not determine version from [%s]", kubernetesVersion)
-			} else {
-				desiredKubernetesVersion = desiredKubernetesVersionMatch[1]
-			}
-
+			kubernetesImsImageID = kubernetesImageIDMatch[0]
 		}
-		if storageCephVersion == "" {
-			storageCeph := path.Base(storageCephFile)
-			desiredCephVersionMatch := fileVersionRegex.FindStringSubmatch(storageCeph)
-			if desiredCephVersionMatch == nil {
-				log.Fatalf("ERROR: Could not determine version from [%s]", storageCephFile)
-			} else {
-				desiredCephVersion = desiredCephVersionMatch[1]
-			}
+
+		// Validate the input is a valid UUID
+		cephImsImageIDMatch := versionRegex.FindStringSubmatch(storageUUID)
+		if cephImsImageIDMatch == nil {
+			log.Fatalf("ERROR: Could not determine storage image ID from [%s]", storageUUID)
 		} else {
-			// Validate the version input.
-			desiredCephVersionMatch := versionRegex.FindStringSubmatch(storageCephVersion)
-			if desiredCephVersionMatch == nil {
-				log.Fatalf("ERROR: Could not determine version from [%s]", storageCephVersion)
-			} else {
-				desiredCephVersion = desiredCephVersionMatch[1]
-			}
+			storageImsImageID = cephImsImageIDMatch[0]
 		}
 
 		// Parse the data.json file.
@@ -185,22 +148,13 @@ func init() {
 		"", "version of CSM that is currently running")
 	_ = handoffBSSMetadataCmd.MarkFlagRequired("data-file")
 
-	handoffBSSMetadataCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version",
-		"", "The version of the kubernetes image (provide this or --kubernetes-file)")
-	handoffBSSMetadataCmd.Flags().StringVar(&storageCephVersion, "storage-ceph-version",
-		"", "The version of the storage-ceph image (provide this or --storage-ceph-file)")
+	handoffBSSMetadataCmd.Flags().StringVar(&kubernetesUUID, "kubernetes-ims-image-id",
+		"", "The Kubernetes IMS_IMAGE_ID UUID value")
 
-	handoffBSSMetadataCmd.Flags().StringVar(&kubernetesFile, "kubernetes-file",
-		"", "The kubernetes squashFS file to parse version information from (provide this or --kubernetes-version)")
-	_ = handoffBSSMetadataCmd.MarkFlagFilename("kubernetes-file")
-	handoffBSSMetadataCmd.Flags().StringVar(&storageCephFile, "storage-ceph-file",
-		"", "The storage-ceph squashFS file to parse version information from (provide this or --storage-ceph-version)")
-	_ = handoffBSSMetadataCmd.MarkFlagFilename("storage-ceph-file")
+	handoffBSSMetadataCmd.Flags().StringVar(&storageUUID, "storage-ims-image-id",
+		"", "The storage-ceph IMS_IMAGE_ID UUID value")
 
-	handoffBSSMetadataCmd.MarkFlagsRequiredTogether("kubernetes-version", "storage-ceph-version")
-	handoffBSSMetadataCmd.MarkFlagsRequiredTogether("kubernetes-file", "storage-ceph-file")
-	handoffBSSMetadataCmd.MarkFlagsMutuallyExclusive("kubernetes-version", "kubernetes-file")
-	handoffBSSMetadataCmd.MarkFlagsMutuallyExclusive("storage-ceph-version", "storage-ceph-file")
+	handoffBSSMetadataCmd.MarkFlagsRequiredTogether("kubernetes-ims-image-id", "storage-ims-image-id")
 }
 
 func getKernelCommandlineArgs(ncn sls_common.GenericHardware, cmdline string) string {
@@ -213,23 +167,20 @@ func getKernelCommandlineArgs(ncn sls_common.GenericHardware, cmdline string) st
 		part := cmdlineParts[i]
 
 		if strings.HasPrefix(part, "metal.server") {
-			var path string
-			var version string
+			var imsImageID string
 
 			// Storage NCNs get different assets than masters/workers.
 			if extraProperties.SubRole == "Storage" {
-				path = cephPath
-				version = desiredCephVersion
+				imsImageID = storageImsImageID
 			} else {
-				path = k8sPath
-				version = desiredKubernetesVersion
+				imsImageID = kubernetesImsImageID
 			}
 
-			if version == "" {
+			if imsImageID == "" {
 				log.Fatalf("ERROR: Could not determine version, version was empty.")
 			}
 
-			cmdlineParts[i] = fmt.Sprintf("metal.server=%s/%s/%s/%s", s3Prefix, path, version, rootfsName)
+			cmdlineParts[i] = fmt.Sprintf("metal.server=%s/%s/%s", s3Prefix, imsImageID, rootfsName)
 		} else if strings.HasPrefix(part, "ds=nocloud-net") {
 			cmdlineParts[i] = fmt.Sprintf("ds=nocloud-net;s=%s", dsEndpoint)
 		} else if strings.HasPrefix(part, "hostname") {
@@ -402,20 +353,17 @@ func getBSSEntryForNCN(ncn sls_common.GenericHardware) (bssEntry bssTypes.BootPa
 		_ = sshClient.Close()
 	}
 
-	var path string
-	var version string
+	var imsImageID string
 
 	// Storage NCNs get different assets than masters/workers.
 	if extraProperties.SubRole == "Storage" {
-		path = cephPath
-		version = desiredCephVersion
+		imsImageID = storageImsImageID
 	} else {
-		path = k8sPath
-		version = desiredKubernetesVersion
+		imsImageID = kubernetesImsImageID
 	}
 
-	if version == "" {
-		log.Fatalf("ERROR: Could not determine version, version was empty.")
+	if imsImageID == "" {
+		log.Fatalf("ERROR: Could not determine IMS_IMAGE_ID")
 	}
 
 	// Now we can build the BSS structure.
@@ -423,8 +371,8 @@ func getBSSEntryForNCN(ncn sls_common.GenericHardware) (bssEntry bssTypes.BootPa
 		Hosts:  []string{ncn.Xname},
 		Macs:   macs,
 		Params: getKernelCommandlineArgs(ncn, cmdline),
-		Kernel: fmt.Sprintf("%s/%s/%s/%s", s3Prefix, path, version, kernelName),
-		Initrd: fmt.Sprintf("%s/%s/%s/%s", s3Prefix, path, version, initrdName),
+		Kernel: fmt.Sprintf("%s/%s/%s", s3Prefix, imsImageID, kernelName),
+		Initrd: fmt.Sprintf("%s/%s/%s", s3Prefix, imsImageID, initrdName),
 		CloudInit: bssTypes.CloudInit{
 			MetaData: metaData,
 			UserData: userData,
