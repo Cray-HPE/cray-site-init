@@ -149,7 +149,7 @@ func init() {
 	_ = handoffBSSMetadataCmd.MarkFlagRequired("data-file")
 
 	handoffBSSMetadataCmd.Flags().StringVar(&kubernetesUUID, "kubernetes-ims-image-id",
-		"", "The kubernetes IMS_IMAGE_ID UUID value")
+		"", "The Kubernetes IMS_IMAGE_ID UUID value")
 
 	handoffBSSMetadataCmd.Flags().StringVar(&storageUUID, "storage-ims-image-id",
 		"", "The storage-ceph IMS_IMAGE_ID UUID value")
