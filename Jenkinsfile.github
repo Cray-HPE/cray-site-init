@@ -46,41 +46,77 @@ pipeline {
 
     stages {
 
-        stage('Prepare: RPMs') {
-            agent {
-                docker {
-                    label 'docker'
-                    reuseNode true
-                    image "${goImage}:${env.GO_VERSION}"
-                }
-            }
-            steps {
-                runLibraryScript("addRpmMetaData.sh", "${env.NAME}.spec")
-                sh "make rpm_prepare"
-                sh "git update-index --assume-unchanged ${env.NAME}.spec"
-            }
-        }
+        stage('Build & Publish') {
 
-        stage('Build: RPMs') {
-            agent {
-                docker {
-                    label 'docker'
-                    reuseNode true
-                    image "${goImage}:${env.GO_VERSION}"
-                }
-            }
-            steps {
-                sh "make rpm"
-            }
-        }
+            matrix {
 
-        stage('Publish: RPMs') {
-            steps {
-                script {
-                    publishCsmRpms(component: env.NAME, pattern: "dist/rpmbuild/RPMS/x86_64/*.rpm", os: "sle-15sp2", arch: "x86_64", isStable: isStable)
-                    publishCsmRpms(component: env.NAME, pattern: "dist/rpmbuild/RPMS/x86_64/*.rpm", os: "sle-15sp3", arch: "x86_64", isStable: isStable)
-                    publishCsmRpms(component: env.NAME, pattern: "dist/rpmbuild/SRPMS/*.rpm", os: "sle-15sp2", arch: "src", isStable: isStable)
-                    publishCsmRpms(component: env.NAME, pattern: "dist/rpmbuild/SRPMS/*.rpm", os: "sle-15sp3", arch: "src", isStable: isStable)
+                agent {
+                    node {
+                        label "metal-gcp-builder"
+                        customWorkspace "${env.WORKSPACE}/${sleVersion}/${env.GO_VERSION}"
+                    }
+                }
+
+                axes {
+                    axis {
+                        name 'sleVersion'
+                        values 15.3, 15.4
+                    }
+                }
+
+                stages {
+
+                    stage('Prepare: RPMs') {
+                        agent {
+                            docker {
+                                label 'docker'
+                                reuseNode true
+                                image "${goImage}:${env.GO_VERSION}-SLES${sleVersion}"
+                            }
+                        }
+                        steps {
+                            runLibraryScript("addRpmMetaData.sh", "${env.NAME}.spec")
+                            sh "make rpm_prepare"
+                            sh "git update-index --assume-unchanged ${env.NAME}.spec"
+                        }
+                    }
+
+                    stage('Build: RPMs') {
+                        agent {
+                            docker {
+                                label 'docker'
+                                reuseNode true
+                                image "${goImage}:${env.GO_VERSION}-SLES${sleVersion}"
+                            }
+                        }
+                        steps {
+                            sh "make rpm"
+                        }
+                    }
+
+                    stage('Publish: RPMs') {
+                        steps {
+                            script {
+                                sles_version_parts = "${sleVersion}".tokenize('.')
+                                sles_major = "${sles_version_parts[0]}"
+                                sles_minor = "${sles_version_parts[1]}"
+                                publishCsmRpms(
+                                        arch: "x86_64",
+                                        component: env.NAME,
+                                        isStable: isStable,
+                                        os: "sle-${sles_major}sp${sles_minor}",
+                                        pattern: "dist/rpmbuild/RPMS/x86_64/*.rpm",
+                                )
+                                publishCsmRpms(
+                                        arch: "src",
+                                        component: env.NAME,
+                                        isStable: isStable,
+                                        os: "sle-${sles_major}sp${sles_minor}",
+                                        pattern: "dist/rpmbuild/SRPMS/*.rpm",
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
