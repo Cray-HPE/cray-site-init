@@ -117,7 +117,7 @@ var handoffBSSMetadataCmd = &cobra.Command{
 		// Validate the input is a valid UUID
 		cephImsImageIDMatch := versionRegex.FindStringSubmatch(storageUUID)
 		if cephImsImageIDMatch == nil {
-			log.Fatalf("ERROR: Could not determine storage image id from [%s]", storageUUID)
+			log.Fatalf("ERROR: Could not determine storage image ID from [%s]", storageUUID)
 		} else {
 			storageImsImageID = cephImsImageIDMatch[0]
 		}
