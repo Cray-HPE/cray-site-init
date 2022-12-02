@@ -109,7 +109,7 @@ var handoffBSSMetadataCmd = &cobra.Command{
 		// Validate the input is a valid UUID
 		kubernetesImageIDMatch := versionRegex.FindStringSubmatch(kubernetesUUID)
 		if kubernetesImageIDMatch == nil {
-			log.Fatalf("ERROR: Could not determine kubernetes image id from [%s]", kubernetesUUID)
+			log.Fatalf("ERROR: Could not determine Kubernetes image ID from [%s]", kubernetesUUID)
 		} else {
 			kubernetesImsImageID = kubernetesImageIDMatch[0]
 		}
