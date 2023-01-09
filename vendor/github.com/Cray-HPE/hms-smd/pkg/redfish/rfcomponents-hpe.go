@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2022] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2022-2023] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -249,9 +249,21 @@ func (ep *RedfishEP) getHpeDeviceOrdinal(d *EpHpeDevice) int {
 	if len(d.systemRF.HpeDevices.OIDs) > 0 {
 		dsOIDs := make([]string, 0, len(d.systemRF.HpeDevices.OIDs))
 		for oid, device := range d.systemRF.HpeDevices.OIDs {
-			// Get onlt devices of the same type
+			// Get only devices of the same type
 			if strings.ToLower(device.RedfishSubtype) == strings.ToLower(d.RedfishSubtype) {
-				dsOIDs = append(dsOIDs, oid)
+				if strings.Contains(strings.ToLower(d.RedfishSubtype), "nic") {
+					// Accept Mellanox or Cassini HSN NICs so we ignore non-HSN NICs.
+					// Cassini shows as HPE instead of BEI in Proliant iLO redfish
+					// implementations so we check for both just incase this changes
+					// in the future. 
+					if strings.Contains(strings.ToLower(d.DeviceRF.Manufacturer), "mellanox") ||
+					   strings.Contains(strings.ToLower(d.DeviceRF.Manufacturer), "hpe") ||
+					   strings.Contains(strings.ToLower(d.DeviceRF.Manufacturer), "bei") {
+						dsOIDs = append(dsOIDs, oid)
+					}
+				} else {
+					dsOIDs = append(dsOIDs, oid)
+				}
 			}
 		}
 		//sort the OIDs
