@@ -93,7 +93,7 @@ create_partition () {
     fi
 
     info "Creating partition ${dev_part} for ${label} data: ${start}MB to ${end_num}MB"
-    parted --wipesignatures -s $dev unit MB mkpart primary ext4 ${start}MB ${end_num}MB
+    parted --wipesignatures -m --align=opt -s $dev unit MB mkpart primary ext4 ${start}MB ${end_num}MB
     [[ $? -ne 0 ]] && error "Failed to create partition ${dev_part}" && exit 1
 
     # Wait for the partitioning and device file creation to complete.
@@ -191,13 +191,16 @@ fi
 
 # Write new partition table
 info "Writing new GUID partition table to ${usb}"
-parted -s $usb mktable gpt
+parted --wipesignatures -m --align=opt -s $usb mktable gpt
 
 # Write the ISO to the USB raw device, creating an exact duplicate
 # of the ISO image layout.
 info "Writing ISO to $usb"
 dd bs=1M if=$iso_file of=$usb conv=fdatasync
 [[ $? -ne 0 ]] && error "Failed to write $iso_file to $usb" && exit 1
+
+# The ISO's GPT geometry will not match the USB, the unallocated space will be hidden. Fix the headers.
+sgdisk -e $usb
 
 info "Scanning $usb for where to begin creating partition"
 readarray -t parted_line < <(parted -s -m $usb unit MB print)
@@ -239,6 +242,16 @@ done
 
 # Create cow partition for liveCD
 create_partition $part_num "cow" $usb $start_num $cow_size
+
+temp_mount=$(mktemp -d)
+mount ${usb}3 $temp_mount
+LABEL=$(blkid -s LABEL -o value ${usb}1)
+USB_ISO_UUID=$(blkid -s UUID -o value /dev/disk/by-label/$LABEL)
+mkdir -v -m 0755 -p \
+    "${temp_mount}/LiveOS/overlay-${LABEL}-${USB_ISO_UUID}" \
+    "${temp_mount}//LiveOS/overlay-${LABEL}-${USB_ISO_UUID}/../ovlwork"
+umount $temp_mount
+rmdir $temp_mount
 
 # Create the install data partition for configuration data using
 # remaining space
