@@ -60,8 +60,8 @@ github.com/Cray-HPE/hms-base v1.15.0 h1:VaQj6cY9OAs6rcD1miE133eqQnRTkEcX1lnwJA/S
 github.com/Cray-HPE/hms-base v1.15.0/go.mod h1:+G8KFLPtanLC5lQ602hrf3MDfLTmIXedTavVCOdz5XA=
 github.com/Cray-HPE/hms-base/v2 v2.0.1 h1:xHQWmoOlmA/UU0zDWjHxCK/qOF9WMLr7MrSpFAxLXWY=
 github.com/Cray-HPE/hms-base/v2 v2.0.1/go.mod h1:Mq+Ao3q4YtNZJZ1ly9wnEIKyvc3+QaA1B/xpiUpyhzQ=
-github.com/Cray-HPE/hms-bss v1.22.0 h1:rzDoaxHwA/+5cz1zkUL4Qhh5vxiCF4je+e9m3agRcoY=
-github.com/Cray-HPE/hms-bss v1.22.0/go.mod h1:9hBpVuV0jZfk+S9S0ZzKBBdRmQE1ybyRrVSXXDZUTP0=
+github.com/Cray-HPE/hms-bss v1.23.0 h1:M7dg21YmOtJWb1EMSopiVH54Cfer9S3nW8gKH0IXssw=
+github.com/Cray-HPE/hms-bss v1.23.0/go.mod h1:9hBpVuV0jZfk+S9S0ZzKBBdRmQE1ybyRrVSXXDZUTP0=
 github.com/Cray-HPE/hms-certs v1.3.2 h1:Prd7PTwiSMULYuL8bhsvw7LSICx+pSvpWlA9fQKvW9s=
 github.com/Cray-HPE/hms-certs v1.3.2/go.mod h1:6DymilWScLtbQkaQRMuf55K1MzEi0kYCoXfT212yLjY=
 github.com/Cray-HPE/hms-compcredentials v1.11.2/go.mod h1:tmurR+zsOtB61n6j3GlEfsl7wmNIAGJqErFymOUb0Hw=
