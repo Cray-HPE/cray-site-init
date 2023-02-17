@@ -97,9 +97,9 @@ pipeline {
                     stage('Publish: RPMs') {
                         steps {
                             script {
-                                sles_version_parts = "${sleVersion}".tokenize('.')
-                                sles_major = "${sles_version_parts[0]}"
-                                sles_minor = "${sles_version_parts[1]}"
+                                def sles_version_parts = "${sleVersion}".tokenize('.')
+                                def sles_major = "${sles_version_parts[0]}"
+                                def sles_minor = "${sles_version_parts[1]}"
                                 publishCsmRpms(
                                         arch: "x86_64",
                                         component: env.NAME,
