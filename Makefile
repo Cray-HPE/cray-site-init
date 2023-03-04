@@ -121,7 +121,7 @@ clean:
 	  bin \
 	  $(BUILD_DIR)
 
-test:
+test: tools
 	mkdir -pv $(TEST_OUTPUT_DIR)/unittest $(TEST_OUTPUT_DIR)/coverage
 	go test ./cmd/... ./internal/... ./pkg/... -v -coverprofile $(TEST_OUTPUT_DIR)/coverage.out -covermode count | tee "$(TEST_OUTPUT_DIR)/testing.out"
 	cat "$(TEST_OUTPUT_DIR)/testing.out" | go-junit-report | tee "$(TEST_OUTPUT_DIR)/unittest/testing.xml" | tee "$(TEST_OUTPUT_DIR)/unittest/testing.xml"
@@ -136,7 +136,7 @@ tools:
 vet: version
 	go vet -v ./...
 
-lint:
+lint: tools
 	golint -set_exit_status ./cmd/...
 	golint -set_exit_status ./internal/...
 	golint -set_exit_status ./pkg/...
