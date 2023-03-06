@@ -26,11 +26,9 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -509,8 +507,6 @@ func init() {
 	initCmd.Flags().String("cabinets-yaml", "", "YAML file listing the ids for all cabinets by type")
 	initCmd.Flags().String("application-node-config-yaml", "application_node_config.yaml", "YAML to control Application node identification during the SLS Input File generation")
 
-	// Loftsman Manifest Shasta-CFG
-	initCmd.Flags().String("manifest-release", "", "Loftsman Manifest Release Version (leave blank to prevent manifest generation)")
 	initCmd.Flags().SortFlags = false
 
 	// DNS zone transfer settings
@@ -518,41 +514,6 @@ func init() {
 	initCmd.Flags().String("secondary-servers", "", "Comma-separated list of FQDN/IP for all DNS servers to notify when zone changes are made")
 	initCmd.Flags().String("notify-zones", "", "Comma-separated list of the zones to be allowed transfer")
 	initCmd.AddCommand(emptyCmd)
-}
-
-func initiailzeManifestDir(url, branch, destination string) {
-	// First we need a temporary directory
-	dir, err := ioutil.TempDir("", "loftsman-init")
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer os.RemoveAll(dir)
-	cloneCmd := exec.Command("git", "clone", url, dir)
-	out, err := cloneCmd.Output()
-	if err != nil {
-		log.Fatalf("cloneCommand finished with error: %s (%v)\n", out, err)
-	}
-	checkoutCmd := exec.Command("git", "checkout", branch)
-	checkoutCmd.Dir = dir
-	out, err = checkoutCmd.Output()
-	if err != nil {
-		if err.Error() != "exit status 1" {
-			log.Fatalf("checkoutCommand finished with error: %s (%v)\n", out, err)
-		}
-	}
-	packageCmd := exec.Command("./package/package.sh", "1.4.0")
-	packageCmd.Dir = dir
-	out, err = packageCmd.Output()
-	if err != nil {
-		log.Fatalf("packageCommand finished with error: %s (%v)\n", out, err)
-	}
-	targz, _ := filepath.Abs(filepath.Clean(dir + "/dist/shasta-cfg-1.4.0.tgz"))
-	untarCmd := exec.Command("tar", "-zxvvf", targz)
-	untarCmd.Dir = destination
-	out, err = untarCmd.Output()
-	if err != nil {
-		log.Fatalf("untarCmd finished with error: %s (%v)\n", out, err)
-	}
 }
 
 func setupDirectories(systemName string, v *viper.Viper) (string, error) {
@@ -574,10 +535,7 @@ func setupDirectories(systemName string, v *viper.Viper) (string, error) {
 		filepath.Join(basepath, "pit-files"),
 		filepath.Join(basepath, "basecamp"),
 	}
-	// Add the Manifest directory if needed
-	if v.GetString("manifest-release") != "" {
-		dirs = append(dirs, filepath.Join(basepath, "loftsman-manifests"))
-	}
+
 	// Iterate through the directories and create them
 	for _, dir := range dirs {
 		if err := os.Mkdir(dir, 0777); err != nil {
@@ -726,6 +684,7 @@ func writeOutput(v *viper.Viper, shastaNetworks map[string]*csi.IPV4Network, sls
 	if err != nil {
 		log.Fatalln("Failed to encode SLS state:", err)
 	}
+	v.SetConfigName("system_config")
 	v.SetConfigType("yaml")
 	v.Set("VersionInfo", version.Get())
 	v.WriteConfigAs(filepath.Join(basepath, "system_config.yaml"))
@@ -744,11 +703,7 @@ func writeOutput(v *viper.Viper, shastaNetworks map[string]*csi.IPV4Network, sls
 	pit.WriteMetalLBConfigMap(basepath, v, shastaNetworks, switches)
 	pit.WriteBasecampData(filepath.Join(basepath, "basecamp/data.json"), logicalNCNs, shastaNetworks, globals)
 
-	if v.GetString("manifest-release") != "" {
-		initiailzeManifestDir(csi.DefaultManifestURL, "release/shasta-1.4", filepath.Join(basepath, "loftsman-manifests"))
-	}
 }
-
 func validateFlags() []string {
 	var errors []string
 	v := viper.GetViper()

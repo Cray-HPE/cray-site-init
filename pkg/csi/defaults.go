@@ -394,9 +394,6 @@ func GenDefaultMTLConfig() NetworkLayoutConfiguration {
 	}
 }
 
-// DefaultManifestURL is the git URL for downloading the loftsman manifests for packaging
-var DefaultManifestURL string = "ssh://git@stash.us.cray.com:7999/shasta-cfg/stable.git"
-
 // DefaultUAISubnetReservations is the map of dns names and aliases
 var DefaultUAISubnetReservations = map[string][]string{
 	"uai_nmn_blackhole": {"uai-nmn-blackhole"},
@@ -417,7 +414,6 @@ type PinnedReservation struct {
 // *** This structure is only necessary to pin ip addresses as we shift from 1.3 to 1.4 ***
 // *** *** *** To anyone editing this code in the future, PLEASE DON'T MAKE IT BETTER *** *** ***
 // *** *** *** This code is written to be thrown away with a fully dynamic ip addressing scheme *** *** ***
-//
 var PinnedMetalLBReservations = map[string]PinnedReservation{
 	"istio-ingressgateway":       {71, strings.Split("api-gw-service api-gw-service-nmn.local packages registry spire.local api_gw_service registry.local packages packages.local spire", " ")},
 	"istio-ingressgateway-local": {81, []string{"api-gw-service.local"}},
