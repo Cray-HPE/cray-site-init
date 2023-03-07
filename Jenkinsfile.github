@@ -53,11 +53,15 @@ pipeline {
                 agent {
                     node {
                         label "metal-gcp-builder"
-                        customWorkspace "${env.WORKSPACE}/${sleVersion}/${env.GO_VERSION}"
+                        customWorkspace "${env.WORKSPACE}/${sleVersion}/${ARCH}/${env.GO_VERSION}"
                     }
                 }
 
                 axes {
+                    axis {
+                        name 'ARCH'
+                        values 'x86_64'
+                    }
                     axis {
                         name 'sleVersion'
                         values 15.3, 15.4
@@ -101,11 +105,11 @@ pipeline {
                                 def sles_major = "${sles_version_parts[0]}"
                                 def sles_minor = "${sles_version_parts[1]}"
                                 publishCsmRpms(
-                                        arch: "x86_64",
+                                        arch: "${ARCH}",
                                         component: env.NAME,
                                         isStable: isStable,
                                         os: "sle-${sles_major}sp${sles_minor}",
-                                        pattern: "dist/rpmbuild/RPMS/x86_64/*.rpm",
+                                        pattern: "dist/rpmbuild/RPMS/${ARCH}/*.rpm",
                                 )
                                 publishCsmRpms(
                                         arch: "src",

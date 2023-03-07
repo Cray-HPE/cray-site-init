@@ -1,17 +1,17 @@
 # MIT License
-# 
+#
 # (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
 # the rights to use, copy, modify, merge, publish, distribute, sublicense,
 # and/or sell copies of the Software, and to permit persons to whom the
 # Software is furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -20,13 +20,31 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 SHELL := /bin/bash -o pipefail
+lc =$(subst A,a,$(subst B,b,$(subst C,c,$(subst D,d,$(subst E,e,$(subst F,f,$(subst G,g,$(subst H,h,$(subst I,i,$(subst J,j,$(subst K,k,$(subst L,l,$(subst M,m,$(subst N,n,$(subst O,o,$(subst P,p,$(subst Q,q,$(subst R,r,$(subst S,s,$(subst T,t,$(subst U,u,$(subst V,v,$(subst W,w,$(subst X,x,$(subst Y,y,$(subst Z,z,$1))))))))))))))))))))))))))
 
 ifeq ($(NAME),)
-NAME := $(shell basename $(shell pwd))
+export NAME := $(shell basename $(shell pwd))
+endif
+
+ifeq ($(ARCH),)
+export ARCH := $(shell uname -m)
 endif
 
 ifeq ($(VERSION),)
-VERSION := $(shell git describe --tags | tr -s '-' '~' | tr -d '^v')
+export VERSION := $(shell git describe --tags | tr -s '-' '~' | tr -d '^v')
+endif
+
+# By default, if these are not set then set them to match the host.
+ifeq ($(GOOS),)
+OS := $(shell uname)
+export GOOS := $(call lc,$(OS))
+endif
+ifeq ($(GOARCH),)
+	ifeq "$(ARCH)" "aarch64"
+		export GOARCH=arm64
+	else ifeq "$(ARCH)" "x86_64"
+		export GOARCH=amd64
+	endif
 endif
 
 GO_FILES?=$$(find . -name '*.go' |grep -v vendor)
@@ -70,7 +88,7 @@ endif
 	doc \
 	version
 
-all: fmt lint build
+all: bin/csi
 
 rpm: rpm_prepare rpm_package_source rpm_build_source rpm_build
 
@@ -98,9 +116,12 @@ clean:
 	go clean -i ./...
 	rm -vf \
 	  $(CURDIR)/build/results/coverage/* \
-		$(CURDIR)/build/results/unittest/* \
+	  $(CURDIR)/build/results/unittest/*
+	rm -rf \
+	  bin \
+	  $(BUILD_DIR)
 
-test: build
+test:
 	mkdir -pv $(TEST_OUTPUT_DIR)/unittest $(TEST_OUTPUT_DIR)/coverage
 	go test ./cmd/... ./internal/... ./pkg/... -v -coverprofile $(TEST_OUTPUT_DIR)/coverage.out -covermode count | tee "$(TEST_OUTPUT_DIR)/testing.out"
 	cat "$(TEST_OUTPUT_DIR)/testing.out" | go-junit-report | tee "$(TEST_OUTPUT_DIR)/unittest/testing.xml" | tee "$(TEST_OUTPUT_DIR)/unittest/testing.xml"
@@ -129,12 +150,11 @@ env:
 tidy:
 	go mod tidy
 
-build: fmt
-	go build -o bin/csi -ldflags "\
+bin/csi:
+	GOOS=$(GOOS) GOARCH=$(GOARCH) go build -o bin/csi -ldflags "\
 	-X github.com/Cray-HPE/cray-site-init/pkg/version.version=${.GIT_VERSION} \
 	-X github.com/Cray-HPE/cray-site-init/pkg/version.buildDate=${.BUILDTIME} \
 	-X github.com/Cray-HPE/cray-site-init/pkg/version.sha1ver=${.GIT_COMMIT_AND_BRANCH}"
-	bin/csi version
 
 rpm_prepare:
 	rm -rf $(BUILD_DIR)
@@ -145,10 +165,10 @@ rpm_package_source:
 	tar --transform 'flags=r;s,^,/$(SOURCE_NAME)/,' --exclude .git --exclude dist -cvjf $(SOURCE_PATH) .
 
 rpm_build_source:
-	rpmbuild --nodeps -ts $(SOURCE_PATH) --define "_topdir $(BUILD_DIR)"
+	rpmbuild --nodeps --target $(ARCH) -ts $(SOURCE_PATH) --define "_topdir $(BUILD_DIR)"
 
 rpm_build:
-	rpmbuild --nodeps -ba $(SPEC_FILE) --define "_topdir $(BUILD_DIR)"
+	rpmbuild --nodeps --target $(ARCH) -ba $(SPEC_FILE) --define "_topdir $(BUILD_DIR)"
 
 doc:
 	godoc -http=:8080 -index
