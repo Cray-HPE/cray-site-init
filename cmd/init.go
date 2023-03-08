@@ -377,7 +377,7 @@ var initCmd = &cobra.Command{
 		fmt.Printf("Installation Node: %v\n", v.GetString("install-ncn"))
 		fmt.Printf("Customer Management: %v GW: %v\n", v.GetString("cmn-cidr"), v.GetString("cmn-gateway"))
 		fmt.Printf("Customer Access: %v GW: %v\n", v.GetString("can-cidr"), v.GetString("can-gateway"))
-		fmt.Printf("\tUpstream DNS: %v\n", v.GetString("ipv4-resolvers"))
+		fmt.Printf("\tUpstream DNS: %v\n", v.GetString("site-dns"))
 		fmt.Printf("\tMetalLB Peers: %v\n", v.GetStringSlice("bgp-peer-types"))
 		fmt.Println("Networking")
 		fmt.Printf("\tBICAN user network toggle set to %v\n", v.GetString("bican-user-network-name"))
@@ -412,7 +412,7 @@ func init() {
 	initCmd.Flags().StringSlice("ntp-servers", []string{"ncn-m001"}, "Comma-separated list of upstream NTP server(s); ncn-m001 should always be in this list")
 	initCmd.Flags().StringSlice("ntp-peers", []string{"ncn-m001", "ncn-m002", "ncn-m003", "ncn-w001", "ncn-w002", "ncn-w003", "ncn-s001", "ncn-s002", "ncn-s003"}, "Comma-separated list of NCNs that will peer together")
 	initCmd.Flags().String("ntp-timezone", "UTC", "Timezone to be used on the NCNs and across the system")
-	initCmd.Flags().String("ipv4-resolvers", "8.8.8.8, 9.9.9.9", "List of IP Addresses for DNS")
+	initCmd.Flags().MarkDeprecated("ipv4-resolvers", "please use --site-dns instead")
 	initCmd.Flags().String("v2-registry", "https://registry.nmn/", "URL for default v2 registry used for both helm and containers")
 	initCmd.Flags().String("rpm-repository", "https://packages.nmn/repository/shasta-master", "URL for default rpm repository")
 	initCmd.Flags().String("cmn-gateway", "", "Gateway for NCNs on the CMN (Administrative/Management)")
@@ -427,7 +427,7 @@ func init() {
 	initCmd.Flags().String("install-ncn-bond-members", "p1p1,p1p2", "List of devices to use to form a bond on the install ncn")
 	initCmd.Flags().String("site-ip", "", "Site Network Information in the form ipaddress/prefix like 192.168.1.1/24")
 	initCmd.Flags().String("site-gw", "", "Site Network IPv4 Gateway")
-	initCmd.Flags().String("site-dns", "", "Site Network DNS Server which can be different from the upstream ipv4-resolvers if necessary")
+	initCmd.Flags().String("site-dns", "", "Site Network DNS Server")
 	initCmd.Flags().String("site-nic", "em1", "Network Interface on install-ncn that will be connected to the site network")
 
 	// BICAN Network Toggle
