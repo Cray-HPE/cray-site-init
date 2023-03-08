@@ -1,0 +1,31 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - '*'
+    tags:
+      # semver tags:
+      - 'v[12].[0-9]+.[0-9]+'
+  pull_request:
+    branches:
+      - main
+      - 'release/**'
+
+jobs:
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.19
+
+    - name: Test
+      run: |
+        make tools
+        make test

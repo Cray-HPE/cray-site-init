@@ -455,9 +455,7 @@ func (g *SLSStateGenerator) parseSourceCabinetFromRow(row shcd_parser.HMNRow) (x
 	return xnames.Cabinet{Cabinet: cabinetInteger}, nil
 }
 
-//
 // River hardware
-//
 func (g *SLSStateGenerator) getRiverHardwareFromRow(row shcd_parser.HMNRow) (hardware sls_common.GenericHardware) {
 	sourceLowerCase := strings.ToLower(row.Source)
 
@@ -979,9 +977,7 @@ func (g *SLSStateGenerator) findRowWithSource(sourceParent string) shcd_parser.H
 	return shcd_parser.HMNRow{}
 }
 
-//
 // Mountain and Hill hardware
-//
 func (g *SLSStateGenerator) getLiquidCooledHardwareForCabinet(cabinetTemplate SLSCabinetTemplate) (hardware []sls_common.GenericHardware) {
 	// Start with the Cabinet
 	cabinetXname := cabinetTemplate.Xname
@@ -1038,9 +1034,7 @@ func (g *SLSStateGenerator) buildSLSHardware(xname xnames.Xname, class sls_commo
 	}
 }
 
-//
 // Networks
-//
 func (g *SLSStateGenerator) buildNetworksSection() (allNetworks map[string]sls_common.Network) {
 	allNetworks = g.inputState.Networks
 

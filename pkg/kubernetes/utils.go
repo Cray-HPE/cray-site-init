@@ -106,9 +106,9 @@ func (utilsClient *UtilsClient) UnCordonNCN(ncn string) error {
 }
 
 // DrainNCN - Draining an NCN is really 3 individual steps:
-//   1) Cordon the node.
-//   2) Identify any pods that might be on that node in violation of any pod distribution budgets and move them.
-//   3) Drain the node.
+//  1. Cordon the node.
+//  2. Identify any pods that might be on that node in violation of any pod distribution budgets and move them.
+//  3. Drain the node.
 func (utilsClient *UtilsClient) DrainNCN(ncn string) error {
 	err := utilsClient.ChangeNCNCordonState(ncn, true)
 	if err != nil {

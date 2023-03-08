@@ -1,9 +1,10 @@
-name: github pages
+name: GitHub Pages
 
 on:
   push:
     branches:
-      - main  # Set a branch to deploy
+      - main
+      - 'release/**'
   pull_request:
 
 jobs:
@@ -18,7 +19,7 @@ jobs:
       - name: setup go
         uses: actions/setup-go@v2
         with:
-          go-version: "1.16"
+          go-version: "1.19"
 
       - name: makedocs
         run: go run main.go makedocs ./hugo/content/commands
@@ -26,7 +27,7 @@ jobs:
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@v2
         with:
-          hugo-version: '0.88.1'
+          hugo-version: 'latest'
           # extended: true
 
       - name: Build

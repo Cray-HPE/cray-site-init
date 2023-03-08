@@ -396,6 +396,7 @@ var HMNConnections = []shcd_parser.HMNRow{
 // - 4 LeafBMC switches (2 in each river cabinet)
 //   - sw-leaf-bmc-00[1-3] are Dell
 //   - sw-leaf-bmc-004 is Aruba
+//
 // - 1 Hill Cabinet x5000
 // - 1 Mountain Cabinet x1000
 var TestSLSInputState = SLSGeneratorInputState{
