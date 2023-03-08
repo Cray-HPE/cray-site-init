@@ -1,387 +1,68 @@
-<!doctype html><html lang=en class="js csstransforms3d">
-<head>
-<meta charset=utf-8>
-<meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=generator content="Hugo 0.88.1">
-<meta name=description content="Cray Site Initializer documentation">
-<meta name=author content="Cray-HPE">
-<link rel=icon href=/cray-site-init/images/favicon.png type=image/png>
-<title>csi patch ca - Cray Site Init</title>
-<link href=/cray-site-init/css/nucleus.css?1675105310 rel=stylesheet>
-<link href=/cray-site-init/css/fontawesome-all.min.css?1675105310 rel=stylesheet>
-<link href=/cray-site-init/css/hybrid.css?1675105310 rel=stylesheet>
-<link href=/cray-site-init/css/featherlight.min.css?1675105310 rel=stylesheet>
-<link href=/cray-site-init/css/perfect-scrollbar.min.css?1675105310 rel=stylesheet>
-<link href=/cray-site-init/css/auto-complete.css?1675105310 rel=stylesheet>
-<link href=/cray-site-init/css/atom-one-dark-reasonable.css?1675105310 rel=stylesheet>
-<link href=/cray-site-init/css/theme.css?1675105310 rel=stylesheet>
-<link href=/cray-site-init/css/tabs.css?1675105310 rel=stylesheet>
-<link href=/cray-site-init/css/hugo-theme.css?1675105310 rel=stylesheet>
-<link href=/cray-site-init/css/theme-blue.css?1675105310 rel=stylesheet>
-<link href=/cray-site-init/css/foo.css?1675105310 rel=stylesheet><link href=/cray-site-init/css/bar.css?1675105310 rel=stylesheet>
-<script src=/cray-site-init/js/jquery-3.3.1.min.js?1675105310></script>
-<style>:root #header+#content>#left>#rlblock_left{display:none!important}</style>
-</head>
-<body data-url=/cray-site-init/commands/csi_patch_ca/>
-<nav id=sidebar class=showVisitedLinks>
-<div id=header-wrapper>
-<div id=header><svg viewBox="0 0 240 80" xmlns="http://www.w3.org/2000/svg"><style>.small{font:italic 13px sans-serif}.heavy{font:700 30px sans-serif}</style><text x="40" y="35" class="heavy">CSI</text><text x="55" y="55" class="small">Cray Site Initializer</text></svg>
-</div>
-<div class=searchbox>
-<label for=search-by><i class="fas fa-search"></i></label>
+<!doctype html><html lang=en class="js csstransforms3d"><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=generator content="Hugo 0.111.2"><meta name=description content="Cray Site Initializer documentation"><meta name=author content="Cray-HPE"><link rel=icon href=/cray-site-init/images/favicon.png type=image/png><title>csi patch ca - Cray Site Init</title><link href=/cray-site-init/css/nucleus.css?1678245743 rel=stylesheet><link href=/cray-site-init/css/fontawesome-all.min.css?1678245743 rel=stylesheet><link href=/cray-site-init/css/hybrid.css?1678245743 rel=stylesheet><link href=/cray-site-init/css/featherlight.min.css?1678245743 rel=stylesheet><link href=/cray-site-init/css/perfect-scrollbar.min.css?1678245743 rel=stylesheet><link href=/cray-site-init/css/auto-complete.css?1678245743 rel=stylesheet><link href=/cray-site-init/css/atom-one-dark-reasonable.css?1678245743 rel=stylesheet><link href=/cray-site-init/css/theme.css?1678245743 rel=stylesheet><link href=/cray-site-init/css/tabs.css?1678245743 rel=stylesheet><link href=/cray-site-init/css/hugo-theme.css?1678245743 rel=stylesheet><link href=/cray-site-init/css/theme-blue.css?1678245743 rel=stylesheet><link href=/cray-site-init/css/foo.css?1678245743 rel=stylesheet><link href=/cray-site-init/css/bar.css?1678245743 rel=stylesheet><script src=/cray-site-init/js/jquery-3.3.1.min.js?1678245743></script><style>:root #header+#content>#left>#rlblock_left{display:none!important}</style></head><body data-url=/cray-site-init/commands/csi_patch_ca/><nav id=sidebar class=showVisitedLinks><div id=header-wrapper><div id=header><svg viewBox="0 0 240 80" xmlns="http://www.w3.org/2000/svg"><style>.small{font:italic 13px sans-serif}.heavy{font:700 30px sans-serif}</style><text x="40" y="35" class="heavy">CSI</text><text x="55" y="55" class="small">Cray Site Initializer</text></svg></div><div class=searchbox><label for=search-by><i class="fas fa-search"></i></label>
 <input data-search-input id=search-by type=search placeholder=Search...>
-<span data-search-clear><i class="fas fa-times"></i></span>
-</div>
-<script type=text/javascript src=/cray-site-init/js/lunr.min.js?1675105310></script>
-<script type=text/javascript src=/cray-site-init/js/auto-complete.js?1675105310></script>
-<script type=text/javascript>var baseurl="https://cray-hpe.github.io/cray-site-init/"</script>
-<script type=text/javascript src=/cray-site-init/js/search.js?1675105310></script>
-</div>
-<div class=highlightable>
-<ul class=topics>
-<li data-nav-id=/cray-site-init/commands/ title=Commands class="dd-item
-parent">
-<a href=/cray-site-init/commands/>
-Commands
-<i class="fas fa-check read-icon"></i>
-</a>
-<ul>
-<li data-nav-id=/cray-site-init/commands/csi/ title=csi class=dd-item>
-<a href=/cray-site-init/commands/csi/>
-csi
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_automate/ title="csi automate" class=dd-item>
-<a href=/cray-site-init/commands/csi_automate/>
-csi automate
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_automate_ncn/ title="csi automate ncn" class=dd-item>
-<a href=/cray-site-init/commands/csi_automate_ncn/>
-csi automate ncn
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_automate_ncn_etcd/ title="csi automate ncn etcd" class=dd-item>
-<a href=/cray-site-init/commands/csi_automate_ncn_etcd/>
-csi automate ncn etcd
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_automate_ncn_kubernetes/ title="csi automate ncn kubernetes" class=dd-item>
-<a href=/cray-site-init/commands/csi_automate_ncn_kubernetes/>
-csi automate ncn kubernetes
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_automate_ncn_preflight/ title="csi automate ncn preflight" class=dd-item>
-<a href=/cray-site-init/commands/csi_automate_ncn_preflight/>
-csi automate ncn preflight
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_completion/ title="csi completion" class=dd-item>
-<a href=/cray-site-init/commands/csi_completion/>
-csi completion
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_completion_bash/ title="csi completion bash" class=dd-item>
-<a href=/cray-site-init/commands/csi_completion_bash/>
-csi completion bash
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_completion_fish/ title="csi completion fish" class=dd-item>
-<a href=/cray-site-init/commands/csi_completion_fish/>
-csi completion fish
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_completion_powershell/ title="csi completion powershell" class=dd-item>
-<a href=/cray-site-init/commands/csi_completion_powershell/>
-csi completion powershell
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_completion_zsh/ title="csi completion zsh" class=dd-item>
-<a href=/cray-site-init/commands/csi_completion_zsh/>
-csi completion zsh
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_config/ title="csi config" class=dd-item>
-<a href=/cray-site-init/commands/csi_config/>
-csi config
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_config_dump/ title="csi config dump" class=dd-item>
-<a href=/cray-site-init/commands/csi_config_dump/>
-csi config dump
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_config_gen-sls/ title="csi config gen-sls" class=dd-item>
-<a href=/cray-site-init/commands/csi_config_gen-sls/>
-csi config gen-sls
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_config_init/ title="csi config init" class=dd-item>
-<a href=/cray-site-init/commands/csi_config_init/>
-csi config init
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_config_init_empty/ title="csi config init empty" class=dd-item>
-<a href=/cray-site-init/commands/csi_config_init_empty/>
-csi config init empty
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_config_load/ title="csi config load" class=dd-item>
-<a href=/cray-site-init/commands/csi_config_load/>
-csi config load
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_config_shcd/ title="csi config shcd" class=dd-item>
-<a href=/cray-site-init/commands/csi_config_shcd/>
-csi config shcd
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_handoff/ title="csi handoff" class=dd-item>
-<a href=/cray-site-init/commands/csi_handoff/>
-csi handoff
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_handoff_bss-metadata/ title="csi handoff bss-metadata" class=dd-item>
-<a href=/cray-site-init/commands/csi_handoff_bss-metadata/>
-csi handoff bss-metadata
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_handoff_bss-update-cloud-init/ title="csi handoff bss-update-cloud-init" class=dd-item>
-<a href=/cray-site-init/commands/csi_handoff_bss-update-cloud-init/>
-csi handoff bss-update-cloud-init
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_handoff_bss-update-param/ title="csi handoff bss-update-param" class=dd-item>
-<a href=/cray-site-init/commands/csi_handoff_bss-update-param/>
-csi handoff bss-update-param
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_makedocs/ title="csi makedocs" class=dd-item>
-<a href=/cray-site-init/commands/csi_makedocs/>
-csi makedocs
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_patch/ title="csi patch" class=dd-item>
-<a href=/cray-site-init/commands/csi_patch/>
-csi patch
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_patch_ca/ title="csi patch ca" class="dd-item active">
-<a href=/cray-site-init/commands/csi_patch_ca/>
-csi patch ca
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_pit/ title="csi pit" class=dd-item>
-<a href=/cray-site-init/commands/csi_pit/>
-csi pit
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_pit_format/ title="csi pit format" class=dd-item>
-<a href=/cray-site-init/commands/csi_pit_format/>
-csi pit format
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_pit_get/ title="csi pit get" class=dd-item>
-<a href=/cray-site-init/commands/csi_pit_get/>
-csi pit get
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_pit_validate/ title="csi pit validate" class=dd-item>
-<a href=/cray-site-init/commands/csi_pit_validate/>
-csi pit validate
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_upgrade/ title="csi upgrade" class=dd-item>
-<a href=/cray-site-init/commands/csi_upgrade/>
-csi upgrade
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_upload-sls-file/ title="csi upload-sls-file" class=dd-item>
-<a href=/cray-site-init/commands/csi_upload-sls-file/>
-csi upload-sls-file
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_version/ title="csi version" class=dd-item>
-<a href=/cray-site-init/commands/csi_version/>
-csi version
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_handoff_ncn-images/ title="csi handoff ncn-images" class=dd-item>
-<a href=/cray-site-init/commands/csi_handoff_ncn-images/>
-csi handoff ncn-images
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_pit_populate/ title="csi pit populate" class=dd-item>
-<a href=/cray-site-init/commands/csi_pit_populate/>
-csi pit populate
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_pit_populate_cow/ title="csi pit populate cow" class=dd-item>
-<a href=/cray-site-init/commands/csi_pit_populate_cow/>
-csi pit populate cow
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/commands/csi_pit_populate_pitdata/ title="csi pit populate pitdata" class=dd-item>
-<a href=/cray-site-init/commands/csi_pit_populate_pitdata/>
-csi pit populate pitdata
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-</ul>
-</li>
-<li data-nav-id=/cray-site-init/shcds/ title=SHCDs class=dd-item>
-<a href=/cray-site-init/shcds/>
-SHCDs
-<i class="fas fa-check read-icon"></i>
-</a>
-<ul>
-<li data-nav-id=/cray-site-init/shcds/running_integration_tests/ title="Running integration tests with canu and csi" class=dd-item>
-<a href=/cray-site-init/shcds/running_integration_tests/>
-Running integration tests with canu and csi
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-<li data-nav-id=/cray-site-init/shcds/using_shcds/ title="Using a canu-generated shcd.json with csi" class=dd-item>
-<a href=/cray-site-init/shcds/using_shcds/>
-Using a canu-generated shcd.json with csi
-<i class="fas fa-check read-icon"></i>
-</a>
-</li>
-</ul>
-</li>
-</ul>
-<section id=prefooter>
-<hr>
-<ul>
-<li><a class=padding href=# data-clear-history-toggle><i class="fas fa-history fa-fw"></i> Clear History</a></li>
-</ul>
-</section>
-<section id=footer>
-<p>Built with <a href=https://github.com/matcornic/hugo-theme-learn><i class="fas fa-heart"></i></a> from <a href=https://getgrav.org>Grav</a> and <a href=https://gohugo.io/>Hugo</a></p>
-</section>
-</div>
-</nav>
-<section id=body>
-<div id=overlay></div>
-<div class="padding highlightable">
-<div>
-<div id=top-bar>
-<div id=top-github-link>
-<a class=github-link title="Edit this page" href=https://github.com/Cray-HPE/cray-site-init/tree/main/hugo/content/commands/csi_patch_ca.md target=blank>
-<i class="fas fa-code-branch"></i>
-<span id=top-github-link-text>Edit this page</span>
-</a>
-</div>
-<div id=breadcrumbs itemscope itemtype=http://data-vocabulary.org/Breadcrumb>
-<span id=sidebar-toggle-span>
-<a href=# id=sidebar-toggle data-sidebar-toggle>
-<i class="fas fa-bars"></i>
-</a>
-</span>
+<span data-search-clear><i class="fas fa-times"></i></span></div><script type=text/javascript src=/cray-site-init/js/lunr.min.js?1678245743></script>
+<script type=text/javascript src=/cray-site-init/js/auto-complete.js?1678245743></script>
+<script type=text/javascript>var baseurl="https://cray-hpe.github.io/cray-site-init/"</script><script type=text/javascript src=/cray-site-init/js/search.js?1678245743></script></div><div class=highlightable><ul class=topics><li data-nav-id=/cray-site-init/commands/ title=Commands class="dd-item
+parent"><a href=/cray-site-init/commands/>Commands
+<i class="fas fa-check read-icon"></i></a><ul><li data-nav-id=/cray-site-init/commands/csi/ title=csi class=dd-item><a href=/cray-site-init/commands/csi/>csi
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_automate/ title="csi automate" class=dd-item><a href=/cray-site-init/commands/csi_automate/>csi automate
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_automate_ncn/ title="csi automate ncn" class=dd-item><a href=/cray-site-init/commands/csi_automate_ncn/>csi automate ncn
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_automate_ncn_etcd/ title="csi automate ncn etcd" class=dd-item><a href=/cray-site-init/commands/csi_automate_ncn_etcd/>csi automate ncn etcd
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_automate_ncn_kubernetes/ title="csi automate ncn kubernetes" class=dd-item><a href=/cray-site-init/commands/csi_automate_ncn_kubernetes/>csi automate ncn kubernetes
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_automate_ncn_preflight/ title="csi automate ncn preflight" class=dd-item><a href=/cray-site-init/commands/csi_automate_ncn_preflight/>csi automate ncn preflight
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_completion/ title="csi completion" class=dd-item><a href=/cray-site-init/commands/csi_completion/>csi completion
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_completion_bash/ title="csi completion bash" class=dd-item><a href=/cray-site-init/commands/csi_completion_bash/>csi completion bash
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_completion_fish/ title="csi completion fish" class=dd-item><a href=/cray-site-init/commands/csi_completion_fish/>csi completion fish
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_completion_powershell/ title="csi completion powershell" class=dd-item><a href=/cray-site-init/commands/csi_completion_powershell/>csi completion powershell
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_completion_zsh/ title="csi completion zsh" class=dd-item><a href=/cray-site-init/commands/csi_completion_zsh/>csi completion zsh
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_config/ title="csi config" class=dd-item><a href=/cray-site-init/commands/csi_config/>csi config
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_config_dump/ title="csi config dump" class=dd-item><a href=/cray-site-init/commands/csi_config_dump/>csi config dump
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_config_gen-sls/ title="csi config gen-sls" class=dd-item><a href=/cray-site-init/commands/csi_config_gen-sls/>csi config gen-sls
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_config_init/ title="csi config init" class=dd-item><a href=/cray-site-init/commands/csi_config_init/>csi config init
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_config_init_empty/ title="csi config init empty" class=dd-item><a href=/cray-site-init/commands/csi_config_init_empty/>csi config init empty
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_config_load/ title="csi config load" class=dd-item><a href=/cray-site-init/commands/csi_config_load/>csi config load
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_config_shcd/ title="csi config shcd" class=dd-item><a href=/cray-site-init/commands/csi_config_shcd/>csi config shcd
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_handoff/ title="csi handoff" class=dd-item><a href=/cray-site-init/commands/csi_handoff/>csi handoff
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_handoff_bss-metadata/ title="csi handoff bss-metadata" class=dd-item><a href=/cray-site-init/commands/csi_handoff_bss-metadata/>csi handoff bss-metadata
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_handoff_bss-update-cloud-init/ title="csi handoff bss-update-cloud-init" class=dd-item><a href=/cray-site-init/commands/csi_handoff_bss-update-cloud-init/>csi handoff bss-update-cloud-init
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_handoff_bss-update-param/ title="csi handoff bss-update-param" class=dd-item><a href=/cray-site-init/commands/csi_handoff_bss-update-param/>csi handoff bss-update-param
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_makedocs/ title="csi makedocs" class=dd-item><a href=/cray-site-init/commands/csi_makedocs/>csi makedocs
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_patch/ title="csi patch" class=dd-item><a href=/cray-site-init/commands/csi_patch/>csi patch
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_patch_ca/ title="csi patch ca" class="dd-item active"><a href=/cray-site-init/commands/csi_patch_ca/>csi patch ca
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_pit/ title="csi pit" class=dd-item><a href=/cray-site-init/commands/csi_pit/>csi pit
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_pit_format/ title="csi pit format" class=dd-item><a href=/cray-site-init/commands/csi_pit_format/>csi pit format
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_pit_get/ title="csi pit get" class=dd-item><a href=/cray-site-init/commands/csi_pit_get/>csi pit get
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_pit_validate/ title="csi pit validate" class=dd-item><a href=/cray-site-init/commands/csi_pit_validate/>csi pit validate
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_upgrade/ title="csi upgrade" class=dd-item><a href=/cray-site-init/commands/csi_upgrade/>csi upgrade
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_upload-sls-file/ title="csi upload-sls-file" class=dd-item><a href=/cray-site-init/commands/csi_upload-sls-file/>csi upload-sls-file
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_version/ title="csi version" class=dd-item><a href=/cray-site-init/commands/csi_version/>csi version
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_handoff_ncn-images/ title="csi handoff ncn-images" class=dd-item><a href=/cray-site-init/commands/csi_handoff_ncn-images/>csi handoff ncn-images
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_pit_populate/ title="csi pit populate" class=dd-item><a href=/cray-site-init/commands/csi_pit_populate/>csi pit populate
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_pit_populate_cow/ title="csi pit populate cow" class=dd-item><a href=/cray-site-init/commands/csi_pit_populate_cow/>csi pit populate cow
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_pit_populate_pitdata/ title="csi pit populate pitdata" class=dd-item><a href=/cray-site-init/commands/csi_pit_populate_pitdata/>csi pit populate pitdata
+<i class="fas fa-check read-icon"></i></a></li></ul></li><li data-nav-id=/cray-site-init/shcds/ title=SHCDs class=dd-item><a href=/cray-site-init/shcds/>SHCDs
+<i class="fas fa-check read-icon"></i></a><ul><li data-nav-id=/cray-site-init/shcds/running_integration_tests/ title="Running integration tests with canu and csi" class=dd-item><a href=/cray-site-init/shcds/running_integration_tests/>Running integration tests with canu and csi
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/shcds/using_shcds/ title="Using a canu-generated shcd.json with csi" class=dd-item><a href=/cray-site-init/shcds/using_shcds/>Using a canu-generated shcd.json with csi
+<i class="fas fa-check read-icon"></i></a></li></ul></li></ul><section id=prefooter><hr><ul><li><a class=padding href=# data-clear-history-toggle><i class="fas fa-history fa-fw"></i> Clear History</a></li></ul></section><section id=footer><p>Built with <a href=https://github.com/matcornic/hugo-theme-learn><i class="fas fa-heart"></i></a> from <a href=https://getgrav.org>Grav</a> and <a href=https://gohugo.io/>Hugo</a></p></section></div></nav><section id=body><div id=overlay></div><div class="padding highlightable"><div><div id=top-bar><div id=top-github-link><a class=github-link title='Edit this page' href=https://github.com/Cray-HPE/cray-site-init/tree/main/hugo/content/commands/csi_patch_ca.md target=blank><i class="fas fa-code-branch"></i>
+<span id=top-github-link-text>Edit this page</span></a></div><div id=breadcrumbs itemscope itemtype=http://data-vocabulary.org/Breadcrumb><span id=sidebar-toggle-span><a href=# id=sidebar-toggle data-sidebar-toggle><i class="fas fa-bars"></i></a></span>
 <span id=toc-menu><i class="fas fa-list-alt"></i></span>
-<span class=links>
-<a href=/cray-site-init/>Cray Site Init</a> > <a href=/cray-site-init/commands/>Commands</a> > csi patch ca
-</span>
-</div>
-<div class=progress>
-<div class=wrapper>
-<nav id=TableOfContents>
-<ul>
-<li><a href=#csi-patch-ca>csi patch ca</a>
-<ul>
-<li><a href=#synopsis>Synopsis</a></li>
-<li><a href=#options>Options</a></li>
-<li><a href=#options-inherited-from-parent-commands>Options inherited from parent commands</a></li>
-<li><a href=#see-also>SEE ALSO</a></li>
-</ul>
-</li>
-</ul>
-</nav>
-</div>
-</div>
-</div>
-</div>
-<div id=head-tags>
-</div>
-<div id=body-inner>
-<h1>
-csi patch ca
-</h1>
-<h2 id=csi-patch-ca>csi patch ca</h2>
-<p>Patch cloud-init metadata with CA certs</p>
-<h3 id=synopsis>Synopsis</h3>
-<p>Patch cloud-init metadata (in place) with certificate authority (CA) certificates from
+<span class=links><a href=/cray-site-init/>Cray Site Init</a> > <a href=/cray-site-init/commands/>Commands</a> > csi patch ca</span></div><div class=progress><div class=wrapper><nav id=TableOfContents><ul><li><a href=#csi-patch-ca>csi patch ca</a><ul><li><a href=#synopsis>Synopsis</a></li><li><a href=#options>Options</a></li><li><a href=#options-inherited-from-parent-commands>Options inherited from parent commands</a></li><li><a href=#see-also>SEE ALSO</a></li></ul></li></ul></nav></div></div></div></div><div id=head-tags></div><div id=body-inner><h1>csi patch ca</h1><h2 id=csi-patch-ca>csi patch ca</h2><p>Patch cloud-init metadata with CA certs</p><h3 id=synopsis>Synopsis</h3><p>Patch cloud-init metadata (in place) with certificate authority (CA) certificates from
 shasta-cfg (customizations.yaml). Decrypts CA material from named sealed secret using the shasta-cfg
-private RSA key.</p>
-<pre tabindex=0><code>csi patch ca [flags]
-</code></pre><h3 id=options>Options</h3>
-<pre tabindex=0><code>      --cloud-init-seed-file string     Path to cloud-init metadata seed file
+private RSA key.</p><pre tabindex=0><code>csi patch ca [flags]
+</code></pre><h3 id=options>Options</h3><pre tabindex=0><code>      --cloud-init-seed-file string     Path to cloud-init metadata seed file
       --customizations-file string      path to customizations.yaml (shasta-cfg)
   -h, --help                            help for ca
       --sealed-secret-key-file string   Path to sealed secrets/shasta-cfg private key
-      --sealed-secret-name string       Path to cloud-init metadata seed file (default &quot;gen_platform_ca_1&quot;)
-</code></pre><h3 id=options-inherited-from-parent-commands>Options inherited from parent commands</h3>
-<pre tabindex=0><code>      --config string   config file
-</code></pre><h3 id=see-also>SEE ALSO</h3>
-<ul>
-<li><a href=/commands/csi_patch/>csi patch</a> - Apply patch operations</li>
-</ul>
-<footer class=footline>
-</footer>
-</div>
-</div>
-<div id=navigation>
-</div>
-</section>
-<div style=left:-1000px;overflow:scroll;position:absolute;top:-1000px;border:none;box-sizing:content-box;height:200px;margin:0;padding:0;width:200px>
-<div style=border:none;box-sizing:content-box;height:200px;margin:0;padding:0;width:200px></div>
-</div>
-<script src=/cray-site-init/js/clipboard.min.js?1675105310></script>
-<script src=/cray-site-init/js/perfect-scrollbar.min.js?1675105310></script>
-<script src=/cray-site-init/js/perfect-scrollbar.jquery.min.js?1675105310></script>
-<script src=/cray-site-init/js/jquery.sticky.js?1675105310></script>
-<script src=/cray-site-init/js/featherlight.min.js?1675105310></script>
-<script src=/cray-site-init/js/highlight.pack.js?1675105310></script>
-<script>hljs.initHighlightingOnLoad()</script>
-<script src=/cray-site-init/js/modernizr.custom-3.6.0.js?1675105310></script>
-<script src=/cray-site-init/js/learn.js?1675105310></script>
-<script src=/cray-site-init/js/hugo-learn.js?1675105310></script>
-<script src=/cray-site-init/mermaid/mermaid.js?1675105310></script>
-<script>mermaid.initialize({startOnLoad:!0})</script>
-</body>
-</html>
+      --sealed-secret-name string       Path to cloud-init metadata seed file (default &#34;gen_platform_ca_1&#34;)
+</code></pre><h3 id=options-inherited-from-parent-commands>Options inherited from parent commands</h3><pre tabindex=0><code>      --config string   config file
+</code></pre><h3 id=see-also>SEE ALSO</h3><ul><li><a href=/commands/csi_patch/>csi patch</a> - Apply patch operations</li></ul><footer class=footline></footer></div></div><div id=navigation></div></section><div style=left:-1000px;overflow:scroll;position:absolute;top:-1000px;border:none;box-sizing:content-box;height:200px;margin:0;padding:0;width:200px><div style=border:none;box-sizing:content-box;height:200px;margin:0;padding:0;width:200px></div></div><script src=/cray-site-init/js/clipboard.min.js?1678245743></script>
+<script src=/cray-site-init/js/perfect-scrollbar.min.js?1678245743></script>
+<script src=/cray-site-init/js/perfect-scrollbar.jquery.min.js?1678245743></script>
+<script src=/cray-site-init/js/jquery.sticky.js?1678245743></script>
+<script src=/cray-site-init/js/featherlight.min.js?1678245743></script>
+<script src=/cray-site-init/js/highlight.pack.js?1678245743></script>
+<script>hljs.initHighlightingOnLoad()</script><script src=/cray-site-init/js/modernizr.custom-3.6.0.js?1678245743></script>
+<script src=/cray-site-init/js/learn.js?1678245743></script>
+<script src=/cray-site-init/js/hugo-learn.js?1678245743></script>
+<script src=/cray-site-init/mermaid/mermaid.js?1678245743></script>
+<script>mermaid.initialize({startOnLoad:!0})</script></body></html>
