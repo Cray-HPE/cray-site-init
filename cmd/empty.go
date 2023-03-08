@@ -47,7 +47,10 @@ var emptyCmd = &cobra.Command{
 		v.BindPFlags(initCmd.Flags())
 		v.SetConfigType("yaml")
 		v.Set("VersionInfo", version.Get())
-		v.WriteConfigAs("system_config.yaml")
+		err = v.SafeWriteConfigAs("system_config.yaml")
+		if err != nil {
+			log.Fatal(err)
+		}
 		log.Printf("Empty config file written to: %s/system_config.yaml\n", path)
 	},
 }
