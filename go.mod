@@ -36,6 +36,7 @@ require (
 require (
 	github.com/Cray-HPE/hms-base v1.15.0 // indirect
 	github.com/aws/aws-sdk-go v1.44.79 // indirect
+	github.com/golang/snappy v0.0.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 )
 
@@ -59,7 +60,6 @@ require (
 	github.com/go-openapi/swag v0.19.14 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/btree v1.0.1 // indirect
 	github.com/google/go-cmp v0.5.9
 	github.com/google/gofuzz v1.1.0 // indirect
@@ -108,6 +108,7 @@ require (
 	go.starlark.net v0.0.0-20200306205701-8dd3e2ee1dd5 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
+	golang.org/x/mod v0.9.0
 	golang.org/x/net v0.8.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783 // indirect
 	golang.org/x/sys v0.6.0 // indirect

@@ -28,6 +28,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/Cray-HPE/cray-site-init/pkg/csm"
+	"github.com/spf13/viper"
 	"io/ioutil"
 	"log"
 	"net"
@@ -73,7 +75,7 @@ type ipJSONStruct struct {
 type ipJSONStructArray []ipJSONStruct
 
 var (
-	dataFile, csmVer                        string
+	dataFile                                string
 	kubernetesImsImageID, storageImsImageID string
 	kubernetesUUID, storageUUID             string
 	cloudInitData                           map[string]bssTypes.CloudInit
@@ -86,9 +88,17 @@ var handoffBSSMetadataCmd = &cobra.Command{
 	Short: "runs migration steps to build BSS entries for all NCNs",
 	Long:  "Using PIT configuration builds kernel command line arguments and cloud-init metadata for each NCN",
 	Run: func(cmd *cobra.Command, args []string) {
+		v := viper.GetViper()
 
-		// 1.x uses vlan names, 1.2.x uses new names
-		if csmVer == "1.0" || csmVer == "1.0.1" {
+		v.BindPFlags(cmd.Flags())
+
+		if v.GetString(csm.APIKeyName) == "" {
+			log.Fatalf("ERROR: Missing %s in parameters or config file", csm.APIKeyName)
+		}
+
+		// If the running version is older than v1.2, use vlan002.
+		_, eval := csm.CompareMajorMinor("v1.2")
+		if eval < 0 {
 			vlansToGather = []string{"vlan002"}
 		} else {
 			vlansToGather = []string{"bond0.nmn0"}
@@ -102,39 +112,44 @@ var handoffBSSMetadataCmd = &cobra.Command{
 			fmt.Println(err)
 		}
 
-		if kubernetesUUID == "" || storageUUID == "" {
-			log.Fatalln("ERROR: Missing --kubernetes-ims-image-id or --storage-ims-image-id")
-		}
+		_, eval = csm.CompareMajorMinor("v1.4")
+		if eval >= 0 {
+			if kubernetesUUID == "" || storageUUID == "" {
+				log.Fatalln("ERROR: Missing --kubernetes-ims-image-id or --storage-ims-image-id")
+			}
 
-		// Validate the input is a valid UUID
-		kubernetesImageIDMatch := versionRegex.FindStringSubmatch(kubernetesUUID)
-		if kubernetesImageIDMatch == nil {
-			log.Fatalf("ERROR: Could not determine Kubernetes image ID from [%s]", kubernetesUUID)
+			// Validate the input is a valid UUID
+			kubernetesImageIDMatch := versionRegex.FindStringSubmatch(kubernetesUUID)
+			if kubernetesImageIDMatch == nil {
+				log.Fatalf("ERROR: Could not determine Kubernetes image ID from [%s]", kubernetesUUID)
+			} else {
+				kubernetesImsImageID = kubernetesImageIDMatch[0]
+			}
+
+			// Validate the input is a valid UUID
+			cephImsImageIDMatch := versionRegex.FindStringSubmatch(storageUUID)
+			if cephImsImageIDMatch == nil {
+				log.Fatalf("ERROR: Could not determine storage image ID from [%s]", storageUUID)
+			} else {
+				storageImsImageID = cephImsImageIDMatch[0]
+			}
+
+			// Parse the data.json file.
+			err = csiFiles.ReadJSONConfig(dataFile, &cloudInitData)
+			if err != nil {
+				log.Fatalln("Couldn't parse data file: ", err)
+			}
+
+			log.Println("Building BSS metadata for NCNs...")
+			populateNCNMetadata()
+			log.Println("Done building BSS metadata for NCNs.")
+
+			log.Println("Transferring global cloud-init metadata to BSS...")
+			populateGlobalMetadata()
+			log.Println("Done transferring global cloud-init metadata to BSS.")
 		} else {
-			kubernetesImsImageID = kubernetesImageIDMatch[0]
+			log.Fatalf("This version of CSI does not support handoff for releases before CSM %s", csm.MinimumVersion)
 		}
-
-		// Validate the input is a valid UUID
-		cephImsImageIDMatch := versionRegex.FindStringSubmatch(storageUUID)
-		if cephImsImageIDMatch == nil {
-			log.Fatalf("ERROR: Could not determine storage image ID from [%s]", storageUUID)
-		} else {
-			storageImsImageID = cephImsImageIDMatch[0]
-		}
-
-		// Parse the data.json file.
-		err = csiFiles.ReadJSONConfig(dataFile, &cloudInitData)
-		if err != nil {
-			log.Fatalln("Couldn't parse data file: ", err)
-		}
-
-		log.Println("Building BSS metadata for NCNs...")
-		populateNCNMetadata()
-		log.Println("Done building BSS metadata for NCNs.")
-
-		log.Println("Transferring global cloud-init metadata to BSS...")
-		populateGlobalMetadata()
-		log.Println("Done transferring global cloud-init metadata to BSS.")
 	},
 }
 
@@ -144,9 +159,8 @@ func init() {
 
 	handoffBSSMetadataCmd.Flags().StringVar(&dataFile, "data-file",
 		"", "data.json file with cloud-init configuration for each node and global")
-	handoffBSSMetadataCmd.Flags().StringVar(&csmVer, "csm-version",
-		"", "version of CSM that is currently running")
 	_ = handoffBSSMetadataCmd.MarkFlagRequired("data-file")
+	handoffBSSMetadataCmd.Flags().String(csm.APIKeyName, "", "Version of CSM being installed (e.g. <major>.<minor> such as \"1.5\" or \"v1.5\").")
 
 	handoffBSSMetadataCmd.Flags().StringVar(&kubernetesUUID, "kubernetes-ims-image-id",
 		"", "The Kubernetes IMS_IMAGE_ID UUID value")

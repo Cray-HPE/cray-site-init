@@ -34,9 +34,11 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/mod/semver"
 
 	csiFiles "github.com/Cray-HPE/cray-site-init/internal/files"
 	"github.com/Cray-HPE/cray-site-init/pkg/csi"
+	"github.com/Cray-HPE/cray-site-init/pkg/csm"
 	"github.com/Cray-HPE/cray-site-init/pkg/ipam"
 	"github.com/Cray-HPE/cray-site-init/pkg/pit"
 	"github.com/Cray-HPE/cray-site-init/pkg/version"
@@ -402,7 +404,7 @@ func init() {
 
 	// System Configuration Flags based on previous system_config.yml and networks_derived.yml
 	initCmd.Flags().String("system-name", "sn-2024", "Name of the System")
-	initCmd.Flags().String("csm-version", "1.4", "Version of CSM being installed")
+	initCmd.Flags().String(csm.APIKeyName, "", "Version of CSM being installed (e.g. <major>.<minor> such as \"1.5\" or \"v1.5\").")
 
 	initCmd.Flags().String("site-domain", "", "Site Domain Name")
 	initCmd.Flags().String("first-master-hostname", "ncn-m002", "Hostname of the first master node")
@@ -707,11 +709,10 @@ func writeOutput(v *viper.Viper, shastaNetworks map[string]*csi.IPV4Network, sls
 func validateFlags() []string {
 	var errors []string
 	v := viper.GetViper()
-	expectedCSMVersion := "1.4"
 
 	var requiredFlags = []string{
 		"system-name",
-		"csm-version",
+		csm.APIKeyName,
 		"can-gateway",
 		"cmn-gateway",
 		"cmn-cidr",
@@ -725,14 +726,39 @@ func validateFlags() []string {
 		"bican-user-network-name",
 	}
 
+	detectedVersion, versionEnvError := csm.DetectedVersion()
+	if versionEnvError != nil {
+		// non-fatal; csi config init can be called without the csm.APIEnvName set, but the user should be notified that the env is CSM release-less.
+		log.Print(versionEnvError)
+	} else {
+		// The currentVersion needs to be canonical for semver to compare it.
+		// Exit and complain if the version of the inputs does not match the environment. It is not clear whether the inputs or the environment are wrong.
+		currentVersion, eval := csm.CompareMajorMinor(detectedVersion)
+		if eval != 0 {
+			log.Fatalf("Detected a potential mismatch of parameters and CSM environment!\n\n%15s=%-20s (a.k.a. %s)\n%15s=%-20s (a.k.a. %s)\n\nERROR: [%s != %s]\n\n- Both values must have matching <major>.<minor> versions\n- %s must be greater than this CSI's minimum allowed CSM version of: [%s]\n\nSince these values did not match one another it is possible that other inputs are also wrong.\nIf inputs from a prior release are being used, please double-check and/or refresh all other inputs and try again.\n",
+				csm.APIKeyName,
+				currentVersion,
+				semver.MajorMinor(currentVersion),
+				csm.APIEnvName,
+				detectedVersion,
+				semver.MajorMinor(detectedVersion),
+				semver.MajorMinor(detectedVersion),
+				semver.MajorMinor(currentVersion),
+				csm.APIKeyName,
+				csm.MinimumVersion,
+			)
+		}
+	}
+	currentVersion, versionError := csm.IsCompatible()
+	if versionError != nil {
+		log.Fatal(versionError)
+	}
+	log.Printf("[%s] was set to [%s]; All inputs are targeted for CSM %s", csm.APIKeyName, currentVersion, currentVersion)
+
 	for _, flagName := range requiredFlags {
 		if !v.IsSet(flagName) || (v.GetString(flagName) == "") {
 			errors = append(errors, fmt.Sprintf("%v is required and not set through flag or config file (%s)", flagName, v.ConfigFileUsed()))
 		}
-	}
-
-	if v.GetString("csm-version") != expectedCSMVersion {
-		errors = append(errors, fmt.Sprintf("CSI inputs must be for csm-version %s", expectedCSMVersion))
 	}
 
 	var ipv4Flags = []string{
