@@ -415,13 +415,18 @@ func init() {
 	initCmd.Flags().String("ntp-timezone", "UTC", "Timezone to be used on the NCNs and across the system")
 	initCmd.Flags().MarkDeprecated("ipv4-resolvers", "please use --site-dns instead")
 	initCmd.Flags().String("v2-registry", "https://registry.nmn/", "URL for default v2 registry used for both helm and containers")
+	initCmd.Flags().MarkDeprecated("v2-registry", "Not used.")
 	initCmd.Flags().String("rpm-repository", "https://packages.nmn/repository/shasta-master", "URL for default rpm repository")
+	initCmd.Flags().MarkDeprecated("rpm-repository", "Not used.")
 	initCmd.Flags().String("cmn-gateway", "", "Gateway for NCNs on the CMN (Administrative/Management)")
 	initCmd.Flags().String("can-gateway", "", "Gateway for NCNs on the CAN (User)")
 	initCmd.Flags().String("chn-gateway", "", "Gateway for NCNs on the CHN (User)")
 	initCmd.Flags().String("ceph-cephfs-image", "dtr.dev.cray.com/cray/cray-cephfs-provisioner:0.1.0-nautilus-1.3", "The container image for the cephfs provisioner")
+	initCmd.Flags().MarkDeprecated("ceph-cephfs-image", "Not used.")
 	initCmd.Flags().String("ceph-rbd-image", "dtr.dev.cray.com/cray/cray-rbd-provisioner:0.1.0-nautilus-1.3", "The container image for the ceph rbd provisioner")
+	initCmd.Flags().MarkDeprecated("ceph-rbd-image", "Not used.")
 	initCmd.Flags().String("docker-image-registry", "dtr.dev.cray.com", "Upstream docker registry for use during the install")
+	initCmd.Flags().MarkDeprecated("docker-image-registry", "Not used.")
 
 	// Site Networking and Preinstall Toolkit Information
 	initCmd.Flags().String("install-ncn", "ncn-m001", "Hostname of the node to be used for installation")
@@ -452,17 +457,22 @@ func init() {
 	initCmd.Flags().String("cmn-static-pool", "", "Overall IPv4 CIDR for static Customer Management load balancer addresses")
 	initCmd.Flags().String("cmn-dynamic-pool", "", "Overall IPv4 CIDR for dynamic Customer Management load balancer addresses")
 	initCmd.Flags().String("cmn-external-dns", "", "IP Address in the cmn-static-pool for the external dns service \"site-to-system lookups\"")
+
 	initCmd.Flags().String("can-cidr", "", "Overall IPv4 CIDR for all Customer Access subnets")
 	initCmd.Flags().String("can-static-pool", "", "Overall IPv4 CIDR for static Customer Access load balancer addresses")
 	initCmd.Flags().String("can-dynamic-pool", "", "Overall IPv4 CIDR for dynamic Customer Access load balancer addresses")
+
 	initCmd.Flags().String("chn-cidr", "", "Overall IPv4 CIDR for all Customer High-Speed subnets")
 	initCmd.Flags().String("chn-static-pool", "", "Overall IPv4 CIDR for static Customer High-Speed load balancer addresses")
 	initCmd.Flags().String("chn-dynamic-pool", "", "Overall IPv4 CIDR for dynamic Customer High-Speed load balancer addresses")
 
 	initCmd.Flags().String("mtl-cidr", csi.DefaultMTLString, "Overall IPv4 CIDR for all Provisioning subnets")
+
 	initCmd.Flags().String("hsn-cidr", csi.DefaultHSNString, "Overall IPv4 CIDR for all HSN subnets")
 	initCmd.Flags().String("hsn-static-pool", "", "Overall IPv4 CIDR for static High Speed load balancer addresses")
+	initCmd.Flags().MarkDeprecated("hsn-static-pool", "Not used.")
 	initCmd.Flags().String("hsn-dynamic-pool", "", "Overall IPv4 CIDR for dynamic High Speed load balancer addresses")
+	initCmd.Flags().MarkDeprecated("hsn-dynamic-pool", "Not used.")
 
 	initCmd.Flags().Bool("supernet", true, "Use the supernet mask and gateway for NCNs and Switches")
 
@@ -491,7 +501,7 @@ func init() {
 	initCmd.Flags().String("bgp-nmn-asn", "65531", "The autonomous system number for NMN BGP clients")
 	initCmd.Flags().String("bgp-chn-asn", "65530", "The autonomous system number for CHN BGP clients")
 	initCmd.Flags().String("bgp-peers", "spine", "Which set of switches to use as metallb peers, spine (default) or leaf")
-	initCmd.Flags().MarkDeprecated("bgp-peers", "please use --bgp-peer-types instead")
+	initCmd.Flags().MarkDeprecated("bgp-peers", "Use --bgp-peer-types.")
 	initCmd.Flags().StringSlice("bgp-peer-types", []string{"spine"}, "Comma-separated list of which set of switches to use as metallb peers: spine (default), leaf and/or edge")
 	initCmd.Flags().Int("management-net-ips", 0, "Additional number of ip addresses to reserve in each vlan for network equipment")
 	initCmd.Flags().Bool("k8s-api-auditing-enabled", false, "Enable the kubernetes auditing API")
