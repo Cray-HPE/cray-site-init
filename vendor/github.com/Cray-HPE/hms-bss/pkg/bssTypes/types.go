@@ -66,8 +66,13 @@ type EndpointType string
 
 const (
 	EndpointTypeBootscript EndpointType = "bootscript"
-	EndpointTypeUserData                = "user-data"
+	EndpointTypeUserData   EndpointType = "user-data"
 )
+
+var EndpointTypes = []EndpointType{
+	EndpointTypeBootscript,
+	EndpointTypeUserData,
+}
 
 type EndpointAccess struct {
 	Name      string       `json:"name"`
