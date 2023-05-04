@@ -1,8 +1,8 @@
-<!doctype html><html lang=en class="js csstransforms3d"><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=generator content="Hugo 0.111.3"><meta name=description content="Cray Site Initializer documentation"><meta name=author content="Cray-HPE"><link rel=icon href=/cray-site-init/images/favicon.png type=image/png><title>csi config init - Cray Site Init</title><link href=/cray-site-init/css/nucleus.css?1682096189 rel=stylesheet><link href=/cray-site-init/css/fontawesome-all.min.css?1682096189 rel=stylesheet><link href=/cray-site-init/css/hybrid.css?1682096189 rel=stylesheet><link href=/cray-site-init/css/featherlight.min.css?1682096189 rel=stylesheet><link href=/cray-site-init/css/perfect-scrollbar.min.css?1682096189 rel=stylesheet><link href=/cray-site-init/css/auto-complete.css?1682096189 rel=stylesheet><link href=/cray-site-init/css/atom-one-dark-reasonable.css?1682096189 rel=stylesheet><link href=/cray-site-init/css/theme.css?1682096189 rel=stylesheet><link href=/cray-site-init/css/tabs.css?1682096189 rel=stylesheet><link href=/cray-site-init/css/hugo-theme.css?1682096189 rel=stylesheet><link href=/cray-site-init/css/theme-blue.css?1682096189 rel=stylesheet><link href=/cray-site-init/css/foo.css?1682096189 rel=stylesheet><link href=/cray-site-init/css/bar.css?1682096189 rel=stylesheet><script src=/cray-site-init/js/jquery-3.3.1.min.js?1682096189></script><style>:root #header+#content>#left>#rlblock_left{display:none!important}</style></head><body data-url=/cray-site-init/commands/csi_config_init/><nav id=sidebar class=showVisitedLinks><div id=header-wrapper><div id=header><svg viewBox="0 0 240 80" xmlns="http://www.w3.org/2000/svg"><style>.small{font:italic 13px sans-serif}.heavy{font:700 30px sans-serif}</style><text x="40" y="35" class="heavy">CSI</text><text x="55" y="55" class="small">Cray Site Initializer</text></svg></div><div class=searchbox><label for=search-by><i class="fas fa-search"></i></label>
+<!doctype html><html lang=en class="js csstransforms3d"><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=generator content="Hugo 0.111.3"><meta name=description content="Cray Site Initializer documentation"><meta name=author content="Cray-HPE"><link rel=icon href=/cray-site-init/images/favicon.png type=image/png><title>csi config init - Cray Site Init</title><link href=/cray-site-init/css/nucleus.css?1683229535 rel=stylesheet><link href=/cray-site-init/css/fontawesome-all.min.css?1683229535 rel=stylesheet><link href=/cray-site-init/css/hybrid.css?1683229535 rel=stylesheet><link href=/cray-site-init/css/featherlight.min.css?1683229535 rel=stylesheet><link href=/cray-site-init/css/perfect-scrollbar.min.css?1683229535 rel=stylesheet><link href=/cray-site-init/css/auto-complete.css?1683229535 rel=stylesheet><link href=/cray-site-init/css/atom-one-dark-reasonable.css?1683229535 rel=stylesheet><link href=/cray-site-init/css/theme.css?1683229535 rel=stylesheet><link href=/cray-site-init/css/tabs.css?1683229535 rel=stylesheet><link href=/cray-site-init/css/hugo-theme.css?1683229535 rel=stylesheet><link href=/cray-site-init/css/theme-blue.css?1683229535 rel=stylesheet><link href=/cray-site-init/css/foo.css?1683229535 rel=stylesheet><link href=/cray-site-init/css/bar.css?1683229535 rel=stylesheet><script src=/cray-site-init/js/jquery-3.3.1.min.js?1683229535></script><style>:root #header+#content>#left>#rlblock_left{display:none!important}</style></head><body data-url=/cray-site-init/commands/csi_config_init/><nav id=sidebar class=showVisitedLinks><div id=header-wrapper><div id=header><svg viewBox="0 0 240 80" xmlns="http://www.w3.org/2000/svg"><style>.small{font:italic 13px sans-serif}.heavy{font:700 30px sans-serif}</style><text x="40" y="35" class="heavy">CSI</text><text x="55" y="55" class="small">Cray Site Initializer</text></svg></div><div class=searchbox><label for=search-by><i class="fas fa-search"></i></label>
 <input data-search-input id=search-by type=search placeholder=Search...>
-<span data-search-clear><i class="fas fa-times"></i></span></div><script type=text/javascript src=/cray-site-init/js/lunr.min.js?1682096189></script>
-<script type=text/javascript src=/cray-site-init/js/auto-complete.js?1682096189></script>
-<script type=text/javascript>var baseurl="https://cray-hpe.github.io/cray-site-init/"</script><script type=text/javascript src=/cray-site-init/js/search.js?1682096189></script></div><div class=highlightable><ul class=topics><li data-nav-id=/cray-site-init/commands/ title=Commands class="dd-item
+<span data-search-clear><i class="fas fa-times"></i></span></div><script type=text/javascript src=/cray-site-init/js/lunr.min.js?1683229535></script>
+<script type=text/javascript src=/cray-site-init/js/auto-complete.js?1683229535></script>
+<script type=text/javascript>var baseurl="https://cray-hpe.github.io/cray-site-init/"</script><script type=text/javascript src=/cray-site-init/js/search.js?1683229535></script></div><div class=highlightable><ul class=topics><li data-nav-id=/cray-site-init/commands/ title=Commands class="dd-item
 parent"><a href=/cray-site-init/commands/>Commands
 <i class="fas fa-check read-icon"></i></a><ul><li data-nav-id=/cray-site-init/commands/csi/ title=csi class=dd-item><a href=/cray-site-init/commands/csi/>csi
 <i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/cray-site-init/commands/csi_automate/ title="csi automate" class=dd-item><a href=/cray-site-init/commands/csi_automate/>csi automate
@@ -76,14 +76,9 @@ In addition, there are many flags to impact the layout of the system.  The defau
       --ntp-servers strings                   Comma-separated list of upstream NTP server(s); ncn-m001 should always be in this list (default [ncn-m001])
       --ntp-peers strings                     Comma-separated list of NCNs that will peer together (default [ncn-m001,ncn-m002,ncn-m003,ncn-w001,ncn-w002,ncn-w003,ncn-s001,ncn-s002,ncn-s003])
       --ntp-timezone string                   Timezone to be used on the NCNs and across the system (default &#34;UTC&#34;)
-      --v2-registry string                    URL for default v2 registry used for both helm and containers (default &#34;https://registry.nmn/&#34;)
-      --rpm-repository string                 URL for default rpm repository (default &#34;https://packages.nmn/repository/shasta-master&#34;)
       --cmn-gateway string                    Gateway for NCNs on the CMN (Administrative/Management)
       --can-gateway string                    Gateway for NCNs on the CAN (User)
       --chn-gateway string                    Gateway for NCNs on the CHN (User)
-      --ceph-cephfs-image string              The container image for the cephfs provisioner (default &#34;dtr.dev.cray.com/cray/cray-cephfs-provisioner:0.1.0-nautilus-1.3&#34;)
-      --ceph-rbd-image string                 The container image for the ceph rbd provisioner (default &#34;dtr.dev.cray.com/cray/cray-rbd-provisioner:0.1.0-nautilus-1.3&#34;)
-      --docker-image-registry string          Upstream docker registry for use during the install (default &#34;dtr.dev.cray.com&#34;)
       --install-ncn string                    Hostname of the node to be used for installation (default &#34;ncn-m001&#34;)
       --install-ncn-bond-members string       List of devices to use to form a bond on the install ncn (default &#34;p1p1,p1p2&#34;)
       --site-ip string                        Site Network Information in the form ipaddress/prefix like 192.168.1.1/24
@@ -114,8 +109,6 @@ In addition, there are many flags to impact the layout of the system.  The defau
       --chn-dynamic-pool string               Overall IPv4 CIDR for dynamic Customer High-Speed load balancer addresses
       --mtl-cidr string                       Overall IPv4 CIDR for all Provisioning subnets (default &#34;10.1.1.0/16&#34;)
       --hsn-cidr string                       Overall IPv4 CIDR for all HSN subnets (default &#34;10.253.0.0/16&#34;)
-      --hsn-static-pool string                Overall IPv4 CIDR for static High Speed load balancer addresses
-      --hsn-dynamic-pool string               Overall IPv4 CIDR for dynamic High Speed load balancer addresses
       --supernet                              Use the supernet mask and gateway for NCNs and Switches (default true)
       --nmn-bootstrap-vlan int                Bootstrap VLAN for the NMN (default 2)
       --hmn-bootstrap-vlan int                Bootstrap VLAN for the HMN (default 4)
@@ -149,14 +142,14 @@ In addition, there are many flags to impact the layout of the system.  The defau
       --notify-zones string                   Comma-separated list of the zones to be allowed transfer
   -h, --help                                  help for init
 </code></pre><h3 id=options-inherited-from-parent-commands>Options inherited from parent commands</h3><pre tabindex=0><code>      --config string   config file
-</code></pre><h3 id=see-also>SEE ALSO</h3><ul><li><a href=/commands/csi_config/>csi config</a> - Interact with a Shasta config</li><li><a href=/commands/csi_config_init_empty/>csi config init empty</a> - Write a empty config file.</li></ul><footer class=footline></footer></div></div><div id=navigation></div></section><div style=left:-1000px;overflow:scroll;position:absolute;top:-1000px;border:none;box-sizing:content-box;height:200px;margin:0;padding:0;width:200px><div style=border:none;box-sizing:content-box;height:200px;margin:0;padding:0;width:200px></div></div><script src=/cray-site-init/js/clipboard.min.js?1682096189></script>
-<script src=/cray-site-init/js/perfect-scrollbar.min.js?1682096189></script>
-<script src=/cray-site-init/js/perfect-scrollbar.jquery.min.js?1682096189></script>
-<script src=/cray-site-init/js/jquery.sticky.js?1682096189></script>
-<script src=/cray-site-init/js/featherlight.min.js?1682096189></script>
-<script src=/cray-site-init/js/highlight.pack.js?1682096189></script>
-<script>hljs.initHighlightingOnLoad()</script><script src=/cray-site-init/js/modernizr.custom-3.6.0.js?1682096189></script>
-<script src=/cray-site-init/js/learn.js?1682096189></script>
-<script src=/cray-site-init/js/hugo-learn.js?1682096189></script>
-<script src=/cray-site-init/mermaid/mermaid.js?1682096189></script>
+</code></pre><h3 id=see-also>SEE ALSO</h3><ul><li><a href=/commands/csi_config/>csi config</a> - Interact with a Shasta config</li><li><a href=/commands/csi_config_init_empty/>csi config init empty</a> - Write a empty config file.</li></ul><footer class=footline></footer></div></div><div id=navigation></div></section><div style=left:-1000px;overflow:scroll;position:absolute;top:-1000px;border:none;box-sizing:content-box;height:200px;margin:0;padding:0;width:200px><div style=border:none;box-sizing:content-box;height:200px;margin:0;padding:0;width:200px></div></div><script src=/cray-site-init/js/clipboard.min.js?1683229535></script>
+<script src=/cray-site-init/js/perfect-scrollbar.min.js?1683229535></script>
+<script src=/cray-site-init/js/perfect-scrollbar.jquery.min.js?1683229535></script>
+<script src=/cray-site-init/js/jquery.sticky.js?1683229535></script>
+<script src=/cray-site-init/js/featherlight.min.js?1683229535></script>
+<script src=/cray-site-init/js/highlight.pack.js?1683229535></script>
+<script>hljs.initHighlightingOnLoad()</script><script src=/cray-site-init/js/modernizr.custom-3.6.0.js?1683229535></script>
+<script src=/cray-site-init/js/learn.js?1683229535></script>
+<script src=/cray-site-init/js/hugo-learn.js?1683229535></script>
+<script src=/cray-site-init/mermaid/mermaid.js?1683229535></script>
 <script>mermaid.initialize({startOnLoad:!0})</script></body></html>
