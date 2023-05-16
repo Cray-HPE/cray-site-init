@@ -35,6 +35,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -516,26 +517,46 @@ func getPITVLanString(vlan string) string {
 
 func publicKeysCallback() (signers []ssh.Signer, err error) {
 	// Use public key auth for SSH if we can set it up...
-	key, err := os.ReadFile(os.Getenv("HOME") + "/.ssh/id_rsa")
+	//
+	// Find all of the public / private key pairs using the
+	// ssh-keygen conventions. If someone wants to do something
+	// more interesting, we might need to add an option to the
+	// command.
+	signers = []ssh.Signer{}
+	publicKeys, err := filepath.Glob(os.Getenv("HOME") + "/.ssh/id_*.pub")
 	if err != nil {
-		// No private key file, so return success but an
-		// empty list of signers. This will let the SSH
-		// session skip this auth method.
-		signers = []ssh.Signer{}
+		// Error getting public keys.  Warn the user then
+		// return no error to let another auth method run.
+		log.Printf("Warning: failed to list keys, skipping public key auth - %s", err)
 		err = nil
 		return
 	}
-	// Create the Signer for this private key.
-	signer, err := ssh.ParsePrivateKey(key)
-	if err != nil {
-		// Trouble parsing the private key, this is an error
-		// so let the authentication process fail on it so the
-		// user knows the key is bad.
-		return
+	for _, publicKey := range publicKeys {
+		// Quick and dirty convert public file name to private
+		// using the ssh-keygen convention.
+		privateKey := publicKey[:len(publicKey)-4]
+		key, err := os.ReadFile(privateKey)
+		if err != nil {
+			// This should be a public key file, if it is
+			// not there, skip it.
+			log.Printf("Warning: cannot open private key file '%s' (skipped) - %s", privateKey, err)
+			continue
+		}
+		// Create the Signer for this private key.
+		signer, err := ssh.ParsePrivateKey(key)
+		if err != nil {
+			// Trouble parsing the private key, this is an
+			// error so let the authentication process
+			// fail on it so the user knows the key is
+			// bad.
+			log.Printf("Warning: cannot parse private key file '%s' (skipped) - %s", privateKey, err)
+			continue
+		}
+		signers = append(signers, signer)
 	}
-	signers = []ssh.Signer{
-		signer,
-	}
+	// If this returns no error and signers has signers in it,
+	// then they will be tried. If it returns no error and signers
+	// is empty, we will move on to another authentication method.
 	return
 }
 
