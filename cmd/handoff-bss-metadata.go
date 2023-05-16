@@ -33,7 +33,9 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -78,8 +80,13 @@ var (
 	kubernetesImsImageID, storageImsImageID string
 	kubernetesUUID, storageUUID             string
 	cloudInitData                           map[string]bssTypes.CloudInit
-	sshConfig                               *ssh.ClientConfig
-	vlansToGather                           = []string{"bond0.nmn0"}
+	sshPassword                             string
+	// Track whether the password callback might have errored and
+	// need a retry with a prompt
+	sshPasswordRetry = false
+	sshPasswordHost  = ""
+	sshConfig        *ssh.ClientConfig
+	vlansToGather    = []string{"bond0.nmn0"}
 )
 
 var handoffBSSMetadataCmd = &cobra.Command{
@@ -223,6 +230,9 @@ func getSSHClientForHostname(hostname string) (sshClient *ssh.Client) {
 
 	log.Printf("Connecting to %s...", hostname)
 
+	// Remember the hostname we are trying to connect to so we can
+	// use it if we prompt for a password / password retry.
+	sshPasswordHost = hostname
 	sshClient, err = ssh.Dial("tcp", hostname+":22", sshConfig)
 	if err != nil {
 		log.Printf("Unable to connect to %s. Was the supplied password correct?", hostname)
@@ -232,13 +242,19 @@ func getSSHClientForHostname(hostname string) (sshClient *ssh.Client) {
 	return
 }
 
-func runSSHCommandWithClient(sshClient *ssh.Client, command string) (output string) {
+func runSSHCommandWithClient(sshClient *ssh.Client, command string) (output string, err error) {
 	if sshClient == nil {
-		return ""
+		return "", nil
 	}
 
 	log.Printf("Creating session to %s...", sshClient.RemoteAddr())
 
+	// When making a new SSH session, the first time into the
+	// password authenticator, if it gets called let it use any
+	// existing cached password. If that fails, the retry logic in
+	// the password authenticator will kick in and start prompting
+	// again.
+	sshPasswordRetry = false
 	sshSession, err := sshClient.NewSession()
 	if err != nil {
 		log.Fatal("Failed to create session: ", err)
@@ -247,10 +263,10 @@ func runSSHCommandWithClient(sshClient *ssh.Client, command string) (output stri
 
 	cmdline, err := sshSession.CombinedOutput(command)
 	if err != nil {
-		log.Panic(err)
+		return "", err
 	}
 
-	return string(cmdline)
+	return string(cmdline), nil
 }
 
 func getCloudInitMetadataForNCN(ncn sls_common.GenericHardware) (userData bssTypes.CloudDataType,
@@ -317,13 +333,27 @@ func getBSSEntryForNCN(ncn sls_common.GenericHardware) (bssEntry bssTypes.BootPa
 	// Setup an SSH connection for those who need it.
 	sshClient := getSSHClientForHostname(hostname)
 
-	cmdline := runSSHCommandWithClient(sshClient, "cat /proc/cmdline")
+	cmdline, err := runSSHCommandWithClient(sshClient, "cat /proc/cmdline")
+	if err != nil {
+		log.Panic(err)
+	}
 
-	macAddrStrings := runSSHCommandWithClient(sshClient, macGatherCommand)
+	macAddrStrings, err := runSSHCommandWithClient(sshClient, macGatherCommand)
+	if err != nil {
+		log.Panic(err)
+	}
 	macs := getMACsFromString(macAddrStrings)
 
-	bondMACStrings := runSSHCommandWithClient(sshClient, bondMACGatherCommand)
-	macs = append(macs, getBondMACsFromString(bondMACStrings)...)
+	// If there is a bonding device called 'bond0' this will return a string with
+	// the MAC addresses on that bonding device. Otherwise it will return an
+	// error, which we can ignore because we have a MAC address already from
+	// /proc/cmdline above.
+	bondMACStrings, err := runSSHCommandWithClient(sshClient, bondMACGatherCommand)
+	if err == nil {
+		macs = append(macs, getBondMACsFromString(bondMACStrings)...)
+	} else {
+		log.Printf("Warning: gathering MAC addresses from bond0 failed (this could be normal) - %s", err)
+	}
 
 	// This is not even related to BSS but it makes the most sense to do here...we need to make sure HSM has correct
 	// EthernetInterface entries for all the NCNs and since they don't DHCP Kea won't do it for us. So take advantage
@@ -335,7 +365,10 @@ func getBSSEntryForNCN(ncn sls_common.GenericHardware) (bssEntry bssTypes.BootPa
 		if hostname == "ncn-m001" {
 			vlanOutputString = getPITVLanString(vlan)
 		} else {
-			vlanOutputString = runSSHCommandWithClient(sshClient, vlanGatherCommand+vlan)
+			vlanOutputString, err = runSSHCommandWithClient(sshClient, vlanGatherCommand+vlan)
+			if err != nil {
+				log.Panic(err)
+			}
 		}
 
 		populateHSMEthernetInterface(ncn.Xname, vlanOutputString, vlan)
@@ -373,7 +406,6 @@ func getBSSEntryForNCN(ncn sls_common.GenericHardware) (bssEntry bssTypes.BootPa
 			UserData: userData,
 		},
 	}
-
 	return
 }
 
@@ -447,9 +479,11 @@ func getPITBondMACs() (macs []string) {
 	// We need to additionally add the *permanent* physical MACs for the bond members.
 	data, err := ioutil.ReadFile("/proc/net/bonding/bond0")
 	if err != nil {
-		log.Panicln(err)
+		log.Printf("Warning: gathering MAC addresses from bond0 failed (this could be normal) - %s", err)
+		macs = []string{}
+	} else {
+		macs = getBondMACsFromString(string(data))
 	}
-	macs = getBondMACsFromString(string(data))
 
 	// Hopefully future proofing against if we have 2 bonds.
 	data, err = ioutil.ReadFile("/proc/net/bonding/bond1")
@@ -481,21 +515,91 @@ func getPITVLanString(vlan string) string {
 	return string(out)
 }
 
-func populateNCNMetadata() {
-	var err error
-	var ncnRootPassword string
+func publicKeysCallback() (signers []ssh.Signer, err error) {
+	// Use public key auth for SSH if we can set it up...
+	//
+	// Find all of the public / private key pairs using the
+	// ssh-keygen conventions. If someone wants to do something
+	// more interesting, we might need to add an option to the
+	// command.
+	signers = []ssh.Signer{}
+	publicKeys, err := filepath.Glob(os.Getenv("HOME") + "/.ssh/id_*.pub")
+	if err != nil {
+		// Error getting public keys.  Warn the user then
+		// return no error to let another auth method run.
+		log.Printf("Warning: failed to list keys, skipping public key auth - %s", err)
+		err = nil
+		return
+	}
+	for _, publicKey := range publicKeys {
+		// Quick and dirty convert public file name to private
+		// using the ssh-keygen convention.
+		privateKey := publicKey[:len(publicKey)-4]
+		key, err := os.ReadFile(privateKey)
+		if err != nil {
+			// This should be a public key file, if it is
+			// not there, skip it.
+			log.Printf("Warning: cannot open private key file '%s' (skipped) - %s", privateKey, err)
+			continue
+		}
+		// Create the Signer for this private key.
+		signer, err := ssh.ParsePrivateKey(key)
+		if err != nil {
+			// Trouble parsing the private key, this is an
+			// error so let the authentication process
+			// fail on it so the user knows the key is
+			// bad.
+			log.Printf("Warning: cannot parse private key file '%s' (skipped) - %s", privateKey, err)
+			continue
+		}
+		signers = append(signers, signer)
+	}
+	// If this returns no error and signers has signers in it,
+	// then they will be tried. If it returns no error and signers
+	// is empty, we will move on to another authentication method.
+	return
+}
 
-	bssEntries := make(map[string]bssTypes.BootParams)
-
-	fmt.Print("Enter root password for NCNs: ")
+func passwordCallback() (ncnRootPassword string, err error) {
+	// If this has already been called and we have not failed a
+	// login attempt for this host with the cached password, just
+	// return the cached password so that we don't have to prompt
+	// for every NCN when we are using SSH.
+	if sshPassword != "" && !sshPasswordRetry {
+		// Make it possible to change the cached password if
+		// it turns out to be incorrect for the current NCN by
+		// requesting a password retry here. This will be
+		// cleared for each new session by the caller.
+		sshPasswordRetry = true
+		ncnRootPassword = sshPassword
+		err = nil
+		return
+	}
+	// First (hopefully) successful time through, or after a
+	// failed attempt using either a prompted for or cached
+	// password, prompt for the password and then cache it for
+	// future use. Note this will specify the host it is prompting
+	// for in case the passwords differ across NCNs. Normally that
+	// should not happen, but the retry logic permits it to be
+	// recoverable if it ever does.
+	fmt.Printf("Enter root password for NCNs [%s]: ", sshPasswordHost)
 	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
 	fmt.Println()
 	if err != nil {
-		log.Panicln(err)
-	} else {
-		ncnRootPassword = string(bytePassword)
+		return
 	}
+	ncnRootPassword = string(bytePassword)
+	sshPassword = ncnRootPassword
+	// Make it possible to change the cached password if it turns
+	// out to be incorrect for the current NCN by requesting a
+	// password retry here. This will be cleared for each new
+	// session by the caller.
+	sshPasswordRetry = true
+	return
+}
 
+func populateNCNMetadata() {
+	bssEntries := make(map[string]bssTypes.BootParams)
 	// Now we must build the kernel cmdline parameters for each NCN. The thing that's not so fun about this is those
 	// are calculated as part of PXE booting, so there is no file we can reference as a source of truth. This means
 	// we have no choice, we have to gather this from already booted NCNs and replace the values specific to each
@@ -503,7 +607,8 @@ func populateNCNMetadata() {
 	sshConfig = &ssh.ClientConfig{
 		User: "root",
 		Auth: []ssh.AuthMethod{
-			ssh.Password(ncnRootPassword),
+			ssh.PublicKeysCallback(publicKeysCallback),
+			ssh.RetryableAuthMethod(ssh.PasswordCallback(passwordCallback), 5),
 		},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
