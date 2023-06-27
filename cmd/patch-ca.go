@@ -44,6 +44,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -150,7 +152,9 @@ private RSA key.`,
 		// write original cloud-init data to backup
 		currentTime := time.Now()
 		ts := currentTime.Unix()
-		backupFile := cloudInitSeedFile + "-" + fmt.Sprintf("%d", ts)
+
+		cloudinitFileName := strings.TrimSuffix(cloudInitFile, filepath.Ext(cloudInitFile))
+		backupFile := cloudinitFileName + "-" + fmt.Sprintf("%d", ts) + filepath.Ext(cloudInitFile)
 		err = ioutil.WriteFile(backupFile, data, 0640)
 		if err != nil {
 			log.Fatalf("Unable to create backup of cloud-init seed data, %v \n", err)
