@@ -1,4 +1,5 @@
 /*
+
  MIT License
 
  (C) Copyright 2023 Hewlett Packard Enterprise Development LP
@@ -20,21 +21,18 @@
  OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  OTHER DEALINGS IN THE SOFTWARE.
+
 */
 
-package cmd
+package patch
 
 import (
 	"encoding/json"
 	"fmt"
-	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 	"log"
 	"os"
-	"path/filepath"
-	"strings"
-	"time"
 )
 
 // Repo is a list of repositories to add to the client node.
@@ -67,9 +65,6 @@ type CloudInitHost map[string]Host
 // configFile is our input, our config to patch into cloud-init data.
 var configFile string
 
-// cloudInitFile is our file we're merging with.
-var cloudInitFile string
-
 var patchPackages = &cobra.Command{
 	Use:   "packages",
 	Short: "Patch cloud-init metadata with repositories and packages",
@@ -82,52 +77,23 @@ CSM's cloud-init.yaml.`,
 			log.Fatalf("Unable to load config data from CSM cloud-init config file, %v \n", err)
 		}
 
-		data, err := os.ReadFile(cloudInitFile)
+		packageData, err := os.ReadFile(cloudInitSeedFile)
 		if err != nil {
 			log.Fatalf("Unable to load cloud-init seed data, %v \n", err)
 		}
 
-		cloudInit := make(map[string]Host)
-		var datas map[string]interface{}
-		if err := json.Unmarshal(data, &datas); err != nil {
-			log.Fatalf(string(data[:]))
-		}
-		for k := range datas {
-			if k == "Global" {
-				continue
-			}
-			var host Host
-			host.UserData = userdata
-			cloudInit[k] = host
-		}
-
+		cloudInit := mergePackagesData(userdata, packageData)
 		update, err := json.Marshal(cloudInit)
 		if err != nil {
 			log.Fatalf("Unable to marshal zypper data into JSON, %v \n", err)
 		}
-		merged, err := jsonpatch.MergePatch(data, update)
+
+		data, err := backupCloudInitData()
 		if err != nil {
-			log.Fatalf("Could not create merge patch to update cloud-init seed data, %v \n", err)
+			log.Fatalf("Failed to write backup file, %v \n", err)
 		}
 
-		currentTime := time.Now()
-		ts := currentTime.Unix()
-
-		cloudinitFileName := strings.TrimSuffix(cloudInitFile, filepath.Ext(cloudInitFile))
-		backupFile := cloudinitFileName + "-" + fmt.Sprintf("%d", ts) + filepath.Ext(cloudInitFile)
-		err = os.WriteFile(backupFile, data, 0640)
-		if err != nil {
-			log.Fatalf("Unable to create backup of cloud-init seed data, %v \n", err)
-		}
-		log.Println("Backup of cloud-init seed data at", backupFile)
-
-		// Unmarshal merged cloud-init data, marshal it back with indent
-		// then write it to the original cloud-init file (in place patch)
-		var mergeUnmarshal map[string]interface{}
-		json.Unmarshal(merged, &mergeUnmarshal)
-		mergeMarshal, _ := json.MarshalIndent(mergeUnmarshal, "", "  ")
-		err = os.WriteFile(cloudInitFile, mergeMarshal, 0640)
-		if err != nil {
+		if err := writeCloudInit(data, update); err != nil {
 			log.Fatalf("Unable to patch cloud-init seed data in place, %v \n", err)
 		}
 		log.Println("Patched cloud-init seed data in place")
@@ -135,14 +101,13 @@ CSM's cloud-init.yaml.`,
 }
 
 func init() {
-	patchCmd.AddCommand(patchPackages)
+	PatchCmd.AddCommand(patchPackages)
 	patchPackages.DisableAutoGenTag = true
 	patchPackages.Flags().StringVarP(&configFile, "config-file", "", "", "Path to cloud-init.yaml")
-	patchPackages.Flags().StringVarP(&cloudInitFile, "cloud-init-seed-file", "", "", "Path to cloud-init metadata seed file")
 	patchPackages.MarkFlagRequired("config-file")
-	patchPackages.MarkFlagRequired("cloud-init-seed-file")
 }
 
+// loadPackagesConfig reads the a configFile, returning its contents as unmarshalled YAML.
 func loadPackagesConfig(filePath string) (UserData, error) {
 
 	var data UserData
@@ -157,4 +122,22 @@ func loadPackagesConfig(filePath string) (UserData, error) {
 	fmt.Println(data)
 
 	return data, err
+}
+
+// mergePackagesData takes assembled userdata and merges it into each user-data entry for each host in a given cloud-init datasource.
+func mergePackagesData(userdata UserData, data []byte) CloudInitHost {
+	cloudInit := make(map[string]Host)
+	var datas map[string]interface{}
+	if err := json.Unmarshal(data, &datas); err != nil {
+		log.Fatalf(string(data[:]))
+	}
+	for k := range datas {
+		if k == "Global" {
+			continue
+		}
+		var host Host
+		host.UserData = userdata
+		cloudInit[k] = host
+	}
+	return cloudInit
 }

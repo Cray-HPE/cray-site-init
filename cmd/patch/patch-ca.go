@@ -1,7 +1,8 @@
 /*
+
  MIT License
 
- (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2021-2023 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -20,13 +21,10 @@
  OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  OTHER DEALINGS IN THE SOFTWARE.
+
 */
 
-package cmd
-
-/*
-Copyright 2021 Hewlett Packard Enterprise Development LP
-*/
+package patch
 
 import (
 	"bytes"
@@ -41,17 +39,10 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"errors"
-	"fmt"
+	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"log"
-	"path/filepath"
-	"strings"
-	"time"
-
-	"github.com/spf13/cobra"
-
-	jsonpatch "github.com/evanphx/json-patch"
-	"gopkg.in/yaml.v2"
 )
 
 // SealedSecret - Minimum struct to determine secret scope
@@ -98,7 +89,6 @@ type CloudInitGlobal struct {
 
 var customizationsFile string
 var sealedSecretsKeyFile string
-var cloudInitSeedFile string
 var sealedSecretName string
 
 var patchCA = &cobra.Command{
@@ -140,34 +130,12 @@ private RSA key.`,
 			log.Fatalf("Unable to marshal ca-certs data into JSON, %v \n", err)
 		}
 
-		data, err := ioutil.ReadFile(cloudInitSeedFile)
+		data, err := backupCloudInitData()
 		if err != nil {
-			log.Fatalf("Unable to load cloud-init seed data, %v \n", err)
-		}
-		merged, err := jsonpatch.MergePatch(data, update)
-		if err != nil {
-			log.Fatalf("Could not create merge patch to update cloud-init seed data, %v \n", err)
+			log.Fatalf("Failed to write backup file, %v \n", err)
 		}
 
-		// write original cloud-init data to backup
-		currentTime := time.Now()
-		ts := currentTime.Unix()
-
-		cloudinitFileName := strings.TrimSuffix(cloudInitFile, filepath.Ext(cloudInitFile))
-		backupFile := cloudinitFileName + "-" + fmt.Sprintf("%d", ts) + filepath.Ext(cloudInitFile)
-		err = ioutil.WriteFile(backupFile, data, 0640)
-		if err != nil {
-			log.Fatalf("Unable to create backup of cloud-init seed data, %v \n", err)
-		}
-		log.Println("Backup of cloud-init seed data at", backupFile)
-
-		// Unmarshal merged cloud-init data, marshal it back with indent
-		// then write it to the original cloud-init file (in place patch)
-		var mergeUnmarshal map[string]interface{}
-		json.Unmarshal(merged, &mergeUnmarshal)
-		mergeMarshal, _ := json.MarshalIndent(mergeUnmarshal, "", "  ")
-		err = ioutil.WriteFile(cloudInitSeedFile, mergeMarshal, 0640)
-		if err != nil {
+		if err := writeCloudInit(data, update); err != nil {
 			log.Fatalf("Unable to patch cloud-init seed data in place, %v \n", err)
 		}
 		log.Println("Patched cloud-init seed data in place")
@@ -175,14 +143,12 @@ private RSA key.`,
 }
 
 func init() {
-	patchCmd.AddCommand(patchCA)
+	PatchCmd.AddCommand(patchCA)
 	patchCA.DisableAutoGenTag = true
 	patchCA.Flags().StringVarP(&customizationsFile, "customizations-file", "", "", "path to customizations.yaml (shasta-cfg)")
-	patchCA.Flags().StringVarP(&cloudInitSeedFile, "cloud-init-seed-file", "", "", "Path to cloud-init metadata seed file")
 	patchCA.Flags().StringVarP(&sealedSecretsKeyFile, "sealed-secret-key-file", "", "", "Path to sealed secrets/shasta-cfg private key")
 	patchCA.Flags().StringVarP(&sealedSecretName, "sealed-secret-name", "", "gen_platform_ca_1", "Path to cloud-init metadata seed file")
 	patchCA.MarkFlagRequired("customizations-file")
-	patchCA.MarkFlagRequired("cloud-init-seed-file")
 	patchCA.MarkFlagRequired("sealed-secret-key-file")
 }
 

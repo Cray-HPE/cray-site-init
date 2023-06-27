@@ -25,6 +25,7 @@
 package cmd
 
 import (
+	"github.com/Cray-HPE/cray-site-init/cmd/patch"
 	"log"
 	"os"
 	"path/filepath"
@@ -110,7 +111,7 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	rootCmd.AddCommand(configCmd)
-
+	rootCmd.AddCommand(patch.PatchCmd)
 	// Add a global '--config' option, so someone can pass in their own
 	// config file if desired, overriding the one in the current dir when
 	// we initialize this cobra program
