@@ -28,7 +28,6 @@ package patch
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 	"log"
@@ -119,7 +118,6 @@ func loadPackagesConfig(filePath string) (UserData, error) {
 	if err := yaml.Unmarshal(config, &data); err != nil {
 		return data, err
 	}
-	fmt.Println(data)
 
 	return data, err
 }
