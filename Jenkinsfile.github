@@ -116,6 +116,35 @@ pipeline {
                                         os: "noos",
                                         pattern: "dist/rpmbuild/SRPMS/*.rpm",
                                 )
+                                // Temporarily publish to sp4 and sp3 until docs-csm is cut-over to use noos in its various directions that install cray-site-init.
+                                publishCsmRpms(
+                                        arch: "${ARCH}",
+                                        component: env.NAME,
+                                        isStable: isStable,
+                                        os: "sle-15sp4",
+                                        pattern: "dist/rpmbuild/RPMS/${ARCH}/*.rpm",
+                                )
+                                publishCsmRpms(
+                                        arch: "src",
+                                        component: env.NAME,
+                                        isStable: isStable,
+                                        os: "sle-15sp4",
+                                        pattern: "dist/rpmbuild/SRPMS/*.rpm",
+                                )
+                                publishCsmRpms(
+                                        arch: "${ARCH}",
+                                        component: env.NAME,
+                                        isStable: isStable,
+                                        os: "sle-15sp3",
+                                        pattern: "dist/rpmbuild/RPMS/${ARCH}/*.rpm",
+                                )
+                                publishCsmRpms(
+                                        arch: "src",
+                                        component: env.NAME,
+                                        isStable: isStable,
+                                        os: "sle-15sp3",
+                                        pattern: "dist/rpmbuild/SRPMS/*.rpm",
+                                )
                             }
                         }
                     }
