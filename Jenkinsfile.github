@@ -23,8 +23,13 @@
  */
 @Library('csm-shared-library') _
 
+// Only consider X.Y.Z and X.Y.Z tags as stable.
+// Never consider X.Y.Z{[a|b|rc} or X.Y.Z.* tags as stable.
+// The ==~ operator performs an exact match.
+def stableToken = ~/v?\d+\.\d+\.\d+/
+def isStable = (env.TAG_NAME != null & env.TAG_NAME ==~ stableToken) ? true : false
+
 def goImage = 'artifactory.algol60.net/csm-docker/stable/csm-docker-sle-go'
-def isStable = env.TAG_NAME != null ? true : false
 pipeline {
 
     agent {
