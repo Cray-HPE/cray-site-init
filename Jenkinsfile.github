@@ -23,8 +23,13 @@
  */
 @Library('csm-shared-library') _
 
+// Only consider X.Y.Z and X.Y.Z tags as stable.
+// Never consider X.Y.Z{[a|b|rc} or X.Y.Z.* tags as stable.
+// The ==~ operator performs an exact match.
+def stableToken = ~/v?\d+\.\d+\.\d+/
+def isStable = (env.TAG_NAME != null & env.TAG_NAME ==~ stableToken) ? true : false
+
 def goImage = 'artifactory.algol60.net/csm-docker/stable/csm-docker-sle-go'
-def isStable = env.TAG_NAME != null ? true : false
 pipeline {
 
     agent {
@@ -53,7 +58,7 @@ pipeline {
                 agent {
                     node {
                         label "metal-gcp-builder"
-                        customWorkspace "${env.WORKSPACE}/${sleVersion}/${ARCH}/${env.GO_VERSION}"
+                        customWorkspace "${env.WORKSPACE}/${ARCH}/${env.GO_VERSION}"
                     }
                 }
 
@@ -61,10 +66,6 @@ pipeline {
                     axis {
                         name 'ARCH'
                         values 'x86_64'
-                    }
-                    axis {
-                        name 'sleVersion'
-                        values 15.3, 15.4
                     }
                 }
 
@@ -75,7 +76,7 @@ pipeline {
                             docker {
                                 label 'docker'
                                 reuseNode true
-                                image "${goImage}:${env.GO_VERSION}-SLES${sleVersion}"
+                                image "${goImage}:${env.GO_VERSION}"
                             }
                         }
                         steps {
@@ -90,7 +91,7 @@ pipeline {
                             docker {
                                 label 'docker'
                                 reuseNode true
-                                image "${goImage}:${env.GO_VERSION}-SLES${sleVersion}"
+                                image "${goImage}:${env.GO_VERSION}"
                             }
                         }
                         steps {
@@ -101,21 +102,18 @@ pipeline {
                     stage('Publish: RPMs') {
                         steps {
                             script {
-                                def sles_version_parts = "${sleVersion}".tokenize('.')
-                                def sles_major = "${sles_version_parts[0]}"
-                                def sles_minor = "${sles_version_parts[1]}"
                                 publishCsmRpms(
                                         arch: "${ARCH}",
                                         component: env.NAME,
                                         isStable: isStable,
-                                        os: "sle-${sles_major}sp${sles_minor}",
+                                        os: "noos",
                                         pattern: "dist/rpmbuild/RPMS/${ARCH}/*.rpm",
                                 )
                                 publishCsmRpms(
                                         arch: "src",
                                         component: env.NAME,
                                         isStable: isStable,
-                                        os: "sle-${sles_major}sp${sles_minor}",
+                                        os: "noos",
                                         pattern: "dist/rpmbuild/SRPMS/*.rpm",
                                 )
                             }
