@@ -7,7 +7,7 @@ replace (
 
 require (
 	github.com/Cray-HPE/hms-base/v2 v2.0.1
-	github.com/Cray-HPE/hms-bss v1.25.1
+	github.com/Cray-HPE/hms-bss v1.26.0
 	github.com/Cray-HPE/hms-s3 v1.10.1
 	github.com/Cray-HPE/hms-shcd-parser v1.9.0
 	github.com/Cray-HPE/hms-sls v1.29.0
