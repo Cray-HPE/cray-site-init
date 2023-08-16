@@ -47,9 +47,20 @@ type Repo struct {
 // Packages is a list of packages to install on the client node.
 type Packages []string
 
+// Zypper is a map for Zypper cloud-init data.
+type Zypper struct {
+	Repos []Repo `json:"repos"`
+}
+
+// ConfigFileData matches the current “cloud-init“ file in the CSM tarball.
+type ConfigFileData struct {
+	Repos    []Repo   `json:"repos"`
+	Packages Packages `json:"packages"`
+}
+
 // UserData is the cloud-init structure/representation of the new data.
 type UserData struct {
-	Repos    []Repo   `json:"repos"`
+	Zypper   Zypper   `json:"zypper"`
 	Packages Packages `json:"packages"`
 }
 
@@ -106,18 +117,24 @@ func init() {
 	patchPackages.MarkFlagRequired("config-file")
 }
 
-// loadPackagesConfig reads the a configFile, returning its contents as unmarshalled YAML.
+// loadPackagesConfig reads a configFile, returning its contents as unmarshalled YAML.
 func loadPackagesConfig(filePath string) (UserData, error) {
 
+	var configData ConfigFileData
 	var data UserData
 	config, err := os.ReadFile(filePath)
 	if err != nil {
 		return data, err
 	}
 
-	if err := yaml.Unmarshal(config, &data); err != nil {
+	if err := yaml.Unmarshal(config, &configData); err != nil {
 		return data, err
 	}
+
+	data.Zypper = Zypper{
+		Repos: configData.Repos,
+	}
+	data.Packages = configData.Packages
 
 	return data, err
 }
