@@ -115,5 +115,5 @@ func init() {
 	// Add a global '--config' option, so someone can pass in their own
 	// config file if desired, overriding the one in the current dir when
 	// we initialize this cobra program
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "CSI config file")
 }
