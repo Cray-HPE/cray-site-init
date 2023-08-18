@@ -127,15 +127,19 @@ func loadPackagesConfig(filePath string) (UserData, error) {
 		return data, err
 	}
 
-	if err := yaml.Unmarshal(config, &configData); err != nil {
+	// Handle config files with or without the ``zypper`` root key.
+	if err := yaml.Unmarshal(config, &data); err != nil {
 		return data, err
 	}
-
-	data.Zypper = Zypper{
-		Repos: configData.Repos,
+	if data.Zypper.Repos == nil {
+		if err := yaml.Unmarshal(config, &configData); err != nil {
+			return data, err
+		}
+		data.Zypper = Zypper{
+			Repos: configData.Repos,
+		}
+		data.Packages = configData.Packages
 	}
-	data.Packages = configData.Packages
-
 	return data, err
 }
 
