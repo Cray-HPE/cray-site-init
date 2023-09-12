@@ -484,49 +484,46 @@ func MakeBaseCampfromNCNs(v *viper.Viper, ncns []csi.LogicalNCN, shastaNetworks 
 		pools := v.GetStringSlice("ntp-pools")
 
 		ntpConfig := NtpConfig{
-			ConfPath: "/etc/chrony.d/cray.conf",
+			ConfPath: "/etc/chrony.d/csm.conf",
 			Template: `
 ## template: jinja
-# csm-generated config for {{ local_hostname }}. Do not modify--changes can be overwritten{% for pool in pools | sort -%}
-{% if local_hostname == 'ncn-m001' and pool == 'ncn-m001' %}
-{% endif %}
-{% if local_hostname != 'ncn-m001' and pool != 'ncn-m001' %}
-{% else %}
-pool {{ pool }} iburst
-{% endif %}
-{% endfor %}
-{% for server in servers | sort -%}
-{% if local_hostname == 'ncn-m001' and server == 'ncn-m001' %}
-# server {{ server }} will not be used as itself for a server
-{% else %}
-server {{ server }} iburst trust
-{% endif %}
-{% if local_hostname != 'ncn-m001' and server != 'ncn-m001' %}
-# {{ local_hostname }}
-{% endif %}
-{% endfor %}
-{% for peer in peers | sort -%}
-{% if local_hostname == peer %}
-{% else %}
-{% if loop.index <= 9 %}
-{# Only add 9 peers to prevent too much NTP traffic #}
-peer {{ peer }} minpoll -2 maxpoll 9 iburst
-{% endif %}
-{% endif %}
-{% endfor %}
-{% for net in allow | sort -%}
-allow {{ net }}
-{% endfor %}
-{% if local_hostname == 'ncn-m001' %}
-# {{ local_hostname }} has a lower stratum than other NCNs since it is the primary server
-local stratum 8 orphan
-{% else %}
-# {{ local_hostname }} has a higher stratum so it selects ncn-m001 in the event of a tie
+{{% if lookup('ansible.builtin.pipe', 'test -f /dev/ptp2' ) %}}
+# use the attached time card as a reference clock and enjoy a very precise and stable NTP Stratum 1 server
+refclock PHC /dev/ptp2 poll 0 trust
+
+# Enable hardware timestamping on all interfaces that support it.
+hwtimestamp *
+
+# Serve time even if not synchronized to a time source.
+# local sets the stratum of the server which will be reported to clients when the local reference is active
+# orphan sources with stratum equal to the local stratum are assumed to not serve real time. 
+# They are ignored unless no other source is selectable and their reference IDs are smaller than the local reference ID
+# Each server needs to be configured to poll all other servers with the local directive
 local stratum 10 orphan
-{% endif %}
-log measurements statistics tracking
-logchange 1.0
-makestep 0.1 3
+{{% endif %}}
+
+# listen for monitoring command packets (issued by chronyc) on all interfaces
+bindcmdaddress 0.0.0.0
+bindcmdaddress ::
+
+# allow network segments to use as a server
+{% for cidr in allow | sort -%}
+cmdallow {{ cidr }}
+allow {{ cidr }}
+{% endfor %}
+
+{% for pool in pools | sort -%}
+pool {{ pool }} {{% for opt in pool.opts %}}{{% if not loop.last %}}{{ opt }} {{% endif %}}{{% endfor %}}
+{% endfor %}
+
+{% for server in servers | sort -%}
+server {{ server }} {{% for opt in server.opts %}}{{% if not loop.last %}}{{ opt }} {{% endif %}}{{% endfor %}}
+{% endfor %}
+
+# Allow the system clock to be stepped in the first three updates
+# if its offset is larger than 1.0 second.
+makestep 1.0 3
+
 `,
 		}
 
