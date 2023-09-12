@@ -485,7 +485,49 @@ func MakeBaseCampfromNCNs(v *viper.Viper, ncns []csi.LogicalNCN, shastaNetworks 
 
 		ntpConfig := NtpConfig{
 			ConfPath: "/etc/chrony.d/cray.conf",
-			Template: "## template: jinja\n# csm-generated config for {{ local_hostname }}. Do not modify--changes can be overwritten\n{% for pool in pools | sort -%}\n{% if local_hostname == 'ncn-m001' and pool == 'ncn-m001' %}\n{% endif %}\n{% if local_hostname != 'ncn-m001' and pool != 'ncn-m001' %}\n{% else %}\npool {{ pool }} iburst\n{% endif %}\n{% endfor %}\n{% for server in servers | sort -%}\n{% if local_hostname == 'ncn-m001' and server == 'ncn-m001' %}\n# server {{ server }} will not be used as itself for a server\n{% else %}\nserver {{ server }} iburst trust\n{% endif %}\n{% if local_hostname != 'ncn-m001' and server != 'ncn-m001' %}\n# {{ local_hostname }}\n{% endif %}\n{% endfor %}\n{% for peer in peers | sort -%}\n{% if local_hostname == peer %}\n{% else %}\n{% if loop.index <= 9 %}\n{# Only add 9 peers to prevent too much NTP traffic #}\npeer {{ peer }} minpoll -2 maxpoll 9 iburst\n{% endif %}\n{% endif %}\n{% endfor %}\n{% for net in allow | sort -%}\nallow {{ net }}\n{% endfor %}\n{% if local_hostname == 'ncn-m001' %}\n# {{ local_hostname }} has a lower stratum than other NCNs since it is the primary server\nlocal stratum 8 orphan\n{% else %}\n# {{ local_hostname }} has a higher stratum so it selects ncn-m001 in the event of a tie\nlocal stratum 10 orphan\n{% endif %}\nlog measurements statistics tracking\nlogchange 1.0\nmakestep 0.1 3\n",
+			Template: `
+## template: jinja
+# csm-generated config for {{ local_hostname }}. Do not modify--changes can be overwritten{% for pool in pools | sort -%}
+{% if local_hostname == 'ncn-m001' and pool == 'ncn-m001' %}
+{% endif %}
+{% if local_hostname != 'ncn-m001' and pool != 'ncn-m001' %}
+{% else %}
+pool {{ pool }} iburst
+{% endif %}
+{% endfor %}
+{% for server in servers | sort -%}
+{% if local_hostname == 'ncn-m001' and server == 'ncn-m001' %}
+# server {{ server }} will not be used as itself for a server
+{% else %}
+server {{ server }} iburst trust
+{% endif %}
+{% if local_hostname != 'ncn-m001' and server != 'ncn-m001' %}
+# {{ local_hostname }}
+{% endif %}
+{% endfor %}
+{% for peer in peers | sort -%}
+{% if local_hostname == peer %}
+{% else %}
+{% if loop.index <= 9 %}
+{# Only add 9 peers to prevent too much NTP traffic #}
+peer {{ peer }} minpoll -2 maxpoll 9 iburst
+{% endif %}
+{% endif %}
+{% endfor %}
+{% for net in allow | sort -%}
+allow {{ net }}
+{% endfor %}
+{% if local_hostname == 'ncn-m001' %}
+# {{ local_hostname }} has a lower stratum than other NCNs since it is the primary server
+local stratum 8 orphan
+{% else %}
+# {{ local_hostname }} has a higher stratum so it selects ncn-m001 in the event of a tie
+local stratum 10 orphan
+{% endif %}
+log measurements statistics tracking
+logchange 1.0
+makestep 0.1 3
+`,
 		}
 
 		// valid hostname/domain regex
