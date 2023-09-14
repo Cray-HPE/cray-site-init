@@ -415,7 +415,7 @@ type PinnedReservation struct {
 // *** *** *** To anyone editing this code in the future, PLEASE DON'T MAKE IT BETTER *** *** ***
 // *** *** *** This code is written to be thrown away with a fully dynamic ip addressing scheme *** *** ***
 var PinnedMetalLBReservations = map[string]PinnedReservation{
-	"istio-ingressgateway":       {71, strings.Split("api-gw-service api-gw-service-nmn.local packages registry spire.local api_gw_service registry.local packages packages.local spire", " ")},
+	"istio-ingressgateway":       {71, strings.Split("api-gw-service api-gw-service-nmn.local packages registry spire.local api_gw_service registry.local packages packages.local packages.internal spire", " ")},
 	"istio-ingressgateway-local": {81, []string{"api-gw-service.local"}},
 	"rsyslog-aggregator":         {72, []string{"rsyslog-agg-service"}},
 	"cray-tftp":                  {60, []string{"tftp-service"}},
