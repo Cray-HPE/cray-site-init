@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2021-2022] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2021-2023] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -1219,6 +1219,18 @@ func (x Node) StorageGroup(storageGroup int) StorageGroup {
 	}
 }
 
+// VirtualNode will get a child component with the specified ordinal
+func (x Node) VirtualNode(virtualNode int) VirtualNode {
+	return VirtualNode{
+		Cabinet:       x.Cabinet,
+		Chassis:       x.Chassis,
+		ComputeModule: x.ComputeModule,
+		NodeBMC:       x.NodeBMC,
+		Node:          x.Node,
+		VirtualNode:   virtualNode,
+	}
+}
+
 // Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
 func (x Node) Validate() error {
 	xname := x.String()
@@ -1680,6 +1692,61 @@ func (x Drive) Validate() error {
 	xname := x.String()
 	if !xnametypes.IsHMSCompIDValid(xname) {
 		return fmt.Errorf("invalid Drive xname: %s", xname)
+	}
+
+	return nil
+}
+
+// VirtualNode - xXcCsSbBnNvV
+type VirtualNode struct {
+	Cabinet       int // xX
+	Chassis       int // cC
+	ComputeModule int // sS
+	NodeBMC       int // bB
+	Node          int // nN
+	VirtualNode   int // vV
+}
+
+// Type will return the corresponding HMSType
+func (x VirtualNode) Type() xnametypes.HMSType {
+	return xnametypes.VirtualNode
+}
+
+// String will stringify VirtualNode into the format of xXcCsSbBnNvV
+func (x VirtualNode) String() string {
+	return fmt.Sprintf(
+		"x%dc%ds%db%dn%dv%d",
+		x.Cabinet,
+		x.Chassis,
+		x.ComputeModule,
+		x.NodeBMC,
+		x.Node,
+		x.VirtualNode,
+	)
+}
+
+// Parent will determine the parent of this VirtualNode
+func (x VirtualNode) Parent() Node {
+	return Node{
+		Cabinet:       x.Cabinet,
+		Chassis:       x.Chassis,
+		ComputeModule: x.ComputeModule,
+		NodeBMC:       x.NodeBMC,
+		Node:          x.Node,
+	}
+}
+
+// ParentGeneric will determine the parent of this VirtualNode, and return it as a Xname interface
+func (x VirtualNode) ParentInterface() Xname {
+	return x.Parent()
+
+}
+
+// Validate will validate the string representation of this structure against xnametypes.IsHMSCompIDValid()
+func (x VirtualNode) Validate() error {
+	xname := x.String()
+	if !xnametypes.IsHMSCompIDValid(xname) {
+		return fmt.Errorf("invalid VirtualNode xname: %s", xname)
 	}
 
 	return nil

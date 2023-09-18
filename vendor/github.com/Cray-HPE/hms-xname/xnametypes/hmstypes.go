@@ -1,7 +1,6 @@
-//
 // MIT License
 //
-// (C) Copyright 2018-2022 Hewlett Packard Enterprise Development LP
+// (C) Copyright 2018-2023 Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -20,7 +19,6 @@
 // OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
-//
 package xnametypes
 
 import (
@@ -74,6 +72,7 @@ const (
 	NodeEnclosurePowerSupply HMSType = "NodeEnclosurePowerSupply" // xXcCsSeEtT
 	NodePowerConnector       HMSType = "NodePowerConnector"       // xXcCsSjJ
 	Node                     HMSType = "Node"                     // xXcCsSbBnN
+	VirtualNode              HMSType = "VirtualNode"              // xXcCsSbBnNvV
 	Processor                HMSType = "Processor"                // xXcCsSbBnNpP
 	StorageGroup             HMSType = "StorageGroup"             // xXcCsSbBnNgG
 	Drive                    HMSType = "Drive"                    // xXcCsSbBnNgGkK
@@ -394,6 +393,14 @@ var hmsCompRecognitionTable = map[string]HMSCompRecognitionEntry{
 		regexp.MustCompile("^x([0-9]{1,4})c([0-7])s([0-9]+)b([0-9]+)n([0-9]+)$"),
 		"x%dc%ds%db%dn%d",
 		5,
+	},
+	"virtualnode": {
+		VirtualNode,
+		Node, // The hypervisor
+		"xXcCsSbBnNvV",
+		regexp.MustCompile("^x([0-9]{1,4})c([0-7])s([0-9]+)b([0-9]+)n([0-9]+)v([0-9]+)$"),
+		"x%dc%ds%db%dn%dv%d",
+		6,
 	},
 	"nodenic": {
 		NodeNic,
@@ -757,7 +764,8 @@ func GetHMSTypeRegex(hmsType HMSType) (*regexp.Regexp, error) {
 func (t HMSType) String() string { return string(t) }
 
 // Given a properly formatted xname, get its immediate parent.
-//  i.e. x0c0s22b11 would become x0c0s22
+//
+//	i.e. x0c0s22b11 would become x0c0s22
 func GetHMSCompParent(xname string) string {
 	hmsType := GetHMSType(xname)
 	if hmsType == CDU || hmsType == Cabinet {
