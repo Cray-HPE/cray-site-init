@@ -81,8 +81,9 @@ github.com/Cray-HPE/hms-sls v1.29.0/go.mod h1:XKGw18eCGS3oJwsYpw8B+QzNUhgHXLnbr2
 github.com/Cray-HPE/hms-smd v1.30.9/go.mod h1:9TFpxIiPnmgBphq0QfFt1BmKiuSZ8VXu5N7A5EJz6L4=
 github.com/Cray-HPE/hms-smd v1.62.0 h1:umcPT6w31hO7nF3v8rIUEQP2G4al47rR8cM+eQasaWM=
 github.com/Cray-HPE/hms-smd v1.62.0/go.mod h1:7J7taeRXmceyLPHdKlLbucb10lqTrJxTUo3RhaTGMhs=
-github.com/Cray-HPE/hms-xname v1.1.0 h1:y/JEM2PbBaD8VbU7u85+/YIugf1Evji59z5IeSffeO8=
 github.com/Cray-HPE/hms-xname v1.1.0/go.mod h1:3A70QF0ddmkt/nz0jis5o8UIB4zAmsgsUiN71dr97n4=
+github.com/Cray-HPE/hms-xname v1.3.0 h1:DQmetMniubqcaL6Cxarz9+7KFfWGSEizIhfPHIgC3Gw=
+github.com/Cray-HPE/hms-xname v1.3.0/go.mod h1:XKdjQSzoTps5KDOE8yWojBTAWASGaS6LfRrVDxwTQO8=
 github.com/DATA-DOG/go-sqlmock v1.3.3/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
 github.com/DataDog/zstd v1.3.6-0.20190409195224-796139022798/go.mod h1:1jcaCB/ufaK+sKp1NBhlGmpz41jOoPQ35bpF36t7BBo=
 github.com/MakeNowJust/heredoc v0.0.0-20170808103936-bb23615498cd h1:sjQovDkwrZp8u+gxLtPgKGjk5hCxuy2hrRejBTA9xFU=

@@ -30,8 +30,8 @@ github.com/Cray-HPE/hms-sls/pkg/sls-common
 ## explicit; go 1.16
 github.com/Cray-HPE/hms-smd/pkg/redfish
 github.com/Cray-HPE/hms-smd/pkg/sm
-# github.com/Cray-HPE/hms-xname v1.1.0
-## explicit; go 1.17
+# github.com/Cray-HPE/hms-xname v1.3.0
+## explicit; go 1.20
 github.com/Cray-HPE/hms-xname/xnames
 github.com/Cray-HPE/hms-xname/xnametypes
 # github.com/MakeNowJust/heredoc v0.0.0-20170808103936-bb23615498cd
