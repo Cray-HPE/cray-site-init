@@ -91,6 +91,7 @@ domain=mtl,{{.CIDR.IP}},{{.DHCPEnd}},local
 dhcp-option=interface:bond0,option:domain-search,mtl
 interface=bond0
 interface-name=pit.mtl,bond0
+cname=packages.local,pit.mtl
 cname=packages.mtl,pit.mtl
 cname=registry.mtl,pit.mtl
 # This needs to point to the liveCD IP for provisioning in bare-metal environments.
@@ -110,7 +111,6 @@ interface-name=pit.nmn,bond0.nmn0
 domain=nmn,{{.CIDR.IP}},{{.DHCPEnd}},local
 dhcp-option=interface:bond0.nmn0,option:domain-search,nmn
 interface=bond0.nmn0
-cname=packages.local,pit.nmn
 cname=packages.nmn,pit.nmn
 cname=registry.nmn,pit.nmn
 # This needs to point to the liveCD IP for provisioning in bare-metal environments.
