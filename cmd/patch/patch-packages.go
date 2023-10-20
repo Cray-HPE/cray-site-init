@@ -36,12 +36,13 @@ import (
 
 // Repo is a list of repositories to add to the client node.
 type Repo struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Baseurl     string `json:"baseurl"`
-	Enabled     int    `json:"enabled"`
-	Autorefresh int    `json:"autorefresh"`
-	Gpgcheck    int    `json:"gpgcheck"`
+	ID           string `json:"id"`
+	Name         string `json:"name"`
+	Baseurl      string `json:"baseurl"`
+	Enabled      int    `json:"enabled"`
+	Autorefresh  int    `json:"autorefresh"`
+	Gpgcheck     int    `json:"gpgcheck"`
+	RepoGpgcheck int    `json:"repo_gpgcheck"`
 }
 
 // Packages is a list of packages to install on the client node.
