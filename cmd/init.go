@@ -833,16 +833,16 @@ func validateFlags() []string {
 		}
 	}
 
-	if v.IsSet("kube-proxy-replacement") {
+	if v.IsSet("cilium-kube-proxy-replacement") {
 		validFlag := false
 		for _, value := range [3]string{"strict", "partial", "disabled"} {
-			if v.GetString("kube-proxy-replacement") == value {
+			if v.GetString("cilium-kube-proxy-replacement") == value {
 				validFlag = true
 				break
 			}
 		}
 		if !validFlag {
-			errors = append(errors, fmt.Sprintf("kube-proxy-replacement must be set to strict, partial, or disabled"))
+			errors = append(errors, fmt.Sprintf("cilium-kube-proxy-replacement must be set to strict, partial, or disabled"))
 		}
 	}
 
