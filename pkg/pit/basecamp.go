@@ -111,7 +111,7 @@ type BaseCampGlobals struct {
 	KubernetesWeaveMTU         string `json:"kubernetes-weave-mtu"`     // 1376
 	KubernetesCiliumOpReplicas string `json:"cilium-operator-replicas"` // 1
 	KubernetesPrimaryCNI       string `json:"k8s-primary-cni"`          // weave
-	KubernetesKubeProxyReplace string `json:"kube-proxy-replacement"`   // strict
+	KubernetesKubeProxyReplace string `json:"cilium-kube-proxy-replacement"`   // strict
 
 	NumStorageNodes int `json:"num_storage_nodes"`
 }
@@ -166,7 +166,7 @@ var basecampGlobalString = `{
 	"kubernetes-weave-mtu": "1376",
 	"cilium-operator-replicas": "1",
 	"k8s-primary-cni": "weave",
-	"kube-proxy-replacement": "strict",
+	"cilium-kube-proxy-replacement": "strict",
 	"rgw-virtual-ip": "~FIXME~ e.g. 10.252.2.100",
 	"wipe-ceph-osds": "yes",
 	"system-name": "~FIXME~",
