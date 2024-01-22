@@ -14,7 +14,7 @@ require (
 	github.com/Cray-HPE/hms-smd v1.62.0
 	github.com/Cray-HPE/hms-xname v1.3.0
 	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef
-	github.com/evanphx/json-patch v5.8.0+incompatible
+	github.com/evanphx/json-patch v5.8.1+incompatible
 	github.com/gocarina/gocsv v0.0.0-20200925213129-04be9ee2e1a2
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/pkg/errors v0.9.1
