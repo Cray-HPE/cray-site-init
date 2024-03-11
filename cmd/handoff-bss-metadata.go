@@ -308,7 +308,8 @@ func getMACsFromString(macAddrStrings string) (ncnMacs []string) {
 			interfaceName == "dummy" ||
 			interfaceName == "lo" ||
 			strings.Contains(interfaceName, "usb") ||
-			strings.Contains(interfaceName, "veth") {
+			strings.Contains(interfaceName, "veth") ||
+			strings.Contains(interfaceName, "lxc") {
 			continue
 		}
 
