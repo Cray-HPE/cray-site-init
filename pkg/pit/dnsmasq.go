@@ -149,7 +149,7 @@ host-record={{.APIGWALIASES}},{{.APIGWIP}} # api gateway
 cname=kubernetes-api.vshasta.io,ncn-m001
 `)
 
-// If a system is configured to use the CHN then no CAN IPs are assigned
+// StaticConfigTemplateCHN defines the DNSMasq configuration for a node if a system is configured to use CHN and there is no CAN network.
 var StaticConfigTemplateCHN = []byte(`
 # Static Configurations
 {{range .NCNS}}
