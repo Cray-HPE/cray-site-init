@@ -149,6 +149,32 @@ host-record={{.APIGWALIASES}},{{.APIGWIP}} # api gateway
 cname=kubernetes-api.vshasta.io,ncn-m001
 `)
 
+// StaticConfigTemplateCHN defines the DNSMasq configuration for a node if a system is configured to use CHN and there is no CAN network.
+var StaticConfigTemplateCHN = []byte(`
+# Static Configurations
+{{range .NCNS}}
+# DHCP Entries for {{.Hostname}}
+dhcp-host=id:{{.Xname}},set:{{.Hostname}},{{.Bond0Mac0}},{{.Bond0Mac1}},{{.MtlIP}},{{.Hostname}},20m # MTL
+dhcp-host=id:{{.Xname}},set:{{.Hostname}},{{.Bond0Mac0}},{{.Bond0Mac1}},{{.NmnIP}},{{.Hostname}},20m # Bond0 Mac0/Mac1
+dhcp-host=id:{{.Xname}},set:{{.Hostname}},{{.Bond0Mac0}},{{.Bond0Mac1}},{{.HmnIP}},{{.Hostname}},20m # HMN
+dhcp-host={{.BmcMac}},{{.BmcIP}},{{.Hostname}}-mgmt,20m #HMN
+# Host Record Entries for {{.Hostname}}
+host-record={{.Hostname}},{{.Hostname}}.hmn,{{.HmnIP}}
+host-record={{.Hostname}},{{.Hostname}}.nmn,{{.NmnIP}}
+host-record={{.Hostname}},{{.Hostname}}.mtl,{{.MtlIP}}
+host-record={{.Xname}},{{.Hostname}}.nmn,{{.NmnIP}}
+host-record={{.Hostname}}-mgmt,{{.Hostname}}-mgmt.hmn,{{.BmcIP}}
+# Override root-path with {{.Hostname}}'s xname
+dhcp-option-force=tag:{{.Hostname}},17,{{.Xname}}
+{{end}}
+# Virtual IP Addresses for k8s and the rados gateway
+host-record=kubeapi-vip,kubeapi-vip.nmn,{{.KUBEVIP}} # k8s-virtual-ip
+host-record=rgw-vip,rgw-vip.nmn,{{.RGWVIP}} # rgw-virtual-ip
+host-record={{.APIGWALIASES}},{{.APIGWIP}} # api gateway
+
+cname=kubernetes-api.vshasta.io,ncn-m001
+`)
+
 // DNSMasqBootstrapNetwork holds information for configuring DNSMasq on the LiveCD
 type DNSMasqBootstrapNetwork struct {
 	Subnet    csi.IPV4Subnet
@@ -218,11 +244,15 @@ func WriteDNSMasqConfig(path string, v *viper.Viper, bootstrap []csi.LogicalNCN,
 	if v.GetString("bican-user-network-name") == "CAN" || v.GetBool("retain-unused-user-network") {
 		netCAN, _ := template.New("canconfig").Parse(string(CANConfigTemplate))
 		writeConfig("CAN", path, *netCAN, networks)
-	}
 
-	// Expected NCNs (and other devices) reserved DHCP leases:
-	netIPAM, _ := template.New("statics").Parse(string(StaticConfigTemplate))
-	csiFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/statics.conf"), netIPAM, data)
+		// Expected NCNs (and other devices) reserved DHCP leases:
+		netIPAM, _ := template.New("statics").Parse(string(StaticConfigTemplate))
+		csiFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/statics.conf"), netIPAM, data)
+	} else {
+		// Expected NCNs (and other devices) reserved DHCP leases:
+		netIPAM, _ := template.New("statics").Parse(string(StaticConfigTemplateCHN))
+		csiFiles.WriteTemplate(filepath.Join(path, "dnsmasq.d/statics.conf"), netIPAM, data)
+	}
 }
 
 func writeConfig(name, path string, tpl template.Template, networks map[string]*csi.IPV4Network) {
