@@ -44,6 +44,8 @@ ifeq ($(GOARCH),)
 		export GOARCH=arm64
 	else ifeq "$(ARCH)" "x86_64"
 		export GOARCH=amd64
+	else
+		export GOARCH=$(ARCH)
 	endif
 endif
 
