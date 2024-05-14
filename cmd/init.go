@@ -780,17 +780,16 @@ func validateFlags() []string {
 	}
 
 	userGateway := false
-	for _, gateway := range requiredUserGateway {
-		if v.IsSet(gateway) && (v.GetString(gateway) != "") {
-			if !userGateway {
-				userGateway = true
-			} else {
+	for i, gateway := range requiredUserGateway {
+		if v.IsSet(gateway) && v.GetString(gateway) != "" {
+			if userGateway {
 				errors = append(errors, fmt.Sprintf("provide only one of %v", requiredUserGateway))
 				break
 			}
+			userGateway = true
 		}
-		// if we're looking at the last item in requiredUserGateway and we haven't found a user gateway, set error
-		if gateway == requiredUserGateway[len(requiredUserGateway)-1] && !userGateway {
+
+		if i == len(requiredUserGateway)-1 && !userGateway {
 			errors = append(errors, fmt.Sprintf("one of %v is required, but has not been set through flag or config file", requiredUserGateway))
 		}
 	}
