@@ -783,7 +783,7 @@ func validateFlags() []string {
 	for i, gateway := range requiredUserGateway {
 		if v.IsSet(gateway) && v.GetString(gateway) != "" {
 			if userGateway {
-				errors = append(errors, fmt.Sprintf("provide only one of %v", requiredUserGateway))
+				errors = append(errors, fmt.Sprintf("found value for both %v, expected only one or the other to be set.", requiredUserGateway))
 				break
 			}
 			userGateway = true
