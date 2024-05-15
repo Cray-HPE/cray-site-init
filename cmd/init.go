@@ -377,7 +377,11 @@ var initCmd = &cobra.Command{
 		fmt.Printf("\n===== %v Installation Summary =====\n\n", v.GetString("system-name"))
 		fmt.Printf("Installation Node: %v\n", v.GetString("install-ncn"))
 		fmt.Printf("Customer Management: %v GW: %v\n", v.GetString("cmn-cidr"), v.GetString("cmn-gateway"))
-		fmt.Printf("Customer Access: %v GW: %v\n", v.GetString("can-cidr"), v.GetString("can-gateway"))
+		if v.IsSet("can-gateway") {
+			fmt.Printf("Customer Management: %v GW: %v\n", v.GetString("can-cidr"), v.GetString("can-gateway"))
+		} else if v.IsSet("chn-gateway") {
+			fmt.Printf("Customer Management: %v GW: %v\n", v.GetString("chn-cidr"), v.GetString("chn-gateway"))
+		}
 		fmt.Printf("\tUpstream DNS: %v\n", v.GetString("site-dns"))
 		fmt.Printf("\tMetalLB Peers: %v\n", v.GetStringSlice("bgp-peer-types"))
 		fmt.Println("Networking")
@@ -723,7 +727,6 @@ func validateFlags() []string {
 	var requiredFlags = []string{
 		"system-name",
 		csm.APIKeyName,
-		"can-gateway",
 		"cmn-gateway",
 		"cmn-cidr",
 		"site-ip",
@@ -734,6 +737,11 @@ func validateFlags() []string {
 		"bootstrap-ncn-bmc-user",
 		"bootstrap-ncn-bmc-pass",
 		"bican-user-network-name",
+	}
+
+	var requiredUserGateway = []string{
+		"can-gateway",
+		"chn-gateway",
 	}
 
 	detectedVersion, versionEnvError := csm.DetectedVersion()
@@ -771,10 +779,26 @@ func validateFlags() []string {
 		}
 	}
 
+	userGateway := false
+	for i, gateway := range requiredUserGateway {
+		if v.IsSet(gateway) && v.GetString(gateway) != "" {
+			if userGateway {
+				errors = append(errors, fmt.Sprintf("found value for both %v, expected only one or the other to be set.", requiredUserGateway))
+				break
+			}
+			userGateway = true
+		}
+
+		if i == len(requiredUserGateway)-1 && !userGateway {
+			errors = append(errors, fmt.Sprintf("one of %v is required, but has not been set through flag or config file", requiredUserGateway))
+		}
+	}
+
 	var ipv4Flags = []string{
 		"site-dns",
 		"cmn-gateway",
 		"can-gateway",
+		"chn-gateway",
 		"site-gw",
 	}
 	for _, flagName := range ipv4Flags {
