@@ -802,7 +802,7 @@ func validateFlags() []string {
 		"site-gw",
 	}
 	for _, flagName := range ipv4Flags {
-		if v.IsSet(flagName) {
+		if v.IsSet(flagName) && v.GetString(flagName) != "" {
 			if net.ParseIP(v.GetString(flagName)) == nil {
 				errors = append(errors, fmt.Sprintf("%v should be an ip address and is not set correctly through flag or config file (.%s)", flagName, v.ConfigFileUsed()))
 			}
