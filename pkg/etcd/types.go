@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -25,13 +25,14 @@
 package etcd
 
 import (
+	"net/http"
+
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"k8s.io/client-go/kubernetes"
-	"net/http"
 )
 
-// EtcdSecretName - Name of the secret containing the etcd keys.
-const EtcdSecretName = "kube-etcdbackup-etcd"
+// SecretName - Name of the secret containing the etcd keys.
+const SecretName = "kube-etcdbackup-etcd"
 
 // UtilsClient - Structure for etcd client.
 type UtilsClient struct {

@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -51,10 +51,17 @@ func WriteConfig(enc encoder, path string, conf interface{}) error {
 	}
 	defer f.Close()
 	w := bufio.NewWriter(f)
-	enc(w, conf)
+	enc(
+		w,
+		conf,
+	)
 	w.Flush()
 	info, _ := f.Stat()
-	log.Printf("wrote %d bytes to %s\n", info.Size(), path)
+	log.Printf(
+		"wrote %d bytes to %s\n",
+		info.Size(),
+		path,
+	)
 	return nil
 }
 
@@ -65,7 +72,10 @@ func ReadConfig(dec decoder, path string, conf interface{}) error {
 		return err
 	}
 	defer f.Close()
-	return dec(f, conf)
+	return dec(
+		f,
+		conf,
+	)
 }
 
 // Generic and safe-ish file writing code
@@ -81,6 +91,10 @@ func writeFile(path string, contents string) error {
 		return err
 	}
 	w.Flush()
-	log.Printf("wrote %d bytes to %s\n", size, path)
+	log.Printf(
+		"wrote %d bytes to %s\n",
+		size,
+		path,
+	)
 	return nil
 }

@@ -24,14 +24,14 @@ See https://cray-hpe.github.io/cray-site-init/commands for details on each comma
 +
 [source,bash]
 ----
-make
-./bin/csi --help
+make csi
+./csi --help
 ----
 
 . Calling Go
 +
 [source,bash]
 ----
-go build -o csi ./main.go
+go build -o csi ./cmd/csi
 ./csi --help
 ----

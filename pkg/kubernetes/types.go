@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -30,11 +30,13 @@ import (
 	"k8s.io/kubectl/pkg/drain"
 )
 
-// MinMasters - Minimum number of master nodes the cluster can survive with.
-const MinMasters = 1
+const (
+	// MinMasters - Minimum number of master nodes the cluster can survive with.
+	MinMasters = 1
 
-// MinWorkers - Minimum number of workers nodes the cluster can survive with.
-const MinWorkers = 2
+	// MinWorkers - Minimum number of workers nodes the cluster can survive with.
+	MinWorkers = 2
+)
 
 // UtilsClient - Structure for kubernetes client.
 type UtilsClient struct {

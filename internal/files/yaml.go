@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -42,10 +42,18 @@ func DecodeYAML(f io.Reader, v interface{}) error {
 
 // WriteYAMLConfig marshals from an interface to yaml and writes the result to the path indicated
 func WriteYAMLConfig(path string, conf interface{}) error {
-	return WriteConfig(EncodeYAML, path, conf)
+	return WriteConfig(
+		EncodeYAML,
+		path,
+		conf,
+	)
 }
 
 // ReadYAMLConfig unmarshals a YAML encoded object from the specified file
 func ReadYAMLConfig(path string, conf interface{}) error {
-	return ReadConfig(DecodeYAML, path, conf)
+	return ReadConfig(
+		DecodeYAML,
+		path,
+		conf,
+	)
 }

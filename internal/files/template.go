@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -33,10 +33,19 @@ import (
 // WriteTemplate applies a config to a Template and writes the result to the path indicated
 func WriteTemplate(path string, tpl *template.Template, conf interface{}) error {
 	var bs bytes.Buffer
-	err := tpl.Execute(&bs, conf)
+	err := tpl.Execute(
+		&bs,
+		conf,
+	)
 	if err != nil {
-		log.Printf("The error executing the template is %v \n", err)
+		log.Printf(
+			"The error executing the template is %v \n",
+			err,
+		)
 	}
 	// log.Printf("calling writefile with %v, %v", path, bs.String())
-	return writeFile(path, bs.String())
+	return writeFile(
+		path,
+		bs.String(),
+	)
 }
