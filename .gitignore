@@ -4,3 +4,7 @@ build/
 !cmd/embeded-files/*
 dist/
 system_config.*
+/csi
+/csi-*
+data.json
+data-*.json
