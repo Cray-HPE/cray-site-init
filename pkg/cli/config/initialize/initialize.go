@@ -47,6 +47,8 @@ import (
 	"github.com/Cray-HPE/cray-site-init/pkg/version"
 )
 
+var appVersion string
+
 // NewCommand represents the init command
 func NewCommand() *cobra.Command {
 	c := &cobra.Command{
@@ -80,6 +82,10 @@ func NewCommand() *cobra.Command {
 		Run: func(c *cobra.Command, args []string) {
 			// Initialize the global viper
 			v := viper.GetViper()
+
+			clientVersion := version.Get()
+			appVersion = clientVersion.Version
+
 			err := v.BindPFlags(c.Flags())
 			if err != nil {
 				log.Fatalln(err)
