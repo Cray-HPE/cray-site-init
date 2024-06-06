@@ -1,5 +1,5 @@
 ---
-date: 2021-07-07T16:41:32-05:00
+date: 2024-06-06T09:39:24-05:00
 title: "csi pit format"
 layout: default
 ---
@@ -20,6 +20,12 @@ csi pit format DISK ISO SIZE [flags]
 ```
   -h, --help                  help for format
   -w, --write-script string   Path to the write-livecd.sh script (default "/usr/local/bin/write-livecd.sh")
+```
+
+### Options inherited from parent commands
+
+```
+  -c, --config string   CSI config file
 ```
 
 ### SEE ALSO

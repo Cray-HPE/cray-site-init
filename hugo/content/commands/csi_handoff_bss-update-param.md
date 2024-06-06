@@ -1,5 +1,5 @@
 ---
-date: 2021-07-07T16:41:32-05:00
+date: 2024-06-06T09:39:24-05:00
 title: "csi handoff bss-update-param"
 layout: default
 ---
@@ -26,7 +26,13 @@ csi handoff bss-update-param [flags]
       --set stringArray      For each kernel parameter you wish to update or add list it in the format of key=value
 ```
 
+### Options inherited from parent commands
+
+```
+  -c, --config string   CSI config file
+```
+
 ### SEE ALSO
 
-* [csi handoff](/commands/csi_handoff/)	 - runs migration steps to transition from LiveCD
+* [csi handoff](/commands/csi_handoff/)	 - Runs migration steps to transition from LiveCD
 

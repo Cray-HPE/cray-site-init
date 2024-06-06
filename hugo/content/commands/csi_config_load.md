@@ -1,16 +1,16 @@
 ---
-date: 2021-07-07T16:41:32-05:00
+date: 2024-06-06T09:39:24-05:00
 title: "csi config load"
 layout: default
 ---
 ## csi config load
 
-load a valid Shasta directory of configuration
+Load an existing Shasta configuration
 
 ### Synopsis
 
 Load a set of files that represent a Shasta system.
-	Often load is used with init which generates the files.
+	Often, 'load' is used with 'init', which generates the files.
 
 ```
 csi config load <path> [flags]
@@ -22,7 +22,13 @@ csi config load <path> [flags]
   -h, --help   help for load
 ```
 
+### Options inherited from parent commands
+
+```
+  -c, --config string   CSI config file
+```
+
 ### SEE ALSO
 
-* [csi config](/commands/csi_config/)	 - Interact with a config in a named directory
+* [csi config](/commands/csi_config/)	 - Interact with a Shasta config
 

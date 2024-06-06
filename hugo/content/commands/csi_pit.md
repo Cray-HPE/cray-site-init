@@ -1,5 +1,5 @@
 ---
-date: 2021-07-07T16:41:32-05:00
+date: 2024-06-06T09:39:24-05:00
 title: "csi pit"
 layout: default
 ---
@@ -24,11 +24,16 @@ csi pit [flags]
   -h, --help   help for pit
 ```
 
+### Options inherited from parent commands
+
+```
+  -c, --config string   CSI config file
+```
+
 ### SEE ALSO
 
-* [csi](/commands/csi/)	 - Cray Site Init. for new sites ore re-installs and upgrades.
+* [csi](/commands/csi/)	 - Cray Site Init. For new sites, re-installs, and upgrades.
 * [csi pit format](/commands/csi_pit_format/)	 - Formats a disk as a LiveCD
 * [csi pit get](/commands/csi_pit_get/)	 - Downloads artifacts
-* [csi pit populate](/commands/csi_pit_populate/)	 - Populates the LiveCD with configs
 * [csi pit validate](/commands/csi_pit_validate/)	 - Runs unit tests
 

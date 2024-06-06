@@ -1,5 +1,5 @@
 ---
-date: 2021-07-07T16:41:32-05:00
+date: 2024-06-06T09:39:24-05:00
 title: "csi patch ca"
 layout: default
 ---
@@ -21,11 +21,17 @@ csi patch ca [flags]
 ### Options
 
 ```
-      --cloud-init-seed-file string     Path to cloud-init metadata seed file
       --customizations-file string      path to customizations.yaml (shasta-cfg)
   -h, --help                            help for ca
       --sealed-secret-key-file string   Path to sealed secrets/shasta-cfg private key
       --sealed-secret-name string       Path to cloud-init metadata seed file (default "gen_platform_ca_1")
+```
+
+### Options inherited from parent commands
+
+```
+      --cloud-init-seed-file string   Path to cloud-init metadata seed file
+  -c, --config string                 CSI config file
 ```
 
 ### SEE ALSO

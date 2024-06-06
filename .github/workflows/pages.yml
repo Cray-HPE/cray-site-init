@@ -22,7 +22,7 @@ jobs:
           go-version: "1.19"
 
       - name: makedocs
-        run: go run main.go makedocs ./hugo/content/commands
+        run: go run cmd/csi/main.go makedocs ./hugo/content/commands
 
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@v3
