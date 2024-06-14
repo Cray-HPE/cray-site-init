@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -47,20 +47,32 @@ type NetworkExtraProperties struct {
 func (network *NetworkExtraProperties) LookupSubnet(name string) (IPV4Subnet, error) {
 	var found []IPV4Subnet
 	if len(network.Subnets) == 0 {
-		return IPV4Subnet{}, fmt.Errorf("subnet not found \"%v\"", name)
+		return IPV4Subnet{}, fmt.Errorf(
+			"subnet not found \"%v\"",
+			name,
+		)
 	}
 	for _, v := range network.Subnets {
 		if v.Name == name {
-			found = append(found, v)
+			found = append(
+				found,
+				v,
+			)
 		}
 	}
 	if len(found) == 1 {
 		return found[0], nil
 	}
 	if len(found) > 1 {
-		return found[0], fmt.Errorf("found %v subnets instead of just one", len(found))
+		return found[0], fmt.Errorf(
+			"found %v subnets instead of just one",
+			len(found),
+		)
 	}
-	return IPV4Subnet{}, fmt.Errorf("subnet not found \"%v\"", name)
+	return IPV4Subnet{}, fmt.Errorf(
+		"subnet not found \"%v\"",
+		name,
+	)
 }
 
 // IPReservation is a type for managing IP Reservations

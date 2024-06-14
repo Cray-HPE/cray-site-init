@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -41,10 +41,18 @@ func DecodeJSON(f io.Reader, v interface{}) error {
 
 // WriteJSONConfig marshals from an interface to json and writes the result to the path indicated
 func WriteJSONConfig(path string, conf interface{}) error {
-	return WriteConfig(EncodeJSON, path, conf)
+	return WriteConfig(
+		EncodeJSON,
+		path,
+		conf,
+	)
 }
 
 // ReadJSONConfig unmarshals a JSON encoded object from the specified file
 func ReadJSONConfig(path string, conf interface{}) error {
-	return ReadConfig(DecodeJSON, path, conf)
+	return ReadConfig(
+		DecodeJSON,
+		path,
+		conf,
+	)
 }

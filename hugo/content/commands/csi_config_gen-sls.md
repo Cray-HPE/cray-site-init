@@ -1,5 +1,5 @@
 ---
-date: 2021-07-07T16:41:32-05:00
+date: 2024-06-06T09:39:24-05:00
 title: "csi config gen-sls"
 layout: default
 ---
@@ -25,7 +25,13 @@ csi config gen-sls [options] <path> [flags]
       --river-cabinets int16   Number of River cabinets (default 1)
 ```
 
+### Options inherited from parent commands
+
+```
+  -c, --config string   CSI config file
+```
+
 ### SEE ALSO
 
-* [csi config](/commands/csi_config/)	 - Interact with a config in a named directory
+* [csi config](/commands/csi_config/)	 - Interact with a Shasta config
 

@@ -1,5 +1,5 @@
 ---
-date: 2021-07-07T16:41:32-05:00
+date: 2024-06-06T09:39:24-05:00
 title: "csi upload-sls-file"
 layout: default
 ---
@@ -27,14 +27,20 @@ csi upload-sls-file [flags]
 
 ```
   -h, --help                 help for upload-sls-file
-      --kubeconfig string    Absolute path to the kubeconfig file (default "/Users/jsalmela/.kube/config")
+      --kubeconfig string    Absolute path to the kubeconfig file (default "/Users/rusty/.kube/config")
       --remove-upload-flag   Remove the upload flag added by the SLS loader
       --s3-bucket string     Bucket to create and upload the SLS input file to (default "sls")
       --s3-secret string     Secret to use for connecting to S3 (default "sls-s3-credentials")
       --sls-file string      Path to the SLS Input File to Upload (default "sls_input_file.json")
 ```
 
+### Options inherited from parent commands
+
+```
+  -c, --config string   CSI config file
+```
+
 ### SEE ALSO
 
-* [csi](/commands/csi/)	 - Cray Site Init. for new sites ore re-installs and upgrades.
+* [csi](/commands/csi/)	 - Cray Site Init. For new sites, re-installs, and upgrades.
 

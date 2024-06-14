@@ -54,7 +54,7 @@ export CGO_ENABLED GOOS GOARCH GO111MODULE
 
 go version
 
-make
+make csi
 
 %install
 CGO_ENABLED=0
@@ -64,7 +64,7 @@ GO111MODULE=on
 export CGO_ENABLED GOOS GOARCH GO111MODULE
 
 mkdir -pv ${RPM_BUILD_ROOT}/usr/bin/
-cp -pv bin/csi ${RPM_BUILD_ROOT}/usr/bin/csi
+cp -pv csi ${RPM_BUILD_ROOT}/usr/bin/csi
 
 mkdir -pv ${RPM_BUILD_ROOT}/usr/local/bin/
 cp -pv scripts/write-livecd.sh ${RPM_BUILD_ROOT}/usr/local/bin/write-livecd.sh
