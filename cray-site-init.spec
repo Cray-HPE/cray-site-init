@@ -71,12 +71,20 @@ cp -pv %{shortname} ${RPM_BUILD_ROOT}/usr/bin/%{shortname}
 mkdir -pv ${RPM_BUILD_ROOT}/usr/local/bin/
 cp -pv scripts/write-livecd.sh ${RPM_BUILD_ROOT}/usr/local/bin/write-livecd.sh
 
+# Shell completion
+install -d %{buildroot}%{_sysconfdir}/bash_completion.d
+install -d %{buildroot}%{_sysconfdir}/zsh_completion.d
+./%{shortname} completion bash >%{buildroot}%{_sysconfdir}/bash_completion.d/%{shortname}_complete
+./%{shortname} completion zsh >%{buildroot}%{_sysconfdir}/zsh_completion.d/%{shortname}_complete
+
 %clean
 
 %files
 %doc README.adoc
 %license LICENSE
 %defattr(755,root,root)
+%{_sysconfdir}/bash_completion.d/%{name}_complete
+%{_sysconfdir}/zsh_completion.d/%{name}_complete
 /usr/bin/%{shortname}
 /usr/local/bin/write-livecd.sh
 
