@@ -19,6 +19,8 @@
 # OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
+%global shortname csi
+
 Name: %(echo $NAME)
 License: MIT License
 BuildArch: %(echo $ARCH)
@@ -27,7 +29,7 @@ Version: %(echo ${VERSION})
 Release: 1
 Source: %{name}-%{version}.tar.bz2
 Vendor: Cray Inc.
-Provides: csi
+Provides: %{shortname}
 
 %ifarch %ix86
     %global GOARCH 386
@@ -54,7 +56,7 @@ export CGO_ENABLED GOOS GOARCH GO111MODULE
 
 go version
 
-make csi
+make %{shortname}
 
 %install
 CGO_ENABLED=0
@@ -64,10 +66,16 @@ GO111MODULE=on
 export CGO_ENABLED GOOS GOARCH GO111MODULE
 
 mkdir -pv ${RPM_BUILD_ROOT}/usr/bin/
-cp -pv csi ${RPM_BUILD_ROOT}/usr/bin/csi
+cp -pv %{shortname} ${RPM_BUILD_ROOT}/usr/bin/%{shortname}
 
 mkdir -pv ${RPM_BUILD_ROOT}/usr/local/bin/
 cp -pv scripts/write-livecd.sh ${RPM_BUILD_ROOT}/usr/local/bin/write-livecd.sh
+
+# Shell completion
+install -d %{buildroot}%{_sysconfdir}/bash_completion.d
+install -d %{buildroot}%{_sysconfdir}/zsh_completion.d
+./%{shortname} completion bash >%{buildroot}%{_sysconfdir}/bash_completion.d/%{shortname}_complete
+./%{shortname} completion zsh >%{buildroot}%{_sysconfdir}/zsh_completion.d/%{shortname}_complete
 
 %clean
 
@@ -75,7 +83,9 @@ cp -pv scripts/write-livecd.sh ${RPM_BUILD_ROOT}/usr/local/bin/write-livecd.sh
 %doc README.adoc
 %license LICENSE
 %defattr(755,root,root)
-/usr/bin/csi
+%{_sysconfdir}/bash_completion.d/%{name}_complete
+%{_sysconfdir}/zsh_completion.d/%{name}_complete
+/usr/bin/%{shortname}
 /usr/local/bin/write-livecd.sh
 
 %changelog
