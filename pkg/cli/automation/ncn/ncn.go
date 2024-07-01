@@ -47,9 +47,10 @@ func NewCommand() *cobra.Command {
 		Long:              "A series of subcommands that automates NCN administrative tasks.",
 		DisableAutoGenTag: true,
 	}
-	c.Flags().StringVar(
+	c.PersistentFlags().StringVarP(
 		&kubeconfig,
 		"kubeconfig",
+		"k",
 		"",
 		"Absolute path to the kubeconfig file",
 	)
