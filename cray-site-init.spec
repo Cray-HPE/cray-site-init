@@ -48,23 +48,10 @@ Installs the Cray Site Initiator GoLang binary onto a Linux system.
 %setup -q
 
 %build
-CGO_ENABLED=0
-GOOS=linux
-GOARCH="%{GOARCH}"
-GO111MODULE=on
-export CGO_ENABLED GOOS GOARCH GO111MODULE
-
 go version
-
-make %{shortname}
+GOOS=linux GOARCH="%{GOARCH}" make %{shortname}
 
 %install
-CGO_ENABLED=0
-GOOS=linux
-GOARCH="%{GOARCH}"
-GO111MODULE=on
-export CGO_ENABLED GOOS GOARCH GO111MODULE
-
 mkdir -pv ${RPM_BUILD_ROOT}/usr/bin/
 cp -pv %{shortname} ${RPM_BUILD_ROOT}/usr/bin/%{shortname}
 

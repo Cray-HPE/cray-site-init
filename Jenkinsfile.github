@@ -73,8 +73,8 @@ pipeline {
                     stage('Build: setup') {
                         steps {
                             lock('docker-image-pull') {
-                                sh "docker pull --platform linux/${DOCKER_ARCH} ${goImage}"
-                                sh "docker tag ${goImage}:latest ${goImage}:${DOCKER_ARCH}"
+                                sh "docker pull --platform linux/${DOCKER_ARCH} ${goImage}:${GO_VERSION}"
+                                sh "docker tag ${goImage}:${GO_VERSION} ${goImage}:${DOCKER_ARCH}"
                             }
                         }
                     }
