@@ -230,7 +230,7 @@ BONDING_MODULE_OPTS='mode=802.3ad miimon=100 lacp_rate=fast xmit_hash_policy=lay
 
 # DO NOT CHANGE THESE:
 ONBOOT='yes'
-STARTMODE='manual'
+STARTMODE='auto'
 BONDING_MASTER='yes'
 `)
 
@@ -250,8 +250,8 @@ BRIDGE_PORTS='{{.Nic}}'
 # Set static IP (becomes "preferred" if dhcp is enabled)
 # NOTE: IPADDR's route will override DHCPs.
 BOOTPROTO='static'
-IPADDR='{{.IP}}'    # i.e. 10.100.10.1/24
-PREFIXLEN='{{.IPPrefix}}' # i.e. 24
+IPADDR='{{.IP}}'
+PREFIXLEN='{{.IPPrefix}}'
 
 # DO NOT CHANGE THESE:
 ONBOOT='yes'
