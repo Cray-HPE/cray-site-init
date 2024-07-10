@@ -295,19 +295,22 @@ func WriteDNSMasqConfig(
 		networks,
 	)
 
-	// Work some BICAN required magic
-	if v.GetString("bican-user-network-name") == "CAN" || v.GetBool("retain-unused-user-network") {
+	var netIPAM *template.Template
+	bicanNetworkName := v.GetString("bican-user-network-name")
+	if bicanNetworkName == "CAN" || v.GetBool("retain-unused-user-network") {
 		netCAN, _ := template.New("canconfig").Parse(string(CANConfigTemplate))
 		writeConfig(
-			"CAN",
+			bicanNetworkName,
 			path,
 			*netCAN,
 			networks,
 		)
+		netIPAM, _ = template.New("statics").Parse(string(StaticConfigTemplate))
+	} else {
+		netIPAM, _ = template.New("statics").Parse(string(StaticConfigTemplateCHN))
 	}
 
 	// Expected NCNs (and other devices) reserved DHCP leases:
-	netIPAM, _ := template.New("statics").Parse(string(StaticConfigTemplateCHN))
 	csiFiles.WriteTemplate(
 		filepath.Join(
 			path,
