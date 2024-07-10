@@ -153,32 +153,6 @@ var DefaultLoadBalancerHMN = networking.IPV4Network{
 	Comment:  "",
 }
 
-// GenDefaultHMN returns the default structure for templating initial HMN configuration
-func GenDefaultHMN() networking.IPV4Network {
-	return networking.IPV4Network{
-		FullName:  "Hardware Management Network",
-		CIDR:      DefaultHMNString,
-		Name:      "HMN",
-		VlanRange: []int16{DefaultHMNVlan},
-		MTU:       9000,
-		NetType:   "ethernet",
-		Comment:   "",
-	}
-}
-
-// GenDefaultNMN returns the default structure for templating initial NMN configuration
-func GenDefaultNMN() networking.IPV4Network {
-	return networking.IPV4Network{
-		FullName:  "Node Management Network",
-		CIDR:      DefaultNMNString,
-		Name:      "NMN",
-		VlanRange: []int16{DefaultNMNVlan},
-		MTU:       9000,
-		NetType:   "ethernet",
-		Comment:   "",
-	}
-}
-
 // DefaultBICAN is the default structure for templating the initial BICAN toggle - CMN
 var DefaultBICAN = networking.IPV4Network{
 	FullName:           "SystemDefaultRoute points the network name of the default route",
@@ -207,46 +181,74 @@ var DefaultHSN = networking.IPV4Network{
 
 // DefaultCMN is the default structure for templating initial CMN configuration
 var DefaultCMN = networking.IPV4Network{
-	FullName:  "Customer Management Network",
-	CIDR:      DefaultCMNString,
-	Name:      "CMN",
-	VlanRange: []int16{DefaultCMNVlan},
-	MTU:       9000,
-	NetType:   "ethernet",
-	Comment:   "",
+	FullName:     "Customer Management Network",
+	CIDR:         DefaultCMNString,
+	Name:         "CMN",
+	VlanRange:    []int16{DefaultCMNVlan},
+	MTU:          9000,
+	NetType:      "ethernet",
+	Comment:      "",
+	ParentDevice: "bond0",
 }
 
 // DefaultCAN is the default structure for templating initial CAN configuration
 var DefaultCAN = networking.IPV4Network{
-	FullName:  "Customer Access Network",
-	CIDR:      DefaultCANString,
-	Name:      "CAN",
-	VlanRange: []int16{DefaultCANVlan},
-	MTU:       9000,
-	NetType:   "ethernet",
-	Comment:   "",
+	FullName:     "Customer Access Network",
+	CIDR:         DefaultCANString,
+	Name:         "CAN",
+	VlanRange:    []int16{DefaultCANVlan},
+	MTU:          9000,
+	NetType:      "ethernet",
+	Comment:      "",
+	ParentDevice: "bond0",
 }
 
 // DefaultCHN is the default structure for templating initial CHN configuration
 var DefaultCHN = networking.IPV4Network{
-	FullName:  "Customer High-Speed Network",
-	CIDR:      DefaultCHNString,
-	Name:      "CHN",
-	VlanRange: []int16{DefaultCHNVlan},
-	MTU:       9000,
-	NetType:   "ethernet",
-	Comment:   "",
+	FullName:     "Customer High-Speed Network",
+	CIDR:         DefaultCHNString,
+	Name:         "CHN",
+	VlanRange:    []int16{DefaultCHNVlan},
+	MTU:          9000,
+	NetType:      "ethernet",
+	Comment:      "",
+	ParentDevice: "bond0",
+}
+
+// DefaultHMN is the default structure for templating initial HMN configuration
+var DefaultHMN = networking.IPV4Network{
+	FullName:     "Hardware Management Network",
+	CIDR:         DefaultHMNString,
+	Name:         "HMN",
+	VlanRange:    []int16{DefaultHMNVlan},
+	MTU:          9000,
+	NetType:      "ethernet",
+	Comment:      "",
+	ParentDevice: "bond0",
+}
+
+// DefaultNMN is the default structure for templating initial NMN configuration
+var DefaultNMN = networking.IPV4Network{
+	FullName:     "Node Management Network",
+	CIDR:         DefaultNMNString,
+	Name:         "NMN",
+	VlanRange:    []int16{DefaultNMNVlan},
+	MTU:          9000,
+	NetType:      "ethernet",
+	Comment:      "",
+	ParentDevice: "bond0",
 }
 
 // DefaultMTL is the default structure for templating initial MTL configuration
 var DefaultMTL = networking.IPV4Network{
-	FullName:  "Provisioning Network (untagged)",
-	CIDR:      DefaultMTLString,
-	Name:      "MTL",
-	VlanRange: []int16{DefaultMTLVlan},
-	MTU:       9000,
-	NetType:   "ethernet",
-	Comment:   "This network is only valid for the NCNs",
+	FullName:     "Provisioning Network (untagged)",
+	CIDR:         DefaultMTLString,
+	Name:         "MTL",
+	VlanRange:    []int16{DefaultMTLVlan},
+	MTU:          9000,
+	NetType:      "ethernet",
+	Comment:      "This network is only valid for the NCNs",
+	ParentDevice: "bond0",
 }
 
 // GenDefaultBICANConfig returns the set of defaults for mapping the BICAN toggle
@@ -266,7 +268,7 @@ func GenDefaultBICANConfig(systemDefaultRoute string) NetworkLayoutConfiguration
 func GenDefaultHMNConfig() NetworkLayoutConfiguration {
 
 	return NetworkLayoutConfiguration{
-		Template:                        GenDefaultHMN(),
+		Template:                        DefaultHMN,
 		SubdivideByCabinet:              false,
 		GroupNetworksByCabinetType:      true,
 		IncludeBootstrapDHCP:            true,
@@ -285,7 +287,7 @@ func GenDefaultHMNConfig() NetworkLayoutConfiguration {
 // GenDefaultNMNConfig returns the set of defaults for mapping the NMN
 func GenDefaultNMNConfig() NetworkLayoutConfiguration {
 	return NetworkLayoutConfiguration{
-		Template:                        GenDefaultNMN(),
+		Template:                        DefaultNMN,
 		SubdivideByCabinet:              false,
 		GroupNetworksByCabinetType:      true,
 		IncludeBootstrapDHCP:            true,
@@ -795,6 +797,7 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*networking.IPV
 				"%v Bootstrap DHCP Subnet",
 				tempNet.Name,
 			)
+			subnet.ParentDevice = tempNet.ParentDevice
 			if tempNet.Name == "NMN" || tempNet.Name == "HMN" || tempNet.Name == "CMN" || tempNet.Name == "CAN" || tempNet.Name == "CHN" {
 				if tempNet.Name == "CAN" {
 					subnet.CIDR = *canCIDR

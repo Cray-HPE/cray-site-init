@@ -1712,6 +1712,10 @@ func AllocateIps(ncns []*LogicalNCN, networks map[string]*networking.IPV4Network
 				subnet.CIDR.String(),
 				"/",
 			)[1]
+			err := subnet.GenInterfaceName()
+			if err != nil {
+				// pass
+			}
 			tempNetwork := NCNNetwork{
 				NetworkName: netName,
 				IPAddress:   reservation.IPAddress.String(),
@@ -1724,7 +1728,10 @@ func AllocateIps(ncns []*LogicalNCN, networks map[string]*networking.IPV4Network
 					},
 					"/",
 				),
-				Mask: prefixLen,
+				Mask:                prefixLen,
+				InterfaceName:       subnet.InterfaceName,
+				ParentInterfaceName: subnet.ParentDevice,
+				Gateway:             subnet.Gateway,
 			}
 			ncn.Networks = append(
 				ncn.Networks,
