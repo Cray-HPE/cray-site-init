@@ -582,25 +582,17 @@ func MakeBaseCampfromNCNs(
 		ncnIPAM := make(map[string]interface{})
 		for _, ncnNetwork := range ncn.Networks {
 
-			// get interface configs
-			for _, subnet := range shastaNetworks[ncnNetwork.NetworkName].Subnets {
-				// Kea doesn't support multiple networks with vlan=0 so we need to special case CHN to not include in the ipam output
-				if strings.ToLower(ncnNetwork.NetworkName) == "chn" {
-					continue
-				}
-
-				// FIXME: Support multiple interfaces, nmn0-nmn1-nmn2 for each VLANID.
-				ncnNICSubnet := make(map[string]interface{})
-				ncnNICSubnet["gateway"] = subnet.Gateway
-				ncnNICSubnet["ip"] = ncnNetwork.CIDR
-				ncnNICSubnet["vlanid"] = ncnNetwork.Vlan
-				if strings.ToLower(ncnNetwork.NetworkName) == "sun" {
-					ncnNICSubnet["parent_device"] = "bond1"
-				} else {
-					ncnNICSubnet["parent_device"] = "bond0"
-				}
-				ncnIPAM[strings.ToLower(ncnNetwork.NetworkName)] = ncnNICSubnet
+			// Kea doesn't support multiple networks with vlan=0 so we need to special case CHN to not include in the ipam output
+			if strings.ToLower(ncnNetwork.NetworkName) == "chn" {
+				continue
 			}
+
+			ncnNICSubnet := make(map[string]interface{})
+			ncnNICSubnet["gateway"] = ncnNetwork.Gateway
+			ncnNICSubnet["ip"] = ncnNetwork.CIDR
+			ncnNICSubnet["vlanid"] = ncnNetwork.Vlan
+			ncnNICSubnet["parent_device"] = ncnNetwork.ParentInterfaceName
+			ncnIPAM[strings.ToLower(ncnNetwork.NetworkName)] = ncnNICSubnet
 		}
 		tempMetadata := MetaData{
 			Hostname:         ncn.Hostname,
