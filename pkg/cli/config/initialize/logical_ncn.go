@@ -164,14 +164,16 @@ func GenerateInstanceID() string {
 
 // NCNNetwork holds information about networks in the NCN context
 type NCNNetwork struct {
-	NetworkName   string `json:"network-name"`
-	FullName      string `json:"full-name"`
-	IPAddress     string `json:"ip-address"`
-	InterfaceName string `json:"net-device"`
-	InterfaceMac  string `json:"mac-address"`
-	Vlan          int    `json:"vlan"`
-	CIDR          string `json:"cidr"`
-	Mask          string `json:"mask"`
+	NetworkName         string `json:"network-name"`
+	FullName            string `json:"full-name"`
+	IPAddress           string `json:"ip-address"`
+	InterfaceName       string `json:"net-device"`
+	InterfaceMac        string `json:"mac-address"`
+	ParentInterfaceName string `json:"parent-interface-name"`
+	Vlan                int    `json:"vlan"`
+	CIDR                string `json:"cidr"`
+	Mask                string `json:"mask"`
+	Gateway             net.IP `json:"gateway"`
 }
 
 // NCNInterface holds information for all MAC addresses in all NCNs. CSV definitions are the lshw fields

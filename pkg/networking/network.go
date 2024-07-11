@@ -50,6 +50,7 @@ type IPV4Network struct {
 	PeerASN            int                   `yaml:"peer-asn"`
 	MyASN              int                   `yaml:"my-asn"`
 	SystemDefaultRoute string                `yaml:"system_default_route"`
+	ParentDevice       string                `yaml:"parent-device"`
 }
 
 // IPV4Subnet is a type for managing IPv4 Subnets
@@ -69,6 +70,8 @@ type IPV4Subnet struct {
 	ReservationStart net.IP          `yaml:"reservation-start"`
 	ReservationEnd   net.IP          `yaml:"reservation-end"`
 	MetalLBPoolName  string          `yaml:"metallb-pool-name"`
+	ParentDevice     string          `yaml:"parent-device"`
+	InterfaceName    string          `yaml:"interface-name"`
 }
 
 // IPReservation is a type for managing IP Reservations
@@ -663,4 +666,35 @@ func (iSubnet *IPV4Subnet) AddReservationWithIP(name, addr, comment string) (
 	}
 
 	return &iSubnet.IPReservations[len(iSubnet.IPReservations)-1], retError
+}
+
+// GenInterfaceName generates the network interface name for a subnet.
+func (iSubnet *IPV4Subnet) GenInterfaceName() error {
+	if len(iSubnet.NetName) > 15 {
+		return fmt.Errorf(
+			"network name [%s] is greater than 15 bytes",
+			iSubnet.NetName,
+		)
+	}
+	if iSubnet.NetName == "" {
+		return fmt.Errorf(
+			"network name [%s] is empty/nil",
+			iSubnet.NetName,
+		)
+	}
+	if iSubnet.VlanID < 1 {
+		iSubnet.InterfaceName = fmt.Sprintf(
+			"%s",
+			iSubnet.ParentDevice,
+		)
+	} else {
+		index := 0 // In the future, if we ever need to change this we can handle it with a loop and setting a range in IPV4Subnet.
+		iSubnet.InterfaceName = fmt.Sprintf(
+			"%s.%s%d",
+			iSubnet.ParentDevice,
+			strings.ToLower(iSubnet.NetName),
+			index,
+		)
+	}
+	return nil
 }

@@ -31,7 +31,9 @@ import (
 
 // EncodeJSON encodes object to writer
 func EncodeJSON(f io.Writer, v interface{}) error {
-	return json.NewEncoder(f).Encode(v)
+	enc := json.NewEncoder(f)
+	enc.SetIndent("", "    ")
+	return enc.Encode(v)
 }
 
 // DecodeJSON decodes object from reader
