@@ -215,7 +215,6 @@ env:
 tidy:
 	go mod tidy
 
-
 binaries := ${NAME}
 
 build: tidy $(binaries)
