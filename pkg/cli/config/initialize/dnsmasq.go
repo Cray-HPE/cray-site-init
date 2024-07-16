@@ -69,6 +69,9 @@ interface-name=pit.{{.NetName | lower}},{{.InterfaceName}}
 dhcp-option=interface:{{.InterfaceName}},option:domain-search,{{.NetName | lower}}
 interface={{.InterfaceName}}
 cname=packages.{{.NetName | lower}},pit.{{.NetName | lower}}
+{{ if eq .NetName "MTL" -}}
+cname=packages.local,pit.{{.NetName | lower}}
+{{ end -}}
 cname=registry.{{.NetName | lower}},pit.{{.NetName | lower}}
 dhcp-option=interface:{{.InterfaceName}},option:dns-server,{{.PITServer}}
 dhcp-option=interface:{{.InterfaceName}},option:ntp-server,{{.PITServer}}
