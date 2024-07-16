@@ -122,7 +122,7 @@ type DNSMasqBootstrapNetwork struct {
 	Interface string
 }
 
-// WriteDNSMasqConfig writes the dnsmasq configuration files necssary for installation
+// WriteDNSMasqConfig writes the dnsmasq configuration files necessary for installation
 func WriteDNSMasqConfig(
 	path string, v *viper.Viper, bootstrap []LogicalNCN, networks map[string]*networking.IPV4Network,
 ) {
