@@ -28,7 +28,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -37,18 +36,21 @@ import (
 	"github.com/spf13/viper"
 )
 
-func formatCommand() *cobra.Command {
+// WriteLiveCDFunc is a type for the writeLiveCD function to allow for dependency injection in testing
+type WriteLiveCDFunc func(device string, iso string, size string) error
+
+func formatCommand(formatFunc WriteLiveCDFunc) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "format DISK ISO SIZE",
 		Short: "Formats a disk as a LiveCD",
 		Long:  `Formats a disk as a LiveCD using an ISO.`, // ValidArgs: []string{"disk", "iso", "size"},
 		Args:  cobra.ExactArgs(3),
 		Run: func(c *cobra.Command, args []string) {
-			writeLiveCD(
-				args[0],
-				args[1],
-				args[2],
-			)
+			device := args[0]
+			iso := args[1]
+			size := args[2]
+			fmt.Printf("Arguments received: device=%s, iso=%s, size=%s\n", device, iso, size) // Debugging statement
+			formatFunc(device, iso, size)
 		},
 	}
 	viper.SetEnvPrefix("pit") // will be uppercased automatically
@@ -60,15 +62,12 @@ func formatCommand() *cobra.Command {
 		"/usr/local/bin/write-livecd.sh",
 		"Path to the write-livecd.sh script",
 	)
-	c.MarkFlagRequired("write-script")
 	return c
 }
 
 var writeScript = filepath.Join(viper.GetString("write_script"))
 
-func writeLiveCD(
-	device string, iso string, size string,
-) {
+var writeLiveCD = WriteLiveCDFunc(func(device string, iso string, size string) error {
 	// format the device as the liveCD
 	cmd := exec.Command(
 		writeScript,
@@ -89,8 +88,8 @@ func writeLiveCD(
 
 	err := cmd.Run()
 	if err != nil {
-		log.Fatalf(
-			"cmd.Run() failed with %s\n",
+		return fmt.Errorf(
+			"cmd.Run() failed with %s",
 			err,
 		)
 	}
@@ -104,4 +103,5 @@ func writeLiveCD(
 	fmt.Printf("Run these commands before using 'pit populate':\n")
 	fmt.Printf("\tmkdir -pv /mnt/{cow,pitdata}\n")
 	fmt.Printf("\tmount -L cow /mnt/cow && mount -L PITDATA /mnt/pitdata\n")
-}
+	return nil
+})

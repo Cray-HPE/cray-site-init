@@ -45,7 +45,7 @@ the liveCD tool. Fetches artifacts for deployment.`,
 		},
 	}
 	c.AddCommand(
-		formatCommand(),
+		formatCommand(writeLiveCD),
 		getCommand(),
 		validateCommand(),
 	)
