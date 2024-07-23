@@ -45,12 +45,13 @@ func formatCommand(formatFunc WriteLiveCDFunc) *cobra.Command {
 		Short: "Formats a disk as a LiveCD",
 		Long:  `Formats a disk as a LiveCD using an ISO.`, // ValidArgs: []string{"disk", "iso", "size"},
 		Args:  cobra.ExactArgs(3),
-		Run: func(c *cobra.Command, args []string) {
+		RunE: func(c *cobra.Command, args []string) error {
 			device := args[0]
 			iso := args[1]
 			size := args[2]
 			fmt.Printf("Arguments received: device=%s, iso=%s, size=%s\n", device, iso, size) // Debugging statement
-			formatFunc(device, iso, size)
+			err := formatFunc(device, iso, size)
+			return err
 		},
 	}
 	viper.SetEnvPrefix("pit") // will be uppercased automatically
