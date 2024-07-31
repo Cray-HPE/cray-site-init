@@ -1547,7 +1547,7 @@ func validateFlags() []string {
 				if !v.IsSet("chn-gateway") || v.GetString("chn-gateway") == "" {
 					errors = append(
 						errors,
-						fmt.Sprintln("chn-gateway is required because bican-user-network-name is set to CAN but chn-gateway was not set or was blank."),
+						fmt.Sprintln("chn-gateway is required because bican-user-network-name is set to CHN but chn-gateway was not set or was blank."),
 					)
 				} else {
 					ipv4Flags = append(
