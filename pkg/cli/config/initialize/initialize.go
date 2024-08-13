@@ -864,21 +864,6 @@ func NewCommand() *cobra.Command {
 		slsInit.DefaultHSNString,
 		"Overall IPv4 CIDR for all HSN subnets",
 	)
-	c.Flags().String(
-		"hsn-static-pool",
-		"",
-		"Overall IPv4 CIDR for static High Speed load balancer addresses",
-	)
-	c.Flags().String(
-		"hsn-dynamic-pool",
-		"",
-		"Overall IPv4 CIDR for dynamic High Speed load balancer addresses",
-	)
-	c.MarkFlagsRequiredTogether(
-		"hsn-cidr",
-		"hsn-static-pool",
-		"hsn-dynamic-pool",
-	)
 
 	// Misc network.
 	c.Flags().Bool(
