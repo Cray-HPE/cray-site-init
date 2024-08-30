@@ -366,7 +366,7 @@ func (utilsClient *UtilsClient) GetNodes() (nodeMap NodeMap, err error) {
 // IsMaster - Returns true if the given node is a master.
 func IsMaster(node corev1.Node) bool {
 	for key := range node.Labels {
-		if key == "node-role.kubernetes.io/master" {
+		if key == "node-role.kubernetes.io/control-plane" {
 			return true
 		}
 	}
