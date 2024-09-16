@@ -21,7 +21,7 @@ require (
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.9.0
-	go.etcd.io/etcd/api/v3 v3.5.15
+	go.etcd.io/etcd/api/v3 v3.5.16
 	go.etcd.io/etcd/client/v3 v3.5.15
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.25.0
@@ -138,5 +138,4 @@ require (
 )
 
 go 1.21
-
-toolchain go1.22.4
+toolchain go1.22.5
