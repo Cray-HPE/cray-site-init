@@ -119,6 +119,8 @@ type BaseCampGlobals struct {
 }
 
 // Basecamp Defaults
+// See disks.go for disk layout, filesystems, and mounts
+
 // We should try to make these customizable by the user at some point
 // k8sRunCMD has the list of scripts to run on NCN boot for
 // all members of the kubernetes cluster
@@ -603,19 +605,28 @@ func MakeBaseCampfromNCNs(
 			ShastaRole:       "ncn-" + strings.ToLower(ncn.Subrole),
 			IPAM:             ncnIPAM,
 		}
+
 		userDataMap := make(map[string]interface{})
-		if ncn.Subrole == "Storage" {
-			if strings.HasSuffix(
-				ncn.Hostname,
-				"001",
-			) {
+		switch ncn.Subrole {
+		case "Storage":
+			userDataMap["bootcmd"] = cephBootCMD
+			userDataMap["fs_setup"] = cephFileSystems
+			userDataMap["mounts"] = cephMounts
+			if strings.HasSuffix(ncn.Hostname, "001") {
 				userDataMap["runcmd"] = cephRunCMD
 			} else {
 				userDataMap["runcmd"] = cephWorkerRunCMD
 			}
-		} else {
-			userDataMap["runcmd"] = k8sRunCMD
+		case "Master":
+			userDataMap["bootcmd"] = masterBootCMD
+			userDataMap["fs_setup"] = masterFileSystems
+			userDataMap["mounts"] = masterMounts
+		case "Worker":
+			userDataMap["bootcmd"] = workerBootCMD
+			userDataMap["fs_setup"] = workerFileSystems
+			userDataMap["mounts"] = workerMounts
 		}
+
 		userDataMap["hostname"] = ncn.Hostname
 		userDataMap["local_hostname"] = ncn.Hostname
 		userDataMap["mac0"] = mac0Interface
