@@ -36,6 +36,7 @@ import (
 
 	csiFiles "github.com/Cray-HPE/cray-site-init/internal/files"
 	"github.com/Cray-HPE/cray-site-init/pkg/cli"
+	"github.com/Cray-HPE/cray-site-init/pkg/csm"
 	"github.com/Cray-HPE/cray-site-init/pkg/networking"
 )
 
@@ -606,25 +607,42 @@ func MakeBaseCampfromNCNs(
 			IPAM:             ncnIPAM,
 		}
 
+		currentVersion, eval := csm.CompareMajorMinor("1.6")
+		log.Printf("detected csm %s, adding disk configuration to cloud-init", currentVersion)
+
 		userDataMap := make(map[string]interface{})
 		switch ncn.Subrole {
 		case "Storage":
-			userDataMap["bootcmd"] = cephBootCMD
-			userDataMap["fs_setup"] = cephFileSystems
-			userDataMap["mounts"] = cephMounts
+			if eval != -1 {
+				// Add disk configuration to cloud-init user-data if csm >= 1.6
+				// prior to csm 1.6, the disk configuration was baked into the image
+				userDataMap["bootcmd"] = cephBootCMD
+				userDataMap["fs_setup"] = cephFileSystems
+				userDataMap["mounts"] = cephMounts
+			}
 			if strings.HasSuffix(ncn.Hostname, "001") {
 				userDataMap["runcmd"] = cephRunCMD
 			} else {
 				userDataMap["runcmd"] = cephWorkerRunCMD
 			}
 		case "Master":
-			userDataMap["bootcmd"] = masterBootCMD
-			userDataMap["fs_setup"] = masterFileSystems
-			userDataMap["mounts"] = masterMounts
+			userDataMap["runcmd"] = k8sRunCMD
+			if eval != -1 {
+				// Add disk configuration to cloud-init user-data if csm >= 1.6
+				// prior to csm 1.6, the disk configuration was baked into the image
+				userDataMap["bootcmd"] = masterBootCMD
+				userDataMap["fs_setup"] = masterFileSystems
+				userDataMap["mounts"] = masterMounts
+			}
 		case "Worker":
-			userDataMap["bootcmd"] = workerBootCMD
-			userDataMap["fs_setup"] = workerFileSystems
-			userDataMap["mounts"] = workerMounts
+			userDataMap["runcmd"] = k8sRunCMD
+			if eval != -1 {
+				// Add disk configuration to cloud-init user-data if csm >= 1.6
+				// prior to csm 1.6, the disk configuration was baked into the image
+				userDataMap["bootcmd"] = workerBootCMD
+				userDataMap["fs_setup"] = workerFileSystems
+				userDataMap["mounts"] = workerMounts
+			}
 		}
 
 		userDataMap["hostname"] = ncn.Hostname
