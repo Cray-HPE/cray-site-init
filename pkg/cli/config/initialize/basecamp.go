@@ -119,72 +119,7 @@ type BaseCampGlobals struct {
 }
 
 // Basecamp Defaults
-// master bootcmd (cloud-init user-data)
-var masterBootCMD = [][]string{
-	{"cloud-init-per", "once", "create_PART_LVM", "parted", "--wipesignatures", "-m", "--align=opt", "--ignore-busy", "/dev/md/AUX", "mkpart", "primary", "1MiB", "100%"},
-	{"cloud-init-per", "once", "create_PV", "pvcreate", "-ff", "-y", "-M", "lvm2", "/dev/md/AUX1"},
-	{"cloud-init-per", "once", "create_VG", "vgcreate", "metalvg0", "/dev/md/AUX1"},
-	{"cloud-init-per", "once", "create_LV_CRAYS3CACHE", "lvcreate", "-l", "25%PVS", "-n", "CRAYS3CACHE", "-y", "metalvg0"},
-	{"cloud-init-per", "once", "create_LV_CONRUN", "lvcreate", "-l", "4%PVS", "-n", "CONRUN", "-y", "metalvg0"},
-	{"cloud-init-per", "once", "create_LV_CONLIB", "lvcreate", "-l", "36%PVS", "-n", "CONLIB", "-y", "metalvg0"},
-	{"cloud-init-per", "once", "create_LV_K8SLET", "lvcreate", "-l", "10%PVS", "-n", "K8SLET", "-y", "metalvg0"},
-}
-
-// master fs_setup (cloud-init user-data)
-var masterFileSystems = []map[string]interface{}{
-	{"label": "CRAYS3CACHE", "filesystem": "ext4", "device": "/dev/disk/by-id/dm-name-metalvg0-CRAYS3CACHE", "partition": "auto", "overwrite": true},
-	{"label": "CONRUN", "filesystem": "xfs", "device": "/dev/disk/by-id/dm-name-metalvg0-CONRUN", "partition": "auto", "overwrite": true},
-	{"label": "CONLIB", "filesystem": "xfs", "device": "/dev/disk/by-id/dm-name-metalvg0-CONLIB", "partition": "auto", "overwrite": true},
-	{"label": "K8SLET", "filesystem": "xfs", "device": "/dev/disk/by-id/dm-name-metalvg0-K8SLET", "partition": "auto", "overwrite": true},
-}
-
-// master mounts (cloud-init user-data)
-var masterMounts = [][]string{
-	{"LABEL=CRAYS3CACHE", "/var/lib/s3fs_cache", "ext4", "defaults,nofail"},
-	{"LABEL=CONRUN", "/run/containerd", "xfs", "defaults,nofail"},
-	{"LABEL=CONLIB", "/var/lib/containerd", "xfs", "defaults,nofail"},
-	{"LABEL=K8SLET", "/var/lib/kubelet", "xfs", "defaults,nofail"},
-}
-
-// worker bootcmd (cloud-init user-data)
-var workerBootCMD = [][]string{
-	{"cloud-init-per", "once", "create_PV", "pvcreate", "-ff", "-y", "-M", "lvm2", "/dev/md/AUX"},
-	{"cloud-init-per", "once", "create_VG", "vgcreate", "metalvg0", "/dev/md/AUX"},
-	{"cloud-init-per", "once", "create_LV_CRAYS3CACHE", "lvcreate", "-L", "200GB", "-n", "CRAYS3CACHE", "-y", "metalvg0"},
-}
-
-// worker fs_setup (cloud-init user-data)
-var workerFileSystems = []map[string]interface{}{
-	{"label": "CRAYS3CACHE", "filesystem": "ext4", "device": "/dev/disk/by-id/dm-name-metalvg0-CRAYS3CACHE", "partition": "auto", "overwrite": true},
-}
-
-// worker mounts (cloud-init user-data)
-var workerMounts = [][]string{
-	{"LABEL=CRAYS3CACHE", "/var/lib/s3fs_cache", "ext4", "defaults,nofail"},
-}
-
-// storage bootcmd (cloud-init user-data)
-var cephBootCMD = [][]string{
-	{"cloud-init-per", "once", "create_PV", "pvcreate", "-ff", "-y", "-M", "lvm2", "/dev/md/AUX"},
-	{"cloud-init-per", "once", "create_VG", "vgcreate", "metalvg0", "/dev/md/AUX"},
-	{"cloud-init-per", "once", "create_LV_CEPHETC", "lvcreate", "-L", "10GB", "-n", "CEPHETC", "-y", "metalvg0"},
-	{"cloud-init-per", "once", "create_LV_CEPHVAR", "lvcreate", "-L", "60GB", "-n", "CEPHVAR", "-y", "metalvg0"},
-	{"cloud-init-per", "once", "create_LV_CONTAIN", "lvcreate", "-L", "60GB", "-n", "CONTAIN", "-y", "metalvg0"},
-}
-
-// storage fs_setup (cloud-init user-data)
-var cephFileSystems = []map[string]interface{}{
-	{"label": "CEPHETC", "filesystem": "ext4", "device": "/dev/disk/by-id/dm-name-metalvg0-CEPHETC", "partition": "auto", "overwrite": true},
-	{"label": "CEPHVAR", "filesystem": "ext4", "device": "/dev/disk/by-id/dm-name-metalvg0-CEPHVAR", "partition": "auto", "overwrite": true},
-	{"label": "CONTAIN", "filesystem": "xfs", "device": "/dev/disk/by-id/dm-name-metalvg0-CONTAIN", "partition": "auto", "overwrite": true},
-}
-
-// storage mounts (cloud-init user-data)
-var cephMounts = [][]string{
-	{"LABEL=CEPHETC", "/etc/ceph", "auto", "defaults"},
-	{"LABEL=CEPHVAR", "/var/lib/ceph", "auto", "defaults"},
-	{"LABEL=CONTAIN", "/var/lib/containers", "auto", "defaults"},
-}
+// See disks.go for disk layout, filesystems, and mounts
 
 // We should try to make these customizable by the user at some point
 // k8sRunCMD has the list of scripts to run on NCN boot for
