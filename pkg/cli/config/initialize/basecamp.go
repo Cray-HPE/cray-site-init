@@ -36,6 +36,7 @@ import (
 
 	csiFiles "github.com/Cray-HPE/cray-site-init/internal/files"
 	"github.com/Cray-HPE/cray-site-init/pkg/cli"
+	cloudinit "github.com/Cray-HPE/cray-site-init/pkg/cli/config/template/cloud-init"
 	"github.com/Cray-HPE/cray-site-init/pkg/csm"
 	"github.com/Cray-HPE/cray-site-init/pkg/networking"
 )
@@ -616,9 +617,9 @@ func MakeBaseCampfromNCNs(
 			if eval != -1 {
 				// Add disk configuration to cloud-init user-data if csm >= 1.6
 				// prior to csm 1.6, the disk configuration was baked into the image
-				userDataMap["bootcmd"] = cephBootCMD
-				userDataMap["fs_setup"] = cephFileSystems
-				userDataMap["mounts"] = cephMounts
+				userDataMap["bootcmd"] = cloudinit.CephBootCMD
+				userDataMap["fs_setup"] = cloudinit.CephFileSystems
+				userDataMap["mounts"] = cloudinit.CephMounts
 			}
 			if strings.HasSuffix(ncn.Hostname, "001") {
 				userDataMap["runcmd"] = cephRunCMD
@@ -630,18 +631,18 @@ func MakeBaseCampfromNCNs(
 			if eval != -1 {
 				// Add disk configuration to cloud-init user-data if csm >= 1.6
 				// prior to csm 1.6, the disk configuration was baked into the image
-				userDataMap["bootcmd"] = masterBootCMD
-				userDataMap["fs_setup"] = masterFileSystems
-				userDataMap["mounts"] = masterMounts
+				userDataMap["bootcmd"] = cloudinit.MasterBootCMD
+				userDataMap["fs_setup"] = cloudinit.MasterFileSystems
+				userDataMap["mounts"] = cloudinit.MasterMounts
 			}
 		case "Worker":
 			userDataMap["runcmd"] = k8sRunCMD
 			if eval != -1 {
 				// Add disk configuration to cloud-init user-data if csm >= 1.6
 				// prior to csm 1.6, the disk configuration was baked into the image
-				userDataMap["bootcmd"] = workerBootCMD
-				userDataMap["fs_setup"] = workerFileSystems
-				userDataMap["mounts"] = workerMounts
+				userDataMap["bootcmd"] = cloudinit.WorkerBootCMD
+				userDataMap["fs_setup"] = cloudinit.WorkerFileSystems
+				userDataMap["mounts"] = cloudinit.WorkerMounts
 			}
 		}
 
