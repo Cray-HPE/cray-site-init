@@ -38,7 +38,7 @@ import (
 func emptyCommand() *cobra.Command {
 	c := &cobra.Command{
 		Use:               "empty",
-		Short:             "Write a empty config file.",
+		Short:             "Write an empty config file.",
 		Args:              cobra.NoArgs,
 		DisableAutoGenTag: true,
 		Run: func(c *cobra.Command, args []string) {
