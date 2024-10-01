@@ -36,6 +36,7 @@ import (
 
 	csiFiles "github.com/Cray-HPE/cray-site-init/internal/files"
 	"github.com/Cray-HPE/cray-site-init/pkg/cli"
+	"github.com/Cray-HPE/cray-site-init/pkg/csm"
 	"github.com/Cray-HPE/cray-site-init/pkg/networking"
 )
 
@@ -119,6 +120,8 @@ type BaseCampGlobals struct {
 }
 
 // Basecamp Defaults
+// See disks.go for disk layout, filesystems, and mounts
+
 // We should try to make these customizable by the user at some point
 // k8sRunCMD has the list of scripts to run on NCN boot for
 // all members of the kubernetes cluster
@@ -603,19 +606,45 @@ func MakeBaseCampfromNCNs(
 			ShastaRole:       "ncn-" + strings.ToLower(ncn.Subrole),
 			IPAM:             ncnIPAM,
 		}
+
+		currentVersion, eval := csm.CompareMajorMinor("1.6")
+		log.Printf("detected csm %s, adding disk configuration to cloud-init", currentVersion)
+
 		userDataMap := make(map[string]interface{})
-		if ncn.Subrole == "Storage" {
-			if strings.HasSuffix(
-				ncn.Hostname,
-				"001",
-			) {
+		switch ncn.Subrole {
+		case "Storage":
+			if eval != -1 {
+				// Add disk configuration to cloud-init user-data if csm >= 1.6
+				// prior to csm 1.6, the disk configuration was baked into the image
+				userDataMap["bootcmd"] = cephBootCMD
+				userDataMap["fs_setup"] = cephFileSystems
+				userDataMap["mounts"] = cephMounts
+			}
+			if strings.HasSuffix(ncn.Hostname, "001") {
 				userDataMap["runcmd"] = cephRunCMD
 			} else {
 				userDataMap["runcmd"] = cephWorkerRunCMD
 			}
-		} else {
+		case "Master":
 			userDataMap["runcmd"] = k8sRunCMD
+			if eval != -1 {
+				// Add disk configuration to cloud-init user-data if csm >= 1.6
+				// prior to csm 1.6, the disk configuration was baked into the image
+				userDataMap["bootcmd"] = masterBootCMD
+				userDataMap["fs_setup"] = masterFileSystems
+				userDataMap["mounts"] = masterMounts
+			}
+		case "Worker":
+			userDataMap["runcmd"] = k8sRunCMD
+			if eval != -1 {
+				// Add disk configuration to cloud-init user-data if csm >= 1.6
+				// prior to csm 1.6, the disk configuration was baked into the image
+				userDataMap["bootcmd"] = workerBootCMD
+				userDataMap["fs_setup"] = workerFileSystems
+				userDataMap["mounts"] = workerMounts
+			}
 		}
+
 		userDataMap["hostname"] = ncn.Hostname
 		userDataMap["local_hostname"] = ncn.Hostname
 		userDataMap["mac0"] = mac0Interface
