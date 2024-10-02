@@ -31,6 +31,7 @@ import (
 	"github.com/Cray-HPE/cray-site-init/pkg/cli/config/initialize"
 	"github.com/Cray-HPE/cray-site-init/pkg/cli/config/initialize/sls"
 	"github.com/Cray-HPE/cray-site-init/pkg/cli/config/shcd"
+	template "github.com/Cray-HPE/cray-site-init/pkg/cli/config/template"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -88,10 +89,11 @@ func NewCommand() *cobra.Command {
 
 	c.AddCommand(
 		dumpCommand(),
-		loadCommand(),
 		initialize.NewCommand(),
-		sls.NewCommand(),
+		loadCommand(),
 		shcd.NewCommand(),
+		sls.NewCommand(),
+		template.NewCommand(),
 	)
 	return c
 }

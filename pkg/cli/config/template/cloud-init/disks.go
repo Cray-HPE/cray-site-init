@@ -22,7 +22,7 @@
  OTHER DEALINGS IN THE SOFTWARE.
 */
 
-package initialize
+package cloudinit
 
 import "fmt"
 
@@ -39,8 +39,8 @@ const (
 	raidArray   = "/dev/md/AUX"
 )
 
-// master bootcmd (cloud-init user-data)
-var masterBootCMD = [][]string{
+// MasterBootCMD (cloud-init user-data)
+var MasterBootCMD = [][]string{
 	{
 		"cloud-init-per",
 		"once",
@@ -110,8 +110,8 @@ var masterBootCMD = [][]string{
 	},
 }
 
-// master fs_setup (cloud-init user-data)
-var masterFileSystems = []map[string]interface{}{
+// MasterFileSystems (cloud-init user-data)
+var MasterFileSystems = []map[string]interface{}{
 	{
 		"label":      crays3cache,
 		"filesystem": "ext4",
@@ -142,8 +142,8 @@ var masterFileSystems = []map[string]interface{}{
 	},
 }
 
-// master mounts (cloud-init user-data)
-var masterMounts = [][]string{
+// MasterMounts (cloud-init user-data)
+var MasterMounts = [][]string{
 	{
 		fmt.Sprintf("LABEL=%s", crays3cache),
 		"/var/lib/s3fs_cache",
@@ -170,8 +170,8 @@ var masterMounts = [][]string{
 	},
 }
 
-// worker bootcmd (cloud-init user-data)
-var workerBootCMD = [][]string{
+// WorkerBootCMD (cloud-init user-data)
+var WorkerBootCMD = [][]string{
 	{
 		"cloud-init-per",
 		"once",
@@ -205,8 +205,8 @@ var workerBootCMD = [][]string{
 	},
 }
 
-// worker fs_setup (cloud-init user-data)
-var workerFileSystems = []map[string]interface{}{
+// WorkerFileSystems (cloud-init user-data)
+var WorkerFileSystems = []map[string]interface{}{
 	{
 		"label":      crays3cache,
 		"filesystem": "ext4",
@@ -216,8 +216,8 @@ var workerFileSystems = []map[string]interface{}{
 	},
 }
 
-// worker mounts (cloud-init user-data)
-var workerMounts = [][]string{
+// WorkerMounts (cloud-init user-data)
+var WorkerMounts = [][]string{
 	{
 		fmt.Sprintf("LABEL=%s", crays3cache),
 		"/var/lib/s3fs_cache",
@@ -226,8 +226,8 @@ var workerMounts = [][]string{
 	},
 }
 
-// storage bootcmd (cloud-init user-data)
-var cephBootCMD = [][]string{
+// CephBootCMD (cloud-init user-data)
+var CephBootCMD = [][]string{
 	{
 		"cloud-init-per",
 		"once",
@@ -285,8 +285,8 @@ var cephBootCMD = [][]string{
 	},
 }
 
-// storage fs_setup (cloud-init user-data)
-var cephFileSystems = []map[string]interface{}{
+// CephFileSystems (cloud-init user-data)
+var CephFileSystems = []map[string]interface{}{
 	{
 		"label":      cephetc,
 		"filesystem": "ext4",
@@ -310,8 +310,8 @@ var cephFileSystems = []map[string]interface{}{
 	},
 }
 
-// storage mounts (cloud-init user-data)
-var cephMounts = [][]string{
+// CephMounts (cloud-init user-data)
+var CephMounts = [][]string{
 	{
 		fmt.Sprintf("LABEL=%s", cephetc),
 		"/etc/ceph",
