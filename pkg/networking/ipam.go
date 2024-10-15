@@ -599,6 +599,7 @@ var netmasks = map[int]string{
 // Basic VLAN management
 var vlans = [4096]bool{4095: true}
 
+// Test to see if a given VLAN is already allocated and managed.
 func IsVlanAllocated(vlan int16) (bool, error) {
 	if vlan > 4095 || vlan < 0 {
 		return true, errors.New("VLAN out of range")
@@ -606,6 +607,7 @@ func IsVlanAllocated(vlan int16) (bool, error) {
 	return vlans[vlan], nil
 }
 
+// Allocate and manage a single VLAN.
 func AllocateVlan(vlan int16) error {
 	allocated, err := IsVlanAllocated(vlan)
 	if allocated {
@@ -618,11 +620,13 @@ func AllocateVlan(vlan int16) error {
 	return nil
 }
 
+// Free a single VLAN from management.
 func FreeVlan(vlan int16) error {
 	vlans[vlan] = false
 	return nil
 }
 
+// Allocate and manage a range of VLANs.
 func AllocateVlanRange(startvlan, endvlan int16) error {
 	if startvlan > endvlan {
 		return errors.New("VLAN range is bad - start is larger than end")
@@ -650,6 +654,7 @@ func AllocateVlanRange(startvlan, endvlan int16) error {
 	return nil
 }
 
+// Free a range of VLANs from management.
 func FreeVlanRange(startvlan, endvlan int16) error {
 	if startvlan > endvlan {
 		return errors.New("VLAN range is bad - start is larger than end")
