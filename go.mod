@@ -7,7 +7,7 @@ replace (
 
 require (
 	github.com/Cray-HPE/hms-base/v2 v2.0.1
-	github.com/Cray-HPE/hms-bss v1.26.0
+	github.com/Cray-HPE/hms-bss v1.28.0
 	github.com/Cray-HPE/hms-s3 v1.10.1
 	github.com/Cray-HPE/hms-shcd-parser v1.9.0
 	github.com/Cray-HPE/hms-sls v1.29.0
@@ -137,5 +137,4 @@ require (
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
 
-go 1.21
-toolchain go1.22.5
+go 1.22

@@ -253,6 +253,18 @@ func getKernelCommandlineArgs(
 		) {
 			// We don't need to specific the kernel pram because BSS will *always* add it.
 			cmdlineParts[i] = ""
+		} else if strings.HasPrefix(
+			part,
+			"ifname=hsn",
+		) {
+			// Do not assign hsn* interface names.
+			cmdlineParts[i] = ""
+		} else if strings.HasPrefix(
+			part,
+			"ip=hsn",
+		) {
+			// Do not set parameters for hsn* interfaces.
+			cmdlineParts[i] = ""
 		}
 	}
 
