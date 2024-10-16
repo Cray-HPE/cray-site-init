@@ -234,6 +234,7 @@ func NewCommand() *cobra.Command {
 
 			}
 
+			// Remember a loop over a map is random ordered in Go
 			for name, layout := range internalNetConfigs {
 				myLayout := layout
 
@@ -244,31 +245,64 @@ func NewCommand() *cobra.Command {
 					"-",
 				)
 
-				// Use CLI values if available, otherwise defaults
-				if v.IsSet(
-					fmt.Sprintf(
-						"%v-bootstrap-vlan",
-						normalizedName,
-					),
-				) {
-					myLayout.BaseVlan = int16(
-						v.GetInt(
-							fmt.Sprintf(
-								"%v-bootstrap-vlan",
-								normalizedName,
-							),
-						),
-					)
-					myLayout.Template.VlanRange[0] = int16(
-						v.GetInt(
-							fmt.Sprintf(
-								"%v-bootstrap-vlan",
-								normalizedName,
-							),
-						),
-					)
+				// Use CLI/file input values if available, otherwise defaults
+				baseVlanName := fmt.Sprintf("%v-bootstrap-vlan", normalizedName)
+				if v.IsSet(baseVlanName) {
+					baseVlan := int16(v.GetInt(baseVlanName))
+					myLayout.BaseVlan = baseVlan
+					myLayout.Template.VlanRange[0] = baseVlan
 				} else {
 					myLayout.BaseVlan = layout.Template.VlanRange[0]
+				}
+
+				// Check VLAN allocations for re-use and overlaps
+				if len(layout.Template.VlanRange) == 2 {
+					err := networking.AllocateVlanRange(
+						myLayout.Template.VlanRange[0],
+						myLayout.Template.VlanRange[1],
+					)
+					if err != nil {
+						log.Fatalln(
+							"Unable to allocate VLAN range for",
+							myLayout.Template.Name,
+							err,
+						)
+					} else {
+						log.Println(
+							"Allocating VLANs",
+							myLayout.Template.Name,
+							myLayout.Template.VlanRange[0],
+							myLayout.Template.VlanRange[1],
+						)
+					}
+				} else {
+					err := networking.AllocateVlan(
+						myLayout.Template.VlanRange[0],
+					)
+					if err != nil {
+						log.Fatalln(
+							"Unable to allocate single VLAN for",
+							myLayout.Template.Name,
+							myLayout.Template.VlanRange[0],
+							err,
+						)
+					} else {
+						log.Println(
+							"Allocating VLAN ",
+							myLayout.Template.Name,
+							myLayout.Template.VlanRange[0],
+						)
+					}
+				}
+
+				allocated, err := networking.IsVlanAllocated(myLayout.BaseVlan)
+				if !allocated {
+					log.Fatalln(
+						"VLAN for",
+						layout.Template.Name,
+						"has not been initialized by defaults or input values:",
+						err,
+					)
 				}
 
 				if v.IsSet(

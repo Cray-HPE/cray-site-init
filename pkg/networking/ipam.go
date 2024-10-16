@@ -595,3 +595,72 @@ var netmasks = map[int]string{
 	32766: "/17",
 	65534: "/16",
 }
+
+// Basic VLAN management
+var vlans = [4096]bool{4095: true}
+
+// IsVlanAllocated takes an int16 and tests if a given VLAN is already allocated and managed.
+func IsVlanAllocated(vlan int16) (bool, error) {
+	if vlan > 4095 || vlan < 0 {
+		return true, errors.New("VLAN out of range")
+	}
+	return vlans[vlan], nil
+}
+
+// AllocateVlan takes an int16 and manages a single VLAN.
+func AllocateVlan(vlan int16) error {
+	allocated, err := IsVlanAllocated(vlan)
+	if allocated {
+		if err != nil {
+			return err
+		}
+		return errors.New("VLAN already used")
+	}
+	vlans[vlan] = true
+	return nil
+}
+
+// FreeVlan takes an int16 and stops managing a single VLAN.
+func FreeVlan(vlan int16) error {
+	vlans[vlan] = false
+	return nil
+}
+
+// AllocateVlanRange takes two int16 and manages a range of VLANs.
+func AllocateVlanRange(startvlan, endvlan int16) error {
+	if startvlan > endvlan {
+		return errors.New("VLAN range is bad - start is larger than end")
+	}
+	// Pre-test all VLANs for previous allocation
+	hasAllocationErrors := false
+	allocatedVlans := []int16{}
+	for vlan := startvlan; vlan <= endvlan; vlan++ {
+		allocated, err := IsVlanAllocated(vlan)
+		if err != nil {
+			return err
+		}
+		if allocated {
+			hasAllocationErrors = true
+			allocatedVlans = append(allocatedVlans, vlan)
+		}
+	}
+	if hasAllocationErrors {
+		return fmt.Errorf("VLANs already used: %v", allocatedVlans)
+	}
+
+	for vlan := startvlan; vlan <= endvlan; vlan++ {
+		AllocateVlan(vlan)
+	}
+	return nil
+}
+
+// FreeVlanRange takes two int16 and stops managing a range of VLANs.
+func FreeVlanRange(startvlan, endvlan int16) error {
+	if startvlan > endvlan {
+		return errors.New("VLAN range is bad - start is larger than end")
+	}
+	for vlan := startvlan; vlan <= endvlan; vlan++ {
+		FreeVlan(vlan)
+	}
+	return nil
+}
