@@ -682,7 +682,7 @@ func (iSubnet *IPV4Subnet) GenInterfaceName() error {
 			iSubnet.NetName,
 		)
 	}
-	if iSubnet.VlanID < 1 {
+	if iSubnet.VlanID <= 1 {
 		iSubnet.InterfaceName = fmt.Sprintf(
 			"%s",
 			iSubnet.ParentDevice,
