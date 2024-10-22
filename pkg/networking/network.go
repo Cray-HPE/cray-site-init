@@ -682,7 +682,9 @@ func (iSubnet *IPV4Subnet) GenInterfaceName() error {
 			iSubnet.NetName,
 		)
 	}
-	if iSubnet.VlanID < 1 {
+
+	// TODO - Vlans below should come out of sls Defaults, but have circular deps
+	if iSubnet.VlanID == 0 || iSubnet.VlanID == 1 {
 		iSubnet.InterfaceName = fmt.Sprintf(
 			"%s",
 			iSubnet.ParentDevice,
