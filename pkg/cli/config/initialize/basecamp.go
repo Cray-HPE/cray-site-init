@@ -586,7 +586,7 @@ func MakeBaseCampfromNCNs(
 		ncnIPAM := make(map[string]interface{})
 		for _, ncnNetwork := range ncn.Networks {
 
-			// Kea doesn't support multiple networks with vlan=0 so we need to special case CHN to not include in the ipam output
+			// The CHN is configured as a subnet of the HSN which is not done by basecamp, but by SHS and Ansible.
 			if strings.ToLower(ncnNetwork.NetworkName) == "chn" {
 				continue
 			}
