@@ -37,7 +37,6 @@ import (
 	"github.com/Cray-HPE/cray-site-init/pkg/cli"
 )
 
-
 const (
 	// DefaultMTLVlan is the default MTL Bootstrap Vlan - zero (0) represents untagged.
 	DefaultMTLVlan = 1
@@ -82,7 +81,6 @@ const (
 	// DefaultMTLString is the Default MTL String (bond0 interface)
 	DefaultMTLString = "10.1.1.0/16"
 )
-
 
 /*
 Handy Netmask Cheet Sheet
@@ -232,7 +230,6 @@ var DefaultMTL = IPV4Network{
 	Comment:      "This network is only valid for the NCNs",
 	ParentDevice: "bond0",
 }
-
 
 // IPV4Network is a type for managing IPv4 Networks
 type IPV4Network struct {
