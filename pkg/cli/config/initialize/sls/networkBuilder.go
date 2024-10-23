@@ -78,7 +78,7 @@ Handy Netmask Cheet Sheet
 
 const (
 	// DefaultMTLVlan is the default MTL Bootstrap Vlan - zero (0) represents untagged.
-	DefaultMTLVlan = 1
+	DefaultMTLVlan = 0
 	// DefaultHMNString is the Default HMN String (bond0.hmn0)
 	DefaultHMNString = "10.254.0.0/17"
 	// DefaultHMNVlan is the default HMN Bootstrap Vlan
