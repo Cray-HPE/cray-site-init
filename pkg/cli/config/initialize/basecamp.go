@@ -594,7 +594,13 @@ func MakeBaseCampfromNCNs(
 			ncnNICSubnet := make(map[string]interface{})
 			ncnNICSubnet["gateway"] = ncnNetwork.Gateway
 			ncnNICSubnet["ip"] = ncnNetwork.CIDR
-			ncnNICSubnet["vlanid"] = ncnNetwork.Vlan
+
+			if strings.ToLower(ncnNetwork.NetworkName) == "mtl" {
+				ncnNICSubnet["vlanid"] = 0
+			} else {
+				ncnNICSubnet["vlanid"] = ncnNetwork.Vlan
+			}
+
 			ncnNICSubnet["parent_device"] = ncnNetwork.ParentInterfaceName
 			ncnIPAM[strings.ToLower(ncnNetwork.NetworkName)] = ncnNICSubnet
 		}
