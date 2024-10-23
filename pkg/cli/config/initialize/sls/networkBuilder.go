@@ -158,7 +158,7 @@ var DefaultBICAN = networking.IPV4Network{
 	FullName:           "SystemDefaultRoute points the network name of the default route",
 	CIDR:               "0.0.0.0/0",
 	Name:               "BICAN",
-	VlanRange:          []int16{1},
+	VlanRange:          []int16{0},
 	MTU:                9000,
 	NetType:            "ethernet",
 	Comment:            "",
