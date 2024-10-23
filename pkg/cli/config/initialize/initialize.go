@@ -173,7 +173,7 @@ func NewCommand() *cobra.Command {
 						3000,
 						3999,
 					}
-					tmpHmnMtn.Template.CIDR = slsInit.DefaultHMNMTNString
+					tmpHmnMtn.Template.CIDR = networking.DefaultHMNMTNString
 					tmpHmnMtn.SubdivideByCabinet = true
 					tmpHmnMtn.IncludeBootstrapDHCP = false
 					tmpHmnMtn.SuperNetHack = false
@@ -188,7 +188,7 @@ func NewCommand() *cobra.Command {
 						1513,
 						1769,
 					}
-					tmpHmnRvr.Template.CIDR = slsInit.DefaultHMNRVRString
+					tmpHmnRvr.Template.CIDR = networking.DefaultHMNRVRString
 					tmpHmnRvr.SubdivideByCabinet = true
 					tmpHmnRvr.IncludeBootstrapDHCP = false
 					tmpHmnRvr.SuperNetHack = false
@@ -207,7 +207,7 @@ func NewCommand() *cobra.Command {
 						2000,
 						2999,
 					}
-					tmpNmnMtn.Template.CIDR = slsInit.DefaultNMNMTNString
+					tmpNmnMtn.Template.CIDR = networking.DefaultNMNMTNString
 					tmpNmnMtn.SubdivideByCabinet = true
 					tmpNmnMtn.IncludeBootstrapDHCP = false
 					tmpNmnMtn.SuperNetHack = false
@@ -223,7 +223,7 @@ func NewCommand() *cobra.Command {
 						1770,
 						1999,
 					}
-					tmpNmnRvr.Template.CIDR = slsInit.DefaultNMNRVRString
+					tmpNmnRvr.Template.CIDR = networking.DefaultNMNRVRString
 					tmpNmnRvr.SubdivideByCabinet = true
 					tmpNmnRvr.IncludeBootstrapDHCP = false
 					tmpNmnRvr.SuperNetHack = false
@@ -742,7 +742,7 @@ func NewCommand() *cobra.Command {
 	// Node management network.
 	c.Flags().String(
 		"nmn-cidr",
-		slsInit.DefaultNMNString,
+		networking.DefaultNMNString,
 		"Overall IPv4 CIDR for all Node Management subnets",
 	)
 	c.Flags().String(
@@ -752,17 +752,17 @@ func NewCommand() *cobra.Command {
 	)
 	c.Flags().String(
 		"nmn-dynamic-pool",
-		slsInit.DefaultNMNLBString,
+		networking.DefaultNMNLBString,
 		"Overall IPv4 CIDR for dynamic Node Management load balancer addresses",
 	)
 	c.Flags().String(
 		"nmn-mtn-cidr",
-		slsInit.DefaultNMNMTNString,
+		networking.DefaultNMNMTNString,
 		"IPv4 CIDR for grouped Mountain Node Management subnets",
 	)
 	c.Flags().String(
 		"nmn-rvr-cidr",
-		slsInit.DefaultNMNRVRString,
+		networking.DefaultNMNRVRString,
 		"IPv4 CIDR for grouped River Node Management subnets",
 	)
 	_ = c.MarkFlagRequired("nmn-cidr")
@@ -770,7 +770,7 @@ func NewCommand() *cobra.Command {
 	// Hardware management network.
 	c.Flags().String(
 		"hmn-cidr",
-		slsInit.DefaultHMNString,
+		networking.DefaultHMNString,
 		"Overall IPv4 CIDR for all Hardware Management subnets",
 	)
 	c.Flags().String(
@@ -780,17 +780,17 @@ func NewCommand() *cobra.Command {
 	)
 	c.Flags().String(
 		"hmn-dynamic-pool",
-		slsInit.DefaultHMNLBString,
+		networking.DefaultHMNLBString,
 		"Overall IPv4 CIDR for dynamic Hardware Management load balancer addresses",
 	)
 	c.Flags().String(
 		"hmn-mtn-cidr",
-		slsInit.DefaultHMNMTNString,
+		networking.DefaultHMNMTNString,
 		"IPv4 CIDR for grouped Mountain Hardware Management subnets",
 	)
 	c.Flags().String(
 		"hmn-rvr-cidr",
-		slsInit.DefaultHMNRVRString,
+		networking.DefaultHMNRVRString,
 		"IPv4 CIDR for grouped River Hardware Management subnets",
 	)
 	_ = c.MarkFlagRequired("hmn-cidr")
@@ -888,14 +888,14 @@ func NewCommand() *cobra.Command {
 	// Metal network.
 	c.Flags().String(
 		"mtl-cidr",
-		slsInit.DefaultMTLString,
+		networking.DefaultMTLString,
 		"Overall IPv4 CIDR for all Provisioning subnets",
 	)
 
 	// High-speed network.
 	c.Flags().String(
 		"hsn-cidr",
-		slsInit.DefaultHSNString,
+		networking.DefaultHSNString,
 		"Overall IPv4 CIDR for all HSN subnets",
 	)
 
@@ -914,22 +914,22 @@ func NewCommand() *cobra.Command {
 	// Bootstrap VLANS
 	c.Flags().Int(
 		"can-bootstrap-vlan",
-		slsInit.DefaultCANVlan,
+		networking.DefaultCANVlan,
 		"Bootstrap VLAN for the CAN",
 	)
 	c.Flags().Int(
 		"cmn-bootstrap-vlan",
-		slsInit.DefaultCMNVlan,
+		networking.DefaultCMNVlan,
 		"Bootstrap VLAN for the CMN",
 	)
 	c.Flags().Int(
 		"hmn-bootstrap-vlan",
-		slsInit.DefaultHMNVlan,
+		networking.DefaultHMNVlan,
 		"Bootstrap VLAN for the HMN",
 	)
 	c.Flags().Int(
 		"nmn-bootstrap-vlan",
-		slsInit.DefaultNMNVlan,
+		networking.DefaultNMNVlan,
 		"Bootstrap VLAN for the NMN",
 	)
 

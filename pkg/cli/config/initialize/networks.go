@@ -35,8 +35,6 @@ import (
 
 	csiFiles "github.com/Cray-HPE/cray-site-init/internal/files"
 	"github.com/Cray-HPE/cray-site-init/pkg/cli"
-	"github.com/Cray-HPE/cray-site-init/pkg/cli/config/initialize/sls"
-
 	"github.com/Cray-HPE/cray-site-init/pkg/networking"
 )
 
@@ -138,7 +136,7 @@ func WriteCPTNetworkConfig(
 			network.NetworkName,
 			networking.ValidNetNames,
 		) {
-			if network.Vlan != sls.DefaultMTLVlan && network.NetworkName != "CHN" {
+			if network.Vlan != networking.DefaultMTLVlan && network.NetworkName != "CHN" {
 				csiFiles.WriteTemplate(
 					filepath.Join(
 						path,
