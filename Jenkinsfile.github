@@ -47,7 +47,6 @@ pipeline {
         NAME = getRepoName()
         GO_VERSION = sh(returnStdout: true, script: 'grep -Eo "^go .*" go.mod | cut -d " " -f2').trim()
         VERSION = sh(returnStdout: true, script: "git describe --tags | tr -s '-' '~' | tr -d '^v'").trim()
-        PRIMARY_NODE = "${env.NODE_NAME}"
     }
 
     stages {
@@ -58,6 +57,8 @@ pipeline {
 
                 environment {
                     DOCKER_ARCH = sh(returnStdout: true, script: "[ ${ARCH} == 'x86_64' ] && echo -n 'amd64' || echo -n 'arm64'")
+                    JENKINS_AGENT = sh(returnStdout: true, script: "[ ${ARCH} == 'x86_64' ] && echo -n 'metal-gcp-builder' || echo -n 'metal-gcp-builder-arm64'")
+                    DOCKER_GO_IMAGE = "${goImage}:${GO_VERSION}-SLES15.5"
                     BUILD_DIR = "${env.WORKSPACE}/dist/rpmbuild/${ARCH}"
                 }
 
@@ -71,21 +72,21 @@ pipeline {
                 stages {
 
                     stage('Build: setup') {
+                        agent {
+                            label "${env.JENKINS_AGENT}"
+                        }
                         steps {
-                            lock('docker-image-pull') {
-                                sh "docker pull --platform linux/${DOCKER_ARCH} ${goImage}:${GO_VERSION}-SLES15.5"
-                                sh "docker tag ${goImage}:${GO_VERSION}-SLES15.5 ${goImage}:${DOCKER_ARCH}"
-                            }
+                            sh "docker pull ${goImage}:${GO_VERSION}-SLES15.5"
                         }
                     }
 
                     stage('Prepare: RPMs') {
                         agent {
                             docker {
-                                label "${PRIMARY_NODE}"
+                                label "${JENKINS_AGENT}"
                                 reuseNode true
-                                args "-v /home/jenkins/.ssh:/home/jenkins/.ssh --platform linux/${DOCKER_ARCH}"
-                                image "${goImage}:${DOCKER_ARCH}"
+                                args "-v /home/jenkins/.ssh:/home/jenkins/.ssh"
+                                image "${DOCKER_GO_IMAGE}"
                             }
                         }
                         steps {
@@ -98,10 +99,10 @@ pipeline {
                     stage('Build: RPMs') {
                         agent {
                             docker {
-                                label "${PRIMARY_NODE}"
+                                label "${JENKINS_AGENT}"
                                 reuseNode true
                                 args "-v /home/jenkins/.ssh:/home/jenkins/.ssh --platform linux/${DOCKER_ARCH}"
-                                image "${goImage}:${DOCKER_ARCH}"
+                                image "${DOCKER_GO_IMAGE}"
                             }
                         }
                         steps {
@@ -112,10 +113,10 @@ pipeline {
                     stage('Publish: RPMs') {
                         agent {
                             docker {
-                                label "${PRIMARY_NODE}"
+                                label "${JENKINS_AGENT}"
                                 reuseNode true
                                 args "-v /home/jenkins/.ssh:/home/jenkins/.ssh --platform linux/${DOCKER_ARCH}"
-                                image "${goImage}:${DOCKER_ARCH}"
+                                image "${DOCKER_GO_IMAGE}"
                             }
                         }
                         steps {
