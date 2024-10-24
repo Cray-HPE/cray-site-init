@@ -586,7 +586,7 @@ func MakeBaseCampfromNCNs(
 		ncnIPAM := make(map[string]interface{})
 		for _, ncnNetwork := range ncn.Networks {
 
-			// Kea doesn't support multiple networks with vlan=0 so we need to special case CHN to not include in the ipam output
+			// The CHN is configured as a subnet of the HSN which is not done by basecamp, but by SHS and Ansible.
 			if strings.ToLower(ncnNetwork.NetworkName) == "chn" {
 				continue
 			}
@@ -594,7 +594,14 @@ func MakeBaseCampfromNCNs(
 			ncnNICSubnet := make(map[string]interface{})
 			ncnNICSubnet["gateway"] = ncnNetwork.Gateway
 			ncnNICSubnet["ip"] = ncnNetwork.CIDR
-			ncnNICSubnet["vlanid"] = ncnNetwork.Vlan
+
+			// Fix cloud-init and remove this shenanigan
+			if strings.ToLower(ncnNetwork.NetworkName) == "mtl" {
+				ncnNICSubnet["vlanid"] = 0
+			} else {
+				ncnNICSubnet["vlanid"] = ncnNetwork.Vlan
+			}
+
 			ncnNICSubnet["parent_device"] = ncnNetwork.ParentInterfaceName
 			ncnIPAM[strings.ToLower(ncnNetwork.NetworkName)] = ncnNICSubnet
 		}

@@ -26,6 +26,7 @@ package networking
 
 import (
 	"fmt"
+	"github.com/Cray-HPE/cray-site-init/pkg/sls"
 	"log"
 	"net"
 	"strings"
@@ -34,8 +35,201 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/Cray-HPE/cray-site-init/pkg/cli"
-	"github.com/Cray-HPE/cray-site-init/pkg/sls"
 )
+
+const (
+	// DefaultMTLVlan is the default MTL Bootstrap Vlan - zero (0) represents untagged.
+	DefaultMTLVlan = 1
+	// DefaultHMNString is the Default HMN String (bond0.hmn0)
+	DefaultHMNString = "10.254.0.0/17"
+	// DefaultHMNVlan is the default HMN Bootstrap Vlan
+	DefaultHMNVlan = 4
+	// DefaultHMNMTNString is the default HMN Network for Mountain Cabinets with Grouped Configuration
+	DefaultHMNMTNString = "10.104.0.0/17"
+	// DefaultHMNRVRString is the default HMN Network for River Cabinets with Grouped Configuration
+	DefaultHMNRVRString = "10.107.0.0/17"
+	// DefaultNMNString is the Default NMN String (bond0.nmn0)
+	DefaultNMNString = "10.252.0.0/17"
+	// DefaultNMNVlan is the default NMN Bootstrap Vlan
+	DefaultNMNVlan = 2
+	// DefaultMacVlanVlan is the default MacVlan Bootstrap Vlan
+	DefaultMacVlanVlan = 2
+	// DefaultNMNMTNString is the default NMN Network for Mountain Cabinets with Grouped Configuration
+	DefaultNMNMTNString = "10.100.0.0/17"
+	// DefaultNMNRVRString is the default NMN Network for River Cabinets with Grouped Configuration
+	DefaultNMNRVRString = "10.106.0.0/17"
+	// DefaultNMNLBString is the default LoadBalancer CIDR for the NMN
+	DefaultNMNLBString = "10.92.100.0/24"
+	// DefaultHMNLBString is the default LoadBalancer CIDR for the HMN
+	DefaultHMNLBString = "10.94.100.0/24"
+	// DefaultMacVlanString is the default Macvlan cidr (shares vlan with NMN)
+	DefaultMacVlanString = "10.252.124.0/23"
+	// DefaultHSNString is the Default HSN String
+	DefaultHSNString = "10.253.0.0/16"
+	// DefaultCMNString is the Default CMN String (bond0.cmn0)
+	DefaultCMNString = "10.103.6.0/24"
+	// DefaultCMNVlan is the default CMN Bootstrap Vlan
+	DefaultCMNVlan = 7
+	// DefaultCANString is the Default CAN String (bond0.can0)
+	DefaultCANString = "10.102.11.0/24"
+	// DefaultCANVlan is the default CAN Bootstrap Vlan
+	DefaultCANVlan = 6
+	// DefaultCHNString is the Default CHN String
+	DefaultCHNString = "10.104.7.0/24"
+	// DefaultCHNVlan is the default CHN Bootstrap Vlan
+	DefaultCHNVlan = 5
+	// DefaultMTLString is the Default MTL String (bond0 interface)
+	DefaultMTLString = "10.1.1.0/16"
+)
+
+/*
+Handy Netmask Cheet Sheet
+/30	4	2	255.255.255.252	1/64
+/29	8	6	255.255.255.248	1/32
+/28	16	14	255.255.255.240	1/16
+/27	32	30	255.255.255.224	1/8
+/26	64	62	255.255.255.192	1/4
+/25	128	126	255.255.255.128	1/2
+/24	256	254	255.255.255.0	1
+/23	512	510	255.255.254.0	2
+/22	1024	1022	255.255.252.0	4
+/21	2048	2046	255.255.248.0	8
+/20	4096	4094	255.255.240.0	16
+/19	8192	8190	255.255.224.0	32
+/18	16384	16382	255.255.192.0	64
+/17	32768	32766	255.255.128.0	128
+/16	65536	65534	255.255.0.0	256
+*/
+
+// DefaultCabinetMask is the default subnet mask for each cabinet
+var DefaultCabinetMask = net.CIDRMask(
+	22,
+	32,
+)
+
+// DefaultNetworkingHardwareMask is the default subnet mask for a subnet that contains all networking hardware
+var DefaultNetworkingHardwareMask = net.CIDRMask(
+	24,
+	32,
+)
+
+// DefaultLoadBalancerNMN is a thing we need
+var DefaultLoadBalancerNMN = IPV4Network{
+	FullName: "Node Management Network LoadBalancers",
+	CIDR:     DefaultNMNLBString,
+	Name:     "NMNLB",
+	MTU:      9000,
+	NetType:  "ethernet",
+	Comment:  "",
+}
+
+// DefaultLoadBalancerHMN is a thing we need
+var DefaultLoadBalancerHMN = IPV4Network{
+	FullName: "Hardware Management Network LoadBalancers",
+	CIDR:     DefaultHMNLBString,
+	Name:     "HMNLB",
+	MTU:      9000,
+	NetType:  "ethernet",
+	Comment:  "",
+}
+
+// DefaultBICAN is the default structure for templating the initial BICAN toggle - CMN
+var DefaultBICAN = IPV4Network{
+	FullName:           "SystemDefaultRoute points the network name of the default route",
+	CIDR:               "0.0.0.0/0",
+	Name:               "BICAN",
+	VlanRange:          []int16{0},
+	MTU:                9000,
+	NetType:            "ethernet",
+	Comment:            "",
+	SystemDefaultRoute: "",
+}
+
+// DefaultHSN is the default structure for templating initial HSN configuration
+var DefaultHSN = IPV4Network{
+	FullName: "High Speed Network",
+	CIDR:     DefaultHSNString,
+	Name:     "HSN",
+	VlanRange: []int16{
+		613,
+		868,
+	},
+	MTU:     9000,
+	NetType: "slingshot10",
+	Comment: "",
+}
+
+// DefaultCMN is the default structure for templating initial CMN configuration
+var DefaultCMN = IPV4Network{
+	FullName:     "Customer Management Network",
+	CIDR:         DefaultCMNString,
+	Name:         "CMN",
+	VlanRange:    []int16{DefaultCMNVlan},
+	MTU:          9000,
+	NetType:      "ethernet",
+	Comment:      "",
+	ParentDevice: "bond0",
+}
+
+// DefaultCAN is the default structure for templating initial CAN configuration
+var DefaultCAN = IPV4Network{
+	FullName:     "Customer Access Network",
+	CIDR:         DefaultCANString,
+	Name:         "CAN",
+	VlanRange:    []int16{DefaultCANVlan},
+	MTU:          9000,
+	NetType:      "ethernet",
+	Comment:      "",
+	ParentDevice: "bond0",
+}
+
+// DefaultCHN is the default structure for templating initial CHN configuration
+var DefaultCHN = IPV4Network{
+	FullName:     "Customer High-Speed Network",
+	CIDR:         DefaultCHNString,
+	Name:         "CHN",
+	VlanRange:    []int16{DefaultCHNVlan},
+	MTU:          9000,
+	NetType:      "ethernet",
+	Comment:      "",
+	ParentDevice: "bond0",
+}
+
+// DefaultHMN is the default structure for templating initial HMN configuration
+var DefaultHMN = IPV4Network{
+	FullName:     "Hardware Management Network",
+	CIDR:         DefaultHMNString,
+	Name:         "HMN",
+	VlanRange:    []int16{DefaultHMNVlan},
+	MTU:          9000,
+	NetType:      "ethernet",
+	Comment:      "",
+	ParentDevice: "bond0",
+}
+
+// DefaultNMN is the default structure for templating initial NMN configuration
+var DefaultNMN = IPV4Network{
+	FullName:     "Node Management Network",
+	CIDR:         DefaultNMNString,
+	Name:         "NMN",
+	VlanRange:    []int16{DefaultNMNVlan},
+	MTU:          9000,
+	NetType:      "ethernet",
+	Comment:      "",
+	ParentDevice: "bond0",
+}
+
+// DefaultMTL is the default structure for templating initial MTL configuration
+var DefaultMTL = IPV4Network{
+	FullName:     "Provisioning Network (untagged)",
+	CIDR:         DefaultMTLString,
+	Name:         "MTL",
+	VlanRange:    []int16{DefaultMTLVlan},
+	MTU:          9000,
+	NetType:      "ethernet",
+	Comment:      "This network is only valid for the NCNs",
+	ParentDevice: "bond0",
+}
 
 // IPV4Network is a type for managing IPv4 Networks
 type IPV4Network struct {
@@ -682,7 +876,9 @@ func (iSubnet *IPV4Subnet) GenInterfaceName() error {
 			iSubnet.NetName,
 		)
 	}
-	if iSubnet.VlanID < 1 {
+
+	// TODO - Vlans below should come out of sls Defaults, but have circular deps
+	if iSubnet.VlanID == 0 || iSubnet.VlanID == DefaultMTLVlan {
 		iSubnet.InterfaceName = fmt.Sprintf(
 			"%s",
 			iSubnet.ParentDevice,
