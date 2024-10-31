@@ -628,14 +628,14 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*networking.IPV
 						[]string{},
 					)
 				}
-				subnet.AddReservation(
-					"kubeapi-vip",
-					"k8s-virtual-ip",
-				)
 				if tempNet.Name == "NMN" {
 					subnet.AddReservation(
 						"rgw-vip",
 						"rgw-virtual-ip",
+					)
+					subnet.AddReservation(
+						"kubeapi-vip",
+						"k8s-virtual-ip",
 					)
 				}
 			}
