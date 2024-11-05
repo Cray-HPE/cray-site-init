@@ -6,7 +6,7 @@ on:
       - '*'
     tags:
       # semver tags:
-      - 'v[12].[0-9]+.[0-9]+'
+      - 'v?[0-9]+.[0-9]+.[0-9]+'
   pull_request:
     branches:
       - main
