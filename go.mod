@@ -9,7 +9,7 @@ require (
 	github.com/Cray-HPE/hms-base/v2 v2.0.1
 	github.com/Cray-HPE/hms-bss v1.28.0
 	github.com/Cray-HPE/hms-s3 v1.10.1
-	github.com/Cray-HPE/hms-shcd-parser v1.9.0
+	github.com/Cray-HPE/hms-shcd-parser v1.10.0
 	github.com/Cray-HPE/hms-sls v1.29.0
 	github.com/Cray-HPE/hms-smd v1.62.0
 	github.com/Cray-HPE/hms-xname v1.3.0
@@ -138,4 +138,4 @@ require (
 )
 
 go 1.22
-toolchain go1.22.5
+toolchain go1.23.4
