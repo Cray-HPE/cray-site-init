@@ -425,6 +425,13 @@ func MakeBasecampGlobals(
 	global["k8s-virtual-ip"] = reservations["kubeapi-vip"].IPAddress.String()
 	global["rgw-virtual-ip"] = reservations["rgw-vip"].IPAddress.String()
 
+	// "Set k8s-primary-cns" to Cilium if CSM 1.7 or later
+	currentVersion, eval := csm.CompareMajorMinor("1.7")
+	if eval != -1 {
+		log.Printf("Detected CSM %s, setting k8s-primary-cni to Cilium", currentVersion)
+		global["k8s-primary-cni"] = "cilium"
+	}
+
 	global["host_records"] = MakeBasecampHostRecords(
 		logicalNcns,
 		shastaNetworks,
