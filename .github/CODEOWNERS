@@ -1,20 +1,9 @@
-.github/                                @Cray-HPE/metal
-*                                       @Cray-HPE/metal
-pkg/pit                                 @Cray-HPE/metal
-pkg/csi                                 @Cray-HPE/metal
-pkg/version                             @Cray-HPE/metal
-cmd/cow.go                              @Cray-HPE/metal
-cmd/get.go                              @Cray-HPE/metal
-cmd/format.go                           @Cray-HPE/metal
-cmd/init.go                             @Cray-HPE/metal
-cmd/makedocs.go                         @Cray-HPE/metal
-cmd/pit.go                              @Cray-HPE/metal
-cmd/pitdata.go                          @Cray-HPE/metal
-cmd/populate.go                         @Cray-HPE/metal
-cmd/validate.go                         @Cray-HPE/metal
-write-livecd.sh                         @Cray-HPE/metal
-
-cmd/handoff.go                          @Cray-HPE/hardware-management
-cmd/handoff-bss-metadata.go             @Cray-HPE/hardware-management
-cmd/handoff-bss-update-cloud-init.go    @Cray-HPE/hardware-management
-cmd/handoff-bss-update-param.go         @Cray-HPE/hardware-management
+.github/                    @Cray-HPE/metal
+*                           @Cray-HPE/metal @Cray-HPE/management-network
+scripts/                    @Cray-HPE/metal
+pkg/bss                     @Cray-HPE/hardware-management
+pkg/etcd                    @Cray-HPE/platform-engineering
+pkg/kubernetes              @Cray-HPE/platform-engineering
+pkg/networking              @Cray-HPE/management-network
+pkg/shcd                    @Cray-HPE/metal @Cray-HPE/management-network
+pkg/sls                     @Cray-HPE/hardware-management
