@@ -1443,7 +1443,7 @@ func writeOutput(
 		),
 		logicalNCNs,
 	)
-	WriteMetalLBConfigMap(
+	WriteMetalLBCRD(
 		basepath,
 		v,
 		shastaNetworks,
