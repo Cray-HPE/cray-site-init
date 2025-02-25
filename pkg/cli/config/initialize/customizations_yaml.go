@@ -122,7 +122,7 @@ func GenCustomizationsYaml(
 	siteDomain := v.GetString("site-domain")
 
 	var output CustomizationsYaml
-	var metallb MetalLBConfigMap
+	var metallb MetalLBCRD
 
 	// nmnMacvlanSubnet, _ := shastaNetworks["NMN"].LookUpSubnet("uai_macvlan")
 	var masters []net.IP
