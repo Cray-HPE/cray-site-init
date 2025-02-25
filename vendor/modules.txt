@@ -14,8 +14,8 @@ github.com/Cray-HPE/hms-bss/pkg/bssTypes
 # github.com/Cray-HPE/hms-certs v1.3.2
 ## explicit; go 1.16
 github.com/Cray-HPE/hms-certs/pkg/hms_certs
-# github.com/Cray-HPE/hms-s3 v1.10.1
-## explicit; go 1.16
+# github.com/Cray-HPE/hms-s3 v1.12.0
+## explicit; go 1.23
 github.com/Cray-HPE/hms-s3
 # github.com/Cray-HPE/hms-securestorage v1.12.2
 ## explicit; go 1.16
@@ -46,10 +46,11 @@ github.com/PuerkitoBio/urlesc
 # github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef
 ## explicit; go 1.13
 github.com/asaskevich/govalidator
-# github.com/aws/aws-sdk-go v1.44.79
-## explicit; go 1.11
+# github.com/aws/aws-sdk-go v1.55.6
+## explicit; go 1.19
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/arn
+github.com/aws/aws-sdk-go/aws/auth/bearer
 github.com/aws/aws-sdk-go/aws/awserr
 github.com/aws/aws-sdk-go/aws/awsutil
 github.com/aws/aws-sdk-go/aws/client
@@ -97,6 +98,7 @@ github.com/aws/aws-sdk-go/service/s3/s3iface
 github.com/aws/aws-sdk-go/service/s3/s3manager
 github.com/aws/aws-sdk-go/service/sso
 github.com/aws/aws-sdk-go/service/sso/ssoiface
+github.com/aws/aws-sdk-go/service/ssooidc
 github.com/aws/aws-sdk-go/service/sts
 github.com/aws/aws-sdk-go/service/sts/stsiface
 # github.com/coreos/go-semver v0.3.0
@@ -348,9 +350,10 @@ github.com/spf13/viper/internal/encoding/json
 github.com/spf13/viper/internal/encoding/toml
 github.com/spf13/viper/internal/encoding/yaml
 github.com/spf13/viper/internal/features
-# github.com/stretchr/testify v1.9.0
+# github.com/stretchr/testify v1.10.0
 ## explicit; go 1.17
 github.com/stretchr/testify/assert
+github.com/stretchr/testify/assert/yaml
 github.com/stretchr/testify/require
 github.com/stretchr/testify/suite
 # github.com/subosito/gotenv v1.6.0
