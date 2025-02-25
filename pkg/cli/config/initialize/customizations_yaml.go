@@ -122,7 +122,7 @@ func GenCustomizationsYaml(
 	siteDomain := v.GetString("site-domain")
 
 	var output CustomizationsYaml
-	var metallb MetalLBConfigMap
+	var metallb MetalLBCRD
 
 	// nmnMacvlanSubnet, _ := shastaNetworks["NMN"].LookUpSubnet("uai_macvlan")
 	var masters []net.IP
@@ -255,7 +255,7 @@ func GenCustomizationsYaml(
 			AddressPools []AddressPoolDetail "yaml:\"address-pools\""
 		}{
 			Peers:        metallb.PeerSwitches,
-			AddressPools: metallb.Networks,
+			AddressPools: metallb.AddressPools,
 		},
 	}
 	output.Networking = customizationsNetworks
