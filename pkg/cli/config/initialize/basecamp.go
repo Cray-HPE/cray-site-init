@@ -114,7 +114,7 @@ type BaseCampGlobals struct {
 	KubernetesServicesCIDR     string `json:"kubernetes-services-cidr"`      // "10.16.0.0/12"
 	KubernetesWeaveMTU         string `json:"kubernetes-weave-mtu"`          // 1376
 	KubernetesCiliumOpReplicas string `json:"cilium-operator-replicas"`      // 1
-	KubernetesPrimaryCNI       string `json:"k8s-primary-cni"`               // cilium
+	KubernetesPrimaryCNI       string `json:"k8s-primary-cni"`               // weave
 	KubernetesKubeProxyReplace string `json:"cilium-kube-proxy-replacement"` // disabled
 
 	NumStorageNodes int `json:"num_storage_nodes"`
@@ -171,7 +171,7 @@ var basecampGlobalString = `{
 	"kubernetes-services-cidr": "10.16.0.0/12",
 	"kubernetes-weave-mtu": "1376",
 	"cilium-operator-replicas": "1",
-	"k8s-primary-cni": "cilium",
+	"k8s-primary-cni": "weave",
 	"cilium-kube-proxy-replacement": "disabled",
 	"rgw-virtual-ip": "~FIXME~ e.g. 10.252.2.100",
 	"wipe-ceph-osds": "yes",
@@ -424,6 +424,13 @@ func MakeBasecampGlobals(
 	// "k8s-virtual-ip" is the nmn alias for k8s
 	global["k8s-virtual-ip"] = reservations["kubeapi-vip"].IPAddress.String()
 	global["rgw-virtual-ip"] = reservations["rgw-vip"].IPAddress.String()
+
+	// "Set k8s-primary-cns" to Cilium if CSM 1.7 or later
+	currentVersion, eval := csm.CompareMajorMinor("1.7")
+	if eval != -1 {
+		log.Printf("Detected CSM %s, setting k8s-primary-cni to Cilium", currentVersion)
+		global["k8s-primary-cni"] = "cilium"
+	}
 
 	global["host_records"] = MakeBasecampHostRecords(
 		logicalNcns,
