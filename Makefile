@@ -1,6 +1,6 @@
 # MIT License
 #
-# (C) Copyright 2021-2024 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2021-2025 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -21,6 +21,7 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 # There is no reason GOROOT should be set anymore. Unset it so it doesn't mess
 # with our go toolchain detection/usage.
+
 SHELL := /bin/bash -o pipefail
 ifneq ($(GOROOT),)
 	export GOROOT=
@@ -240,6 +241,7 @@ BUILD_DIR ?= $(PWD)/dist/rpmbuild
 SPEC_FILE ?= ${NAME}.spec
 SOURCE_NAME ?= ${NAME}-${VERSION}
 SOURCE_PATH := ${BUILD_DIR}/SOURCES/${SOURCE_NAME}.tar.bz2
+UNTRACKED_FILES := $(shell git ls-files --others --exclude-standard)
 
 rpm: rpm_prepare rpm_package_source rpm_build_source rpm_build
 
@@ -249,10 +251,15 @@ rpm_prepare:
 	cp $(SPEC_FILE) $(BUILD_DIR)/SPECS/
 
 rpm_package_source:
-	tar --transform 'flags=r;s,^,/$(SOURCE_NAME)/,' --exclude .git --exclude dist -cvjf $(SOURCE_PATH) .
+	touch $(SOURCE_PATH)
+	tar --transform 'flags=r;s,^,/$(SOURCE_NAME)/,' --exclude .git --exclude dist --exclude $(SOURCE_NAME).tar.bz2 -cvjf $(SOURCE_PATH) .
 
 rpm_build_source:
 	rpmbuild --nodeps --target $(ARCH) -ts $(SOURCE_PATH) --define "_topdir $(BUILD_DIR)"
 
 rpm_build:
 	rpmbuild --nodeps --target $(ARCH) -ba $(SPEC_FILE) --define "_topdir $(BUILD_DIR)"
+	@if [ -n "$(UNTRACKED_FILES)" ]; then \
+	  echo >&2 -e "\nWARNING! The following files are NOT tracked by git, but were included in the build:"; \
+	  echo >&2 -e "$(UNTRACKED_FILES)\n" | tr ' ' '\n'; \
+	fi
