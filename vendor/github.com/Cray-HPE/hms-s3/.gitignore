@@ -1,1 +1,12 @@
 .idea/
+
+# This file is copied in by the unit tests
+docker-compose
+
+# Prevent certificates from getting checked in
+*.ca
+*.cer
+*.crt
+*.csr
+*.key
+*.pem
