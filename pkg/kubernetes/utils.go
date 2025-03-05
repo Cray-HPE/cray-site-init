@@ -165,7 +165,7 @@ func (utilsClient *UtilsClient) DrainNCN(ncn string) error {
 	)
 
 	// Now identify any pods running on this NCN that also have a pod distribution budget.
-	budgets, err := utilsClient.clientSet.PolicyV1beta1().PodDisruptionBudgets("").List(
+	budgets, err := utilsClient.clientSet.PolicyV1().PodDisruptionBudgets("").List(
 		context.Background(),
 		v1.ListOptions{},
 	)
