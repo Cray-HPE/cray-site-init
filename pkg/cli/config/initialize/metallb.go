@@ -62,7 +62,7 @@ apiVersion: metallb.io/v1beta1
 kind: IPAddressPool
 metadata:
   namespace: metallb-system
-  name: ip-pool-{{ $index }}
+  name: {{ .Name}}
 spec:
   addresses:
   {{- range $subnet := $pool.Addresses }}
