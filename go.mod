@@ -8,7 +8,7 @@ replace (
 require (
 	github.com/Cray-HPE/hms-base/v2 v2.0.1
 	github.com/Cray-HPE/hms-bss v1.28.0
-	github.com/Cray-HPE/hms-s3 v1.10.1
+	github.com/Cray-HPE/hms-s3 v1.12.0
 	github.com/Cray-HPE/hms-shcd-parser v1.9.0
 	github.com/Cray-HPE/hms-sls v1.29.0
 	github.com/Cray-HPE/hms-smd v1.62.0
@@ -20,7 +20,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.18.2
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	go.etcd.io/etcd/api/v3 v3.5.17
 	go.etcd.io/etcd/client/v3 v3.5.16
 	go.uber.org/zap v1.27.0
@@ -35,7 +35,7 @@ require (
 
 require (
 	github.com/Cray-HPE/hms-base v1.15.0 // indirect
-	github.com/aws/aws-sdk-go v1.44.79 // indirect
+	github.com/aws/aws-sdk-go v1.55.6 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
@@ -138,4 +138,4 @@ require (
 )
 
 go 1.22
-toolchain go1.22.5
+toolchain go1.23.6
