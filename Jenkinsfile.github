@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022-2023 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2025 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -21,6 +21,7 @@
  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  OTHER DEALINGS IN THE SOFTWARE.
  */
+
 @Library('csm-shared-library') _
 
 // Only consider X.Y.Z and X.Y.Z tags as stable.
@@ -30,11 +31,10 @@ def stableToken = ~/v?\d+\.\d+\.\d+/
 def isStable = (env.TAG_NAME != null & env.TAG_NAME ==~ stableToken) ? true : false
 
 def goImage = 'artifactory.algol60.net/csm-docker/stable/csm-docker-sle-go'
+
 pipeline {
 
-    agent {
-        label "metal-gcp-builder"
-    }
+    agent any
 
     options {
         buildDiscarder(logRotator(numToKeepStr: "10"))
@@ -51,7 +51,7 @@ pipeline {
 
     stages {
 
-        stage('Build & Publish') {
+        stage('Matrix') {
 
             matrix {
 
@@ -71,99 +71,84 @@ pipeline {
 
                 stages {
 
-                    stage('Build: setup') {
+                    stage('Build & Publish') {
+
                         agent {
                             label "${env.JENKINS_AGENT}"
                         }
-                        steps {
-                            sh "docker pull ${goImage}:${GO_VERSION}-SLES15.5"
-                        }
-                    }
 
-                    stage('Prepare: RPMs') {
-                        agent {
-                            docker {
-                                label "${JENKINS_AGENT}"
-                                reuseNode true
-                                args "-v /home/jenkins/.ssh:/home/jenkins/.ssh"
-                                image "${DOCKER_GO_IMAGE}"
+                        stages {
+                            stage('Prepare: Docker') {
+                                steps {
+                                    sh "docker pull ${env.DOCKER_GO_IMAGE}"
+                                }
                             }
-                        }
-                        steps {
-                            runLibraryScript("addRpmMetaData.sh", "${env.NAME}.spec")
-                            sh "make rpm_prepare"
-                            sh "git update-index --assume-unchanged ${env.NAME}.spec"
-                        }
-                    }
 
-                    stage('Build: RPMs') {
-                        agent {
-                            docker {
-                                label "${JENKINS_AGENT}"
-                                reuseNode true
-                                args "-v /home/jenkins/.ssh:/home/jenkins/.ssh --platform linux/${DOCKER_ARCH}"
-                                image "${DOCKER_GO_IMAGE}"
+                            stage('Prepare: RPMs') {
+                                steps {
+                                    runLibraryScript("addRpmMetaData.sh", "${env.NAME}.spec")
+                                    sh "make rpm_prepare"
+                                    sh "git update-index --assume-unchanged ${env.NAME}.spec"
+                                }
                             }
-                        }
-                        steps {
-                            sh "make rpm"
-                        }
-                    }
 
-                    stage('Publish: RPMs') {
-                        agent {
-                            docker {
-                                label "${JENKINS_AGENT}"
-                                reuseNode true
-                                args "-v /home/jenkins/.ssh:/home/jenkins/.ssh --platform linux/${DOCKER_ARCH}"
-                                image "${DOCKER_GO_IMAGE}"
+                            stage('Build: RPMs') {
+                                steps {
+                                    script {
+                                        docker.image(DOCKER_GO_IMAGE).inside {
+                                            sh "make rpm"
+                                        }
+                                    }
+                                }
                             }
-                        }
-                        steps {
-                            script {
-                                publishCsmRpms(
-                                        arch: "${ARCH}",
-                                        component: env.NAME,
-                                        isStable: isStable,
-                                        os: "noos",
-                                        pattern: "dist/rpmbuild/${ARCH}/RPMS/${ARCH}/*.rpm",
-                                )
-                                publishCsmRpms(
-                                        arch: "src",
-                                        component: env.NAME,
-                                        isStable: isStable,
-                                        os: "noos",
-                                        pattern: "dist/rpmbuild/${ARCH}/SRPMS/*.rpm",
-                                )
-                                // Temporarily publish to sp4 and sp3 until docs-csm is cut-over to use noos in its various directions that install cray-site-init.
-                                publishCsmRpms(
-                                        arch: "${ARCH}",
-                                        component: env.NAME,
-                                        isStable: isStable,
-                                        os: "sle-15sp4",
-                                        pattern: "dist/rpmbuild/${ARCH}/RPMS/${ARCH}/*.rpm",
-                                )
-                                publishCsmRpms(
-                                        arch: "src",
-                                        component: env.NAME,
-                                        isStable: isStable,
-                                        os: "sle-15sp4",
-                                        pattern: "dist/rpmbuild/${ARCH}/SRPMS/*.rpm",
-                                )
-                                publishCsmRpms(
-                                        arch: "${ARCH}",
-                                        component: env.NAME,
-                                        isStable: isStable,
-                                        os: "sle-15sp3",
-                                        pattern: "dist/rpmbuild/${ARCH}/RPMS/${ARCH}/*.rpm",
-                                )
-                                publishCsmRpms(
-                                        arch: "src",
-                                        component: env.NAME,
-                                        isStable: isStable,
-                                        os: "sle-15sp3",
-                                        pattern: "dist/rpmbuild/${ARCH}/SRPMS/*.rpm",
-                                )
+
+                            stage('Publish: RPMs') {
+                                steps {
+                                    script {
+                                        publishCsmRpms(
+                                            arch: "${ARCH}",
+                                            component: env.NAME,
+                                            isStable: isStable,
+                                            os: "noos",
+                                            pattern: "dist/rpmbuild/${ARCH}/RPMS/${ARCH}/*.rpm",
+                                        )
+                                        publishCsmRpms(
+                                            arch: "src",
+                                            component: env.NAME,
+                                            isStable: isStable,
+                                            os: "noos",
+                                            pattern: "dist/rpmbuild/${ARCH}/SRPMS/*.rpm",
+                                        )
+                                        publishCsmRpms(
+                                            arch: "${ARCH}",
+                                            component: env.NAME,
+                                            isStable: isStable,
+                                            os: "sle-15sp4",
+                                            pattern: "dist/rpmbuild/${ARCH}/RPMS/${ARCH}/*.rpm",
+                                        )
+                                        publishCsmRpms(
+                                            arch: "src",
+                                            component: env.NAME,
+                                            isStable: isStable,
+                                            os: "sle-15sp4",
+                                            pattern: "dist/rpmbuild/${ARCH}/SRPMS/*.rpm",
+                                        )
+                                        publishCsmRpms(
+                                            arch: "${ARCH}",
+                                            component: env.NAME,
+                                            isStable: isStable,
+                                            os: "sle-15sp3",
+                                            pattern: "dist/rpmbuild/${ARCH}/RPMS/${ARCH}/*.rpm",
+                                        )
+                                        publishCsmRpms(
+                                            arch: "src",
+                                            component: env.NAME,
+                                            isStable: isStable,
+                                            os: "sle-15sp3",
+                                            pattern: "dist/rpmbuild/${ARCH}/SRPMS/*.rpm",
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
