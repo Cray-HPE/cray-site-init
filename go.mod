@@ -24,7 +24,7 @@ require (
 	go.etcd.io/etcd/api/v3 v3.5.17
 	go.etcd.io/etcd/client/v3 v3.5.16
 	go.uber.org/zap v1.27.0
-	golang.org/x/crypto v0.27.0
+	golang.org/x/crypto v0.36.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.22.2
@@ -115,9 +115,9 @@ require (
 	golang.org/x/mod v0.22.0
 	golang.org/x/net v0.23.0 // indirect
 	golang.org/x/oauth2 v0.15.0 // indirect
-	golang.org/x/sys v0.25.0 // indirect
-	golang.org/x/term v0.24.0 // indirect
-	golang.org/x/text v0.18.0 // indirect
+	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/term v0.30.0 // indirect
+	golang.org/x/text v0.23.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20231106174013-bbf56f31fb17 // indirect
@@ -138,4 +138,4 @@ require (
 )
 
 go 1.22
-toolchain go1.22.5
+toolchain go1.23.7
