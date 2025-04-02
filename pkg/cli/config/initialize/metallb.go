@@ -71,6 +71,8 @@ type PeerDetail struct {
 	IPAddress string `yaml:"peer-address" valid:"_,required"`
 	PeerASN   int    `yaml:"peer-asn" valid:"_,required"`
 	MyASN     int    `yaml:"my-asn" valid:"_,required"`
+	Name      string `yaml:"device-name" valid:"_,required"`
+	Network   string `yaml:"device-network" valid:"_,required"`
 }
 
 // AddressPoolDetail holds information about each of the MetalLB address pools
@@ -112,6 +114,8 @@ func GetMetalLBConfig(
 					tmpPeer.PeerASN = network.PeerASN
 					tmpPeer.MyASN = network.MyASN
 					tmpPeer.IPAddress = reservation.IPAddress.String()
+					tmpPeer.Name = reservation.Name
+					tmpPeer.Network = strings.ToLower(name)
 					if spineSwitchNameRegexp.FindString(reservation.Name) != "" {
 						configStruct.SpineSwitches = append(
 							configStruct.SpineSwitches,
@@ -132,6 +136,8 @@ func GetMetalLBConfig(
 					tmpPeer.PeerASN = network.PeerASN
 					tmpPeer.MyASN = network.MyASN
 					tmpPeer.IPAddress = reservation.IPAddress.String()
+					tmpPeer.Name = reservation.Name
+					tmpPeer.Network = strings.ToLower(name)
 					if edgeSwitchNameRegexp.FindString(reservation.Name) != "" {
 						configStruct.EdgeSwitches = append(
 							configStruct.EdgeSwitches,
