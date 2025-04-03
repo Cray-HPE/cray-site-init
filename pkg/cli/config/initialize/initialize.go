@@ -1443,12 +1443,16 @@ func writeOutput(
 		),
 		logicalNCNs,
 	)
-	WriteMetalLBConfigMap(
-		basepath,
-		v,
-		shastaNetworks,
-		switches,
-	)
+	// The MetalLB ConfigMap is no longer used in CSM 1.7
+	_, eval := csm.CompareMajorMinor("1.7")
+	if eval == -1 {
+		WriteMetalLBConfigMap(
+			basepath,
+			v,
+			shastaNetworks,
+			switches,
+		)
+	}
 	WriteBasecampData(
 		filepath.Join(
 			basepath,
