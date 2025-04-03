@@ -35,6 +35,7 @@ import (
 
 	csiFiles "github.com/Cray-HPE/cray-site-init/internal/files"
 
+	"github.com/Cray-HPE/cray-site-init/pkg/csm"
 	"github.com/Cray-HPE/cray-site-init/pkg/networking"
 )
 
@@ -71,8 +72,11 @@ type PeerDetail struct {
 	IPAddress string `yaml:"peer-address" valid:"_,required"`
 	PeerASN   int    `yaml:"peer-asn" valid:"_,required"`
 	MyASN     int    `yaml:"my-asn" valid:"_,required"`
-	Name      string `yaml:"device-name" valid:"_,required"`
-	Network   string `yaml:"device-network" valid:"_,required"`
+	// Newer versions of MetalLB are configured by means of Custom Resource Definitions
+	// rather than a ConfigMap. In order to build the BGPAnnouncement resources some way
+	// of mapping the IPAddressPool to the BGPPeer is required.
+	Name      string `yaml:"device-name,omitempty" valid:"_"`
+	Network   string `yaml:"device-network,omitempty" valid:"_"`
 }
 
 // AddressPoolDetail holds information about each of the MetalLB address pools
@@ -103,6 +107,8 @@ func GetMetalLBConfig(
 	spineSwitchNameRegexp := regexp.MustCompile(`sw-spine-\d{3}`)
 	leafSwitchNameRegexp := regexp.MustCompile(`sw-leaf-\d{3}`)
 	edgeSwitchNameRegexp := regexp.MustCompile(`chn-switch-\d`)
+	// Populate extra PeerDetail fields if CSM 1.7 and above
+	_, useNewMetalLB := csm.CompareMajorMinor("1.7")
 
 	for name, network := range networks {
 		for _, subnet := range network.Subnets {
@@ -114,8 +120,10 @@ func GetMetalLBConfig(
 					tmpPeer.PeerASN = network.PeerASN
 					tmpPeer.MyASN = network.MyASN
 					tmpPeer.IPAddress = reservation.IPAddress.String()
-					tmpPeer.Name = reservation.Name
-					tmpPeer.Network = strings.ToLower(name)
+					if useNewMetalLB != -1 {
+						tmpPeer.Name = reservation.Name
+						tmpPeer.Network = strings.ToLower(name)
+					}
 					if spineSwitchNameRegexp.FindString(reservation.Name) != "" {
 						configStruct.SpineSwitches = append(
 							configStruct.SpineSwitches,
@@ -136,8 +144,10 @@ func GetMetalLBConfig(
 					tmpPeer.PeerASN = network.PeerASN
 					tmpPeer.MyASN = network.MyASN
 					tmpPeer.IPAddress = reservation.IPAddress.String()
-					tmpPeer.Name = reservation.Name
-					tmpPeer.Network = strings.ToLower(name)
+					if useNewMetalLB != -1 {
+						tmpPeer.Name = reservation.Name
+						tmpPeer.Network = strings.ToLower(name)
+					}
 					if edgeSwitchNameRegexp.FindString(reservation.Name) != "" {
 						configStruct.EdgeSwitches = append(
 							configStruct.EdgeSwitches,
