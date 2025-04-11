@@ -117,17 +117,17 @@ func setupEnvs() {
 
 	bssBaseURL = os.Getenv("BSS_BASE_URL")
 	if bssBaseURL == "" {
-		bssBaseURL = "https://api-gw-service-nmn.local/apis/bss"
+		bssBaseURL = csm.DefaultBSSBaseURL
 	}
 
 	hsmBaseURL = os.Getenv("HSM_BASE_URL")
 	if hsmBaseURL == "" {
-		hsmBaseURL = "https://api-gw-service-nmn.local/apis/smd"
+		hsmBaseURL = csm.DefaultSMDBaseURL
 	}
 
 	slsBaseURL = os.Getenv("SLS_BASE_URL")
 	if slsBaseURL == "" {
-		slsBaseURL = "https://api-gw-service-nmn.local/apis/sls"
+		slsBaseURL = csm.DefaultSLSBaseURL
 	}
 }
 
