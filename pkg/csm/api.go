@@ -37,6 +37,9 @@ import (
 	"strings"
 )
 
+// BaseAPIURL is the URL for which all API requests should be directed at.
+const BaseAPIURL = "https://api-gw-service-nmn.local"
+
 // DefaultNameSpace is the default namespace to use when interfacing with Kubernetes.
 const DefaultNameSpace = "default"
 
