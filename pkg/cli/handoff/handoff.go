@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2025 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -26,6 +26,7 @@ package handoff
 
 import (
 	"crypto/tls"
+	"github.com/Cray-HPE/cray-site-init/pkg/csm"
 	"log"
 	"net/http"
 	"os"
@@ -97,31 +98,36 @@ func NewCommand() *cobra.Command {
 	return c
 }
 
-func checkToken() {
-	if token == "" {
-		log.Panicln("Environment variable TOKEN can NOT be blank!")
-	}
-}
-
 func setupEnvs() {
 	token = os.Getenv("TOKEN")
+	if token == "" {
+		log.Println("TOKEN was not set. Attempting to read API token from Kubernetes directly ... ")
+		var err error
+		token, err = csm.GetToken(
+			csm.DefaultNameSpace,
+			csm.DefaultAdminTokenSecretName,
+		)
+		if err != nil {
+			log.Panicf(
+				"Neither the environment variable [TOKEN] or Kubernetes %s provided a useful token!",
+				csm.DefaultAdminTokenSecretName,
+			)
+		}
+	}
 
 	bssBaseURL = os.Getenv("BSS_BASE_URL")
 	if bssBaseURL == "" {
 		bssBaseURL = "https://api-gw-service-nmn.local/apis/bss"
-		checkToken()
 	}
 
 	hsmBaseURL = os.Getenv("HSM_BASE_URL")
 	if hsmBaseURL == "" {
 		hsmBaseURL = "https://api-gw-service-nmn.local/apis/smd"
-		checkToken()
 	}
 
 	slsBaseURL = os.Getenv("SLS_BASE_URL")
 	if slsBaseURL == "" {
 		slsBaseURL = "https://api-gw-service-nmn.local/apis/sls"
-		checkToken()
 	}
 }
 
