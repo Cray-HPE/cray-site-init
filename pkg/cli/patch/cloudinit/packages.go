@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2023-2024 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2023-2025 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -22,7 +22,7 @@
  OTHER DEALINGS IN THE SOFTWARE.
 */
 
-package patch
+package cloudinit
 
 import (
 	"encoding/json"
@@ -69,8 +69,8 @@ type Host struct {
 	UserData UserData `json:"user-data"`
 }
 
-// CloudInitHost is the representation of all the new cloud-init data.
-type CloudInitHost map[string]Host
+// NewHost is the representation of all the new cloud-init data.
+type NewHost map[string]Host
 
 // configFile is our input, our config to patch into cloud-init data.
 var configFile string
@@ -180,7 +180,7 @@ func loadPackagesConfig(filePath string) (
 // mergePackagesData takes assembled userdata and merges it into each user-data entry for each host in a given cloud-init datasource.
 func mergePackagesData(
 	userdata UserData, data []byte,
-) CloudInitHost {
+) NewHost {
 	cloudInit := make(map[string]Host)
 	var datas map[string]interface{}
 	if err := json.Unmarshal(
