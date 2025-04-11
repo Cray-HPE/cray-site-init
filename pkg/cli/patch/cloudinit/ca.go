@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2021-2024 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2021-2025 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -22,7 +22,7 @@
  OTHER DEALINGS IN THE SOFTWARE.
 */
 
-package patch
+package cloudinit
 
 import (
 	"bytes"
@@ -79,8 +79,8 @@ type Metadata struct {
 	CACerts `json:"ca-certs"`
 }
 
-// CloudInitGlobal - Boilerplate for cloud-init hierarchical structure
-type CloudInitGlobal struct {
+// Global - Boilerplate for cloud-init hierarchical structure
+type Global struct {
 	Global struct {
 		Metadata `json:"meta-data"`
 	}
@@ -143,7 +143,7 @@ private RSA key.`,
 				log.Fatalf("No CA certificates were found.")
 			}
 
-			var cloudInit CloudInitGlobal
+			var cloudInit Global
 			cloudInit.Global.Metadata.CACerts = CABundle
 			update, err := json.Marshal(cloudInit)
 			if err != nil {
