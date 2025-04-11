@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2025 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -36,110 +36,14 @@ the SLS structure.
 */
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"log"
-	"net/http"
-	"os"
-	"regexp"
-	"strings"
-	"time"
-
 	"github.com/mitchellh/mapstructure"
+	"log"
+	"regexp"
 
 	slsCommon "github.com/Cray-HPE/hms-sls/pkg/sls-common"
-
-	"github.com/Cray-HPE/cray-site-init/pkg/networking"
 )
-
-// ParseSLSFile takes a path and returns an SLSState struct for parsing
-func ParseSLSFile(path string) (
-	slsCommon.SLSState, error,
-) {
-	var existingState slsCommon.SLSState
-	jsonSLSFile, err := os.Open(path)
-	if err != nil {
-		return existingState, err
-	}
-	// defer the closing of our jsonFile so that we can parse it later on
-	defer jsonSLSFile.Close()
-	buf, _ := ioutil.ReadAll(jsonSLSFile)
-	err = json.Unmarshal(
-		buf,
-		&existingState,
-	)
-	if err != nil {
-		return existingState, err
-	}
-	return existingState, nil
-}
-
-// ParseSLSfromURL takes a url (likely the sls dumpstate url) and returns a useful struct
-func ParseSLSfromURL(url string) (
-	slsCommon.SLSState, error,
-) {
-	var existingState slsCommon.SLSState
-
-	slsClient := http.Client{
-		Timeout: time.Second * 2, // Timeout after 2 seconds
-	}
-	req, err := http.NewRequest(
-		http.MethodGet,
-		url,
-		nil,
-	)
-	if err != nil {
-		return existingState, err
-	}
-	req.Header.Set(
-		"User-Agent",
-		"shasta-1.4-installer",
-	)
-	res, err := slsClient.Do(req)
-	if err != nil {
-		return existingState, err
-	}
-	if res.Body != nil {
-		defer res.Body.Close()
-	}
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return existingState, err
-	}
-	err = json.Unmarshal(
-		body,
-		&existingState,
-	)
-	return existingState, err
-}
-
-// ExtractSLSNetworks converts from the SLS version of
-// Network Definitions to a list of IPV4Networks
-func ExtractSLSNetworks(sls *slsCommon.SLSState) (
-	[]networking.IPV4Network, error,
-) {
-	var ourNetworks []networking.IPV4Network
-	for key, element := range sls.Networks {
-		// log.Printf("Key:", key, "=>", "Element:", element, "(", reflect.TypeOf(element), ")")
-		// log.Printf("Extra Properties:", element.ExtraPropertiesRaw)
-		tempNetwork := new(networking.IPV4Network)
-		tempNetwork.FullName = element.FullName
-		tempNetwork.CIDR = strings.Join(
-			element.IPRanges,
-			",",
-		)
-		tempNetwork.Name = key
-		// Pull the VLAN Range from the Extra Properties
-		// tempNetwork.VlanRange
-		ourNetworks = append(
-			ourNetworks,
-			*tempNetwork,
-		)
-	}
-	return ourNetworks, nil
-}
 
 // ExtractUANs pulls the information needed to assign CAN addresses to the UAN xnames
 func ExtractUANs(sls *slsCommon.SLSState) (
@@ -252,28 +156,6 @@ func portForXname(
 	}
 	// log.Printf("Couldn't find", xname)
 	return "", "", errors.New("WARNING (Not Fatal): Couldn't find switch port for NCN: " + xname)
-}
-
-// ExtractSLSSwitches reads the SLSState object and finds any switches
-func ExtractSLSSwitches(sls *slsCommon.SLSState) (
-	[]networking.ManagementSwitch, error,
-) {
-	var switches []networking.ManagementSwitch
-	for _, node := range sls.Hardware {
-		if node.Type == slsCommon.MgmtSwitch {
-			var extra slsCommon.ComptypeMgmtSwitch
-			err := mapstructure.Decode(
-				node.ExtraPropertiesRaw,
-				&extra,
-			)
-			if err != nil {
-				return switches, err
-			}
-			// TODO: Map the switch data to either an SLS object or an internal object as needed by SLS
-			// Update the signature to return the lost of switches
-		}
-	}
-	return switches, nil
 }
 
 // CabinetForXname extracts the cabinet identifier from an xname
