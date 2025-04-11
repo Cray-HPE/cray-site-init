@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2025 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -31,7 +31,7 @@ import (
 	"github.com/Cray-HPE/cray-site-init/pkg/cli/config/initialize"
 	"github.com/Cray-HPE/cray-site-init/pkg/cli/config/initialize/sls"
 	"github.com/Cray-HPE/cray-site-init/pkg/cli/config/shcd"
-	template "github.com/Cray-HPE/cray-site-init/pkg/cli/config/template"
+	"github.com/Cray-HPE/cray-site-init/pkg/cli/config/template"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
