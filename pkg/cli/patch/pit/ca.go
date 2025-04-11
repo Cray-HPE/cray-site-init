@@ -1,28 +1,28 @@
 /*
- MIT License
+ * MIT License
+ *
+ * (C) Copyright 2021-2025 Hewlett Packard Enterprise Development LP
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
 
- (C) Copyright 2021-2024 Hewlett Packard Enterprise Development LP
-
- Permission is hereby granted, free of charge, to any person obtaining a
- copy of this software and associated documentation files (the "Software"),
- to deal in the Software without restriction, including without limitation
- the rights to use, copy, modify, merge, publish, distribute, sublicense,
- and/or sell copies of the Software, and to permit persons to whom the
- Software is furnished to do so, subject to the following conditions:
-
- The above copyright notice and this permission notice shall be included
- in all copies or substantial portions of the Software.
-
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
- OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
- ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- OTHER DEALINGS IN THE SOFTWARE.
-*/
-
-package patch
+package pit
 
 import (
 	"bytes"
@@ -37,8 +37,8 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"errors"
-	"io/ioutil"
 	"log"
+	"os"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -60,8 +60,7 @@ type SealedSecret struct {
 // Customizations - Minimum customizations (shasta-cfg) struct
 // to access sealed secrets
 type Customizations struct {
-	apiVersion string
-	Spec       struct {
+	Spec struct {
 		Kubernetes struct {
 			SealedSecrets map[string]SealedSecret `yaml:"sealed_secrets"`
 		}
@@ -79,8 +78,8 @@ type Metadata struct {
 	CACerts `json:"ca-certs"`
 }
 
-// CloudInitGlobal - Boilerplate for cloud-init hierarchical structure
-type CloudInitGlobal struct {
+// Global - Boilerplate for cloud-init hierarchical structure
+type Global struct {
 	Global struct {
 		Metadata `json:"meta-data"`
 	}
@@ -93,12 +92,12 @@ var sealedSecretName string
 func caCommand() *cobra.Command {
 	c := &cobra.Command{
 		Use:               "ca",
-		Short:             "Patch cloud-init metadata with CA certs",
+		Short:             "Patch CA certificates into the PIT's cloud-init meta-data.",
 		DisableAutoGenTag: true,
 		Long: `
-Patch cloud-init metadata (in place) with certificate authority (CA) certificates from
-shasta-cfg (customizations.yaml). Decrypts CA material from named sealed secret using the shasta-cfg
-private RSA key.`,
+Patches the Pre-Install Toolkit's (PIT) cloud-init meta-data, adding Certificate Authority (CA) certificates from a
+given Shasta configuration (shasta-cfg).
+`,
 		Run: func(c *cobra.Command, args []string) {
 			ciphertext, err := loadEncryptedCABundle(
 				customizationsFile,
@@ -143,8 +142,10 @@ private RSA key.`,
 				log.Fatalf("No CA certificates were found.")
 			}
 
-			var cloudInit CloudInitGlobal
-			cloudInit.Global.Metadata.CACerts = CABundle
+			var cloudInit Global
+			var metaData Metadata
+			metaData.CACerts = CABundle
+			cloudInit.Global.Metadata = metaData
 			update, err := json.Marshal(cloudInit)
 			if err != nil {
 				log.Fatalf(
@@ -194,8 +195,24 @@ private RSA key.`,
 		"gen_platform_ca_1",
 		"Path to cloud-init metadata seed file",
 	)
-	c.MarkFlagRequired("customizations-file")
-	c.MarkFlagRequired("sealed-secret-key-file")
+	err := c.MarkFlagRequired("customizations-file")
+
+	if err != nil {
+		log.Fatalf(
+			"Failed to mark flag as required because %v",
+			err,
+		)
+		return nil
+	}
+	err = c.MarkFlagRequired("sealed-secret-key-file")
+
+	if err != nil {
+		log.Fatalf(
+			"Failed to mark flag as required because %v",
+			err,
+		)
+		return nil
+	}
 	return c
 }
 
@@ -207,7 +224,7 @@ func loadEncryptedCABundle(
 	[]byte, error,
 ) {
 
-	customizations, err := ioutil.ReadFile(filePath)
+	customizations, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}
@@ -248,7 +265,7 @@ func loadPrivateKey(filePath string) (
 	*rsa.PrivateKey, error,
 ) {
 
-	key, err := ioutil.ReadFile(filePath)
+	key, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}
@@ -340,10 +357,9 @@ func decryptCABundle(
 // Given a decrypted PEM bundle, populate and return appropriate
 // cloud-init structure
 func formatCABundle(raw []byte) (
-	CACerts, error,
+	CABundle CACerts, err error,
 ) {
 
-	var CABundle CACerts
 	CABundle.RemoveDefaults = false
 
 	// parse each cert from bundle
@@ -358,13 +374,16 @@ func formatCABundle(raw []byte) (
 		if block.Type == "CERTIFICATE" {
 
 			certPem := new(bytes.Buffer)
-			pem.Encode(
+			err = pem.Encode(
 				certPem,
 				&pem.Block{
 					Type:  "CERTIFICATE",
 					Bytes: block.Bytes,
 				},
 			)
+			if err != nil {
+				return CABundle, err
+			}
 			CABundle.Trusted = append(
 				CABundle.Trusted,
 				certPem.String(),
@@ -373,5 +392,5 @@ func formatCABundle(raw []byte) (
 		raw = other
 	}
 
-	return CABundle, nil
+	return CABundle, err
 }

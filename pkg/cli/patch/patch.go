@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2021-2024 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2021-2025 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -25,108 +25,26 @@
 package patch
 
 import (
-	"encoding/json"
-	"fmt"
-	"log"
-	"os"
-	"path/filepath"
-	"strings"
-	"time"
-
-	jsonpatch "github.com/evanphx/json-patch"
+	"github.com/Cray-HPE/cray-site-init/pkg/cli/patch/pit"
 	"github.com/spf13/cobra"
 )
 
-var cloudInitSeedFile string
-
-// NewCommand is a command for applying changes to an existing cloud-init file.
+// NewCommand is a command for applying changes to a system's running services.
 func NewCommand() *cobra.Command {
 	c := &cobra.Command{
 		Use:               "patch",
-		Short:             "Apply patch operations",
+		Short:             "Patch commands for modifying system contexts.",
 		DisableAutoGenTag: true,
 		Long: `
-Runs patch operations against the CRAY.
+Commands for patching data and/or services in various system contexts.
 `,
-		Run: func(c *cobra.Command, args []string) {
-			c.Usage()
-		},
 	}
-	c.PersistentFlags().StringVarP(
-		&cloudInitSeedFile,
-		"cloud-init-seed-file",
-		"",
-		"",
-		"Path to cloud-init metadata seed file",
-	)
-	c.MarkFlagRequired("cloud-init-seed-file")
 	c.AddCommand(
-		caCommand(),
-		packageCommand(),
+		pit.NewCommand(),
+
+		// Legacy commands; these were sub-commands of `csi patch` in CSI v1.36.10
+		pit.DeprecatedCACommand(),
+		pit.DeprecatedPackagesCommand(),
 	)
 	return c
-}
-
-// backupCloudInitData makes a backup of the cloudInitSeedFile.
-func backupCloudInitData() (
-	[]byte, error,
-) {
-	data, err := os.ReadFile(cloudInitSeedFile)
-	if err != nil {
-		log.Fatalf(
-			"Unable to load cloud-init seed data, %v \n",
-			err,
-		)
-	}
-	currentTime := time.Now()
-	ts := currentTime.Unix()
-
-	cloudinitFileName := strings.TrimSuffix(
-		cloudInitSeedFile,
-		filepath.Ext(cloudInitSeedFile),
-	)
-	backupFile := cloudinitFileName + "-" + fmt.Sprintf(
-		"%d",
-		ts,
-	) + filepath.Ext(cloudInitSeedFile)
-	err = os.WriteFile(
-		backupFile,
-		data,
-		0640,
-	)
-	return data, err
-}
-
-// writeCloudInit merges new data with an existing cloud-init seed file, saving the merged data to disk.
-func writeCloudInit(
-	data []byte, update []byte,
-) error {
-	// Unmarshal merged cloud-init data, marshal it back with indent
-	// then write it to the original cloud-init file (in place patch)
-	merged, err := jsonpatch.MergePatch(
-		data,
-		update,
-	)
-	if err != nil {
-		log.Fatalf(
-			"Could not create merge patch to update cloud-init seed data, %v \n",
-			err,
-		)
-	}
-	var mergeUnmarshal map[string]interface{}
-	json.Unmarshal(
-		merged,
-		&mergeUnmarshal,
-	)
-	mergeMarshal, _ := json.MarshalIndent(
-		mergeUnmarshal,
-		"",
-		"  ",
-	)
-	err = os.WriteFile(
-		cloudInitSeedFile,
-		mergeMarshal,
-		0640,
-	)
-	return err
 }
