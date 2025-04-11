@@ -5,8 +5,8 @@ github.com/Azure/go-ansiterm/winterm
 # github.com/Cray-HPE/hms-base v1.15.0
 ## explicit; go 1.16
 github.com/Cray-HPE/hms-base
-# github.com/Cray-HPE/hms-base/v2 v2.0.1
-## explicit; go 1.16
+# github.com/Cray-HPE/hms-base/v2 v2.2.0
+## explicit; go 1.23
 github.com/Cray-HPE/hms-base/v2
 # github.com/Cray-HPE/hms-bss v1.28.0
 ## explicit; go 1.16
@@ -14,8 +14,8 @@ github.com/Cray-HPE/hms-bss/pkg/bssTypes
 # github.com/Cray-HPE/hms-certs v1.3.2
 ## explicit; go 1.16
 github.com/Cray-HPE/hms-certs/pkg/hms_certs
-# github.com/Cray-HPE/hms-s3 v1.10.1
-## explicit; go 1.16
+# github.com/Cray-HPE/hms-s3 v1.12.0
+## explicit; go 1.23
 github.com/Cray-HPE/hms-s3
 # github.com/Cray-HPE/hms-securestorage v1.12.2
 ## explicit; go 1.16
@@ -26,12 +26,16 @@ github.com/Cray-HPE/hms-shcd-parser/pkg/shcd-parser
 # github.com/Cray-HPE/hms-sls v1.29.0
 ## explicit; go 1.16
 github.com/Cray-HPE/hms-sls/pkg/sls-common
+# github.com/Cray-HPE/hms-sls/v2 v2.8.0
+## explicit; go 1.23
+github.com/Cray-HPE/hms-sls/v2/pkg/sls-client
+github.com/Cray-HPE/hms-sls/v2/pkg/sls-common
 # github.com/Cray-HPE/hms-smd v1.62.0
 ## explicit; go 1.16
 github.com/Cray-HPE/hms-smd/pkg/redfish
 github.com/Cray-HPE/hms-smd/pkg/sm
-# github.com/Cray-HPE/hms-xname v1.3.0
-## explicit; go 1.20
+# github.com/Cray-HPE/hms-xname v1.4.0
+## explicit; go 1.23
 github.com/Cray-HPE/hms-xname/xnames
 github.com/Cray-HPE/hms-xname/xnametypes
 # github.com/MakeNowJust/heredoc v0.0.0-20170808103936-bb23615498cd
@@ -46,10 +50,11 @@ github.com/PuerkitoBio/urlesc
 # github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef
 ## explicit; go 1.13
 github.com/asaskevich/govalidator
-# github.com/aws/aws-sdk-go v1.44.79
-## explicit; go 1.11
+# github.com/aws/aws-sdk-go v1.55.6
+## explicit; go 1.19
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/arn
+github.com/aws/aws-sdk-go/aws/auth/bearer
 github.com/aws/aws-sdk-go/aws/awserr
 github.com/aws/aws-sdk-go/aws/awsutil
 github.com/aws/aws-sdk-go/aws/client
@@ -97,6 +102,7 @@ github.com/aws/aws-sdk-go/service/s3/s3iface
 github.com/aws/aws-sdk-go/service/s3/s3manager
 github.com/aws/aws-sdk-go/service/sso
 github.com/aws/aws-sdk-go/service/sso/ssoiface
+github.com/aws/aws-sdk-go/service/ssooidc
 github.com/aws/aws-sdk-go/service/sts
 github.com/aws/aws-sdk-go/service/sts/stsiface
 # github.com/coreos/go-semver v0.3.0
@@ -117,9 +123,10 @@ github.com/evanphx/json-patch
 # github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d
 ## explicit
 github.com/exponent-io/jsonpath
-# github.com/fsnotify/fsnotify v1.7.0
+# github.com/fsnotify/fsnotify v1.8.0
 ## explicit; go 1.17
 github.com/fsnotify/fsnotify
+github.com/fsnotify/fsnotify/internal
 # github.com/go-errors/errors v1.0.1
 ## explicit
 github.com/go-errors/errors
@@ -184,14 +191,14 @@ github.com/googleapis/gnostic/openapiv2
 ## explicit
 github.com/gregjones/httpcache
 github.com/gregjones/httpcache/diskcache
-# github.com/hashicorp/errwrap v1.0.0
+# github.com/hashicorp/errwrap v1.1.0
 ## explicit
 github.com/hashicorp/errwrap
 # github.com/hashicorp/go-cleanhttp v0.5.2
 ## explicit; go 1.13
 github.com/hashicorp/go-cleanhttp
-# github.com/hashicorp/go-multierror v1.1.0
-## explicit; go 1.14
+# github.com/hashicorp/go-multierror v1.1.1
+## explicit; go 1.13
 github.com/hashicorp/go-multierror
 # github.com/hashicorp/go-retryablehttp v0.7.7
 ## explicit; go 1.19
@@ -348,9 +355,10 @@ github.com/spf13/viper/internal/encoding/json
 github.com/spf13/viper/internal/encoding/toml
 github.com/spf13/viper/internal/encoding/yaml
 github.com/spf13/viper/internal/features
-# github.com/stretchr/testify v1.9.0
+# github.com/stretchr/testify v1.10.0
 ## explicit; go 1.17
 github.com/stretchr/testify/assert
+github.com/stretchr/testify/assert/yaml
 github.com/stretchr/testify/require
 github.com/stretchr/testify/suite
 # github.com/subosito/gotenv v1.6.0
@@ -386,7 +394,7 @@ go.starlark.net/resolve
 go.starlark.net/starlark
 go.starlark.net/starlarkstruct
 go.starlark.net/syntax
-# go.uber.org/multierr v1.10.0
+# go.uber.org/multierr v1.11.0
 ## explicit; go 1.19
 go.uber.org/multierr
 # go.uber.org/zap v1.27.0
@@ -436,7 +444,7 @@ golang.org/x/net/trace
 ## explicit; go 1.18
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.25.0
+# golang.org/x/sys v0.30.0
 ## explicit; go 1.18
 golang.org/x/sys/cpu
 golang.org/x/sys/plan9

@@ -45,7 +45,7 @@ pipeline {
 
     environment {
         NAME = getRepoName()
-        GO_VERSION = sh(returnStdout: true, script: 'grep -Eo "^go .*" go.mod | cut -d " " -f2').trim()
+        GO_VERSION = sh(returnStdout: true, script: "grep -Eo '^go .*' go.mod | cut -d ' ' -f2 | awk -F. '{print \$1\".\"\$2}'").trim()
         VERSION = sh(returnStdout: true, script: "git describe --tags | tr -s '-' '~' | tr -d '^v'").trim()
     }
 
