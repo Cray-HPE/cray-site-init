@@ -261,7 +261,7 @@ func writeConfig(
 		tempSubnet.Gateway = net.ParseIP(v.GetString("can-gateway"))
 	}
 	if tempNet.Name == "CMN" {
-		tempSubnet.Gateway = net.ParseIP(v.GetString("cmn-gateway"))
+		tempSubnet.Gateway = net.ParseIP(v.GetString("cmn-gateway4"))
 	}
 
 	nmnLBSubnet, _ := networks["NMNLB"].LookUpSubnet("nmn_metallb_address_pool")

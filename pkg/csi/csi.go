@@ -151,6 +151,9 @@ func initializeConfig(c *cobra.Command) error {
 
 // Bind each cobra flag to its associated viper configuration (config file and environment variable)
 func bindFlags(cmd *cobra.Command, v *viper.Viper) {
+
+	setAliases(v)
+
 	cmd.Flags().VisitAll(
 		func(f *pflag.Flag) {
 
@@ -215,6 +218,26 @@ func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 				}
 			}
 		},
+	)
+}
+
+// setAliases enables flags to be replaced without breaking the application.
+func setAliases(v *viper.Viper) {
+	v.RegisterAlias(
+		"chn-cidr",
+		"chn-cidr4",
+	)
+	v.RegisterAlias(
+		"chn-gateway",
+		"chn-gateway4",
+	)
+	v.RegisterAlias(
+		"cmn-cidr",
+		"cmn-cidr4",
+	)
+	v.RegisterAlias(
+		"cmn-gateway",
+		"cmn-gateway4",
 	)
 }
 

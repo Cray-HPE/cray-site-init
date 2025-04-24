@@ -565,8 +565,8 @@ func NewCommand() *cobra.Command {
 			)
 			fmt.Printf(
 				"Customer Management: %v GW: %v\n",
-				v.GetString("cmn-cidr"),
-				v.GetString("cmn-gateway"),
+				v.GetString("cmn-cidr4"),
+				v.GetString("cmn-gateway4"),
 			)
 			if v.GetString("bican-user-network-name") == "CHN" {
 				fmt.Printf(
@@ -834,6 +834,34 @@ func NewCommand() *cobra.Command {
 		"",
 		"Gateway for NCNs on the CHN (User)",
 	)
+	c.Flags().MarkDeprecated(
+		"chn-cidr",
+		"Please use --chn-cidr4 instead",
+	)
+	c.Flags().MarkDeprecated(
+		"chn-gateway",
+		"Please use --chn-gateway4 instead",
+	)
+	c.Flags().String(
+		"chn-cidr4",
+		"",
+		"Overall IPv4 CIDR for all Customer High-Speed subnets",
+	)
+	c.Flags().String(
+		"chn-gateway4",
+		"",
+		"IPv4 Gateway for NCNs on the CHN (User)",
+	)
+	c.Flags().String(
+		"chn-cidr6",
+		"",
+		"Overall IPv6 CIDR for all Customer High-Speed subnets",
+	)
+	c.Flags().String(
+		"chn-gateway6",
+		"",
+		"IPv6 Gateway for NCNs on the CHN (User)",
+	)
 	c.Flags().String(
 		"chn-static-pool",
 		"",
@@ -845,8 +873,13 @@ func NewCommand() *cobra.Command {
 		"Overall IPv4 CIDR for dynamic Customer High-Speed load balancer addresses",
 	)
 	c.MarkFlagsRequiredTogether(
-		"chn-cidr",
-		"chn-gateway",
+		"chn-cidr6",
+		"chn-gateway6",
+	)
+	// TODO: Can we still require the deprecated one somehow?
+	c.MarkFlagsRequiredTogether(
+		"chn-cidr4",
+		"chn-gateway4",
 		"chn-static-pool",
 		"chn-dynamic-pool",
 	)
@@ -861,6 +894,35 @@ func NewCommand() *cobra.Command {
 		"cmn-gateway",
 		"",
 		"Gateway for NCNs on the CMN (Administrative/Management)",
+	)
+	c.Flags().MarkDeprecated(
+		"cmn-cidr",
+		"Please use --cmn-cidr4 instead",
+	)
+	c.Flags().MarkDeprecated(
+		"cmn-gateway",
+		"Please use --cmn-gateway4 instead",
+	)
+
+	c.Flags().String(
+		"cmn-cidr4",
+		"",
+		"Overall IPv4 CIDR for all Customer Management subnets",
+	)
+	c.Flags().String(
+		"cmn-gateway4",
+		"",
+		"IPv4 Gateway for NCNs on the CMN (Administrative/Management)",
+	)
+	c.Flags().String(
+		"cmn-cidr6",
+		"",
+		"Overall IPv6 CIDR for all Customer Management subnets",
+	)
+	c.Flags().String(
+		"cmn-gateway6",
+		"",
+		"IPv6 Gateway for NCNs on the CMN (Administrative/Management)",
 	)
 	c.Flags().String(
 		"cmn-static-pool",
@@ -878,8 +940,13 @@ func NewCommand() *cobra.Command {
 		"IP Address in the cmn-static-pool for the external dns service \"site-to-system lookups\"",
 	)
 	c.MarkFlagsRequiredTogether(
-		"cmn-cidr",
-		"cmn-gateway",
+		"cmn-cidr6",
+		"cmn-gateway6",
+	)
+	// TODO: Can we still require the deprecated one somehow?
+	c.MarkFlagsRequiredTogether(
+		"cmn-cidr4",
+		"cmn-gateway4",
 		"cmn-static-pool",
 		"cmn-dynamic-pool",
 		"cmn-external-dns",
@@ -1093,7 +1160,6 @@ func NewCommand() *cobra.Command {
 		"",
 		"Comma-separated list of the zones to be allowed transfer",
 	)
-
 	c.AddCommand(emptyCommand())
 
 	return c
@@ -1472,10 +1538,12 @@ func validateFlags() []string {
 		"can-cidr",
 		"can-dynamic-pool",
 		"can-static-pool",
-		"chn-cidr",
+		"chn-cidr4",
+		"chn-cidr6",
 		"chn-dynamic-pool",
 		"chn-static-pool",
-		"cmn-cidr",
+		"cmn-cidr4",
+		"cmn-cidr6",
 		"cmn-dynamic-pool",
 		"cmn-static-pool",
 		"hmn-cidr",
@@ -1567,15 +1635,15 @@ func validateFlags() []string {
 					)
 				}
 			} else if bicanNetworkName == "CHN" {
-				if !v.IsSet("chn-gateway") || v.GetString("chn-gateway") == "" {
+				if !v.IsSet("chn-gateway4") || v.GetString("chn-gateway4") == "" {
 					errors = append(
 						errors,
-						fmt.Sprintln("chn-gateway is required because bican-user-network-name is set to CHN but chn-gateway was not set or was blank."),
+						fmt.Sprintln("chn-gateway4 is required because bican-user-network-name is set to CHN but chn-gateway4 was not set or was blank."),
 					)
 				} else {
 					ipv4Flags = append(
 						ipv4Flags,
-						"chn-gateway",
+						"chn-gateway4",
 					)
 				}
 			}

@@ -229,7 +229,7 @@ func BuildCSMNetworks(
 		myLayout := layout
 
 		if name == "CHN" {
-			if v.GetString("chn-cidr") == "" {
+			if v.GetString("chn-cidr4") == "" {
 				log.Println("No CHN Network definition provided")
 				continue
 			}
@@ -353,7 +353,7 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*networking.IPV
 
 	// Do all the special assembly for the CMN
 	if tempNet.Name == "CMN" {
-		_, cmnCIDR, _ = net.ParseCIDR(v.GetString("cmn-cidr"))
+		_, cmnCIDR, _ = net.ParseCIDR(v.GetString("cmn-cidr4"))
 		conf.DesiredBootstrapDHCPMask = cmnCIDR.Mask
 		_, cmnStaticPool, err := net.ParseCIDR(v.GetString("cmn-static-pool"))
 		if err != nil {
@@ -471,8 +471,8 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*networking.IPV
 
 	// Do all the special assembly for the CHN
 	if tempNet.Name == "CHN" {
-		if v.GetString("chn-cidr") != "" {
-			_, chnCIDR, _ = net.ParseCIDR(v.GetString("chn-cidr"))
+		if v.GetString("chn-cidr4") != "" {
+			_, chnCIDR, _ = net.ParseCIDR(v.GetString("chn-cidr4"))
 			conf.DesiredBootstrapDHCPMask = chnCIDR.Mask
 
 			if v.GetString("chn-static-pool") != "" {
@@ -618,7 +618,7 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*networking.IPV
 					)
 				} else if tempNet.Name == "CHN" {
 					subnet.CIDR = *chnCIDR
-					subnet.Gateway = net.ParseIP(v.GetString("chn-gateway"))
+					subnet.Gateway = net.ParseIP(v.GetString("chn-gateway4"))
 					subnet.ReserveEdgeSwitchIPs(edgeSwitches)
 				} else {
 					subnet.ReserveNetMgmtIPs(

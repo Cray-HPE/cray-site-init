@@ -377,7 +377,7 @@ func MakeBasecampGlobals(
 	)
 	v.RegisterAlias(
 		"cmn-gw",
-		"cmn-gateway",
+		"cmn-gateway4",
 	)
 	for key := range global {
 		if v.IsSet(key) {
