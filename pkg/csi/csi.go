@@ -51,6 +51,7 @@ const (
 )
 
 var cfgFile string
+var inputDir string
 
 // NewCommand represents the base command.
 func NewCommand() *cobra.Command {
@@ -78,6 +79,15 @@ func NewCommand() *cobra.Command {
 		"CSI config file",
 	)
 	_ = c.MarkPersistentFlagFilename("config")
+
+	c.PersistentFlags().StringVarP(
+		&inputDir,
+		"input-dir",
+		"i",
+		"",
+		"Directory to read input files from.",
+	)
+	_ = c.MarkPersistentFlagFilename("input-dir")
 
 	c.AddCommand(
 		automation.NewCommand(),

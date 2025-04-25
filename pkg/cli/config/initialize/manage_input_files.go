@@ -27,6 +27,7 @@ package initialize
 import (
 	"fmt"
 	"log"
+	"os"
 	"path/filepath"
 
 	shcdParser "github.com/Cray-HPE/hms-shcd-parser/pkg/shcd-parser"
@@ -44,8 +45,36 @@ type cabinetDefinition struct {
 	startingID int
 }
 
+func getFile(name string) (path string, err error) {
+	v := viper.GetViper()
+	inputDir := v.GetString("input-dir")
+	if inputDir == "" {
+		path = fmt.Sprintf(
+			"%s%s%s",
+			filepath.Dir(v.ConfigFileUsed()),
+			string(os.PathSeparator),
+			name,
+		)
+	} else {
+		path = fmt.Sprintf(
+			"%s%s%s",
+			inputDir,
+			string(os.PathSeparator),
+			name,
+		)
+	}
+	_, err = os.Stat(path)
+	return path, err
+}
+
 func collectHMNRows(v *viper.Viper) []shcdParser.HMNRow {
-	seedFileHmnConnections := filepath.Dir(viper.ConfigFileUsed()) + "/" + v.GetString("hmn-connections")
+	seedFileHmnConnections, err := getFile(v.GetString("hmn-connections"))
+	if err != nil {
+		log.Fatalf(
+			"Error reading hmn-connections file: %v",
+			err,
+		)
+	}
 	hmnRows, err := loadHMNConnectionsFile(seedFileHmnConnections)
 	if err != nil {
 		log.Fatalf(
@@ -57,7 +86,13 @@ func collectHMNRows(v *viper.Viper) []shcdParser.HMNRow {
 }
 
 func collectNCNMeta(v *viper.Viper) []*LogicalNCN {
-	seedFileNcnMetadata := filepath.Dir(viper.ConfigFileUsed()) + "/" + v.GetString("ncn-metadata")
+	seedFileNcnMetadata, err := getFile(v.GetString("ncn-metadata"))
+	if err != nil {
+		log.Fatalf(
+			"Error reading ncn-metadata file: %v",
+			err,
+		)
+	}
 	ncns, err := ReadNodeCSV(seedFileNcnMetadata)
 	if err != nil {
 		log.Fatalln(
@@ -81,7 +116,13 @@ func collectNCNMeta(v *viper.Viper) []*LogicalNCN {
 }
 
 func collectSwitches(v *viper.Viper) []*networking.ManagementSwitch {
-	seedFileSwitchMetadata := filepath.Dir(v.ConfigFileUsed()) + "/" + v.GetString("switch-metadata")
+	seedFileSwitchMetadata, err := getFile(v.GetString("switch-metadata"))
+	if err != nil {
+		log.Fatalf(
+			"Error reading switch-metadata file: %v",
+			err,
+		)
+	}
 
 	switches, err := networking.ReadSwitchCSV(seedFileSwitchMetadata)
 	if err != nil {
@@ -108,13 +149,19 @@ func collectSwitches(v *viper.Viper) []*networking.ManagementSwitch {
 func collectApplicationNodeConfig(v *viper.Viper) slsInit.GeneratorApplicationNodeConfig {
 	var applicationNodeConfig slsInit.GeneratorApplicationNodeConfig
 	if v.IsSet("application-node-config-yaml") && (v.GetString("application-node-config-yaml") != "") {
-		seedFileAppNodeConfig := filepath.Dir(viper.ConfigFileUsed()) + "/" + v.GetString("application-node-config-yaml")
+		seedFileAppNodeConfig, err := getFile(v.GetString("application-node-config-yaml"))
+		if err != nil {
+			log.Fatalf(
+				"Error reading application-node-config-yaml file: %v",
+				err,
+			)
+		}
 
 		log.Printf(
 			"Using application node config: %s\n",
 			seedFileAppNodeConfig,
 		)
-		err := files.ReadYAMLConfig(
+		err = files.ReadYAMLConfig(
 			seedFileAppNodeConfig,
 			&applicationNodeConfig,
 		)
@@ -149,8 +196,14 @@ func collectApplicationNodeConfig(v *viper.Viper) slsInit.GeneratorApplicationNo
 func collectCabinets(v *viper.Viper) []sls.CabinetGroupDetail {
 	var cabDetailFile sls.CabinetDetailFile
 	if v.IsSet("cabinets-yaml") && (v.GetString("cabinets-yaml") != "") {
-		seedFileCabinets := filepath.Dir(viper.ConfigFileUsed()) + "/" + v.GetString("cabinets-yaml")
-		err := files.ReadYAMLConfig(
+		seedFileCabinets, err := getFile(v.GetString("cabinets-yaml"))
+		if err != nil {
+			log.Fatalf(
+				"Error reading cabinets-yaml file: %v",
+				err,
+			)
+		}
+		err = files.ReadYAMLConfig(
 			seedFileCabinets,
 			&cabDetailFile,
 		)
