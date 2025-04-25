@@ -176,6 +176,15 @@ func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 				)
 			}
 
+			// Cobra won't print the deprecation warning if the flag comes in through a config file. Here, we'll force print
+			// the deprecation message for a flag (if it exists) when we're reading config files.
+			if f.Deprecated != "" {
+				fmt.Printf(
+					"Flag %s has been deprecated, %s\n",
+					f.Name,
+					f.Deprecated,
+				)
+			}
 			// Apply the viper config value to the flag when the flag is not set and viper has a value
 			if !f.Changed && v.IsSet(configName) {
 
