@@ -221,7 +221,7 @@ func (suite *GenSLSTestSuite) TestConvertManagementSwitchToSLS_InvalidSwitchType
 }
 
 func (suite *GenSLSTestSuite) TestExtractSwitchesfromReservations() {
-	subnet := &networking.IPV4Subnet{
+	subnet := &networking.IPSubnet{
 		IPReservations: []networking.IPReservation{
 			{
 				Comment:   "x3000c0w14",

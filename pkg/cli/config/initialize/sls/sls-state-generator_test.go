@@ -1585,7 +1585,7 @@ func (suite *ConfigGeneratorTestSuite) TestGatewayNode() {
 		    "TypeString": "Node",
 		    "ExtraProperties": {
 		      "Role": "Application",
-			  "SubRole": "Gateway"
+			  "SubRole": "Gateway4"
 		    }
 		  },
 	*/
@@ -1630,7 +1630,7 @@ func (suite *ConfigGeneratorTestSuite) TestGatewayNode() {
 	)
 	suite.Equal(
 		hardwareExtraProperties.SubRole,
-		"Gateway",
+		"Gateway4",
 	)
 	suite.Equal(
 		hardwareExtraProperties.Aliases,

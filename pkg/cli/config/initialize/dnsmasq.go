@@ -51,7 +51,7 @@ interface-name=pit.{{.NetName | lower}},{{.InterfaceName}}
 interface={{.InterfaceName}}
 cname=packages.{{.NetName | lower}},pit.{{.NetName | lower}}
 cname=registry.{{.NetName | lower}},pit.{{.NetName | lower}}
-dhcp-option=interface:{{.InterfaceName}},option:router,{{.Gateway}}
+dhcp-option=interface:{{.InterfaceName}},option:router,{{.Gateway4}}
 dhcp-range=interface:{{.InterfaceName}},{{.DHCPStart}},{{.DHCPEnd}},10m
 `)
 
@@ -64,7 +64,7 @@ var SubnetConfigTemplate = []byte(`
 # {{.NetName}}:
 server=/{{.NetName | lower}}/
 address=/{{.NetName | lower}}/
-domain=nmn,{{.CIDR.IP}},{{.DHCPEnd}},local
+domain=nmn,{{.CIDR4.IP}},{{.DHCPEnd}},local
 interface-name=pit.{{.NetName | lower}},{{.InterfaceName}}
 dhcp-option=interface:{{.InterfaceName}},option:domain-search,{{.NetName | lower}}
 interface={{.InterfaceName}}
@@ -75,7 +75,7 @@ cname=packages.local,pit.{{.NetName | lower}}
 cname=registry.{{.NetName | lower}},pit.{{.NetName | lower}}
 dhcp-option=interface:{{.InterfaceName}},option:dns-server,{{.PITServer}}
 dhcp-option=interface:{{.InterfaceName}},option:ntp-server,{{.PITServer}}
-dhcp-option=interface:{{.InterfaceName}},option:router,{{.Gateway}}
+dhcp-option=interface:{{.InterfaceName}},option:router,{{.Gateway4}}
 dhcp-range=interface:{{.InterfaceName}},{{.DHCPStart}},{{.DHCPEnd}},10m
 `)
 
@@ -118,13 +118,13 @@ cname=kubernetes-api.vshasta.io,ncn-m001
 
 // DNSMasqBootstrapNetwork holds information for configuring DNSMasq on the LiveCD
 type DNSMasqBootstrapNetwork struct {
-	Subnet    networking.IPV4Subnet
+	Subnet networking.IPSubnet
 	Interface string
 }
 
 // WriteDNSMasqConfig writes the dnsmasq configuration files necessary for installation
 func WriteDNSMasqConfig(
-	path string, v *viper.Viper, bootstrap []LogicalNCN, networks map[string]*networking.IPV4Network,
+	path string, v *viper.Viper, bootstrap []LogicalNCN, networks map[string]*networking.IPNetwork,
 ) {
 	bicanNetworkName := v.GetString("bican-user-network-name")
 	for i, tmpNcn := range bootstrap {
@@ -239,9 +239,9 @@ func WriteDNSMasqConfig(
 }
 
 func writeConfig(
-	name, path string, tpl template.Template, networks map[string]*networking.IPV4Network,
+	name, path string, tpl template.Template, networks map[string]*networking.IPNetwork,
 ) {
-	// Pointer to the IPV4Network
+	// Pointer to the IPNetwork
 	tempNet := networks[name]
 
 	v := viper.GetViper()
@@ -258,10 +258,10 @@ func writeConfig(
 		}
 	}
 	if tempNet.Name == "CAN" {
-		tempSubnet.Gateway = net.ParseIP(v.GetString("can-gateway"))
+		tempSubnet.Gateway4 = net.ParseIP(v.GetString("can-gateway"))
 	}
 	if tempNet.Name == "CMN" {
-		tempSubnet.Gateway = net.ParseIP(v.GetString("cmn-gateway4"))
+		tempSubnet.Gateway4 = net.ParseIP(v.GetString("cmn-gateway4"))
 	}
 
 	nmnLBSubnet, _ := networks["NMNLB"].LookUpSubnet("nmn_metallb_address_pool")

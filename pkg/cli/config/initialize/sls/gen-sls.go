@@ -73,7 +73,7 @@ func NewCommand() *cobra.Command {
 
 // GenCabinetMap creates a map of cabinets.
 func GenCabinetMap(
-	cd []sls.CabinetGroupDetail, shastaNetworks map[string]*networking.IPV4Network,
+	cd []sls.CabinetGroupDetail, shastaNetworks map[string]*networking.IPNetwork,
 ) map[slsCommon.CabinetType]map[string]CabinetTemplate {
 	// Use information from CabinetGroupDetails and shastaNetworks to generate
 	// Cabinet information for SLS
@@ -115,7 +115,7 @@ func GenCabinetMap(
 							id,
 						),
 					)
-					if subnet.CIDR.String() != "<nil>" {
+					if subnet.CIDR4.String() != "<nil>" {
 						networks[strings.TrimSuffix(
 							strings.TrimSuffix(
 								netName,
@@ -123,8 +123,8 @@ func GenCabinetMap(
 							),
 							"_RVR",
 						)] = slsCommon.CabinetNetworks{
-							CIDR:    subnet.CIDR.String(),
-							Gateway: subnet.Gateway.String(),
+							CIDR:    subnet.CIDR4.String(),
+							Gateway: subnet.Gateway4.String(),
 							VLan:    int(subnet.VlanID),
 						}
 					}
@@ -376,7 +376,7 @@ func ConvertManagementSwitchToSLS(s *networking.ManagementSwitch) (slsCommon.Gen
 }
 
 // ExtractSwitchesfromReservations extracts all the switches from a IP network.
-func ExtractSwitchesfromReservations(subnet *networking.IPV4Subnet) ([]networking.ManagementSwitch, error) {
+func ExtractSwitchesfromReservations(subnet *networking.IPSubnet) ([]networking.ManagementSwitch, error) {
 	var switches []networking.ManagementSwitch
 	for _, reservation := range subnet.IPReservations {
 		if strings.HasPrefix(
@@ -444,7 +444,7 @@ func ExtractSwitchesfromReservations(subnet *networking.IPV4Subnet) ([]networkin
 }
 
 // ConvertIPV4NetworksToSLS converts IPV4 network definitions to a compatible format for SLS.
-func ConvertIPV4NetworksToSLS(networks *[]networking.IPV4Network) map[string]slsCommon.Network {
+func ConvertIPV4NetworksToSLS(networks *[]networking.IPNetwork) map[string]slsCommon.Network {
 	slsNetworks := make(
 		map[string]slsCommon.Network,
 		len(*networks),
@@ -459,7 +459,7 @@ func ConvertIPV4NetworksToSLS(networks *[]networking.IPV4Network) map[string]sls
 	return slsNetworks
 }
 
-func convertIPV4NetworkToSLS(n *networking.IPV4Network) slsCommon.Network {
+func convertIPV4NetworkToSLS(n *networking.IPNetwork) slsCommon.Network {
 	subnets := make(
 		[]slsCommon.IPV4Subnet,
 		len(n.Subnets),
@@ -472,10 +472,10 @@ func convertIPV4NetworkToSLS(n *networking.IPV4Network) slsCommon.Network {
 		Name:     n.Name,
 		FullName: n.FullName,
 		Type:     n.NetType,
-		IPRanges: []string{n.CIDR},
+		IPRanges: []string{n.CIDR4},
 		ExtraPropertiesRaw: slsCommon.NetworkExtraProperties{
 			Comment:            n.Comment,
-			CIDR:               n.CIDR,
+			CIDR: n.CIDR4,
 			MTU:                n.MTU,
 			VlanRange:          n.VlanRange,
 			PeerASN:            n.PeerASN,
@@ -486,7 +486,7 @@ func convertIPV4NetworkToSLS(n *networking.IPV4Network) slsCommon.Network {
 	}
 }
 
-func convertIPV4SubnetToSLS(s *networking.IPV4Subnet) slsCommon.IPV4Subnet {
+func convertIPV4SubnetToSLS(s *networking.IPSubnet) slsCommon.IPV4Subnet {
 	ipReservations := make(
 		[]slsCommon.IPReservation,
 		len(s.IPReservations),
@@ -498,10 +498,10 @@ func convertIPV4SubnetToSLS(s *networking.IPV4Subnet) slsCommon.IPV4Subnet {
 	return slsCommon.IPV4Subnet{
 		Name:             s.Name,
 		FullName:         s.FullName,
-		CIDR:             s.CIDR.String(),
+		CIDR:    s.CIDR4.String(),
 		VlanID:           s.VlanID,
 		Comment:          s.Comment,
-		Gateway:          s.Gateway,
+		Gateway: s.Gateway4,
 		DHCPStart:        s.DHCPStart,
 		DHCPEnd:          s.DHCPEnd,
 		ReservationStart: s.ReservationStart,

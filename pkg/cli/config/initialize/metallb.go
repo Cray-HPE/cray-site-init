@@ -97,7 +97,7 @@ type MetalLBConfigMap struct {
 
 // GetMetalLBConfig gathers the information for the metallb config map
 func GetMetalLBConfig(
-	v *viper.Viper, networks map[string]*networking.IPV4Network, switches []*networking.ManagementSwitch,
+	v *viper.Viper, networks map[string]*networking.IPNetwork, switches []*networking.ManagementSwitch,
 ) MetalLBConfigMap {
 
 	var configStruct MetalLBConfigMap
@@ -165,7 +165,7 @@ func GetMetalLBConfig(
 				tmpAddPool.Protocol = "bgp"
 				tmpAddPool.Addresses = append(
 					tmpAddPool.Addresses,
-					subnet.CIDR.String(),
+					subnet.CIDR4.String(),
 				)
 				configStruct.Networks = append(
 					configStruct.Networks,
@@ -185,7 +185,7 @@ func GetMetalLBConfig(
 
 // WriteMetalLBConfigMap creates the yaml configmap
 func WriteMetalLBConfigMap(
-	path string, v *viper.Viper, networks map[string]*networking.IPV4Network, switches []*networking.ManagementSwitch,
+	path string, v *viper.Viper, networks map[string]*networking.IPNetwork, switches []*networking.ManagementSwitch,
 ) {
 
 	tpl, err := template.New("mtllbconfigmap").Parse(string(MetalLBConfigMapTemplate))

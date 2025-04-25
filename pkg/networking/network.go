@@ -58,9 +58,9 @@ const (
 	DefaultNMNMTNString = "10.100.0.0/17"
 	// DefaultNMNRVRString is the default NMN Network for River Cabinets with Grouped Configuration
 	DefaultNMNRVRString = "10.106.0.0/17"
-	// DefaultNMNLBString is the default LoadBalancer CIDR for the NMN
+	// DefaultNMNLBString is the default LoadBalancer CIDR4 for the NMN
 	DefaultNMNLBString = "10.92.100.0/24"
-	// DefaultHMNLBString is the default LoadBalancer CIDR for the HMN
+	// DefaultHMNLBString is the default LoadBalancer CIDR4 for the HMN
 	DefaultHMNLBString = "10.94.100.0/24"
 	// DefaultMacVlanString is the default Macvlan cidr (shares vlan with NMN)
 	DefaultMacVlanString = "10.252.124.0/23"
@@ -114,9 +114,9 @@ var DefaultNetworkingHardwareMask = net.CIDRMask(
 )
 
 // DefaultLoadBalancerNMN is a thing we need
-var DefaultLoadBalancerNMN = IPV4Network{
+var DefaultLoadBalancerNMN = IPNetwork{
 	FullName: "Node Management Network LoadBalancers",
-	CIDR:     DefaultNMNLBString,
+	CIDR4: DefaultNMNLBString,
 	Name:     "NMNLB",
 	MTU:      9000,
 	NetType:  "ethernet",
@@ -124,9 +124,9 @@ var DefaultLoadBalancerNMN = IPV4Network{
 }
 
 // DefaultLoadBalancerHMN is a thing we need
-var DefaultLoadBalancerHMN = IPV4Network{
+var DefaultLoadBalancerHMN = IPNetwork{
 	FullName: "Hardware Management Network LoadBalancers",
-	CIDR:     DefaultHMNLBString,
+	CIDR4: DefaultHMNLBString,
 	Name:     "HMNLB",
 	MTU:      9000,
 	NetType:  "ethernet",
@@ -134,9 +134,9 @@ var DefaultLoadBalancerHMN = IPV4Network{
 }
 
 // DefaultBICAN is the default structure for templating the initial BICAN toggle - CMN
-var DefaultBICAN = IPV4Network{
+var DefaultBICAN = IPNetwork{
 	FullName:           "SystemDefaultRoute points the network name of the default route",
-	CIDR:               "0.0.0.0/0",
+	CIDR4: "0.0.0.0/0",
 	Name:               "BICAN",
 	VlanRange:          []int16{0},
 	MTU:                9000,
@@ -146,9 +146,9 @@ var DefaultBICAN = IPV4Network{
 }
 
 // DefaultHSN is the default structure for templating initial HSN configuration
-var DefaultHSN = IPV4Network{
+var DefaultHSN = IPNetwork{
 	FullName: "High Speed Network",
-	CIDR:     DefaultHSNString,
+	CIDR4: DefaultHSNString,
 	Name:     "HSN",
 	VlanRange: []int16{
 		613,
@@ -160,9 +160,9 @@ var DefaultHSN = IPV4Network{
 }
 
 // DefaultCMN is the default structure for templating initial CMN configuration
-var DefaultCMN = IPV4Network{
+var DefaultCMN = IPNetwork{
 	FullName:     "Customer Management Network",
-	CIDR:         DefaultCMNString,
+	CIDR4: DefaultCMNString,
 	Name:         "CMN",
 	VlanRange:    []int16{DefaultCMNVlan},
 	MTU:          9000,
@@ -172,9 +172,9 @@ var DefaultCMN = IPV4Network{
 }
 
 // DefaultCAN is the default structure for templating initial CAN configuration
-var DefaultCAN = IPV4Network{
+var DefaultCAN = IPNetwork{
 	FullName:     "Customer Access Network",
-	CIDR:         DefaultCANString,
+	CIDR4: DefaultCANString,
 	Name:         "CAN",
 	VlanRange:    []int16{DefaultCANVlan},
 	MTU:          9000,
@@ -184,9 +184,9 @@ var DefaultCAN = IPV4Network{
 }
 
 // DefaultCHN is the default structure for templating initial CHN configuration
-var DefaultCHN = IPV4Network{
+var DefaultCHN = IPNetwork{
 	FullName:     "Customer High-Speed Network",
-	CIDR:         DefaultCHNString,
+	CIDR4: DefaultCHNString,
 	Name:         "CHN",
 	VlanRange:    []int16{DefaultCHNVlan},
 	MTU:          9000,
@@ -196,9 +196,9 @@ var DefaultCHN = IPV4Network{
 }
 
 // DefaultHMN is the default structure for templating initial HMN configuration
-var DefaultHMN = IPV4Network{
+var DefaultHMN = IPNetwork{
 	FullName:     "Hardware Management Network",
-	CIDR:         DefaultHMNString,
+	CIDR4: DefaultHMNString,
 	Name:         "HMN",
 	VlanRange:    []int16{DefaultHMNVlan},
 	MTU:          9000,
@@ -208,9 +208,9 @@ var DefaultHMN = IPV4Network{
 }
 
 // DefaultNMN is the default structure for templating initial NMN configuration
-var DefaultNMN = IPV4Network{
+var DefaultNMN = IPNetwork{
 	FullName:     "Node Management Network",
-	CIDR:         DefaultNMNString,
+	CIDR4: DefaultNMNString,
 	Name:         "NMN",
 	VlanRange:    []int16{DefaultNMNVlan},
 	MTU:          9000,
@@ -220,9 +220,9 @@ var DefaultNMN = IPV4Network{
 }
 
 // DefaultMTL is the default structure for templating initial MTL configuration
-var DefaultMTL = IPV4Network{
+var DefaultMTL = IPNetwork{
 	FullName:     "Provisioning Network (untagged)",
-	CIDR:         DefaultMTLString,
+	CIDR4: DefaultMTLString,
 	Name:         "MTL",
 	VlanRange:    []int16{DefaultMTLVlan},
 	MTU:          9000,
@@ -231,11 +231,11 @@ var DefaultMTL = IPV4Network{
 	ParentDevice: "bond0",
 }
 
-// IPV4Network is a type for managing IPv4 Networks
-type IPV4Network struct {
+// IPNetwork is a type for managing IPv4 Networks
+type IPNetwork struct {
 	FullName           string                `yaml:"full_name"`
-	CIDR               string                `yaml:"cidr"`
-	Subnets            []*IPV4Subnet         `yaml:"subnets"`
+	CIDR4   string      `yaml:"cidr4"`
+	Subnets []*IPSubnet `yaml:"subnets"`
 	Name               string                `yaml:"name"`
 	VlanRange          []int16               `yaml:"vlan_range"`
 	MTU                int16                 `yaml:"mtu"`
@@ -247,16 +247,16 @@ type IPV4Network struct {
 	ParentDevice       string                `yaml:"parent-device"`
 }
 
-// IPV4Subnet is a type for managing IPv4 Subnets
-type IPV4Subnet struct {
+// IPSubnet is a type for managing IPv4 Subnets
+type IPSubnet struct {
 	FullName         string          `yaml:"full_name" form:"full_name" mapstructure:"full_name"`
-	CIDR             net.IPNet       `yaml:"cidr"`
+	CIDR4    net.IPNet `yaml:"cidr4"`
 	IPReservations   []IPReservation `yaml:"ip_reservations"`
 	Name             string          `yaml:"name" form:"name" mapstructure:"name"`
 	NetName          string          `yaml:"net-name"`
 	VlanID           int16           `yaml:"vlan_id" form:"vlan_id" mapstructure:"vlan_id"`
 	Comment          string          `yaml:"comment"`
-	Gateway          net.IP          `yaml:"gateway"`
+	Gateway4 net.IP    `yaml:"gateway4"`
 	PITServer        net.IP          `yaml:"_"`
 	DNSServer        net.IP          `yaml:"dns_server"`
 	DHCPStart        net.IP          `yaml:"iprange-start"`
@@ -277,13 +277,13 @@ type IPReservation struct {
 }
 
 // ApplySupernetHack applys a dirty hack.
-func (iNet *IPV4Network) ApplySupernetHack() {
+func (iNet *IPNetwork) ApplySupernetHack() {
 	// Replace the gateway and netmask on the to better support the 1.3 network switch configuration
 	// *** This is a HACK ***
-	_, superNet, err := net.ParseCIDR(iNet.CIDR)
+	_, superNet, err := net.ParseCIDR(iNet.CIDR4)
 	if err != nil {
 		log.Fatal(
-			"Couldn't parse the CIDR for ",
+			"Couldn't parse the CIDR4 for ",
 			iNet.Name,
 		)
 	}
@@ -300,21 +300,21 @@ func (iNet *IPV4Network) ApplySupernetHack() {
 			// ** HACK ** We're doing this here to bypass all sanity checks
 			// This **WILL** cause an overlap of broadcast domains, but is required
 			// for reducing switch configuration changes from 1.3 to 1.4
-			tempSubnet.Gateway = Add(
+			tempSubnet.Gateway4 = Add(
 				superNet.IP,
 				1,
 			)
-			tempSubnet.CIDR.Mask = superNet.Mask
+			tempSubnet.CIDR4.Mask = superNet.Mask
 		}
 	}
 }
 
 // GenSubnets subdivides a network into a set of subnets
-func (iNet *IPV4Network) GenSubnets(
+func (iNet *IPNetwork) GenSubnets(
 	cabinetDetails []sls.CabinetGroupDetail, mask net.IPMask, cabinetFilter sls.CabinetFilterFunc,
 ) error {
 	// log.Printf("Generating Subnets for %s\ncabinetType: %v,\n", iNet.Name, cabinetType)
-	_, myNet, _ := net.ParseCIDR(iNet.CIDR)
+	_, myNet, _ := net.ParseCIDR(iNet.CIDR4)
 	mySubnets := iNet.AllocatedSubnets()
 	myIPv4Subnets := iNet.Subnets
 	var minVlan, maxVlan int16 = 4095, 0
@@ -356,13 +356,13 @@ func (iNet *IPV4Network) GenSubnets(
 				if tmpVlanID == 0 {
 					tmpVlanID = int16(j) + iNet.VlanRange[0]
 				}
-				tempSubnet := IPV4Subnet{
-					CIDR: newSubnet,
+				tempSubnet := IPSubnet{
+					CIDR4: newSubnet,
 					Name: fmt.Sprintf(
 						"cabinet_%d",
 						i.ID,
 					),
-					Gateway: Add(
+					Gateway4: Add(
 						newSubnet.IP,
 						1,
 					),
@@ -389,19 +389,19 @@ func (iNet *IPV4Network) GenSubnets(
 }
 
 // AllocatedSubnets returns a list of the allocated subnets
-func (iNet IPV4Network) AllocatedSubnets() []net.IPNet {
+func (iNet IPNetwork) AllocatedSubnets() []net.IPNet {
 	var myNets []net.IPNet
 	for _, v := range iNet.Subnets {
 		myNets = append(
 			myNets,
-			v.CIDR,
+			v.CIDR4,
 		)
 	}
 	return myNets
 }
 
 // AllocatedVlans returns a list of all allocated vlan ids
-func (iNet IPV4Network) AllocatedVlans() []int16 {
+func (iNet IPNetwork) AllocatedVlans() []int16 {
 	var myVlans []int16
 	for _, v := range iNet.Subnets {
 		if v.VlanID > 0 {
@@ -415,22 +415,22 @@ func (iNet IPV4Network) AllocatedVlans() []int16 {
 }
 
 // AddSubnetbyCIDR allocates a new subnet
-func (iNet *IPV4Network) AddSubnetbyCIDR(
+func (iNet *IPNetwork) AddSubnetbyCIDR(
 	desiredNet net.IPNet, name string, vlanID int16,
 ) (
-	*IPV4Subnet, error,
+	*IPSubnet, error,
 ) {
-	_, myNet, _ := net.ParseCIDR(iNet.CIDR)
+	_, myNet, _ := net.ParseCIDR(iNet.CIDR4)
 	if Contains(
 		*myNet,
 		desiredNet,
 	) {
 		iNet.Subnets = append(
 			iNet.Subnets,
-			&IPV4Subnet{
-				CIDR: desiredNet,
-				Name: name,
-				Gateway: Add(
+			&IPSubnet{
+				CIDR4: desiredNet,
+				Name:  name,
+				Gateway4: Add(
 					desiredNet.IP,
 					1,
 				),
@@ -439,7 +439,7 @@ func (iNet *IPV4Network) AddSubnetbyCIDR(
 		)
 		return iNet.Subnets[len(iNet.Subnets)-1], nil
 	}
-	return &IPV4Subnet{}, fmt.Errorf(
+	return &IPSubnet{}, fmt.Errorf(
 		"subnet %v is not part of %v",
 		desiredNet.String(),
 		myNet.String(),
@@ -447,13 +447,13 @@ func (iNet *IPV4Network) AddSubnetbyCIDR(
 }
 
 // AddSubnet allocates a new subnet
-func (iNet *IPV4Network) AddSubnet(
+func (iNet *IPNetwork) AddSubnet(
 	mask net.IPMask, name string, vlanID int16,
 ) (
-	*IPV4Subnet, error,
+	*IPSubnet, error,
 ) {
-	var tempSubnet IPV4Subnet
-	_, myNet, _ := net.ParseCIDR(iNet.CIDR)
+	var tempSubnet IPSubnet
+	_, myNet, _ := net.ParseCIDR(iNet.CIDR4)
 	newSubnet, err := Free(
 		*myNet,
 		mask,
@@ -464,11 +464,11 @@ func (iNet *IPV4Network) AddSubnet(
 	}
 	iNet.Subnets = append(
 		iNet.Subnets,
-		&IPV4Subnet{
-			CIDR:    newSubnet,
+		&IPSubnet{
+			CIDR4: newSubnet,
 			Name:    name,
 			NetName: iNet.Name,
-			Gateway: Add(
+			Gateway4: Add(
 				newSubnet.IP,
 				1,
 			),
@@ -479,10 +479,10 @@ func (iNet *IPV4Network) AddSubnet(
 }
 
 // AddBiggestSubnet allocates the largest subnet possible within the requested network and mask
-func (iNet *IPV4Network) AddBiggestSubnet(
+func (iNet *IPNetwork) AddBiggestSubnet(
 	mask net.IPMask, name string, vlanID int16,
 ) (
-	*IPV4Subnet, error,
+	*IPSubnet, error,
 ) {
 	// Try for the largest available and go smaller if needed
 	maskSize, _ := mask.Size() // the second output of this function is 32 for ipv4 or 64 for ipv6
@@ -500,7 +500,7 @@ func (iNet *IPV4Network) AddBiggestSubnet(
 			return newSubnet, nil
 		}
 	}
-	return &IPV4Subnet{}, fmt.Errorf(
+	return &IPSubnet{}, fmt.Errorf(
 		"no room for %v subnet within %v (tried from /%d to /29)",
 		name,
 		iNet.Name,
@@ -509,12 +509,12 @@ func (iNet *IPV4Network) AddBiggestSubnet(
 }
 
 // LookUpSubnet returns a subnet by name
-func (iNet *IPV4Network) LookUpSubnet(name string) (
-	*IPV4Subnet, error,
+func (iNet *IPNetwork) LookUpSubnet(name string) (
+	*IPSubnet, error,
 ) {
-	var found []*IPV4Subnet
+	var found []*IPSubnet
 	if len(iNet.Subnets) == 0 {
-		return &IPV4Subnet{}, fmt.Errorf(
+		return &IPSubnet{}, fmt.Errorf(
 			"subnet not found \"%v\"",
 			name,
 		)
@@ -537,14 +537,14 @@ func (iNet *IPV4Network) LookUpSubnet(name string) (
 			len(found),
 		)
 	}
-	return &IPV4Subnet{}, fmt.Errorf(
+	return &IPSubnet{}, fmt.Errorf(
 		"subnet not found \"%v\"",
 		name,
 	)
 }
 
 // SubnetbyName Return a copy of the subnet by name or a blank subnet if it doesn't exists
-func (iNet IPV4Network) SubnetbyName(name string) IPV4Subnet {
+func (iNet IPNetwork) SubnetbyName(name string) IPSubnet {
 	for _, v := range iNet.Subnets {
 		if strings.EqualFold(
 			v.Name,
@@ -553,11 +553,11 @@ func (iNet IPV4Network) SubnetbyName(name string) IPV4Subnet {
 			return *v
 		}
 	}
-	return IPV4Subnet{}
+	return IPSubnet{}
 }
 
 // ReserveEdgeSwitchIPs reserves (n) IP addresses for edge switches
-func (iSubnet *IPV4Subnet) ReserveEdgeSwitchIPs(edges []string) {
+func (iSubnet *IPSubnet) ReserveEdgeSwitchIPs(edges []string) {
 	for i := 0; i < len(edges); i++ {
 		name := fmt.Sprintf(
 			"chn-switch-%01d",
@@ -571,7 +571,7 @@ func (iSubnet *IPV4Subnet) ReserveEdgeSwitchIPs(edges []string) {
 }
 
 // ReserveNetMgmtIPs reserves (n) IP addresses for management networking equipment
-func (iSubnet *IPV4Subnet) ReserveNetMgmtIPs(
+func (iSubnet *IPSubnet) ReserveNetMgmtIPs(
 	spines []string, leafs []string, leafbmcs []string, cdus []string,
 ) {
 	for i := 0; i < len(spines); i++ {
@@ -617,7 +617,7 @@ func (iSubnet *IPV4Subnet) ReserveNetMgmtIPs(
 }
 
 // ReservedIPs returns a list of IPs already reserved within the subnet
-func (iSubnet *IPV4Subnet) ReservedIPs() []net.IP {
+func (iSubnet *IPSubnet) ReservedIPs() []net.IP {
 	var addresses []net.IP
 	for _, v := range iSubnet.IPReservations {
 		addresses = append(
@@ -629,7 +629,7 @@ func (iSubnet *IPV4Subnet) ReservedIPs() []net.IP {
 }
 
 // ReservationsByName presents the IPReservations in a map by name
-func (iSubnet *IPV4Subnet) ReservationsByName() map[string]IPReservation {
+func (iSubnet *IPSubnet) ReservationsByName() map[string]IPReservation {
 	reservations := make(map[string]IPReservation)
 	for _, v := range iSubnet.IPReservations {
 		reservations[v.Name] = v
@@ -638,7 +638,7 @@ func (iSubnet *IPV4Subnet) ReservationsByName() map[string]IPReservation {
 }
 
 // LookupReservation searches the subnet for an IPReservation that matches the name provided
-func (iSubnet *IPV4Subnet) LookupReservation(resName string) IPReservation {
+func (iSubnet *IPSubnet) LookupReservation(resName string) IPReservation {
 	for _, v := range iSubnet.IPReservations {
 		if resName == v.Name {
 			return v
@@ -648,14 +648,14 @@ func (iSubnet *IPV4Subnet) LookupReservation(resName string) IPReservation {
 }
 
 // TotalIPAddresses returns the number of ip addresses in a subnet see UsableHostAddresses
-func (iSubnet *IPV4Subnet) TotalIPAddresses() int {
-	maskSize, _ := iSubnet.CIDR.Mask.Size()
+func (iSubnet *IPSubnet) TotalIPAddresses() int {
+	maskSize, _ := iSubnet.CIDR4.Mask.Size()
 	return 2 << uint(31-maskSize)
 }
 
 // UsableHostAddresses returns the number of usable ip addresses in a subnet
-func (iSubnet *IPV4Subnet) UsableHostAddresses() int {
-	maskSize, _ := iSubnet.CIDR.Mask.Size()
+func (iSubnet *IPSubnet) UsableHostAddresses() int {
+	maskSize, _ := iSubnet.CIDR4.Mask.Size()
 	if maskSize == 32 {
 		return 1
 	} else if maskSize == 31 {
@@ -665,7 +665,7 @@ func (iSubnet *IPV4Subnet) UsableHostAddresses() int {
 }
 
 // UpdateDHCPRange resets the DHCPStart to exclude all IPReservations
-func (iSubnet *IPV4Subnet) UpdateDHCPRange(applySupernetHack bool) {
+func (iSubnet *IPSubnet) UpdateDHCPRange(applySupernetHack bool) {
 
 	myReservedIPs := iSubnet.ReservedIPs()
 	if len(myReservedIPs) > iSubnet.UsableHostAddresses() {
@@ -675,18 +675,18 @@ func (iSubnet *IPV4Subnet) UpdateDHCPRange(applySupernetHack bool) {
 			iSubnet.NetName,
 			len(myReservedIPs),
 			iSubnet.UsableHostAddresses(),
-			iSubnet.CIDR.String(),
+			iSubnet.CIDR4.String(),
 		)
 	}
 
 	// Bump the DHCP Start IP past the gateway
 	// At least ten IPs are needed, but more if required
 	staticLimit := Add(
-		iSubnet.CIDR.IP,
+		iSubnet.CIDR4.IP,
 		10,
 	)
 	dynamicLimit := Add(
-		iSubnet.CIDR.IP,
+		iSubnet.CIDR4.IP,
 		len(iSubnet.IPReservations)+2,
 	)
 	if IPLessThan(
@@ -721,12 +721,12 @@ func (iSubnet *IPV4Subnet) UpdateDHCPRange(applySupernetHack bool) {
 	} else {
 		if iSubnet.Name == "uai_macvlan" {
 			iSubnet.ReservationEnd = Add(
-				Broadcast(iSubnet.CIDR),
+				Broadcast(iSubnet.CIDR4),
 				-1,
 			)
 		} else {
 			iSubnet.DHCPEnd = Add(
-				Broadcast(iSubnet.CIDR),
+				Broadcast(iSubnet.CIDR4),
 				-1,
 			)
 		}
@@ -734,7 +734,7 @@ func (iSubnet *IPV4Subnet) UpdateDHCPRange(applySupernetHack bool) {
 }
 
 // AddReservationWithPin adds a new IPv4 reservation to the subnet with the last octet pinned
-func (iSubnet *IPV4Subnet) AddReservationWithPin(
+func (iSubnet *IPSubnet) AddReservationWithPin(
 	name, comment string, pin uint8,
 ) *IPReservation {
 	// Grab the "floor" of the subnet and alter the last byte to match the pinned byte
@@ -747,16 +747,16 @@ func (iSubnet *IPV4Subnet) AddReservationWithPin(
 		net.IP,
 		4,
 	)
-	if len(iSubnet.CIDR.IP) == 4 {
-		newIP[0] = iSubnet.CIDR.IP[0]
-		newIP[1] = iSubnet.CIDR.IP[1]
-		newIP[2] = iSubnet.CIDR.IP[2]
+	if len(iSubnet.CIDR4.IP) == 4 {
+		newIP[0] = iSubnet.CIDR4.IP[0]
+		newIP[1] = iSubnet.CIDR4.IP[1]
+		newIP[2] = iSubnet.CIDR4.IP[2]
 		newIP[3] = pin
 	}
-	if len(iSubnet.CIDR.IP) == 16 {
-		newIP[0] = iSubnet.CIDR.IP[12]
-		newIP[1] = iSubnet.CIDR.IP[13]
-		newIP[2] = iSubnet.CIDR.IP[14]
+	if len(iSubnet.CIDR4.IP) == 16 {
+		newIP[0] = iSubnet.CIDR4.IP[12]
+		newIP[1] = iSubnet.CIDR4.IP[13]
+		newIP[2] = iSubnet.CIDR4.IP[14]
 		newIP[3] = pin
 	}
 	if comment != "" {
@@ -798,16 +798,16 @@ func (iReserv *IPReservation) AddReservationAlias(alias string) {
 }
 
 // AddReservation adds a new IP reservation to the subnet
-func (iSubnet *IPV4Subnet) AddReservation(name, comment string) *IPReservation {
+func (iSubnet *IPSubnet) AddReservation(name, comment string) *IPReservation {
 	myReservedIPs := iSubnet.ReservedIPs()
 	// Commenting out this section because the supernet configuration we're using will trigger this all the time and it shouldn't be an error
-	// floor := iSubnet.CIDR.IP.Mask(iSubnet.CIDR.Mask)
-	// if !floor.Equal(iSubnet.CIDR.IP) {
-	// 	log.Printf("VERY BAD - In reservation. CIDR.IP = %v and floor is %v", iSubnet.CIDR.IP.String(), floor)
+	// floor := iSubnet.CIDR4.IP.Mask(iSubnet.CIDR4.Mask)
+	// if !floor.Equal(iSubnet.CIDR4.IP) {
+	// 	log.Printf("VERY BAD - In reservation. CIDR4.IP = %v and floor is %v", iSubnet.CIDR4.IP.String(), floor)
 	// }
 	// Start counting from the bottom knowing the gateway is on the bottom
 	tempIP := Add(
-		iSubnet.CIDR.IP,
+		iSubnet.CIDR4.IP,
 		2,
 	)
 	for {
@@ -832,10 +832,10 @@ func (iSubnet *IPV4Subnet) AddReservation(name, comment string) *IPReservation {
 }
 
 // AddReservationWithIP adds a reservation with a specific ip address
-func (iSubnet *IPV4Subnet) AddReservationWithIP(name, addr, comment string) (
+func (iSubnet *IPSubnet) AddReservationWithIP(name, addr, comment string) (
 	*IPReservation, error,
 ) {
-	if iSubnet.CIDR.Contains(net.ParseIP(addr)) {
+	if iSubnet.CIDR4.Contains(net.ParseIP(addr)) {
 		iSubnet.IPReservations = append(
 			iSubnet.IPReservations,
 			IPReservation{
@@ -852,7 +852,7 @@ func (iSubnet *IPV4Subnet) AddReservationWithIP(name, addr, comment string) (
 		iSubnet.Name,
 		addr,
 		addr,
-		iSubnet.CIDR.String(),
+		iSubnet.CIDR4.String(),
 	)
 
 	if len(iSubnet.IPReservations) == 0 {
@@ -863,7 +863,7 @@ func (iSubnet *IPV4Subnet) AddReservationWithIP(name, addr, comment string) (
 }
 
 // GenInterfaceName generates the network interface name for a subnet.
-func (iSubnet *IPV4Subnet) GenInterfaceName() error {
+func (iSubnet *IPSubnet) GenInterfaceName() error {
 	if len(iSubnet.NetName) > 15 {
 		return fmt.Errorf(
 			"network name [%s] is greater than 15 bytes",
@@ -884,7 +884,7 @@ func (iSubnet *IPV4Subnet) GenInterfaceName() error {
 			iSubnet.ParentDevice,
 		)
 	} else {
-		index := 0 // In the future, if we ever need to change this we can handle it with a loop and setting a range in IPV4Subnet.
+		index := 0 // In the future, if we ever need to change this we can handle it with a loop and setting a range in IPSubnet.
 		iSubnet.InterfaceName = fmt.Sprintf(
 			"%s.%s%d",
 			iSubnet.ParentDevice,

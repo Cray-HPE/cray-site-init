@@ -40,7 +40,7 @@ import (
 
 // NetworkLayoutConfiguration is the internal configuration structure for shasta networks
 type NetworkLayoutConfiguration struct {
-	Template                        networking.IPV4Network
+	Template networking.IPNetwork
 	ReservationHostnames            []string
 	IncludeBootstrapDHCP            bool
 	DesiredBootstrapDHCPMask        net.IPMask
@@ -123,7 +123,7 @@ func GenDefaultHSNConfig() NetworkLayoutConfiguration {
 
 // GenDefaultCMNConfig returns the set of defaults for mapping the CMN
 func GenDefaultCMNConfig(ncns int, switches int) NetworkLayoutConfiguration {
-	_, cmnNet, _ := net.ParseCIDR(networking.DefaultCMN.CIDR)
+	_, cmnNet, _ := net.ParseCIDR(networking.DefaultCMN.CIDR4)
 
 	// Dynamically calculate the bootstrap_dhcp netmask based on number of NCNs.
 	bootstrapSubnet, err := networking.SubnetWithin(
@@ -220,9 +220,9 @@ func BuildCSMNetworks(
 	internalNetConfigs map[string]NetworkLayoutConfiguration,
 	internalCabinetDetails []sls.CabinetGroupDetail,
 	switches []*networking.ManagementSwitch,
-) (map[string]*networking.IPV4Network, error) {
+) (map[string]*networking.IPNetwork, error) {
 	v := viper.GetViper()
-	var networkMap = make(map[string]*networking.IPV4Network)
+	var networkMap = make(map[string]*networking.IPNetwork)
 
 	for name, layout := range internalNetConfigs {
 		// log.Println("Building Network for ", name)
@@ -318,7 +318,7 @@ func BuildCSMNetworks(
 	return networkMap, nil
 }
 
-func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*networking.IPV4Network, error) {
+func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*networking.IPNetwork, error) {
 	// log.Printf("Creating a network for %v with NetworkLayoutConfig %+v", conf.Template.Name, conf)
 	var canCIDR *net.IPNet
 	var cmnCIDR *net.IPNet
@@ -370,7 +370,7 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*networking.IPV
 						"Couldn't add MetalLB Static pool of %v to net %v: %v\n"+
 						"Possible missing or mismatched cmn-static-pool input value.",
 					v.GetString("cmn-static-pool"),
-					tempNet.CIDR,
+					tempNet.CIDR4,
 					err,
 				)
 			}
@@ -401,7 +401,7 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*networking.IPV
 						"Couldn't add MetalLB Dynamic pool of %v to net %v: %v\n"+
 						"Possible missing or mismatched cmn-dynamic-pool input value.",
 					v.GetString("cmn-dynamic-pool"),
-					tempNet.CIDR,
+					tempNet.CIDR4,
 					err,
 				)
 			}
@@ -433,7 +433,7 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*networking.IPV
 								"Couldn't add MetalLB Static pool of %v to net %v: %v\n"+
 								"Possible missing or mismatched can-static-pool input value.",
 							v.GetString("can-static-pool"),
-							tempNet.CIDR,
+							tempNet.CIDR4,
 							err,
 						)
 					}
@@ -457,7 +457,7 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*networking.IPV
 								"Couldn't add MetalLB Dynamic pool of %v to net %v: %v\n"+
 								"Possible missing or mismatched can-dynamic-pool value.",
 							v.GetString("can-dynamic-pool"),
-							tempNet.CIDR,
+							tempNet.CIDR4,
 							err,
 						)
 						log.Fatalf("Possible missing or mismatched can-dynamic-pool value.")
@@ -491,7 +491,7 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*networking.IPV
 								"Couldn't add MetalLB Static pool of %v to net %v: %v\n"+
 								"Possible missing or mismatched chn-static-pool input value.",
 							v.GetString("chn-static-pool"),
-							tempNet.CIDR,
+							tempNet.CIDR4,
 							err,
 						)
 					}
@@ -515,7 +515,7 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*networking.IPV
 								"Couldn't add MetalLB Dynamic pool of %v to net %v: %v\n"+
 								"Possible missing or mismatched chn-dynamic-pool value.",
 							v.GetString("chn-dynamic-pool"),
-							tempNet.CIDR,
+							tempNet.CIDR4,
 							err,
 						)
 						log.Fatalf("Possible missing or mismatched chn-dynamic-pool value.")
@@ -543,7 +543,7 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*networking.IPV
 				log.Fatalf(
 					"IP Addressing Failure\nCouldn't add hsn_base_subnet of %v to net %v: %v",
 					v.GetString("hsn-cidr"),
-					tempNet.CIDR,
+					tempNet.CIDR4,
 					err,
 				)
 			}
@@ -586,7 +586,7 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*networking.IPV
 			netNameLower,
 		)
 		if v.GetString(myNet) != "" {
-			var subnet *networking.IPV4Subnet
+			var subnet *networking.IPSubnet
 			subnet, err := tempNet.AddBiggestSubnet(
 				conf.DesiredBootstrapDHCPMask,
 				"bootstrap_dhcp",
@@ -606,8 +606,8 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*networking.IPV
 			subnet.ParentDevice = tempNet.ParentDevice
 			if tempNet.Name == "NMN" || tempNet.Name == "HMN" || tempNet.Name == "CMN" || tempNet.Name == "CAN" || tempNet.Name == "CHN" {
 				if tempNet.Name == "CAN" {
-					subnet.CIDR = *canCIDR
-					subnet.Gateway = net.ParseIP(v.GetString("can-gateway"))
+					subnet.CIDR4 = *canCIDR
+					subnet.Gateway4 = net.ParseIP(v.GetString("can-gateway"))
 					subnet.AddReservation(
 						"can-switch-1",
 						"",
@@ -617,8 +617,8 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*networking.IPV
 						"",
 					)
 				} else if tempNet.Name == "CHN" {
-					subnet.CIDR = *chnCIDR
-					subnet.Gateway = net.ParseIP(v.GetString("chn-gateway4"))
+					subnet.CIDR4 = *chnCIDR
+					subnet.Gateway4 = net.ParseIP(v.GetString("chn-gateway4"))
 					subnet.ReserveEdgeSwitchIPs(edgeSwitches)
 				} else {
 					subnet.ReserveNetMgmtIPs(
@@ -663,8 +663,8 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*networking.IPV
 			"uai_macvlan",
 			int16(v.GetInt("nmn-bootstrap-vlan")),
 		)
-		_, supernetNet, _ := net.ParseCIDR(tempNet.CIDR)
-		uaisubnet.Gateway = networking.Add(
+		_, supernetNet, _ := net.ParseCIDR(tempNet.CIDR4)
+		uaisubnet.Gateway4 = networking.Add(
 			supernetNet.IP,
 			1,
 		)
@@ -700,7 +700,7 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (*networking.IPV
 				reservation.AddReservationAlias(alias)
 			}
 		}
-		// log.Println("Added the MacVlan Subnet at ", uaisubnet.CIDR.String())
+		// log.Println("Added the MacVlan Subnet at ", uaisubnet.CIDR4.String())
 	}
 	// Build out the per-cabinet subnets
 	// If the networks are intended to be grouped, only do the listed cabinet type

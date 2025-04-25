@@ -75,7 +75,7 @@ func loadCommand() *cobra.Command {
 				log.Println(
 					v.Name,
 					":",
-					v.CIDR,
+					v.CIDR4,
 					len(v.Subnets),
 					"Subnets",
 				)
@@ -97,7 +97,7 @@ func loadSystemConfig(path string) (
 }
 
 func loadNetwork(path string) (
-	network networking.IPV4Network, err error,
+	network networking.IPNetwork, err error,
 ) {
 	err = csiFiles.ReadJSONConfig(
 		path,
@@ -107,10 +107,10 @@ func loadNetwork(path string) (
 }
 
 func extractNetworks(basepath string) (
-	[]networking.IPV4Network, error,
+	[]networking.IPNetwork, error,
 ) {
 	// TODO: Handle incoming error?
-	var networks []networking.IPV4Network
+	var networks []networking.IPNetwork
 	err := filepath.Walk(
 		basepath,
 		func(
@@ -120,7 +120,7 @@ func extractNetworks(basepath string) (
 				log.Println(
 					"Processing",
 					path,
-					"as ipam.IPV4Network -",
+					"as ipam.IPNetwork -",
 					info.Size(),
 				)
 				network, err := loadNetwork(path)

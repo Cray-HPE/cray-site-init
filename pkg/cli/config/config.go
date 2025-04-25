@@ -69,7 +69,7 @@ type InstallConfig struct {
 	SiteIP              net.IP `desc:"IP address for the site connection of the installer node"  valid:"ipv4 notnull"`
 	SitePrefix          string `desc:"Subnet Prefix for the site connection"`
 	SiteDNS             net.IP `desc:"IP address for the site dns server" valid:"ipv4"`
-	SiteGW              net.IP `desc:"Gateway IP address for the site connection of the installer node" valid:"ipv4"`
+	SiteGW net.IP `desc:"Gateway4 IP address for the site connection of the installer node" valid:"ipv4"`
 	SiteNIC             string `desc:"Linux Interface Identifier for the NIC connected to the site network" flag:",required" valid:"stringlength(2|20)"`
 	CephCephfsImage     string `desc:"The container image for the cephfs provisioner" valid:"url"`
 	CephRBDImage        string `desc:"The container image for the ceph rbd provisioner" valid:"url"`

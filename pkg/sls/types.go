@@ -33,7 +33,7 @@ import "fmt"
 
 // NetworkExtraProperties provides additional network information
 type NetworkExtraProperties struct {
-	CIDR      string  `json:"CIDR"`
+	CIDR string `json:"CIDR4"`
 	VlanRange []int16 `json:"VlanRange"`
 	MTU       int16   `json:"MTU,omitempty"`
 	Comment   string  `json:"Comment,omitempty"`
@@ -87,11 +87,11 @@ type IPReservation struct {
 // IPV4Subnet is a type for managing IPv4 Subnets
 type IPV4Subnet struct {
 	FullName        string          `json:"FullName"`
-	CIDR            string          `json:"CIDR"`
+	CIDR    string `json:"CIDR4"`
 	IPReservations  []IPReservation `json:"IPReservations,omitempty"`
 	Name            string          `json:"Name"`
 	VlanID          int16           `json:"VlanID"`
-	Gateway         string          `json:"Gateway"`
+	Gateway string `json:"Gateway4"`
 	DHCPStart       string          `json:"DHCPStart,omitempty"`
 	DHCPEnd         string          `json:"DHCPEnd,omitempty"`
 	Comment         string          `json:"Comment,omitempty"`

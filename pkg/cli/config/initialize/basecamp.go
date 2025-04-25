@@ -190,7 +190,7 @@ type BasecampHostRecord struct {
 
 // MakeBasecampHostRecords uses the ncns to generate a list of host ips and their names for use in /etc/hosts
 func MakeBasecampHostRecords(
-	ncns []LogicalNCN, shastaNetworks map[string]*networking.IPV4Network, installNCN string,
+	ncns []LogicalNCN, shastaNetworks map[string]*networking.IPNetwork, installNCN string,
 ) interface{} {
 	var hostrecords []BasecampHostRecord
 	hmnNetwork, _ := shastaNetworks["HMN"].LookUpSubnet("bootstrap_dhcp")
@@ -351,7 +351,7 @@ func unique(arr []string) []string {
 func MakeBasecampGlobals(
 	v *viper.Viper,
 	logicalNcns []LogicalNCN,
-	shastaNetworks map[string]*networking.IPV4Network,
+	shastaNetworks map[string]*networking.IPNetwork,
 	installNetwork string,
 	installSubnet string,
 	installNCN string,
@@ -457,7 +457,7 @@ func MakeBasecampGlobals(
 // Lastly, add the HMN/NMN k8s routes
 // Format for ifroute-<interface> files
 func getNCNStaticRoutes(
-	v *viper.Viper, shastaNetworks map[string]*networking.IPV4Network,
+	v *viper.Viper, shastaNetworks map[string]*networking.IPNetwork,
 ) []WriteFiles {
 	var nmnGateway string
 	var hmnGateway string
@@ -481,16 +481,16 @@ func getNCNStaticRoutes(
 			for _, subnet := range shastaNetworks[netName].Subnets {
 				if subnet.Name == "network_hardware" {
 					if netName == "NMN" {
-						nmnGateway = subnet.Gateway.String()
+						nmnGateway = subnet.Gateway4.String()
 					}
 					if netName == "HMN" {
-						hmnGateway = subnet.Gateway.String()
+						hmnGateway = subnet.Gateway4.String()
 					}
 					if netName == "MTL" {
 						ifrouteNMN.WriteString(
 							fmt.Sprintf(
 								"%s %s - bond0.nmn0\n",
-								subnet.CIDR.String(),
+								subnet.CIDR4.String(),
 								nmnGateway,
 							),
 						)
@@ -504,7 +504,7 @@ func getNCNStaticRoutes(
 						ifrouteNMN.WriteString(
 							fmt.Sprintf(
 								"%s %s - bond0.nmn0\n",
-								subnet.CIDR.String(),
+								subnet.CIDR4.String(),
 								nmnGateway,
 							),
 						)
@@ -512,7 +512,7 @@ func getNCNStaticRoutes(
 						ifrouteHMN.WriteString(
 							fmt.Sprintf(
 								"%s %s - bond0.hmn0\n",
-								subnet.CIDR.String(),
+								subnet.CIDR4.String(),
 								hmnGateway,
 							),
 						)
@@ -531,14 +531,14 @@ func getNCNStaticRoutes(
 	ifrouteNMN.WriteString(
 		fmt.Sprintf(
 			"%s %s - bond0.nmn0\n",
-			shastaNetworks["NMNLB"].CIDR,
+			shastaNetworks["NMNLB"].CIDR4,
 			nmnGateway,
 		),
 	)
 	ifrouteHMN.WriteString(
 		fmt.Sprintf(
 			"%s %s - bond0.hmn0\n",
-			shastaNetworks["HMNLB"].CIDR,
+			shastaNetworks["HMNLB"].CIDR4,
 			hmnGateway,
 		),
 	)
@@ -562,7 +562,7 @@ func getNCNStaticRoutes(
 
 // MakeBaseCampfromNCNs uses ncns and networks to create the basecamp config
 func MakeBaseCampfromNCNs(
-	v *viper.Viper, ncns []LogicalNCN, shastaNetworks map[string]*networking.IPV4Network,
+	v *viper.Viper, ncns []LogicalNCN, shastaNetworks map[string]*networking.IPNetwork,
 ) (
 	map[string]CloudInit, error,
 ) {
@@ -580,8 +580,8 @@ func MakeBaseCampfromNCNs(
 	for _, ncn := range ncns {
 		mac0Interface := make(map[string]interface{})
 		mac0Interface["ip"] = uaiReservations[ncn.Hostname].IPAddress
-		mac0Interface["mask"] = uaiMacvlanSubnet.CIDR.String()
-		mac0Interface["gateway"] = uaiMacvlanSubnet.Gateway
+		mac0Interface["mask"] = uaiMacvlanSubnet.CIDR4.String()
+		mac0Interface["gateway"] = uaiMacvlanSubnet.Gateway4
 		tempAvailabilityZone, err := CabinetForXname(ncn.Xname)
 		if err != nil {
 			log.Printf(
@@ -701,7 +701,7 @@ func MakeBaseCampfromNCNs(
 				) {
 				nmnNets = append(
 					nmnNets,
-					netNetwork.CIDR,
+					netNetwork.CIDR4,
 				)
 			}
 		}
@@ -775,7 +775,7 @@ func MakeBaseCampfromNCNs(
 
 // WriteBasecampData writes basecamp data.json for the installer
 func WriteBasecampData(
-	path string, ncns []LogicalNCN, shastaNetworks map[string]*networking.IPV4Network, globals interface{},
+	path string, ncns []LogicalNCN, shastaNetworks map[string]*networking.IPNetwork, globals interface{},
 ) {
 	v := viper.GetViper()
 	basecampConfig, err := MakeBaseCampfromNCNs(

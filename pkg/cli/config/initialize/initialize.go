@@ -173,7 +173,7 @@ func NewCommand() *cobra.Command {
 						3000,
 						3999,
 					}
-					tmpHmnMtn.Template.CIDR = networking.DefaultHMNMTNString
+					tmpHmnMtn.Template.CIDR4 = networking.DefaultHMNMTNString
 					tmpHmnMtn.SubdivideByCabinet = true
 					tmpHmnMtn.IncludeBootstrapDHCP = false
 					tmpHmnMtn.SuperNetHack = false
@@ -188,7 +188,7 @@ func NewCommand() *cobra.Command {
 						1513,
 						1769,
 					}
-					tmpHmnRvr.Template.CIDR = networking.DefaultHMNRVRString
+					tmpHmnRvr.Template.CIDR4 = networking.DefaultHMNRVRString
 					tmpHmnRvr.SubdivideByCabinet = true
 					tmpHmnRvr.IncludeBootstrapDHCP = false
 					tmpHmnRvr.SuperNetHack = false
@@ -207,7 +207,7 @@ func NewCommand() *cobra.Command {
 						2000,
 						2999,
 					}
-					tmpNmnMtn.Template.CIDR = networking.DefaultNMNMTNString
+					tmpNmnMtn.Template.CIDR4 = networking.DefaultNMNMTNString
 					tmpNmnMtn.SubdivideByCabinet = true
 					tmpNmnMtn.IncludeBootstrapDHCP = false
 					tmpNmnMtn.SuperNetHack = false
@@ -223,7 +223,7 @@ func NewCommand() *cobra.Command {
 						1770,
 						1999,
 					}
-					tmpNmnRvr.Template.CIDR = networking.DefaultNMNRVRString
+					tmpNmnRvr.Template.CIDR4 = networking.DefaultNMNRVRString
 					tmpNmnRvr.SubdivideByCabinet = true
 					tmpNmnRvr.IncludeBootstrapDHCP = false
 					tmpNmnRvr.SuperNetHack = false
@@ -311,7 +311,7 @@ func NewCommand() *cobra.Command {
 						normalizedName,
 					),
 				) {
-					myLayout.Template.CIDR = v.GetString(
+					myLayout.Template.CIDR4 = v.GetString(
 						fmt.Sprintf(
 							"%v-cidr",
 							normalizedName,
@@ -459,7 +459,7 @@ func NewCommand() *cobra.Command {
 							// Guidance has changed on whether the CAN gw should be at the start or end of the
 							// range. Here we account for it being at the end of the range.
 							// Leaving this check in place for CMN because it is harmless to do so.
-							if tempSubnet.Gateway.String() == networking.Add(
+							if tempSubnet.Gateway4.String() == networking.Add(
 								poolStartIP,
 								-1,
 							).String() {
@@ -601,7 +601,7 @@ func NewCommand() *cobra.Command {
 				fmt.Printf(
 					"\t* %v %v with %d subnets \n",
 					tempNet.FullName,
-					tempNet.CIDR,
+					tempNet.CIDR4,
 					len(tempNet.Subnets),
 				)
 			}
@@ -707,7 +707,7 @@ func NewCommand() *cobra.Command {
 	c.Flags().String(
 		"site-gw",
 		"",
-		"Site Network IPv4 Gateway",
+		"Site Network IPv4 Gateway4",
 	)
 	c.Flags().String(
 		"site-ip",
@@ -743,27 +743,27 @@ func NewCommand() *cobra.Command {
 	c.Flags().String(
 		"nmn-cidr",
 		networking.DefaultNMNString,
-		"Overall IPv4 CIDR for all Node Management subnets",
+		"Overall IPv4 CIDR4 for all Node Management subnets",
 	)
 	c.Flags().String(
 		"nmn-static-pool",
 		"",
-		"Overall IPv4 CIDR for static Node Management load balancer addresses",
+		"Overall IPv4 CIDR4 for static Node Management load balancer addresses",
 	)
 	c.Flags().String(
 		"nmn-dynamic-pool",
 		networking.DefaultNMNLBString,
-		"Overall IPv4 CIDR for dynamic Node Management load balancer addresses",
+		"Overall IPv4 CIDR4 for dynamic Node Management load balancer addresses",
 	)
 	c.Flags().String(
 		"nmn-mtn-cidr",
 		networking.DefaultNMNMTNString,
-		"IPv4 CIDR for grouped Mountain Node Management subnets",
+		"IPv4 CIDR4 for grouped Mountain Node Management subnets",
 	)
 	c.Flags().String(
 		"nmn-rvr-cidr",
 		networking.DefaultNMNRVRString,
-		"IPv4 CIDR for grouped River Node Management subnets",
+		"IPv4 CIDR4 for grouped River Node Management subnets",
 	)
 	_ = c.MarkFlagRequired("nmn-cidr")
 
@@ -771,27 +771,27 @@ func NewCommand() *cobra.Command {
 	c.Flags().String(
 		"hmn-cidr",
 		networking.DefaultHMNString,
-		"Overall IPv4 CIDR for all Hardware Management subnets",
+		"Overall IPv4 CIDR4 for all Hardware Management subnets",
 	)
 	c.Flags().String(
 		"hmn-static-pool",
 		"",
-		"Overall IPv4 CIDR for static Hardware Management load balancer addresses",
+		"Overall IPv4 CIDR4 for static Hardware Management load balancer addresses",
 	)
 	c.Flags().String(
 		"hmn-dynamic-pool",
 		networking.DefaultHMNLBString,
-		"Overall IPv4 CIDR for dynamic Hardware Management load balancer addresses",
+		"Overall IPv4 CIDR4 for dynamic Hardware Management load balancer addresses",
 	)
 	c.Flags().String(
 		"hmn-mtn-cidr",
 		networking.DefaultHMNMTNString,
-		"IPv4 CIDR for grouped Mountain Hardware Management subnets",
+		"IPv4 CIDR4 for grouped Mountain Hardware Management subnets",
 	)
 	c.Flags().String(
 		"hmn-rvr-cidr",
 		networking.DefaultHMNRVRString,
-		"IPv4 CIDR for grouped River Hardware Management subnets",
+		"IPv4 CIDR4 for grouped River Hardware Management subnets",
 	)
 	_ = c.MarkFlagRequired("hmn-cidr")
 
@@ -799,22 +799,22 @@ func NewCommand() *cobra.Command {
 	c.Flags().String(
 		"can-cidr",
 		"",
-		"Overall IPv4 CIDR for all Customer Access subnets",
+		"Overall IPv4 CIDR4 for all Customer Access subnets",
 	)
 	c.Flags().String(
 		"can-gateway",
 		"",
-		"Gateway for NCNs on the CAN (User)",
+		"Gateway4 for NCNs on the CAN (User)",
 	)
 	c.Flags().String(
 		"can-static-pool",
 		"",
-		"Overall IPv4 CIDR for static Customer Access load balancer addresses",
+		"Overall IPv4 CIDR4 for static Customer Access load balancer addresses",
 	)
 	c.Flags().String(
 		"can-dynamic-pool",
 		"",
-		"Overall IPv4 CIDR for dynamic Customer Access load balancer addresses",
+		"Overall IPv4 CIDR4 for dynamic Customer Access load balancer addresses",
 	)
 	c.MarkFlagsRequiredTogether(
 		"can-cidr",
@@ -827,12 +827,12 @@ func NewCommand() *cobra.Command {
 	c.Flags().String(
 		"chn-cidr",
 		"",
-		"Overall IPv4 CIDR for all Customer High-Speed subnets",
+		"Overall IPv4 CIDR4 for all Customer High-Speed subnets",
 	)
 	c.Flags().String(
 		"chn-gateway",
 		"",
-		"Gateway for NCNs on the CHN (User)",
+		"Gateway4 for NCNs on the CHN (User)",
 	)
 	c.Flags().MarkDeprecated(
 		"chn-cidr",
@@ -845,32 +845,32 @@ func NewCommand() *cobra.Command {
 	c.Flags().String(
 		"chn-cidr4",
 		"",
-		"Overall IPv4 CIDR for all Customer High-Speed subnets",
+		"Overall IPv4 CIDR4 for all Customer High-Speed subnets",
 	)
 	c.Flags().String(
 		"chn-gateway4",
 		"",
-		"IPv4 Gateway for NCNs on the CHN (User)",
+		"IPv4 Gateway4 for NCNs on the CHN (User)",
 	)
 	c.Flags().String(
 		"chn-cidr6",
 		"",
-		"Overall IPv6 CIDR for all Customer High-Speed subnets",
+		"Overall IPv6 CIDR4 for all Customer High-Speed subnets",
 	)
 	c.Flags().String(
 		"chn-gateway6",
 		"",
-		"IPv6 Gateway for NCNs on the CHN (User)",
+		"IPv6 Gateway4 for NCNs on the CHN (User)",
 	)
 	c.Flags().String(
 		"chn-static-pool",
 		"",
-		"Overall IPv4 CIDR for static Customer High-Speed load balancer addresses",
+		"Overall IPv4 CIDR4 for static Customer High-Speed load balancer addresses",
 	)
 	c.Flags().String(
 		"chn-dynamic-pool",
 		"",
-		"Overall IPv4 CIDR for dynamic Customer High-Speed load balancer addresses",
+		"Overall IPv4 CIDR4 for dynamic Customer High-Speed load balancer addresses",
 	)
 	c.MarkFlagsRequiredTogether(
 		"chn-cidr6",
@@ -888,12 +888,12 @@ func NewCommand() *cobra.Command {
 	c.Flags().String(
 		"cmn-cidr",
 		"",
-		"Overall IPv4 CIDR for all Customer Management subnets",
+		"Overall IPv4 CIDR4 for all Customer Management subnets",
 	)
 	c.Flags().String(
 		"cmn-gateway",
 		"",
-		"Gateway for NCNs on the CMN (Administrative/Management)",
+		"Gateway4 for NCNs on the CMN (Administrative/Management)",
 	)
 	c.Flags().MarkDeprecated(
 		"cmn-cidr",
@@ -907,32 +907,32 @@ func NewCommand() *cobra.Command {
 	c.Flags().String(
 		"cmn-cidr4",
 		"",
-		"Overall IPv4 CIDR for all Customer Management subnets",
+		"Overall IPv4 CIDR4 for all Customer Management subnets",
 	)
 	c.Flags().String(
 		"cmn-gateway4",
 		"",
-		"IPv4 Gateway for NCNs on the CMN (Administrative/Management)",
+		"IPv4 Gateway4 for NCNs on the CMN (Administrative/Management)",
 	)
 	c.Flags().String(
 		"cmn-cidr6",
 		"",
-		"Overall IPv6 CIDR for all Customer Management subnets",
+		"Overall IPv6 CIDR4 for all Customer Management subnets",
 	)
 	c.Flags().String(
 		"cmn-gateway6",
 		"",
-		"IPv6 Gateway for NCNs on the CMN (Administrative/Management)",
+		"IPv6 Gateway4 for NCNs on the CMN (Administrative/Management)",
 	)
 	c.Flags().String(
 		"cmn-static-pool",
 		"",
-		"Overall IPv4 CIDR for static Customer Management load balancer addresses",
+		"Overall IPv4 CIDR4 for static Customer Management load balancer addresses",
 	)
 	c.Flags().String(
 		"cmn-dynamic-pool",
 		"",
-		"Overall IPv4 CIDR for dynamic Customer Management load balancer addresses",
+		"Overall IPv4 CIDR4 for dynamic Customer Management load balancer addresses",
 	)
 	c.Flags().String(
 		"cmn-external-dns",
@@ -956,14 +956,14 @@ func NewCommand() *cobra.Command {
 	c.Flags().String(
 		"mtl-cidr",
 		networking.DefaultMTLString,
-		"Overall IPv4 CIDR for all Provisioning subnets",
+		"Overall IPv4 CIDR4 for all Provisioning subnets",
 	)
 
 	// High-speed network.
 	c.Flags().String(
 		"hsn-cidr",
 		networking.DefaultHSNString,
-		"Overall IPv4 CIDR for all HSN subnets",
+		"Overall IPv4 CIDR4 for all HSN subnets",
 	)
 
 	// Misc network.
@@ -1243,11 +1243,11 @@ func mergeNCNs(logicalNcns []*LogicalNCN, slsNCNs []LogicalNCN) error {
 	return nil
 }
 
-func prepareNetworkSLS(shastaNetworks map[string]*networking.IPV4Network) (
-	[]networking.IPV4Network, map[string]slsCommon.Network,
+func prepareNetworkSLS(shastaNetworks map[string]*networking.IPNetwork) (
+	[]networking.IPNetwork, map[string]slsCommon.Network,
 ) {
 	// Fix up the network names & create the SLS friendly version of the shasta networks
-	var networks []networking.IPV4Network
+	var networks []networking.IPNetwork
 	for name, network := range shastaNetworks {
 		if network.Name == "" {
 			network.Name = name
@@ -1262,7 +1262,7 @@ func prepareNetworkSLS(shastaNetworks map[string]*networking.IPV4Network) (
 
 func prepareAndGenerateSLS(
 	cd []sls.CabinetGroupDetail,
-	shastaNetworks map[string]*networking.IPV4Network,
+	shastaNetworks map[string]*networking.IPNetwork,
 	hmnRows []shcdParser.HMNRow,
 	inputSwitches []*networking.ManagementSwitch,
 	applicationNodeConfig slsInit.GeneratorApplicationNodeConfig,
@@ -1353,7 +1353,7 @@ func prepareAndGenerateSLS(
 	return slsState
 }
 
-func updateReservations(tempSubnet *networking.IPV4Subnet, logicalNcns []*LogicalNCN) {
+func updateReservations(tempSubnet *networking.IPSubnet, logicalNcns []*LogicalNCN) {
 	// Loop the reservations and update the NCN reservations with hostnames
 	// we likely didn't have when we registered the reservation
 	for index, reservation := range tempSubnet.IPReservations {
@@ -1427,7 +1427,7 @@ func updateReservations(tempSubnet *networking.IPV4Subnet, logicalNcns []*Logica
 
 func writeOutput(
 	v *viper.Viper,
-	shastaNetworks map[string]*networking.IPV4Network,
+	shastaNetworks map[string]*networking.IPNetwork,
 	slsState slsCommon.SLSState,
 	logicalNCNs []LogicalNCN,
 	switches []*networking.ManagementSwitch,
@@ -1672,7 +1672,7 @@ func validateFlags() []string {
 				errors = append(
 					errors,
 					fmt.Sprintf(
-						"%v should be a CIDR in the form 192.168.0.1/24 and is not set correctly through flag or config file (.%s)",
+						"%v should be a CIDR4 in the form 192.168.0.1/24 and is not set correctly through flag or config file (.%s)",
 						flagName,
 						v.ConfigFileUsed(),
 					),
@@ -1739,10 +1739,10 @@ func validateFlags() []string {
 }
 
 // AllocateIps distributes IP reservations for each of the NCNs within the networks
-func AllocateIps(ncns []*LogicalNCN, networks map[string]*networking.IPV4Network) {
+func AllocateIps(ncns []*LogicalNCN, networks map[string]*networking.IPNetwork) {
 	// log.Printf("I'm here in AllocateIps with %d ncns to work with and %d networks", len(ncns), len(networks))
-	lookup := func(name string, subnetName string, networks map[string]*networking.IPV4Network) (
-		*networking.IPV4Subnet, error,
+	lookup := func(name string, subnetName string, networks map[string]*networking.IPNetwork) (
+		*networking.IPSubnet, error,
 	) {
 		tempNetwork := networks[name]
 		subnet, err := tempNetwork.LookUpSubnet(subnetName)
@@ -1759,7 +1759,7 @@ func AllocateIps(ncns []*LogicalNCN, networks map[string]*networking.IPV4Network
 	}
 
 	// Build a map of networks based on their names
-	subnets := make(map[string]*networking.IPV4Subnet)
+	subnets := make(map[string]*networking.IPSubnet)
 	for name := range networks {
 		bootstrapNet, err := lookup(
 			name,
@@ -1800,7 +1800,7 @@ func AllocateIps(ncns []*LogicalNCN, networks map[string]*networking.IPV4Network
 			)
 			// log.Printf("Adding %v %v reservation for %v(%v) at %v \n", netName, subnet.Name, ncn.Xname, ncn.Xname, reservation.IPAddress.String())
 			prefixLen := strings.Split(
-				subnet.CIDR.String(),
+				subnet.CIDR4.String(),
 				"/",
 			)[1]
 			err := subnet.GenInterfaceName()
@@ -1822,7 +1822,7 @@ func AllocateIps(ncns []*LogicalNCN, networks map[string]*networking.IPV4Network
 				Mask:                prefixLen,
 				InterfaceName:       subnet.InterfaceName,
 				ParentInterfaceName: subnet.ParentDevice,
-				Gateway:             subnet.Gateway,
+				Gateway: subnet.Gateway4,
 			}
 			ncn.Networks = append(
 				ncn.Networks,

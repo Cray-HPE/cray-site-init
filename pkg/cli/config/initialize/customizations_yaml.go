@@ -115,7 +115,7 @@ func (c *CustomizationsYaml) IsValid() bool {
 
 // GenCustomizationsYaml generates our configurations.yaml nested struct
 func GenCustomizationsYaml(
-	ncns []LogicalNCN, shastaNetworks map[string]*networking.IPV4Network, switches []*networking.ManagementSwitch,
+	ncns []LogicalNCN, shastaNetworks map[string]*networking.IPNetwork, switches []*networking.ManagementSwitch,
 ) CustomizationsYaml {
 	v := viper.GetViper()
 	systemName := v.GetString("system-name")
@@ -167,14 +167,14 @@ func GenCustomizationsYaml(
 	hmnLBs, _ := shastaNetworks["HMNLB"].LookUpSubnet("hmn_metallb_address_pool")
 	uaiNet, _ := shastaNetworks["NMN"].LookUpSubnet("uai_macvlan")
 	cmnStaticNet, _ := shastaNetworks["CMN"].LookUpSubnet("cmn_metallb_static_pool")
-	// Normalize the CIDR before using it
-	_, uaiNetCIDR, _ := net.ParseCIDR(uaiNet.CIDR.String())
+	// Normalize the CIDR4 before using it
+	_, uaiNetCIDR, _ := net.ParseCIDR(uaiNet.CIDR4.String())
 	var customizationsNetworks = CustomizationsNetworking{
-		NMN:   shastaNetworks["NMN"].CIDR,
-		NMNLB: shastaNetworks["NMNLB"].CIDR,
-		HMN:   shastaNetworks["HMN"].CIDR,
-		HMNLB: shastaNetworks["HMNLB"].CIDR,
-		HSN:   shastaNetworks["HSN"].CIDR,
+		NMN:   shastaNetworks["NMN"].CIDR4,
+		NMNLB: shastaNetworks["NMNLB"].CIDR4,
+		HMN:   shastaNetworks["HMN"].CIDR4,
+		HMNLB: shastaNetworks["HMNLB"].CIDR4,
+		HSN:   shastaNetworks["HSN"].CIDR4,
 		NetStaticIps: struct {
 			SiteToSystem       net.IP   "yaml:\"site_to_system_lookups\" valid:\"ipv4,required\""
 			SystemToSite       net.IP   "yaml:\"system_to_site_lookups\" valid:\"ipv4,required\""
@@ -284,8 +284,8 @@ func GenCustomizationsYaml(
 			}
 		}{
 			NMNSubnetCIDR:              uaiNetCIDR.String(),
-			NMNSupernetGateway:         uaiNet.Gateway,
-			NMNSupernetCIDR:            shastaNetworks["NMN"].CIDR,
+			NMNSupernetGateway: uaiNet.Gateway4,
+			NMNSupernetCIDR:    shastaNetworks["NMN"].CIDR4,
 			NMNVlanInterface:           "bond0.nmn0",
 			NMNMacVlanReservationStart: uaiNet.ReservationStart,
 			NMNMacVlanReservationEnd:   uaiNet.ReservationEnd,
@@ -299,7 +299,7 @@ func GenCustomizationsYaml(
 					Destination string "yaml:\"dst\" valid:\"cidr,required\""
 					Gateway     string "yaml:\"gw\" valid:\"cidr,required\""
 				}{
-					Destination: network.CIDR,
+					Destination: network.CIDR4,
 					Gateway:     uaiNet.LookupReservation("uai_nmn_blackhole").IPAddress.String(),
 				},
 			)
@@ -310,8 +310,8 @@ func GenCustomizationsYaml(
 					Destination string "yaml:\"dst\" valid:\"cidr,required\""
 					Gateway     string "yaml:\"gw\" valid:\"cidr,required\""
 				}{
-					Destination: network.CIDR,
-					Gateway:     uaiNet.Gateway.String(),
+					Destination: network.CIDR4,
+					Gateway:     uaiNet.Gateway4.String(),
 				},
 			)
 		}

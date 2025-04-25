@@ -48,7 +48,7 @@ var DefaultApplicationNodePrefixes = []string{
 var DefaultApplicationNodeSubroles = map[string]string{
 	"uan": "UAN",
 	"ln":  "UAN", // Nodes with the ln prefix are also UAN nodes
-	"gn":  "Gateway",
+	"gn": "Gateway4",
 }
 
 // SubrolePlaceHolder is the placeholder used to indicate that a prefix has no subrole mapping in ApplicationNodeConfig.
