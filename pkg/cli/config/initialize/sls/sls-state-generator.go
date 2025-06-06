@@ -33,7 +33,7 @@ import (
 	"strings"
 
 	shcdParser "github.com/Cray-HPE/hms-shcd-parser/pkg/shcd-parser"
-	slsCommon "github.com/Cray-HPE/hms-sls/pkg/sls-common"
+	slsCommon "github.com/Cray-HPE/hms-sls/v2/pkg/sls-common"
 
 	"github.com/Cray-HPE/hms-xname/xnames"
 	"github.com/Cray-HPE/hms-xname/xnametypes"

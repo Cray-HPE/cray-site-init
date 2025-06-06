@@ -31,7 +31,7 @@ import (
 	"sort"
 	"strings"
 
-	slsCommon "github.com/Cray-HPE/hms-sls/pkg/sls-common"
+	slsCommon "github.com/Cray-HPE/hms-sls/v2/pkg/sls-common"
 	"github.com/spf13/viper"
 
 	"github.com/Cray-HPE/cray-site-init/pkg/networking"

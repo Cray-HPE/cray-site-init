@@ -37,7 +37,7 @@ import (
 	"golang.org/x/mod/semver"
 
 	shcdParser "github.com/Cray-HPE/hms-shcd-parser/pkg/shcd-parser"
-	slsCommon "github.com/Cray-HPE/hms-sls/pkg/sls-common"
+	slsCommon "github.com/Cray-HPE/hms-sls/v2/pkg/sls-common"
 
 	csiFiles "github.com/Cray-HPE/cray-site-init/internal/files"
 	slsInit "github.com/Cray-HPE/cray-site-init/pkg/cli/config/initialize/sls"
@@ -246,7 +246,10 @@ func NewCommand() *cobra.Command {
 				)
 
 				// Use CLI/file input values if available, otherwise defaults
-				baseVlanName := fmt.Sprintf("%v-bootstrap-vlan", normalizedName)
+				baseVlanName := fmt.Sprintf(
+					"%v-bootstrap-vlan",
+					normalizedName,
+				)
 				if v.IsSet(baseVlanName) {
 					baseVlan := int16(v.GetInt(baseVlanName))
 					myLayout.BaseVlan = baseVlan

@@ -31,7 +31,7 @@ import (
 	"net"
 	"strings"
 
-	slsCommon "github.com/Cray-HPE/hms-sls/pkg/sls-common"
+	slsCommon "github.com/Cray-HPE/hms-sls/v2/pkg/sls-common"
 	"github.com/pkg/errors"
 
 	"github.com/Cray-HPE/cray-site-init/pkg/cli"

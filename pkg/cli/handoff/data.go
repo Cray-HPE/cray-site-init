@@ -44,7 +44,7 @@ import (
 
 	base "github.com/Cray-HPE/hms-base/v2"
 	"github.com/Cray-HPE/hms-bss/pkg/bssTypes"
-	slsCommon "github.com/Cray-HPE/hms-sls/pkg/sls-common"
+	slsCommon "github.com/Cray-HPE/hms-sls/v2/pkg/sls-common"
 	"github.com/Cray-HPE/hms-smd/pkg/sm"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"

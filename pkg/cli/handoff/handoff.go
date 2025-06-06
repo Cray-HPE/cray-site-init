@@ -35,7 +35,7 @@ import (
 
 	"github.com/Cray-HPE/hms-bss/pkg/bssTypes"
 	hmsS3 "github.com/Cray-HPE/hms-s3"
-	slsCommon "github.com/Cray-HPE/hms-sls/pkg/sls-common"
+	slsCommon "github.com/Cray-HPE/hms-sls/v2/pkg/sls-common"
 	"github.com/spf13/cobra"
 
 	"github.com/Cray-HPE/cray-site-init/pkg/bss"

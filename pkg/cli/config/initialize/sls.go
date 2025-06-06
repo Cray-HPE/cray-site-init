@@ -42,7 +42,7 @@ import (
 	"log"
 	"regexp"
 
-	slsCommon "github.com/Cray-HPE/hms-sls/pkg/sls-common"
+	slsCommon "github.com/Cray-HPE/hms-sls/v2/pkg/sls-common"
 )
 
 // ExtractUANs pulls the information needed to assign CAN addresses to the UAN xnames

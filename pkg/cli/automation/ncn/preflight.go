@@ -29,7 +29,7 @@ import (
 	"log"
 	"strings"
 
-	slsCommon "github.com/Cray-HPE/hms-sls/pkg/sls-common"
+	slsCommon "github.com/Cray-HPE/hms-sls/v2/pkg/sls-common"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 

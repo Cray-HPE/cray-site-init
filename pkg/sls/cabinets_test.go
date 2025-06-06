@@ -30,7 +30,7 @@ import (
 	"math/rand"
 	"testing"
 
-	slsCommon "github.com/Cray-HPE/hms-sls/pkg/sls-common"
+	slsCommon "github.com/Cray-HPE/hms-sls/v2/pkg/sls-common"
 	"github.com/stretchr/testify/suite"
 	"gopkg.in/yaml.v2"
 )
