@@ -11,7 +11,6 @@ require (
 	github.com/Cray-HPE/hms-s3 v1.12.0
 	github.com/Cray-HPE/hms-shcd-parser v1.9.0
 	github.com/Cray-HPE/hms-sls v1.29.0
-	github.com/Cray-HPE/hms-sls/v2 v2.8.0
 	github.com/Cray-HPE/hms-smd v1.62.0
 	github.com/Cray-HPE/hms-xname v1.4.0
 	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef
@@ -77,7 +76,7 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
-	github.com/hashicorp/go-retryablehttp v0.7.7
+	github.com/hashicorp/go-retryablehttp v0.7.8 // indirect
 	github.com/hashicorp/go-rootcerts v1.0.2 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect

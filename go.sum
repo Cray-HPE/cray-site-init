@@ -73,8 +73,6 @@ github.com/Cray-HPE/hms-shcd-parser v1.9.0 h1:OskGVvodvyXy2lEYPjzpRjfruWYnC/pGOJ
 github.com/Cray-HPE/hms-shcd-parser v1.9.0/go.mod h1:PNCl00A2oQGUyEYkTiCHj40kUIGj8DJs9rM+vE6E/8E=
 github.com/Cray-HPE/hms-sls v1.29.0 h1:HK4H1ooB86Zau0o6DDLUqnnMvt9H/bVht7BfQep3NcQ=
 github.com/Cray-HPE/hms-sls v1.29.0/go.mod h1:XKGw18eCGS3oJwsYpw8B+QzNUhgHXLnbr2kgNUNUYrg=
-github.com/Cray-HPE/hms-sls/v2 v2.8.0 h1:/su+fDGAsyuptJNpOjiD9xB6+wzR4Zb3IxFXoRPbhGs=
-github.com/Cray-HPE/hms-sls/v2 v2.8.0/go.mod h1:74rMPuwSz5Ljos1PIW7YGuQcC1HibFaZLsYFZe/hxD0=
 github.com/Cray-HPE/hms-smd v1.30.9/go.mod h1:9TFpxIiPnmgBphq0QfFt1BmKiuSZ8VXu5N7A5EJz6L4=
 github.com/Cray-HPE/hms-smd v1.62.0 h1:umcPT6w31hO7nF3v8rIUEQP2G4al47rR8cM+eQasaWM=
 github.com/Cray-HPE/hms-smd v1.62.0/go.mod h1:7J7taeRXmceyLPHdKlLbucb10lqTrJxTUo3RhaTGMhs=
@@ -388,8 +386,8 @@ github.com/hashicorp/go-plugin v1.0.1/go.mod h1:++UyYGoz3o5w9ZzAdZxtQKrWWP+iqPBn
 github.com/hashicorp/go-retryablehttp v0.5.4/go.mod h1:9B5zBasrRhHXnJnui7y6sL7es7NDiJgTc6Er0maI1Xs=
 github.com/hashicorp/go-retryablehttp v0.7.0/go.mod h1:vAew36LZh98gCBJNLH42IQ1ER/9wtLZZ8meHqQvEYWY=
 github.com/hashicorp/go-retryablehttp v0.7.1/go.mod h1:vAew36LZh98gCBJNLH42IQ1ER/9wtLZZ8meHqQvEYWY=
-github.com/hashicorp/go-retryablehttp v0.7.7 h1:C8hUCYzor8PIfXHa4UrZkU4VvK8o9ISHxT2Q8+VepXU=
-github.com/hashicorp/go-retryablehttp v0.7.7/go.mod h1:pkQpWZeYWskR+D1tR2O5OcBFOxfA7DoAO6xtkuQnHTk=
+github.com/hashicorp/go-retryablehttp v0.7.8 h1:ylXZWnqa7Lhqpk0L1P1LzDtGcCR0rPVUrx/c8Unxc48=
+github.com/hashicorp/go-retryablehttp v0.7.8/go.mod h1:rjiScheydd+CxvumBsIrFKlx3iS0jrZ7LvzFGFmuKbw=
 github.com/hashicorp/go-rootcerts v1.0.0/go.mod h1:K6zTfqpRlCUIjkwsN4Z+hiSfzSTQa6eBIzfwKfwNnHU=
 github.com/hashicorp/go-rootcerts v1.0.1/go.mod h1:pqUvnprVnM5bf7AOirdbb01K4ccR319Vf4pU3K5EGc8=
 github.com/hashicorp/go-rootcerts v1.0.2 h1:jzhAVGtqPKbwpyCPELlgNWhE1znq+qwJtW5Oi2viEzc=
