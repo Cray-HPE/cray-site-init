@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2019, 2021] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2019-2022] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -24,6 +24,7 @@ package securestorage
 
 type SecureStorage interface {
 	Store(key string, value interface{}) error
+	StoreWithData(key string, value interface{}, output interface{}) error
 	Lookup(key string, output interface{}) error
 	Delete(key string) error
 	LookupKeys(keyPath string) ([]string, error)
