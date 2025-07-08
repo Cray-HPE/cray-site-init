@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2025 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -29,7 +29,7 @@ import (
 	"os"
 	"testing"
 
-	slsCommon "github.com/Cray-HPE/hms-sls/pkg/sls-common"
+	slsCommon "github.com/Cray-HPE/hms-sls/v2/pkg/sls-common"
 	"github.com/Cray-HPE/hms-xname/xnames"
 	"github.com/Cray-HPE/hms-xname/xnametypes"
 	"github.com/stretchr/testify/suite"
@@ -1585,7 +1585,7 @@ func (suite *ConfigGeneratorTestSuite) TestGatewayNode() {
 		    "TypeString": "Node",
 		    "ExtraProperties": {
 		      "Role": "Application",
-			  "SubRole": "Gateway"
+			  "SubRole": "Gateway4"
 		    }
 		  },
 	*/
@@ -1630,7 +1630,7 @@ func (suite *ConfigGeneratorTestSuite) TestGatewayNode() {
 	)
 	suite.Equal(
 		hardwareExtraProperties.SubRole,
-		"Gateway",
+		"Gateway4",
 	)
 	suite.Equal(
 		hardwareExtraProperties.Aliases,

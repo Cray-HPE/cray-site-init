@@ -27,21 +27,23 @@ package csm
 import (
 	"context"
 	"encoding/json"
-	csi_kubernetes "github.com/Cray-HPE/cray-site-init/pkg/kubernetes"
+	"fmt"
 	"io"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 	"log"
 	"net/http"
 	"net/url"
 	"strings"
+
+	csiKubernetes "github.com/Cray-HPE/cray-site-init/pkg/kubernetes"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
-// BaseAPIURL is the URL for which all API requests should be directed at.
-const BaseAPIURL = "https://api-gw-service-nmn.local"
+// DefaultBaseAPIURL is the URL for which all API requests should be directed at.
+const DefaultBaseAPIURL = "https://api-gw-service-nmn.local"
 
-// DefaultNameSpace is the default namespace to use when interfacing with Kubernetes.
-const DefaultNameSpace = "default"
+// DefaultAdminTokenSecretNamespace is the default namespace to use when interfacing with Kubernetes.
+const DefaultAdminTokenSecretNamespace = "default"
 
 // DefaultAdminTokenSecretName is the default name of the secret containing the OpenID authentication information for CSM APIs.
 const DefaultAdminTokenSecretName = "admin-client-auth"
@@ -50,20 +52,34 @@ type credentials struct {
 	AccessToken string `json:"access_token"`
 }
 
-// GetToken returns an API token for communicating with CSM's various APIs.
-func GetToken(namespace string, secretName string) (token string, err error) {
+var (
+	AdminTokenSecretName      = DefaultAdminTokenSecretName
+	AdminTokenSecretNamespace = DefaultAdminTokenSecretNamespace
+	BaseAPIURL                = DefaultBaseAPIURL
+)
 
-	kc, err := csi_kubernetes.NewKubernetesClientRaw()
+// GetToken returns an API token for communicating with CSM's various APIs.
+func GetToken() (token string, err error) {
+
+	kc, err := csiKubernetes.NewKubernetesClientRaw()
 	if err != nil {
-		return "", err
+		return token, fmt.Errorf(
+			"error creating Kubernetes client: %v",
+			err,
+		)
 	}
 	secret, err := getSecret(
 		kc,
-		namespace,
-		secretName,
+		AdminTokenSecretNamespace,
+		AdminTokenSecretName,
 	)
 	if err != nil {
-		return "", err
+		return token, fmt.Errorf(
+			"error getting OpenID secret (%s/%s) because %v",
+			AdminTokenSecretNamespace,
+			AdminTokenSecretName,
+			err,
+		)
 	}
 	bearer, err := requestBearer(secret)
 	var creds credentials
@@ -95,7 +111,21 @@ func requestBearer(secret map[string][]byte) (responseBody []byte, err error) {
 	clientID := string(secret[clientIDName])
 	encodedClientSecret := string(secret[clientSecretName])
 	grantType := "client_credentials"
-	endpoint := string(secret[endpointName])
+
+	var endpoint string
+	endpoint = string(secret[endpointName])
+
+	if !strings.HasPrefix(
+		endpoint,
+		BaseAPIURL,
+	) || BaseAPIURL != DefaultBaseAPIURL {
+		endpointURL, _ := url.Parse(endpoint)
+		endpoint = fmt.Sprintf(
+			"%s%s",
+			BaseAPIURL,
+			endpointURL.Path,
+		)
+	}
 
 	data := url.Values{
 		"client_id":     {clientID},

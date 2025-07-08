@@ -409,7 +409,7 @@ func TestCreateApplicationNodeConfig(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 	prefixSubroleMapIn = map[string]string{
-		"gateway": "Gateway",
+		"gateway": "Gateway4",
 		"login":   "UAN",
 		"lnet":    "LNETRouter",
 		"vn":      "Visualization",

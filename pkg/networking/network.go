@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2025 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -25,217 +25,27 @@
 package networking
 
 import (
+	"errors"
 	"fmt"
-	"github.com/Cray-HPE/cray-site-init/pkg/sls"
 	"log"
 	"net"
+	"net/netip"
+	"sort"
 	"strings"
 
-	slsCommon "github.com/Cray-HPE/hms-sls/pkg/sls-common"
-	"github.com/pkg/errors"
-
-	"github.com/Cray-HPE/cray-site-init/pkg/cli"
+	"github.com/Cray-HPE/cray-site-init/pkg/csm/hms/sls"
+	slsCommon "github.com/Cray-HPE/hms-sls/v2/pkg/sls-common"
 )
 
-const (
-	// DefaultMTLVlan is the default MTL Bootstrap Vlan - zero (0) represents untagged.
-	DefaultMTLVlan = 1
-	// DefaultHMNString is the Default HMN String (bond0.hmn0)
-	DefaultHMNString = "10.254.0.0/17"
-	// DefaultHMNVlan is the default HMN Bootstrap Vlan
-	DefaultHMNVlan = 4
-	// DefaultHMNMTNString is the default HMN Network for Mountain Cabinets with Grouped Configuration
-	DefaultHMNMTNString = "10.104.0.0/17"
-	// DefaultHMNRVRString is the default HMN Network for River Cabinets with Grouped Configuration
-	DefaultHMNRVRString = "10.107.0.0/17"
-	// DefaultNMNString is the Default NMN String (bond0.nmn0)
-	DefaultNMNString = "10.252.0.0/17"
-	// DefaultNMNVlan is the default NMN Bootstrap Vlan
-	DefaultNMNVlan = 2
-	// DefaultMacVlanVlan is the default MacVlan Bootstrap Vlan
-	DefaultMacVlanVlan = 2
-	// DefaultNMNMTNString is the default NMN Network for Mountain Cabinets with Grouped Configuration
-	DefaultNMNMTNString = "10.100.0.0/17"
-	// DefaultNMNRVRString is the default NMN Network for River Cabinets with Grouped Configuration
-	DefaultNMNRVRString = "10.106.0.0/17"
-	// DefaultNMNLBString is the default LoadBalancer CIDR for the NMN
-	DefaultNMNLBString = "10.92.100.0/24"
-	// DefaultHMNLBString is the default LoadBalancer CIDR for the HMN
-	DefaultHMNLBString = "10.94.100.0/24"
-	// DefaultMacVlanString is the default Macvlan cidr (shares vlan with NMN)
-	DefaultMacVlanString = "10.252.124.0/23"
-	// DefaultHSNString is the Default HSN String
-	DefaultHSNString = "10.253.0.0/16"
-	// DefaultCMNString is the Default CMN String (bond0.cmn0)
-	DefaultCMNString = "10.103.6.0/24"
-	// DefaultCMNVlan is the default CMN Bootstrap Vlan
-	DefaultCMNVlan = 7
-	// DefaultCANString is the Default CAN String (bond0.can0)
-	DefaultCANString = "10.102.11.0/24"
-	// DefaultCANVlan is the default CAN Bootstrap Vlan
-	DefaultCANVlan = 6
-	// DefaultCHNString is the Default CHN String
-	DefaultCHNString = "10.104.7.0/24"
-	// DefaultCHNVlan is the default CHN Bootstrap Vlan
-	DefaultCHNVlan = 5
-	// DefaultMTLString is the Default MTL String (bond0 interface)
-	DefaultMTLString = "10.1.1.0/16"
-)
+// VLANs accounts for all used VLANs during a run of cray-site-init.
+var VLANs = [MaxVLAN]bool{MaxUsableVLAN: true}
 
-/*
-Handy Netmask Cheet Sheet
-/30	4	2	255.255.255.252	1/64
-/29	8	6	255.255.255.248	1/32
-/28	16	14	255.255.255.240	1/16
-/27	32	30	255.255.255.224	1/8
-/26	64	62	255.255.255.192	1/4
-/25	128	126	255.255.255.128	1/2
-/24	256	254	255.255.255.0	1
-/23	512	510	255.255.254.0	2
-/22	1024	1022	255.255.252.0	4
-/21	2048	2046	255.255.248.0	8
-/20	4096	4094	255.255.240.0	16
-/19	8192	8190	255.255.224.0	32
-/18	16384	16382	255.255.192.0	64
-/17	32768	32766	255.255.128.0	128
-/16	65536	65534	255.255.0.0	256
-*/
-
-// DefaultCabinetMask is the default subnet mask for each cabinet
-var DefaultCabinetMask = net.CIDRMask(
-	22,
-	32,
-)
-
-// DefaultNetworkingHardwareMask is the default subnet mask for a subnet that contains all networking hardware
-var DefaultNetworkingHardwareMask = net.CIDRMask(
-	24,
-	32,
-)
-
-// DefaultLoadBalancerNMN is a thing we need
-var DefaultLoadBalancerNMN = IPV4Network{
-	FullName: "Node Management Network LoadBalancers",
-	CIDR:     DefaultNMNLBString,
-	Name:     "NMNLB",
-	MTU:      9000,
-	NetType:  "ethernet",
-	Comment:  "",
-}
-
-// DefaultLoadBalancerHMN is a thing we need
-var DefaultLoadBalancerHMN = IPV4Network{
-	FullName: "Hardware Management Network LoadBalancers",
-	CIDR:     DefaultHMNLBString,
-	Name:     "HMNLB",
-	MTU:      9000,
-	NetType:  "ethernet",
-	Comment:  "",
-}
-
-// DefaultBICAN is the default structure for templating the initial BICAN toggle - CMN
-var DefaultBICAN = IPV4Network{
-	FullName:           "SystemDefaultRoute points the network name of the default route",
-	CIDR:               "0.0.0.0/0",
-	Name:               "BICAN",
-	VlanRange:          []int16{0},
-	MTU:                9000,
-	NetType:            "ethernet",
-	Comment:            "",
-	SystemDefaultRoute: "",
-}
-
-// DefaultHSN is the default structure for templating initial HSN configuration
-var DefaultHSN = IPV4Network{
-	FullName: "High Speed Network",
-	CIDR:     DefaultHSNString,
-	Name:     "HSN",
-	VlanRange: []int16{
-		613,
-		868,
-	},
-	MTU:     9000,
-	NetType: "slingshot10",
-	Comment: "",
-}
-
-// DefaultCMN is the default structure for templating initial CMN configuration
-var DefaultCMN = IPV4Network{
-	FullName:     "Customer Management Network",
-	CIDR:         DefaultCMNString,
-	Name:         "CMN",
-	VlanRange:    []int16{DefaultCMNVlan},
-	MTU:          9000,
-	NetType:      "ethernet",
-	Comment:      "",
-	ParentDevice: "bond0",
-}
-
-// DefaultCAN is the default structure for templating initial CAN configuration
-var DefaultCAN = IPV4Network{
-	FullName:     "Customer Access Network",
-	CIDR:         DefaultCANString,
-	Name:         "CAN",
-	VlanRange:    []int16{DefaultCANVlan},
-	MTU:          9000,
-	NetType:      "ethernet",
-	Comment:      "",
-	ParentDevice: "bond0",
-}
-
-// DefaultCHN is the default structure for templating initial CHN configuration
-var DefaultCHN = IPV4Network{
-	FullName:     "Customer High-Speed Network",
-	CIDR:         DefaultCHNString,
-	Name:         "CHN",
-	VlanRange:    []int16{DefaultCHNVlan},
-	MTU:          9000,
-	NetType:      "ethernet",
-	Comment:      "",
-	ParentDevice: "bond0",
-}
-
-// DefaultHMN is the default structure for templating initial HMN configuration
-var DefaultHMN = IPV4Network{
-	FullName:     "Hardware Management Network",
-	CIDR:         DefaultHMNString,
-	Name:         "HMN",
-	VlanRange:    []int16{DefaultHMNVlan},
-	MTU:          9000,
-	NetType:      "ethernet",
-	Comment:      "",
-	ParentDevice: "bond0",
-}
-
-// DefaultNMN is the default structure for templating initial NMN configuration
-var DefaultNMN = IPV4Network{
-	FullName:     "Node Management Network",
-	CIDR:         DefaultNMNString,
-	Name:         "NMN",
-	VlanRange:    []int16{DefaultNMNVlan},
-	MTU:          9000,
-	NetType:      "ethernet",
-	Comment:      "",
-	ParentDevice: "bond0",
-}
-
-// DefaultMTL is the default structure for templating initial MTL configuration
-var DefaultMTL = IPV4Network{
-	FullName:     "Provisioning Network (untagged)",
-	CIDR:         DefaultMTLString,
-	Name:         "MTL",
-	VlanRange:    []int16{DefaultMTLVlan},
-	MTU:          9000,
-	NetType:      "ethernet",
-	Comment:      "This network is only valid for the NCNs",
-	ParentDevice: "bond0",
-}
-
-// IPV4Network is a type for managing IPv4 Networks
-type IPV4Network struct {
+// IPNetwork is a type for managing IP Networks.
+type IPNetwork struct {
 	FullName           string                `yaml:"full_name"`
-	CIDR               string                `yaml:"cidr"`
-	Subnets            []*IPV4Subnet         `yaml:"subnets"`
+	CIDR4              string                `yaml:"cidr4"`
+	CIDR6              string                `yaml:"cidr6,omitempty"`
+	Subnets            []*slsCommon.IPSubnet `yaml:"subnets"`
 	Name               string                `yaml:"name"`
 	VlanRange          []int16               `yaml:"vlan_range"`
 	MTU                int16                 `yaml:"mtu"`
@@ -245,79 +55,280 @@ type IPV4Network struct {
 	MyASN              int                   `yaml:"my-asn"`
 	SystemDefaultRoute string                `yaml:"system_default_route"`
 	ParentDevice       string                `yaml:"parent-device"`
+	PITServer          string                `yaml:"pit-server"`
+	DNSServer          string                `yaml:"dns-server"`
 }
 
-// IPV4Subnet is a type for managing IPv4 Subnets
-type IPV4Subnet struct {
-	FullName         string          `yaml:"full_name" form:"full_name" mapstructure:"full_name"`
-	CIDR             net.IPNet       `yaml:"cidr"`
-	IPReservations   []IPReservation `yaml:"ip_reservations"`
-	Name             string          `yaml:"name" form:"name" mapstructure:"name"`
-	NetName          string          `yaml:"net-name"`
-	VlanID           int16           `yaml:"vlan_id" form:"vlan_id" mapstructure:"vlan_id"`
-	Comment          string          `yaml:"comment"`
-	Gateway          net.IP          `yaml:"gateway"`
-	PITServer        net.IP          `yaml:"_"`
-	DNSServer        net.IP          `yaml:"dns_server"`
-	DHCPStart        net.IP          `yaml:"iprange-start"`
-	DHCPEnd          net.IP          `yaml:"iprange-end"`
-	ReservationStart net.IP          `yaml:"reservation-start"`
-	ReservationEnd   net.IP          `yaml:"reservation-end"`
-	MetalLBPoolName  string          `yaml:"metallb-pool-name"`
-	ParentDevice     string          `yaml:"parent-device"`
-	InterfaceName    string          `yaml:"interface-name"`
+type IPNetworks []*IPNetwork
+
+type NetworkMap map[string]*IPNetwork
+
+func (s IPNetworks) Len() int {
+	return len(s)
 }
 
-// IPReservation is a type for managing IP Reservations
-type IPReservation struct {
-	IPAddress net.IP   `yaml:"ip_address"`
-	Name      string   `yaml:"name"`
-	Comment   string   `yaml:"comment"`
-	Aliases   []string `yaml:"aliases"`
+func (s IPNetworks) Less(i, j int) bool {
+	return s[i].FullName < s[j].FullName
 }
 
-// ApplySupernetHack applys a dirty hack.
-func (iNet *IPV4Network) ApplySupernetHack() {
-	// Replace the gateway and netmask on the to better support the 1.3 network switch configuration
-	// *** This is a HACK ***
-	_, superNet, err := net.ParseCIDR(iNet.CIDR)
-	if err != nil {
-		log.Fatal(
-			"Couldn't parse the CIDR for ",
-			iNet.Name,
+func (s IPNetworks) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
+// IPRange defines a pair of IPs, over a range.
+type IPRange struct {
+	start netip.Addr
+	end   netip.Addr
+}
+
+// PinnedReservation is a simple struct to work with our abomination of a PinnedMetalLBReservations.
+type PinnedReservation struct {
+	IPByte  uint8
+	Aliases []string
+}
+
+// IPNets is a helper type for sorting net.IPNets.
+type IPNets []netip.Prefix
+
+func (s IPNets) Len() int {
+	return len(s)
+}
+
+func (s IPNets) Less(i, j int) bool {
+	return s[i].Addr().Less(s[j].Addr())
+}
+
+func (s IPNets) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
+/*
+IsVLANAllocated takes an int16 and tests if a given VLAN is already allocated and managed.
+If the VLAN is above our MaxUsableVLAN or below the MinVLAN an error is returned.
+*/
+func IsVLANAllocated(vlan uint16) (bool, error) {
+	if vlan > MaxUsableVLAN || vlan < MinVLAN {
+		return true, errors.New("VLAN out of range")
+	}
+	return VLANs[vlan], nil
+}
+
+// AllocateVLAN takes an uint16 and manages a single VLAN.
+func AllocateVLAN(vlan uint16) error {
+	allocated, err := IsVLANAllocated(vlan)
+	if allocated {
+		if err != nil {
+			return err
+		}
+		return errors.New("VLAN already used")
+	}
+	VLANs[vlan] = true
+	return nil
+}
+
+// FreeVLAN frees a given VLAN by setting its allocation status to "false".
+func FreeVLAN(vlan uint16) {
+	VLANs[vlan] = false
+}
+
+// freeVLANRange is strictly for expediting tests. This will free a chunk of VLANs
+func freeVLANRange(startVLAN uint16, endVLAN uint16) (err error) {
+	if startVLAN > endVLAN {
+		return fmt.Errorf(
+			"VLAN range is bad - start is larger than end (%d !> %d)",
+			startVLAN,
+			endVLAN,
 		)
 	}
-	for _, subnetName := range []string{
-		"bootstrap_dhcp",
-		"network_hardware",
-		"can_metallb_static_pool",
-		"can_metallb_address_pool",
-	} {
-		tempSubnet, err := iNet.LookUpSubnet(subnetName)
-		if err == nil {
-			// Replace the standard netmask with the supernet netmask
-			// Replace the standard gateway with the supernet gateway
-			// ** HACK ** We're doing this here to bypass all sanity checks
-			// This **WILL** cause an overlap of broadcast domains, but is required
-			// for reducing switch configuration changes from 1.3 to 1.4
-			tempSubnet.Gateway = Add(
-				superNet.IP,
-				1,
+	for vlan := startVLAN; vlan <= endVLAN; vlan++ {
+		FreeVLAN(vlan)
+	}
+	return err
+}
+
+// AllocateVlanRange takes two int16 and manages a range of VLANs.
+func AllocateVlanRange(startVLAN int16, endVLAN int16) error {
+	if startVLAN > endVLAN {
+		return errors.New("VLAN range is bad - start is larger than end")
+	}
+	// Pre-test all VLANs for previous allocation
+	hasAllocationErrors := false
+	var allocatedVlans []uint16
+	for vlan := uint16(startVLAN); vlan <= uint16(endVLAN); vlan++ {
+		allocated, err := IsVLANAllocated(vlan)
+		if err != nil {
+			return err
+		}
+		if allocated {
+			hasAllocationErrors = true
+			allocatedVlans = append(
+				allocatedVlans,
+				vlan,
 			)
-			tempSubnet.CIDR.Mask = superNet.Mask
+		}
+	}
+	if hasAllocationErrors {
+		return fmt.Errorf(
+			"VLANs already used: %v",
+			allocatedVlans,
+		)
+	}
+
+	for vlan := uint16(startVLAN); vlan <= uint16(endVLAN); vlan++ {
+		err := AllocateVLAN(vlan)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+/*
+SupernetSubnets is a list of subnets that should report the real subnet mask of their parent network (instead of their
+own SLS subnet mask).
+
+See "ApplySupernetHack"
+*/
+var SupernetSubnets = []string{
+	"bootstrap_dhcp",
+	"network_hardware",
+	"can_metallb_static_pool",
+	"can_metallb_address_pool",
+}
+
+/*
+ApplySupernetHack
+The IP allocation code in this application derives subnets within each network, these subnets prevent overlapping IP
+reservations (e.g. network_hardware will use a segment of IPs before servers, and servers use a different segment).
+
+Example:
+
+The metal network is 10.1.0.0/16, this app will divide it into /24 chunks for each group of hardware:
+
+  - network switches get 10.1.0.0/24
+  - NCNs get 10.1.1.0/24
+
+In the end, these /24 subnets do not exist in the network configuration.
+
+This is where the "supernet" comes in. This function goes through each subnet's datastruct and updates the CIDR
+to match that of the parent network.
+
+Example:
+
+- network switches were allocated IPs in 10.1.0.0/24 but their CIDR now shows 10.1.0.0/16
+- NCNs were allocated IPs in 10.1.1.0/24 but their CIDR now shows 10.1.1.0/16
+
+This allows us to reflect the real network that those devices live in as well as their starting address,.
+*/
+func (network *IPNetwork) ApplySupernetHack() {
+	net4, err := netip.ParsePrefix(network.CIDR4)
+	if err != nil && network.CIDR4 != "" {
+		log.Fatalf(
+			"couldn't parse the IPv4 CIDR for %s %s because %v",
+			network.Name,
+			network.CIDR4,
+			err,
+		)
+	}
+	gw4, err := network.FindGatewayIP(net4)
+	if err != nil && net4.IsValid() {
+		log.Fatalf(
+			"couldn't find the IPv4 gateway for %s %s because %v",
+			network.Name,
+			network.CIDR4,
+			err,
+		)
+	}
+
+	net6, err := netip.ParsePrefix(network.CIDR6)
+	if err != nil && network.CIDR6 != "" {
+		log.Fatalf(
+			"couldn't parse the IPv6 CIDR for %s %s because %v",
+			network.Name,
+			network.CIDR6,
+			err,
+		)
+	}
+	gw6, err := network.FindGatewayIP(net6)
+	if err != nil && net6.IsValid() {
+		log.Fatalf(
+			"couldn't find the IPv6 gateway for %s %s because %v",
+			network.Name,
+			network.CIDR6,
+			err,
+		)
+	}
+	for _, subnetName := range SupernetSubnets {
+
+		subnet, err := network.LookUpSubnet(subnetName)
+		if err != nil {
+			continue
+		}
+
+		if net4.IsValid() && gw4.IsValid() {
+			subnet.Gateway = gw4.AsSlice()
+			prefix4, err := netip.ParsePrefix(subnet.CIDR)
+			if err != nil {
+				if !net4.IsValid() {
+					log.Fatalf(
+						"Failed to parse the subnet prefix for %s because %s",
+						subnetName,
+						err,
+					)
+				}
+			}
+			subnet.CIDR = netip.PrefixFrom(
+				prefix4.Addr(),
+				net4.Bits(),
+			).String()
+		}
+
+		// Since IPv6 networks are optional, we'll only set the override if they exist (without failing otherwise).
+		if net6.IsValid() && gw6.IsValid() {
+			subnet.Gateway6 = gw6.AsSlice()
+			prefix6, err := netip.ParsePrefix(subnet.CIDR6)
+			if err == nil {
+				if !net6.IsValid() {
+					log.Fatalf(
+						"subnet [%s] had a IPv6 CIDR set [%s] but its parent network [%s] did not!",
+						subnetName,
+						subnet.CIDR6,
+						network.Name,
+					)
+				}
+				subnet.CIDR6 = netip.PrefixFrom(
+					prefix6.Addr(),
+					net6.Bits(),
+				).String()
+			}
 		}
 	}
 }
 
 // GenSubnets subdivides a network into a set of subnets
-func (iNet *IPV4Network) GenSubnets(
-	cabinetDetails []sls.CabinetGroupDetail, mask net.IPMask, cabinetFilter sls.CabinetFilterFunc,
+func (network *IPNetwork) GenSubnets(
+	cabinetDetails []sls.CabinetGroupDetail, cidr net.IPMask, cabinetFilter sls.CabinetFilterFunc,
 ) error {
-	// log.Printf("Generating Subnets for %s\ncabinetType: %v,\n", iNet.Name, cabinetType)
-	_, myNet, _ := net.ParseCIDR(iNet.CIDR)
-	mySubnets := iNet.AllocatedSubnets()
-	myIPv4Subnets := iNet.Subnets
-	var minVlan, maxVlan int16 = 4095, 0
+	networkPrefix, err := netip.ParsePrefix(network.CIDR4)
+	if err != nil {
+		return err
+	}
+	subnets := network.AllocatedIPv4Subnets()
+	networkSubnets := network.Subnets
+	var minVlan, maxVlan int16 = MaxUsableVLAN, MinVLAN
+
+	// IPv6 subnetting.
+	var prefix6 netip.Prefix
+	if network.CIDR6 != "" {
+		prefix6, err = netip.ParsePrefix(network.CIDR6)
+		if err != nil {
+			log.Printf(
+				"Network %s had an unparseable IPv6 CIDR set: %s",
+				network.Name,
+				err,
+			)
+		}
+	}
 
 	for _, cabinetDetail := range cabinetDetails {
 		for j, i := range cabinetDetail.CabinetDetails {
@@ -325,52 +336,69 @@ func (iNet *IPV4Network) GenSubnets(
 				cabinetDetail,
 				i,
 			) {
-				newSubnet, err := Free(
-					*myNet,
-					mask,
-					mySubnets,
-				)
-				mySubnets = append(
-					mySubnets,
-					newSubnet,
+				newSubnet, err := free(
+					networkPrefix,
+					cidr,
+					subnets,
 				)
 				if err != nil {
-					log.Fatalf(
-						"Gensubnets couldn't add subnet because %v \n",
+					return fmt.Errorf(
+						"couldn't add subnet because %v",
 						err,
 					)
 				}
+				subnets = append(
+					subnets,
+					newSubnet,
+				)
 				var tmpVlanID int16
 				if strings.HasPrefix(
-					iNet.Name,
+					strings.ToUpper(network.Name),
 					"NMN",
 				) {
 					tmpVlanID = i.NMNVlanID
 				}
 				if strings.HasPrefix(
-					iNet.Name,
+					strings.ToUpper(network.Name),
 					"HMN",
 				) {
 					tmpVlanID = i.HMNVlanID
 				}
 				if tmpVlanID == 0 {
-					tmpVlanID = int16(j) + iNet.VlanRange[0]
+					tmpVlanID = int16(j) + network.VlanRange[0]
 				}
-				tempSubnet := IPV4Subnet{
-					CIDR: newSubnet,
+				tempSubnet := slsCommon.IPSubnet{
+					CIDR: newSubnet.String(),
 					Name: fmt.Sprintf(
 						"cabinet_%d",
 						i.ID,
 					),
-					Gateway: Add(
-						newSubnet.IP,
-						1,
-					),
-					VlanID: tmpVlanID,
+					Gateway: newSubnet.Addr().Next().AsSlice(),
+					VlanID:  tmpVlanID,
 				}
-				tempSubnet.UpdateDHCPRange(false)
-				myIPv4Subnets = append(
-					myIPv4Subnets,
+
+				err = UpdateDHCPRange(
+					&tempSubnet,
+					false,
+				)
+				if err != nil {
+					err = fmt.Errorf(
+						"couldn't update DHCP range for %s because %v",
+						tempSubnet.Name,
+						err,
+					)
+					return err
+				}
+
+				// IPv6 subnetting.
+				if prefix6.IsValid() {
+					tempSubnet.CIDR6 = prefix6.String()
+					tempSubnet.Gateway6 = prefix6.Addr().Next().AsSlice()
+				}
+
+				// Add the new subnet and move the VLANs along.
+				networkSubnets = append(
+					networkSubnets,
 					&tempSubnet,
 				)
 				if tmpVlanID < minVlan {
@@ -382,170 +410,438 @@ func (iNet *IPV4Network) GenSubnets(
 			}
 		}
 	}
-	iNet.VlanRange[0] = minVlan
-	iNet.VlanRange[1] = maxVlan
-	iNet.Subnets = myIPv4Subnets
-	return nil
+	network.VlanRange[0] = minVlan
+	network.VlanRange[1] = maxVlan
+	network.Subnets = networkSubnets
+	return err
 }
 
-// AllocatedSubnets returns a list of the allocated subnets
-func (iNet IPV4Network) AllocatedSubnets() []net.IPNet {
-	var myNets []net.IPNet
-	for _, v := range iNet.Subnets {
-		myNets = append(
-			myNets,
-			v.CIDR,
+// AllocatedIPv4Subnets returns a list of the allocated IPv4 CIDRs.
+func (network *IPNetwork) AllocatedIPv4Subnets() (subnets []netip.Prefix) {
+	for _, v := range network.Subnets {
+		prefix, err := netip.ParsePrefix(v.CIDR)
+		if err != nil {
+			log.Fatalf(
+				"Failed to parse CIDR for %s because %v \n",
+				v.Name,
+				err,
+			)
+		}
+		subnets = append(
+			subnets,
+			prefix,
 		)
 	}
-	return myNets
+	return subnets
 }
 
-// AllocatedVlans returns a list of all allocated vlan ids
-func (iNet IPV4Network) AllocatedVlans() []int16 {
-	var myVlans []int16
-	for _, v := range iNet.Subnets {
+// AllocatedIPv6Subnets returns a list of the allocated IPv6 CIDRs.
+func (network *IPNetwork) AllocatedIPv6Subnets() (subnets []netip.Prefix) {
+	for _, v := range network.Subnets {
+		if v.CIDR6 == "" {
+			continue
+		}
+		prefix, err := netip.ParsePrefix(v.CIDR6)
+		if err != nil {
+			log.Fatalf(
+				"Failed to parse CIDR6 for %s because %v",
+				v.Name,
+				err,
+			)
+		}
+		subnets = append(
+			subnets,
+			prefix,
+		)
+	}
+	return subnets
+}
+
+// AllocatedVLANs returns a list of all allocated vlan ids.
+func (network *IPNetwork) AllocatedVLANs() (vlans []int16) {
+	for _, v := range network.Subnets {
 		if v.VlanID > 0 {
-			myVlans = append(
-				myVlans,
+			vlans = append(
+				vlans,
 				v.VlanID,
 			)
 		}
 	}
-	return myVlans
+	return vlans
 }
 
-// AddSubnetbyCIDR allocates a new subnet
-func (iNet *IPV4Network) AddSubnetbyCIDR(
-	desiredNet net.IPNet, name string, vlanID int16,
+/*
+CreateSubnetByCIDR returns an SLS subnet based on the given CIDRs.
+*/
+func (network *IPNetwork) CreateSubnetByCIDR(
+	subnetPrefix netip.Prefix, name string, vlanID int16, andAppend bool,
 ) (
-	*IPV4Subnet, error,
+	subnet *slsCommon.IPSubnet, err error,
 ) {
-	_, myNet, _ := net.ParseCIDR(iNet.CIDR)
-	if Contains(
-		*myNet,
-		desiredNet,
-	) {
-		iNet.Subnets = append(
-			iNet.Subnets,
-			&IPV4Subnet{
-				CIDR: desiredNet,
-				Name: name,
-				Gateway: Add(
-					desiredNet.IP,
-					1,
-				),
-				VlanID: vlanID,
-			},
-		)
-		return iNet.Subnets[len(iNet.Subnets)-1], nil
+	if !subnetPrefix.IsValid() {
+		err = fmt.Errorf("invalid subnet prefix given to CreateSubnetByCIDR")
+		return subnet, err
 	}
-	return &IPV4Subnet{}, fmt.Errorf(
-		"subnet %v is not part of %v",
-		desiredNet.String(),
-		myNet.String(),
-	)
-}
-
-// AddSubnet allocates a new subnet
-func (iNet *IPV4Network) AddSubnet(
-	mask net.IPMask, name string, vlanID int16,
-) (
-	*IPV4Subnet, error,
-) {
-	var tempSubnet IPV4Subnet
-	_, myNet, _ := net.ParseCIDR(iNet.CIDR)
-	newSubnet, err := Free(
-		*myNet,
-		mask,
-		iNet.AllocatedSubnets(),
-	)
+	networkPrefix, err := netip.ParsePrefix(network.CIDR4)
 	if err != nil {
-		return &tempSubnet, err
+		return subnet, err
 	}
-	iNet.Subnets = append(
-		iNet.Subnets,
-		&IPV4Subnet{
-			CIDR:    newSubnet,
-			Name:    name,
-			NetName: iNet.Name,
-			Gateway: Add(
-				newSubnet.IP,
-				1,
-			),
+	if ContainsSubnet(
+		networkPrefix,
+		subnetPrefix,
+	) {
+		var newSubnet = slsCommon.IPSubnet{
+			Name:   name,
 			VlanID: vlanID,
-		},
-	)
-	return iNet.Subnets[len(iNet.Subnets)-1], nil
+		}
+		subnet = &newSubnet
+		network.SetSubnetIP(
+			subnet,
+			subnetPrefix,
+		)
+	} else {
+		err = fmt.Errorf(
+			"subnet %v is not part of %v",
+			subnetPrefix.String(),
+			networkPrefix.String(),
+		)
+		return subnet, err
+	}
+	if andAppend {
+		return network.AppendSubnet(subnet), err
+	}
+	return subnet, err
 }
 
-// AddBiggestSubnet allocates the largest subnet possible within the requested network and mask
-func (iNet *IPV4Network) AddBiggestSubnet(
-	mask net.IPMask, name string, vlanID int16,
+/*
+SetSubnetIP sets the CIDR and Gateway in a given subnet object.
+Works for IPv4 and IPv6.
+*/
+func (network *IPNetwork) SetSubnetIP(subnet *slsCommon.IPSubnet, prefix netip.Prefix) {
+	if !prefix.IsValid() {
+		return
+	}
+	gateway := FindGatewayIP(prefix)
+	if prefix.Addr().Is4() {
+		subnet.CIDR = prefix.String()
+		subnet.Gateway = gateway.AsSlice()
+	} else if prefix.Addr().Is6() {
+		subnet.CIDR6 = prefix.String()
+		subnet.Gateway6 = gateway.AsSlice()
+	}
+}
+
+/*
+CreateSubnetByMask
+Creates a viable SLS subnet based on the given net.IPMasks that fits within the network and appends that subnet to the
+network's list of subnets. The created subnet is returned.
+*/
+func (network *IPNetwork) CreateSubnetByMask(
+	v4mask net.IPMask, v6mask net.IPMask, name string, vlanID int16,
 ) (
-	*IPV4Subnet, error,
+	subnet *slsCommon.IPSubnet, err error,
 ) {
-	// Try for the largest available and go smaller if needed
-	maskSize, _ := mask.Size() // the second output of this function is 32 for ipv4 or 64 for ipv6
-	for i := maskSize; i < 29; i++ {
-		// log.Printf("Trying to find room for a /%d mask in %v \n", i, iNet.Name)
-		newSubnet, err := iNet.AddSubnet(
-			net.CIDRMask(
-				i,
-				32,
-			),
-			name,
-			vlanID,
+	var newSubnet = slsCommon.IPSubnet{
+		FullName: network.Name,
+		Name:     name,
+		VlanID:   vlanID,
+	}
+	subnet = &newSubnet
+	if v4mask != nil {
+		var prefix4 netip.Prefix
+		prefix4, err = netip.ParsePrefix(network.CIDR4)
+		if err != nil {
+			return subnet, fmt.Errorf(
+				"couldn't parse %s CIDR %s because %v",
+				network.Name,
+				network.CIDR4,
+				err,
+			)
+		}
+		var freeIPv4Subnet netip.Prefix
+		freeIPv4Subnet, err = free(
+			prefix4,
+			v4mask,
+			network.AllocatedIPv4Subnets(),
 		)
 		if err == nil {
-			return newSubnet, nil
+			network.SetSubnetIP(
+				subnet,
+				freeIPv4Subnet,
+			)
 		}
 	}
-	return &IPV4Subnet{}, fmt.Errorf(
-		"no room for %v subnet within %v (tried from /%d to /29)",
-		name,
-		iNet.Name,
+
+	if v6mask != nil {
+		var prefix6 netip.Prefix
+		prefix6, err = netip.ParsePrefix(network.CIDR6)
+		if err != nil {
+			return subnet, fmt.Errorf(
+				"couldn't parse %s CIDR6 %s because %v",
+				network.Name,
+				network.CIDR6,
+				err,
+			)
+		}
+		var freeIPv6Subnet netip.Prefix
+		freeIPv6Subnet, err = free(
+			prefix6,
+			v6mask,
+			network.AllocatedIPv6Subnets(),
+		)
+		if err == nil {
+			network.SetSubnetIP(
+				subnet,
+				freeIPv6Subnet,
+			)
+		}
+	}
+	return network.AppendSubnet(subnet), err
+}
+
+func (network *IPNetwork) AppendSubnet(subnet *slsCommon.IPSubnet) *slsCommon.IPSubnet {
+	network.Subnets = append(
+		network.Subnets,
+		subnet,
+	)
+	return network.Subnets[len(network.Subnets)-1]
+}
+
+// FindBiggestIPv4Subnet finds the largest, free IPv4 subnet on the network that for the given mask.
+func (network *IPNetwork) FindBiggestIPv4Subnet(
+	mask net.IPMask,
+) (
+	prefix netip.Prefix, err error,
+) {
+	if network.CIDR4 == "" {
+		return prefix, fmt.Errorf(
+			"no IPv4 definition found for %v",
+			network.Name,
+		)
+	}
+	if mask == nil {
+		return
+	}
+	maskSize, _ := mask.Size()
+	networkPrefix, err := netip.ParsePrefix(network.CIDR4)
+	if err != nil {
+		return prefix, fmt.Errorf(
+			"couldn't parse %s CIDR [%s] because %v",
+			network.Name,
+			network.CIDR4,
+			err,
+		)
+	}
+	allocatedSubnets := network.AllocatedIPv4Subnets()
+	for i := maskSize; i < SmallestIPv4Block; i++ {
+		newMask := net.CIDRMask(
+			i,
+			IPv4Size,
+		)
+		prefix, err = free(
+			networkPrefix,
+			newMask,
+			allocatedSubnets,
+		)
+		if err == nil {
+			return prefix, err
+		}
+	}
+	return prefix, fmt.Errorf(
+		"no room for %v subnet within %v (tried from /%d to /%d)",
+		network.Name,
+		network.CIDR4,
 		maskSize,
+		SmallestIPv4Block,
+	)
+}
+
+// FindBiggestIPv6Subnet finds the largest, free IPv6 subnet on the network that for the given mask.
+func (network *IPNetwork) FindBiggestIPv6Subnet(
+	mask net.IPMask,
+) (
+	prefix netip.Prefix, err error,
+) {
+	if network.CIDR6 == "" {
+		return prefix, fmt.Errorf(
+			"no IPv6 definition found for %v",
+			network.Name,
+		)
+	}
+	if mask == nil {
+		return
+	}
+	maskSize, _ := mask.Size()
+	networkPrefix, err := netip.ParsePrefix(network.CIDR6)
+	if err != nil {
+		return prefix, fmt.Errorf(
+			"couldn't parse %s CIDR6 [%s] because %v",
+			network.Name,
+			network.CIDR6,
+			err,
+		)
+	}
+	allocatedSubnets := network.AllocatedIPv6Subnets()
+	for i := maskSize; i < SmallestIPv6Block; i++ {
+		newMask := net.CIDRMask(
+			i,
+			IPv6Size,
+		)
+		prefix, err = free(
+			networkPrefix,
+			newMask,
+			allocatedSubnets,
+		)
+		if err == nil {
+			return prefix, err
+		}
+	}
+	return prefix, fmt.Errorf(
+		"no room for %v subnet within %v (tried from /%d to /%d)",
+		network.Name,
+		network.CIDR6,
+		maskSize,
+		SmallestIPv6Block,
 	)
 }
 
 // LookUpSubnet returns a subnet by name
-func (iNet *IPV4Network) LookUpSubnet(name string) (
-	*IPV4Subnet, error,
+func (network *IPNetwork) LookUpSubnet(name string) (
+	subnet *slsCommon.IPSubnet, err error,
 ) {
-	var found []*IPV4Subnet
-	if len(iNet.Subnets) == 0 {
-		return &IPV4Subnet{}, fmt.Errorf(
-			"subnet not found \"%v\"",
+	if len(network.Subnets) == 0 {
+		return subnet, fmt.Errorf(
+			"no subnets defined for %s - failed to lookup %s",
+			network.Name,
 			name,
 		)
 	}
-	for _, v := range iNet.Subnets {
+	for _, v := range network.Subnets {
 		if v.Name == name {
-			found = append(
-				found,
-				v,
-			)
+			subnet = v
+			return subnet, err
 		}
 	}
-	if len(found) == 1 {
-		return found[0], nil
-	}
-	if len(found) > 1 {
-		// log.Printf("Found %v subnets named %v in the %v network instead of just one \n", len(found), name, iNet.Name)
-		return found[0], fmt.Errorf(
-			"found %v subnets instead of just one",
-			len(found),
-		)
-	}
-	return &IPV4Subnet{}, fmt.Errorf(
+	return subnet, fmt.Errorf(
 		"subnet not found \"%v\"",
 		name,
 	)
 }
 
-// SubnetbyName Return a copy of the subnet by name or a blank subnet if it doesn't exists
-func (iNet IPV4Network) SubnetbyName(name string) IPV4Subnet {
-	for _, v := range iNet.Subnets {
+// SubnetWithin returns the smallest subnet than can contain (size) hosts
+func (network *IPNetwork) SubnetWithin(desiredHosts uint64) (smallestSubnet4 netip.Prefix, smallestSubnet6 netip.Prefix, errors []error) {
+	prefix4, err := netip.ParsePrefix(network.CIDR4)
+	if err == nil {
+		smallestSubnet4, err = smallestIPv4SubnetWithin(
+			prefix4,
+			desiredHosts,
+		)
+		if err != nil {
+			errors = append(
+				errors,
+				err,
+			)
+		}
+	}
+	prefix6, err := netip.ParsePrefix(network.CIDR6)
+	if err == nil {
+		smallestSubnet6, err = smallestIPv6SubnetWithin(
+			prefix6,
+			desiredHosts,
+		)
+		if err != nil {
+			errors = append(
+				errors,
+				err,
+			)
+		}
+	}
+	return smallestSubnet4, smallestSubnet6, errors
+}
+
+func smallestIPv4SubnetWithin(prefix netip.Prefix, desiredHosts uint64) (smallestSubnet netip.Prefix, err error) {
+	if !prefix.IsValid() {
+		err = fmt.Errorf(
+			"invalid network: %s",
+			prefix.String(),
+		)
+		return prefix, err
+	}
+	if prefix.IsSingleIP() {
+		err = fmt.Errorf(
+			"network [%s] is of only one IP address with 0 available",
+			prefix.String(),
+		)
+		return prefix, err
+	}
+	if !prefix.Addr().Is4() {
+		err = fmt.Errorf(
+			"network [%s] is not IPv4 address",
+			prefix.String(),
+		)
+		return prefix, err
+	}
+	var smallestPrefix int
+	for i := prefix.Bits(); i < int(IPv4Size); i++ {
+		smallestSubnet = netip.PrefixFrom(
+			prefix.Addr(),
+			i,
+		)
+		usableHosts, _ := UsableHostAddresses(smallestSubnet)
+		if usableHosts > desiredHosts {
+			smallestPrefix = i
+		}
+	}
+	smallestSubnet = netip.PrefixFrom(
+		prefix.Addr(),
+		smallestPrefix,
+	)
+	return smallestSubnet, err
+}
+
+func smallestIPv6SubnetWithin(prefix netip.Prefix, desiredHosts uint64) (smallestSubnet netip.Prefix, err error) {
+	if !prefix.IsValid() {
+		err = fmt.Errorf(
+			"invalid network: %s",
+			prefix.String(),
+		)
+		return prefix, err
+	}
+	if prefix.IsSingleIP() {
+		err = fmt.Errorf(
+			"network [%s] is of only one IP address with 0 available",
+			prefix.String(),
+		)
+		return prefix, err
+	}
+	if !prefix.Addr().Is6() {
+		err = fmt.Errorf(
+			"network [%s] is not IPv6 address",
+			prefix.String(),
+		)
+		return prefix, err
+	}
+	var smallestPrefix int
+	for i := prefix.Bits(); i < int(IPv6Size); i++ {
+		smallestSubnet = netip.PrefixFrom(
+			prefix.Addr(),
+			i,
+		)
+		usableHosts, _ := UsableHostAddresses(smallestSubnet)
+		if usableHosts > desiredHosts {
+			smallestPrefix = i
+		}
+	}
+	smallestSubnet = netip.PrefixFrom(
+		prefix.Addr(),
+		smallestPrefix,
+	)
+	return smallestSubnet, err
+}
+
+// SubnetByName Return a copy of the subnet by name or a blank subnet if it doesn't exist.
+func (network *IPNetwork) SubnetByName(name string) slsCommon.IPSubnet {
+	for _, v := range network.Subnets {
 		if strings.EqualFold(
 			v.Name,
 			name,
@@ -553,344 +849,492 @@ func (iNet IPV4Network) SubnetbyName(name string) IPV4Subnet {
 			return *v
 		}
 	}
-	return IPV4Subnet{}
+	return slsCommon.IPSubnet{}
 }
 
 // ReserveEdgeSwitchIPs reserves (n) IP addresses for edge switches
-func (iSubnet *IPV4Subnet) ReserveEdgeSwitchIPs(edges []string) {
+func ReserveEdgeSwitchIPs(subnet *slsCommon.IPSubnet, edges []string) (err error) {
 	for i := 0; i < len(edges); i++ {
 		name := fmt.Sprintf(
 			"chn-switch-%01d",
 			i+1,
 		)
-		iSubnet.AddReservation(
+
+		_, err := AddReservation(
+			subnet,
 			name,
 			edges[i],
 		)
+		if err != nil {
+			return err
+		}
 	}
+	return err
 }
 
 // ReserveNetMgmtIPs reserves (n) IP addresses for management networking equipment
-func (iSubnet *IPV4Subnet) ReserveNetMgmtIPs(
-	spines []string, leafs []string, leafbmcs []string, cdus []string,
-) {
+func ReserveNetMgmtIPs(
+	subnet *slsCommon.IPSubnet, spines []string, leafs []string, leafbmcs []string, cdus []string,
+) (err error) {
 	for i := 0; i < len(spines); i++ {
 		name := fmt.Sprintf(
 			"sw-spine-%03d",
 			i+1,
 		)
-		iSubnet.AddReservation(
+		_, err := AddReservation(
+			subnet,
 			name,
 			spines[i],
 		)
+		if err != nil {
+			return err
+		}
 	}
 	for i := 0; i < len(leafs); i++ {
 		name := fmt.Sprintf(
 			"sw-leaf-%03d",
 			i+1,
 		)
-		iSubnet.AddReservation(
+		_, err := AddReservation(
+			subnet,
 			name,
 			leafs[i],
 		)
+		if err != nil {
+			return err
+		}
 	}
 	for i := 0; i < len(leafbmcs); i++ {
 		name := fmt.Sprintf(
 			"sw-leaf-bmc-%03d",
 			i+1,
 		)
-		iSubnet.AddReservation(
+		_, err := AddReservation(
+			subnet,
 			name,
 			leafbmcs[i],
 		)
+		if err != nil {
+			return err
+		}
 	}
 	for i := 0; i < len(cdus); i++ {
 		name := fmt.Sprintf(
 			"sw-cdu-%03d",
 			i+1,
 		)
-		iSubnet.AddReservation(
+		_, err := AddReservation(
+			subnet,
 			name,
 			cdus[i],
 		)
-	}
-}
-
-// ReservedIPs returns a list of IPs already reserved within the subnet
-func (iSubnet *IPV4Subnet) ReservedIPs() []net.IP {
-	var addresses []net.IP
-	for _, v := range iSubnet.IPReservations {
-		addresses = append(
-			addresses,
-			v.IPAddress,
-		)
-	}
-	return addresses
-}
-
-// ReservationsByName presents the IPReservations in a map by name
-func (iSubnet *IPV4Subnet) ReservationsByName() map[string]IPReservation {
-	reservations := make(map[string]IPReservation)
-	for _, v := range iSubnet.IPReservations {
-		reservations[v.Name] = v
-	}
-	return reservations
-}
-
-// LookupReservation searches the subnet for an IPReservation that matches the name provided
-func (iSubnet *IPV4Subnet) LookupReservation(resName string) IPReservation {
-	for _, v := range iSubnet.IPReservations {
-		if resName == v.Name {
-			return v
+		if err != nil {
+			return err
 		}
 	}
-	return IPReservation{}
+	return err
 }
 
-// TotalIPAddresses returns the number of ip addresses in a subnet see UsableHostAddresses
-func (iSubnet *IPV4Subnet) TotalIPAddresses() int {
-	maskSize, _ := iSubnet.CIDR.Mask.Size()
-	return 2 << uint(31-maskSize)
-}
+// UpdateDHCPRange resets the DHCPStart and DHCPEnd to exclude all IPReservations.
+func UpdateDHCPRange(subnet *slsCommon.IPSubnet, applySupernetHack bool) (err error) {
 
-// UsableHostAddresses returns the number of usable ip addresses in a subnet
-func (iSubnet *IPV4Subnet) UsableHostAddresses() int {
-	maskSize, _ := iSubnet.CIDR.Mask.Size()
-	if maskSize == 32 {
-		return 1
-	} else if maskSize == 31 {
-		return 2
+	myReservedIPs := subnet.ReservedIPs()
+	subnetPrefix, _ := netip.ParsePrefix(subnet.CIDR)
+	usable, err := UsableHostAddresses(subnetPrefix)
+	if err != nil {
+		log.Printf(
+			"Error checking for usable addresses in subnet %s: %v",
+			subnet.CIDR,
+			err,
+		)
+		return
 	}
-	return iSubnet.TotalIPAddresses() - 2
-}
-
-// UpdateDHCPRange resets the DHCPStart to exclude all IPReservations
-func (iSubnet *IPV4Subnet) UpdateDHCPRange(applySupernetHack bool) {
-
-	myReservedIPs := iSubnet.ReservedIPs()
-	if len(myReservedIPs) > iSubnet.UsableHostAddresses() {
-		log.Fatalf(
-			"Could not create %s subnet in %s. There are %d reservations and only %d usable ip addresses in the subnet %v.",
-			iSubnet.FullName,
-			iSubnet.NetName,
+	if uint64(len(myReservedIPs)) > usable {
+		return fmt.Errorf(
+			"could not create %s subnet in %s. There are %d reservations and only %d usable ip addresses in the subnet %v",
+			subnet.FullName,
+			subnet.Name,
 			len(myReservedIPs),
-			iSubnet.UsableHostAddresses(),
-			iSubnet.CIDR.String(),
+			usable,
+			subnet.CIDR,
 		)
 	}
 
 	// Bump the DHCP Start IP past the gateway
 	// At least ten IPs are needed, but more if required
 	staticLimit := Add(
-		iSubnet.CIDR.IP,
+		subnetPrefix,
 		10,
 	)
 	dynamicLimit := Add(
-		iSubnet.CIDR.IP,
-		len(iSubnet.IPReservations)+2,
+		subnetPrefix,
+		uint64(len(subnet.IPReservations)+2),
 	)
-	if IPLessThan(
-		dynamicLimit,
-		staticLimit,
-	) {
-		if iSubnet.Name == "uai_macvlan" {
-			iSubnet.ReservationStart = staticLimit
+	if dynamicLimit.Compare(staticLimit) == -1 {
+		if subnet.Name == "uai_macvlan" {
+			subnet.ReservationStart = staticLimit.AsSlice()
 		} else {
-			iSubnet.DHCPStart = staticLimit
+			subnet.DHCPStart = staticLimit.AsSlice()
 		}
 	} else {
-		if iSubnet.Name == "uai_macvlan" {
-			iSubnet.ReservationStart = dynamicLimit
+		if subnet.Name == "uai_macvlan" {
+			subnet.ReservationStart = dynamicLimit.AsSlice()
 		} else {
-			iSubnet.DHCPStart = dynamicLimit
+			subnet.DHCPStart = dynamicLimit.AsSlice()
 		}
 	}
 
 	if applySupernetHack {
-		if iSubnet.Name == "uai_macvlan" {
-			iSubnet.ReservationEnd = Add(
-				iSubnet.DHCPStart,
-				200,
-			)
-		} else {
-			iSubnet.DHCPEnd = Add(
-				iSubnet.DHCPStart,
-				200,
-			) // In this strange world, we can't rely on the broadcast number to be accurate
-		}
-	} else {
-		if iSubnet.Name == "uai_macvlan" {
-			iSubnet.ReservationEnd = Add(
-				Broadcast(iSubnet.CIDR),
-				-1,
-			)
-		} else {
-			iSubnet.DHCPEnd = Add(
-				Broadcast(iSubnet.CIDR),
-				-1,
-			)
-		}
-	}
-}
-
-// AddReservationWithPin adds a new IPv4 reservation to the subnet with the last octet pinned
-func (iSubnet *IPV4Subnet) AddReservationWithPin(
-	name, comment string, pin uint8,
-) *IPReservation {
-	// Grab the "floor" of the subnet and alter the last byte to match the pinned byte
-	// modulo 4/16 bit ip addresses
-	// Worth noting that I could not seem to do this by copying the IP from the struct into a new
-	// net.IP struct and modifying only the last byte. I suspected complier error, but as every
-	// good programmer knows, it's probably not a compiler error and the time to debug the compiler
-	// is not *NOW*
-	newIP := make(
-		net.IP,
-		4,
-	)
-	if len(iSubnet.CIDR.IP) == 4 {
-		newIP[0] = iSubnet.CIDR.IP[0]
-		newIP[1] = iSubnet.CIDR.IP[1]
-		newIP[2] = iSubnet.CIDR.IP[2]
-		newIP[3] = pin
-	}
-	if len(iSubnet.CIDR.IP) == 16 {
-		newIP[0] = iSubnet.CIDR.IP[12]
-		newIP[1] = iSubnet.CIDR.IP[13]
-		newIP[2] = iSubnet.CIDR.IP[14]
-		newIP[3] = pin
-	}
-	if comment != "" {
-		iSubnet.IPReservations = append(
-			iSubnet.IPReservations,
-			IPReservation{
-				IPAddress: newIP,
-				Name:      name,
-				Comment:   comment,
-				Aliases: strings.Split(
-					comment,
-					",",
-				),
-			},
-		)
-	} else {
-		iSubnet.IPReservations = append(
-			iSubnet.IPReservations,
-			IPReservation{
-				IPAddress: newIP,
-				Name:      name,
-			},
-		)
-	}
-	return &iSubnet.IPReservations[len(iSubnet.IPReservations)-1]
-}
-
-// AddReservationAlias adds an alias to a reservation if it doesn't already exist
-func (iReserv *IPReservation) AddReservationAlias(alias string) {
-	if !cli.StringInSlice(
-		alias,
-		iReserv.Aliases,
-	) {
-		iReserv.Aliases = append(
-			iReserv.Aliases,
-			alias,
-		)
-	}
-}
-
-// AddReservation adds a new IP reservation to the subnet
-func (iSubnet *IPV4Subnet) AddReservation(name, comment string) *IPReservation {
-	myReservedIPs := iSubnet.ReservedIPs()
-	// Commenting out this section because the supernet configuration we're using will trigger this all the time and it shouldn't be an error
-	// floor := iSubnet.CIDR.IP.Mask(iSubnet.CIDR.Mask)
-	// if !floor.Equal(iSubnet.CIDR.IP) {
-	// 	log.Printf("VERY BAD - In reservation. CIDR.IP = %v and floor is %v", iSubnet.CIDR.IP.String(), floor)
-	// }
-	// Start counting from the bottom knowing the gateway is on the bottom
-	tempIP := Add(
-		iSubnet.CIDR.IP,
-		2,
-	)
-	for {
-		for _, v := range myReservedIPs {
-			if tempIP.Equal(v) {
-				tempIP = Add(
-					tempIP,
-					1,
+		if subnet.Name == "uai_macvlan" {
+			dhcpStartAddr, err := netip.ParseAddr(subnet.DHCPStart.String())
+			if err != nil {
+				return fmt.Errorf(
+					"error parsing DHCP start address in subnet for supernethack %s: %v",
+					subnetPrefix,
+					err,
 				)
 			}
+			reservationEnd := dhcpStartAddr.AsSlice()
+			subnet.ReservationEnd = reservationEnd
+		} else {
+			dhcpStartAddr, err := netip.ParseAddr(subnet.DHCPStart.String())
+			if err != nil {
+				return fmt.Errorf(
+					"error parsing DHCP end address in subnet for supernethack %s: %v",
+					subnetPrefix,
+					err,
+				)
+			}
+			dhcpEndAddr := Add(
+				netip.PrefixFrom(
+					dhcpStartAddr,
+					subnetPrefix.Bits(),
+				),
+				200,
+			)
+			subnet.DHCPEnd = dhcpEndAddr.AsSlice()
 		}
-		iSubnet.IPReservations = append(
-			iSubnet.IPReservations,
-			IPReservation{
-				IPAddress: tempIP,
-				Name:      name,
-				Comment:   comment,
-			},
-		)
-		return &iSubnet.IPReservations[len(iSubnet.IPReservations)-1]
+	} else {
+		broadcast, err := Broadcast(subnetPrefix)
+		if err != nil {
+			return fmt.Errorf(
+				"error obtaining broadcast address for subnet %s: %v",
+				subnetPrefix,
+				err,
+			)
+		}
+		if subnet.Name == "uai_macvlan" {
+			subnet.ReservationEnd = broadcast.Prev().AsSlice()
+		} else {
+			subnet.DHCPEnd = broadcast.Prev().AsSlice()
+		}
 	}
-}
-
-// AddReservationWithIP adds a reservation with a specific ip address
-func (iSubnet *IPV4Subnet) AddReservationWithIP(name, addr, comment string) (
-	*IPReservation, error,
-) {
-	if iSubnet.CIDR.Contains(net.ParseIP(addr)) {
-		iSubnet.IPReservations = append(
-			iSubnet.IPReservations,
-			IPReservation{
-				IPAddress: net.ParseIP(addr),
-				Name:      name,
-				Comment:   comment,
-			},
-		)
-		return &iSubnet.IPReservations[len(iSubnet.IPReservations)-1], nil
-	}
-	retError := errors.Errorf(
-		"Cannot add \"%v\" to %v subnet as %v. %v is not part of %v.",
-		name,
-		iSubnet.Name,
-		addr,
-		addr,
-		iSubnet.CIDR.String(),
-	)
-
-	if len(iSubnet.IPReservations) == 0 {
-		return nil, retError
-	}
-
-	return &iSubnet.IPReservations[len(iSubnet.IPReservations)-1], retError
+	return err
 }
 
 // GenInterfaceName generates the network interface name for a subnet.
-func (iSubnet *IPV4Subnet) GenInterfaceName() error {
-	if len(iSubnet.NetName) > 15 {
-		return fmt.Errorf(
+func (network *IPNetwork) GenInterfaceName(subnet *slsCommon.IPSubnet) (interfaceName string, err error) {
+	if len(subnet.Name) > 15 {
+		err = fmt.Errorf(
 			"network name [%s] is greater than 15 bytes",
-			iSubnet.NetName,
+			subnet.Name,
 		)
 	}
-	if iSubnet.NetName == "" {
-		return fmt.Errorf(
+	if subnet.Name == "" {
+		err = fmt.Errorf(
 			"network name [%s] is empty/nil",
-			iSubnet.NetName,
+			subnet.Name,
 		)
 	}
 
-	// TODO - Vlans below should come out of sls Defaults, but have circular deps
-	if iSubnet.VlanID == 0 || iSubnet.VlanID == DefaultMTLVlan {
-		iSubnet.InterfaceName = fmt.Sprintf(
-			"%s",
-			iSubnet.ParentDevice,
-		)
+	if subnet.VlanID <= FirstVLAN {
+		interfaceName = network.ParentDevice
 	} else {
-		index := 0 // In the future, if we ever need to change this we can handle it with a loop and setting a range in IPV4Subnet.
-		iSubnet.InterfaceName = fmt.Sprintf(
+		index := 0 // In the future, if we ever need to change this we can handle it with a loop and setting a range in IPSubnet.
+		interfaceName = fmt.Sprintf(
 			"%s.%s%d",
-			iSubnet.ParentDevice,
-			strings.ToLower(iSubnet.NetName),
+			network.ParentDevice,
+			strings.ToLower(network.Name),
 			index,
 		)
 	}
-	return nil
+	return interfaceName, err
+}
+
+/*
+free
+takes a network, a mask, and a list of subnets.
+An available network, within the first network, is returned.
+*/
+func free(network netip.Prefix, mask net.IPMask, subnets []netip.Prefix) (freeNetwork netip.Prefix, err error) {
+
+	maskOnes, _ := mask.Size()
+	networkCapacity, _ := UsableHostAddresses(network)
+	maskPrefix, _ := netip.ParsePrefix(mask.String())
+	maskCapacity, _ := UsableHostAddresses(maskPrefix)
+	if networkCapacity < maskCapacity {
+		return freeNetwork, fmt.Errorf(
+			"prefix was %s, mask requested did not fit /%v (bit)",
+			network.String(),
+			maskOnes,
+		)
+	}
+
+	for _, subnet := range subnets {
+		if !network.Contains(subnet.Addr()) {
+			return freeNetwork, fmt.Errorf(
+				"%v is not contained by %v",
+				subnet.String(),
+				network.String(),
+			)
+		}
+	}
+
+	sort.Sort(IPNets(subnets))
+
+	freeIPRanges, err := freeIPRanges(
+		network,
+		subnets,
+	)
+
+	if err != nil {
+		return freeNetwork, fmt.Errorf(
+			"failed to find any free IP ranges: %v",
+			err,
+		)
+	}
+	// Attempt to find a free space, of the required size.
+	freeNetwork, err = space(
+		freeIPRanges,
+		mask,
+	)
+	if err != nil {
+		return freeNetwork, fmt.Errorf(
+			"failed to find any free space in network [%v]. Error: %v",
+			network.String(),
+			err,
+		)
+	}
+
+	// Invariant: The IP of the network returned should be contained
+	// within the network supplied.
+	if !network.Contains(freeNetwork.Addr()) {
+		return freeNetwork, fmt.Errorf(
+			"%v is not contained by %v",
+			freeNetwork.Addr().String(),
+			network,
+		)
+	}
+
+	// Invariant: The mask of the network returned should be equal to
+	// the mask supplied as an argument.
+	if freeNetwork.Bits() != maskOnes {
+		return freeNetwork, fmt.Errorf(
+			"have: %v, requested: %v",
+			freeNetwork.Bits(),
+			mask,
+		)
+	}
+
+	return freeNetwork, err
+}
+
+// freeIPRanges takes a network, and a list of subnets.
+// It calculates available IPRanges, within the original network.
+func freeIPRanges(network netip.Prefix, subnets []netip.Prefix) (freeSubnets []IPRange, err error) {
+	networkRange := newIPRange(network)
+
+	// If no subnets, return the entire network range.
+	if len(subnets) == 0 {
+		freeSubnets = append(
+			freeSubnets,
+			networkRange,
+		)
+		return freeSubnets, err
+	}
+
+	{
+		// Check space between start of network and first subnet.
+		firstSubnetRange := newIPRange(subnets[0])
+		// Check if we have a free-range between the network's start and the start of the first subnet.
+		if networkRange.start != firstSubnetRange.start {
+			freeSubnets = append(
+				freeSubnets,
+				IPRange{
+					start: networkRange.start,
+					end:   firstSubnetRange.start.Prev(),
+				},
+			)
+		}
+	}
+
+	{
+		// Check space between each subnet.
+		for i := 0; i < len(subnets)-1; i++ {
+			currentSubnetRange := newIPRange(subnets[i])
+			nextSubnetRange := newIPRange(subnets[i+1])
+			// If the two subnets are not contiguous, then there is a free-range between them.
+			if currentSubnetRange.end.Next().Less(nextSubnetRange.start.Prev()) {
+				freeSubnets = append(
+					freeSubnets,
+					IPRange{
+						start: currentSubnetRange.end.Next(),
+						end:   nextSubnetRange.start.Prev(),
+					},
+				)
+			}
+		}
+	}
+
+	{
+		// Check space between last subnet and end of network.
+		lastSubnetRange := newIPRange(subnets[len(subnets)-1])
+		// Check the last subnet doesn't end at the end of the network.
+		if lastSubnetRange.end.Less(networkRange.end) {
+			// It doesn't, so we have a free-range between the end of the
+			// last subnet, and the end of the network.
+			freeSubnets = append(
+				freeSubnets,
+				IPRange{
+					start: lastSubnetRange.end.Next(),
+					end:   networkRange.end,
+				},
+			)
+		}
+	}
+
+	return freeSubnets, nil
+}
+
+func newIPRange(network netip.Prefix) (iprange IPRange) {
+	usableIPs, err := UsableHostAddresses(network)
+	if err != nil {
+		return iprange
+	}
+
+	// UsableHostAddresses will return "2^(bits - prefix) - 2" for IPv4, automatically subtracting the root and broadcast
+	// address. However, for newIPRange we want to include these. We already include the root address via our returned
+	// iprange, but we need to add one for the would-be broadcast address.
+	if network.Addr().Is4() {
+		usableIPs++
+	}
+	endAddress := Add(
+		network,
+		usableIPs,
+	)
+	startAddress, err := FindCIDRRootIP(network)
+	if err != nil {
+		log.Fatalf(
+			"failed to find subnet root IP: %v",
+			err,
+		)
+	}
+	if startAddress == endAddress {
+		return iprange
+	}
+	iprange = IPRange{
+		start: startAddress,
+		end:   endAddress,
+	}
+	return iprange
+}
+
+// space takes a list of free ip ranges, and a mask, returning the first eligible block that could hold any IPs.
+func space(freeIPRanges []IPRange, mask net.IPMask) (firstFree netip.Prefix, err error) {
+
+	var start netip.Addr
+	prefixLength, _ := mask.Size()
+	for _, freeIPRange := range freeIPRanges {
+		start = freeIPRange.start
+		end := freeIPRange.end
+		for start.Less(end) {
+			prefix := netip.PrefixFrom(
+				start,
+				prefixLength,
+			)
+			if !prefix.IsValid() {
+				return firstFree, fmt.Errorf(
+					"no blocks found for %s - %s",
+					freeIPRange.start,
+					end,
+				)
+			}
+			subnetIP, err := FindCIDRRootIP(prefix)
+			if err != nil {
+				return firstFree, err
+			}
+
+			/*
+				When subnet allocations contain various different subnet sizes, it can be
+				that free IP range starts from smaller network than what we are finding
+				for. Therefore, we must first adjust the start IP such that it can hold the
+				whole network that we are looking space for.
+
+				Example: free IP range starts at 10.1.2.192 and ends 10.1.255.255, and
+				we're looking for the first available /24.
+
+				We look for next available /24 network so first suitable
+				start IP for this would be 10.1.3.0.
+			*/
+			if subnetIP.Compare(start) == -1 {
+				broadcast, err := Broadcast(prefix)
+				if err != nil {
+					return prefix, fmt.Errorf(
+						"failed to find broadcast address for %s because %v",
+						prefix.String(),
+						err,
+					)
+				}
+				start = broadcast.Next()
+			} else {
+				firstFree = netip.PrefixFrom(
+					subnetIP,
+					prefixLength,
+				)
+				break
+			}
+		}
+
+		if firstFree.Bits() == -1 {
+			continue
+		}
+
+		// Check that our firstFree network fits our desired mask's addresses.
+		startBinary, _ := start.MarshalBinary()
+		endBinary, _ := end.MarshalBinary()
+		var resultBinary []byte
+		for i, startOctet := range startBinary {
+			endOctet := endBinary[i]
+			resultBinary = append(
+				resultBinary,
+				endOctet-startOctet,
+			)
+		}
+		resultAddr, _ := netip.AddrFromSlice(resultBinary)
+		resultPrefix := netip.PrefixFrom(
+			resultAddr,
+			prefixLength,
+		)
+		usableHosts, err := UsableHostAddresses(resultPrefix)
+		if err != nil {
+			return firstFree, err
+		}
+		maxHosts, err := UsableHostAddresses(
+			netip.PrefixFrom(
+				start,
+				prefixLength,
+			),
+		)
+		if err != nil {
+			return firstFree, err
+		}
+		if usableHosts >= maxHosts {
+			return firstFree, err
+		}
+	}
+	err = fmt.Errorf(
+		"tried to fit a /%v",
+		prefixLength,
+	)
+	return firstFree, err
 }

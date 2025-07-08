@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2019-2021] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2019-2021,2025] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -28,11 +28,13 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/go-retryablehttp"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/hashicorp/go-retryablehttp"
 )
 
 // Package to slightly abstract some of the most mundane of HTTP interactions. Primary intention is as a JSON
@@ -167,6 +169,7 @@ func (request *HTTPRequest) DoHTTPAction() (payloadBytes []byte, err error) {
 	}
 
 	resp, doErr := client.Do(req)
+	defer DrainAndCloseResponseBody(resp)
 	if doErr != nil {
 		err = fmt.Errorf("unable to do request: %s", doErr)
 		return
@@ -182,11 +185,6 @@ func (request *HTTPRequest) DoHTTPAction() (payloadBytes []byte, err error) {
 	payloadBytes, readErr := ioutil.ReadAll(resp.Body)
 	if readErr != nil {
 		err = fmt.Errorf("unable to read response body: %s", readErr)
-		return
-	}
-
-	err = resp.Body.Close()
-	if err != nil {
 		return
 	}
 
@@ -220,4 +218,27 @@ func (request *HTTPRequest) GetBodyForHTTPRequest() (v interface{}, err error) {
 	}
 
 	return
+}
+
+// Response bodies should always be drained and closed, else we leak resources
+// and fail to reuse network connections.
+
+func DrainAndCloseResponseBody(resp *http.Response) {
+	if resp != nil && resp.Body != nil {
+			_, _ = io.Copy(io.Discard, resp.Body) // ok even if already drained
+			resp.Body.Close()                     // ok even if already closed
+	}
+}
+
+// While it is generally not a requirement to close request bodies in server
+// handlers, it is good practice.  If a body is only partially read, there can
+// be a resource leak.  Additionally, if the body is not read at all, the
+// network connection will be closed and will not be reused even though the
+// http server will properly drain and close the request body.
+
+func DrainAndCloseRequestBody(req *http.Request) {
+	if req != nil && req.Body != nil {
+			_, _ = io.Copy(io.Discard, req.Body) // ok even if already drained
+			req.Body.Close()                     // ok even if already closed
+	}
 }

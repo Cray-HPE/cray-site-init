@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2025 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -194,7 +194,7 @@ func (mySwitch *ManagementSwitch) Normalize() error {
 
 // ReadSwitchCSV parses a CSV file into a list of ManagementSwitch structs
 func ReadSwitchCSV(filename string) ([]*ManagementSwitch, error) {
-	switches := []*ManagementSwitch{}
+	var switches []*ManagementSwitch
 	switchMetadataFile, err := os.OpenFile(
 		filename,
 		os.O_RDWR|os.O_CREATE,

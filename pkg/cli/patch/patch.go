@@ -25,6 +25,7 @@
 package patch
 
 import (
+	"github.com/Cray-HPE/cray-site-init/pkg/cli/patch/csm"
 	"github.com/Cray-HPE/cray-site-init/pkg/cli/patch/pit"
 	"github.com/spf13/cobra"
 )
@@ -40,6 +41,7 @@ Commands for patching data and/or services in various system contexts.
 `,
 	}
 	c.AddCommand(
+		csm.NewCommand(),
 		pit.NewCommand(),
 
 		// Legacy commands; these were sub-commands of `csi patch` in CSI v1.36.10

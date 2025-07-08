@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2025 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -99,7 +99,7 @@ func (suite *InitCmdTestSuite) TestValidateSwitchInput_InvalidXname() {
 
 	err := validateSwitchInput(switches)
 	suite.Equal(
-		errors.New("switch_metadata.csv contains invalid switch data"),
+		errors.New("switch_metadata.csv contains invalid switch Data"),
 		err,
 	)
 }
@@ -122,7 +122,7 @@ func (suite *InitCmdTestSuite) TestValidateSwitchInput_WrongXNameTypes() {
 				SwitchType: networking.ManagementSwitchTypeSpine,
 				Brand:      networking.ManagementSwitchBrandAruba,
 			},
-			expectedError: errors.New("switch_metadata.csv contains invalid switch data"),
+			expectedError: errors.New("switch_metadata.csv contains invalid switch Data"),
 		},
 		{
 			// Spine using CDUMgmtSwitch, should be using MgmtHLSwitch
@@ -131,7 +131,7 @@ func (suite *InitCmdTestSuite) TestValidateSwitchInput_WrongXNameTypes() {
 				SwitchType: networking.ManagementSwitchTypeSpine,
 				Brand:      networking.ManagementSwitchBrandAruba,
 			},
-			expectedError: errors.New("switch_metadata.csv contains invalid switch data"),
+			expectedError: errors.New("switch_metadata.csv contains invalid switch Data"),
 		},
 		{
 			// Leaf using MgmtSwitch, should be using MgmtHLSwitch
@@ -140,7 +140,7 @@ func (suite *InitCmdTestSuite) TestValidateSwitchInput_WrongXNameTypes() {
 				SwitchType: networking.ManagementSwitchTypeLeaf,
 				Brand:      networking.ManagementSwitchBrandAruba,
 			},
-			expectedError: errors.New("switch_metadata.csv contains invalid switch data"),
+			expectedError: errors.New("switch_metadata.csv contains invalid switch Data"),
 		},
 		{
 			// Leaf using CDUMgmtSwitch, should be using MgmtHLSwitch
@@ -149,7 +149,7 @@ func (suite *InitCmdTestSuite) TestValidateSwitchInput_WrongXNameTypes() {
 				SwitchType: networking.ManagementSwitchTypeLeaf,
 				Brand:      networking.ManagementSwitchBrandAruba,
 			},
-			expectedError: errors.New("switch_metadata.csv contains invalid switch data"),
+			expectedError: errors.New("switch_metadata.csv contains invalid switch Data"),
 		},
 		{
 			// CDU using MgmtHLSwitch, should be using CDUMgmtSwitch
@@ -158,7 +158,7 @@ func (suite *InitCmdTestSuite) TestValidateSwitchInput_WrongXNameTypes() {
 				SwitchType: networking.ManagementSwitchTypeCDU,
 				Brand:      networking.ManagementSwitchBrandAruba,
 			},
-			expectedError: errors.New("switch_metadata.csv contains invalid switch data"),
+			expectedError: errors.New("switch_metadata.csv contains invalid switch Data"),
 		},
 	}
 
@@ -216,7 +216,7 @@ func (suite *InitCmdTestSuite) TestValidateNCNInput_InvalidXName() {
 
 	err := validateNCNInput(ncns)
 	suite.Equal(
-		errors.New("ncn_metadata.csv contains invalid NCN data"),
+		errors.New("ncn_metadata.csv contains invalid NCN Data"),
 		err,
 	)
 }
@@ -242,7 +242,7 @@ func (suite *InitCmdTestSuite) TestValidateNCNInput_WrongXNameType() {
 
 	err := validateNCNInput(ncns)
 	suite.Equal(
-		errors.New("ncn_metadata.csv contains invalid NCN data"),
+		errors.New("ncn_metadata.csv contains invalid NCN Data"),
 		err,
 	)
 }

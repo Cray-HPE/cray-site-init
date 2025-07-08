@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2025 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -25,11 +25,14 @@
 package csi
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/Cray-HPE/cray-site-init/pkg/cli"
 )
 
 // ConfigInitTest runs 'csi config init' on a system passed to it using the cobra command object
@@ -48,7 +51,11 @@ func ConfigInitTest(system string) {
 
 	// Runs 'config init' without any arguments (this requires system_config.yaml to be present in the dir)
 	// csi.ExecuteCommandC(rootCmd, []string{"config", "init"})
-	conf := confdir + "/system_config.yaml"
+	conf := fmt.Sprintf(
+		"%s/%s",
+		confdir,
+		cli.ConfigFilename,
+	)
 	ExecuteCommandC(
 		NewCommand(),
 		[]string{
@@ -89,9 +96,9 @@ func TestConfigInit_GeneratePayload(t *testing.T) {
 		)
 
 	} else {
-
-		t.Errorf("CSI_SHASTA_SYSTEMS needs to be set")
-
+		if os.Getenv("CI") == "" {
+			t.Skip("Skipping test due to missing CI environment. Set CSI_SHASTA_SYSTEMS to override.")
+		}
 	}
 
 	for _, s := range systems {

@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2024 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2024-2025 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -23,6 +23,15 @@
 */
 
 package cli
+
+import "time"
+
+var (
+	ConfigFilename        string
+	Runtime               time.Time
+	RuntimeTimestamp      string
+	RuntimeTimestampShort string
+)
 
 // StringInSlice returns whether a string exists in a given slice.
 func StringInSlice(

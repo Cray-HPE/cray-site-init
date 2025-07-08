@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2025 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -44,14 +44,14 @@ import (
 
 	base "github.com/Cray-HPE/hms-base/v2"
 	"github.com/Cray-HPE/hms-bss/pkg/bssTypes"
-	slsCommon "github.com/Cray-HPE/hms-sls/pkg/sls-common"
-	"github.com/Cray-HPE/hms-smd/pkg/sm"
+	slsCommon "github.com/Cray-HPE/hms-sls/v2/pkg/sls-common"
+	"github.com/Cray-HPE/hms-smd/v2/pkg/sm"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/terminal"
 
-	csiFiles "github.com/Cray-HPE/cray-site-init/internal/files"
+	"github.com/Cray-HPE/cray-site-init/internal/files"
 )
 
 const hwAddrPrefix = "Permanent HW addr: "
@@ -138,7 +138,7 @@ func NewHandoffMetadataCommand() *cobra.Command {
 			}
 
 			// Parse the data.json file.
-			err = csiFiles.ReadJSONConfig(
+			err = files.ReadJSONConfig(
 				dataFile,
 				&cloudInitData,
 			)
@@ -847,7 +847,6 @@ func passwordCallback() (
 		sshPasswordHost,
 	)
 	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
-	fmt.Println()
 	if err != nil {
 		return
 	}

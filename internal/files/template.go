@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2025 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -26,7 +26,7 @@ package files
 
 import (
 	"bytes"
-	"log"
+	"fmt"
 	"text/template"
 )
 
@@ -38,12 +38,11 @@ func WriteTemplate(path string, tpl *template.Template, conf interface{}) error 
 		conf,
 	)
 	if err != nil {
-		log.Printf(
-			"The error executing the template is %v \n",
+		return fmt.Errorf(
+			"failed to execute template because %v",
 			err,
 		)
 	}
-	// log.Printf("calling writefile with %v, %v", path, bs.String())
 	return writeFile(
 		path,
 		bs.String(),

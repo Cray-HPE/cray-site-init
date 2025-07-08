@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2025 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -34,10 +34,35 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/Cray-HPE/cray-site-init/internal/files"
-	csiFiles "github.com/Cray-HPE/cray-site-init/internal/files"
 	slsInit "github.com/Cray-HPE/cray-site-init/pkg/cli/config/initialize/sls"
+	"github.com/Cray-HPE/cray-site-init/pkg/csm/hms/sls"
 	"github.com/Cray-HPE/cray-site-init/pkg/networking"
-	"github.com/Cray-HPE/cray-site-init/pkg/sls"
+)
+
+const (
+	// DefaultApplicationNodeConfigFilename is the default filename for the application node configuration file.
+	DefaultApplicationNodeConfigFilename = "application_node_config.yaml"
+	// DefaultCabinetsFilename is the default filename for the cabinents file.
+	DefaultCabinetsFilename = "cabinets.yaml"
+	// DefaultHMNConnectionsFilename is the default filename for the HMN connections file.
+	DefaultHMNConnectionsFilename = "hmn_connections.json"
+	// DefaultNCNMetadataFilename is the default filename for NCN metadata file.
+	DefaultNCNMetadataFilename = "ncn_metadata.csv"
+	// DefaultSwitchMetadataFilename is the default filename for switch metadata file.
+	DefaultSwitchMetadataFilename = "switch_metadata.csv"
+)
+
+var (
+	// ApplicationNodeConfigFile is the resolved file for the application node configuration.
+	ApplicationNodeConfigFile string
+	// CabinetsFile is the resolved file for the cabinents configuration.
+	CabinetsFile string
+	// HMNConnectionsFile is the resolved file for the HMN connections configuration.
+	HMNConnectionsFile string
+	// NCNMetadataFile is the resolved file for NCN metadata configuration.
+	NCNMetadataFile string
+	// SwitchMetadataFile is the resolved file for switch metadata configuration.
+	SwitchMetadataFile string
 )
 
 type cabinetDefinition struct {
@@ -67,152 +92,204 @@ func getFile(name string) (path string, err error) {
 	return path, err
 }
 
-func collectHMNRows(v *viper.Viper) []shcdParser.HMNRow {
-	seedFileHmnConnections, err := getFile(v.GetString("hmn-connections"))
+func collectHMNRows(v *viper.Viper) (hmnRows []shcdParser.HMNRow, err error) {
+	hmnConnectionsFile := v.GetString("hmn-connections")
+	if hmnConnectionsFile == "" {
+		HMNConnectionsFile = DefaultHMNConnectionsFilename
+	} else {
+		HMNConnectionsFile = hmnConnectionsFile
+	}
+	seedFileHmnConnections, err := getFile(HMNConnectionsFile)
 	if err != nil {
-		log.Fatalf(
-			"Error reading hmn-connections file: %v",
+		return nil, fmt.Errorf(
+			"error reading hmn-connections: %w",
 			err,
 		)
 	}
-	hmnRows, err := loadHMNConnectionsFile(seedFileHmnConnections)
+	hmnRows, err = loadHMNConnectionsFile(seedFileHmnConnections)
 	if err != nil {
-		log.Fatalf(
-			"unable to load hmn connections, %v \n",
+		return nil, fmt.Errorf(
+			"error loading hmn-connections file: %v",
 			err,
 		)
 	}
-	return hmnRows
+	return hmnRows, err
 }
 
-func collectNCNMeta(v *viper.Viper) []*LogicalNCN {
-	seedFileNcnMetadata, err := getFile(v.GetString("ncn-metadata"))
+func collectNCNMeta(v *viper.Viper) (ncns []*LogicalNCN, err error) {
+	ncnFile := v.GetString("ncn-file")
+	if ncnFile == "" {
+		NCNMetadataFile = DefaultNCNMetadataFilename
+	} else {
+		NCNMetadataFile = ncnFile
+	}
+	seedFileNcnMetadata, err := getFile(NCNMetadataFile)
 	if err != nil {
-		log.Fatalf(
-			"Error reading ncn-metadata file: %v",
+		return nil, fmt.Errorf(
+			"error reading ncn-metadata file because %v",
 			err,
 		)
 	}
-	ncns, err := ReadNodeCSV(seedFileNcnMetadata)
+	ncns, err = ReadNodeCSV(seedFileNcnMetadata)
 	if err != nil {
-		log.Fatalln(
-			"Couldn't extract ncns",
+		return nil, fmt.Errorf(
+			"couldn't extract ncns: %v",
 			err,
 		)
 	}
 
-	// Normalize the ncn data, before validation
+	// Normalize the ncn Data, before validation
 	for _, ncn := range ncns {
-		ncn.Normalize()
+		err := ncn.Normalize()
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to normalize NCN Data because %v",
+				err,
+			)
+		}
 	}
 
 	if err := validateNCNInput(ncns); err != nil {
-		log.Println("Unable to get reasonable NCNs from your csv")
-		log.Println("Does your header match the preferred style? Xname,Role,Subrole,BMC MAC,Bootstrap MAC,Bond0 MAC0,Bond0 MAC1")
-		log.Fatal("CSV Parsing failed. Can't continue.")
+		return nil, fmt.Errorf(
+			"unable to get reasonable NCNs from your csv because %v",
+			err,
+		)
 	}
 
-	return ncns
+	return ncns, err
 }
 
-func collectSwitches(v *viper.Viper) []*networking.ManagementSwitch {
-	seedFileSwitchMetadata, err := getFile(v.GetString("switch-metadata"))
+func collectSwitches(v *viper.Viper) (switches []*networking.ManagementSwitch, err error) {
+	switchMetadataFile := v.GetString("switch-metadata")
+	if switchMetadataFile == "" {
+		SwitchMetadataFile = DefaultSwitchMetadataFilename
+	} else {
+		SwitchMetadataFile = switchMetadataFile
+	}
+	seedFileSwitchMetadata, err := getFile(SwitchMetadataFile)
 	if err != nil {
-		log.Fatalf(
-			"Error reading switch-metadata file: %v",
+		return nil, fmt.Errorf(
+			"error reading switch-metadata file because %v",
 			err,
 		)
 	}
 
-	switches, err := networking.ReadSwitchCSV(seedFileSwitchMetadata)
+	switches, err = networking.ReadSwitchCSV(seedFileSwitchMetadata)
 	if err != nil {
-		log.Fatalf(
-			"Couldn't extract switches, %v",
+		return nil, fmt.Errorf(
+			"couldn't extract switches because %v",
 			err,
 		)
 	}
 
-	// Normalize the management switch data, before validation
+	// Normalize the management switch Data, before validation
+	errors := make(
+		[]error,
+		0,
+	)
 	for _, mySwitch := range switches {
 		mySwitch.Normalize()
 	}
-
-	if err := validateSwitchInput(switches); err != nil {
-		log.Println("Unable to get reasonable Switches from your csv")
-		log.Println("Does your header match the preferred style? Switch Xname,Type,Brand")
-		log.Fatal("CSV Parsing failed. Can't continue.")
+	if len(errors) != 0 {
+		return nil, fmt.Errorf(
+			"couldn't extract switches from CSV because %v",
+			errors,
+		)
 	}
 
-	return switches
+	if err = validateSwitchInput(switches); err != nil {
+		return nil, fmt.Errorf(
+			"unable to get reasonable Switches from your csv because %v",
+			err,
+		)
+	}
+
+	return switches, err
 }
 
-func collectApplicationNodeConfig(v *viper.Viper) slsInit.GeneratorApplicationNodeConfig {
-	var applicationNodeConfig slsInit.GeneratorApplicationNodeConfig
-	if v.IsSet("application-node-config-yaml") && (v.GetString("application-node-config-yaml") != "") {
-		seedFileAppNodeConfig, err := getFile(v.GetString("application-node-config-yaml"))
+func collectApplicationNodeConfig(v *viper.Viper) (applicationNodeConfig slsInit.GeneratorApplicationNodeConfig, err error) {
+	if !v.IsSet("application-node-config-yaml") {
+		return applicationNodeConfig, nil
+	}
+	applicationNodeConfigFile := v.GetString("application-node-config-yaml")
+	if applicationNodeConfigFile == "" {
+		ApplicationNodeConfigFile = DefaultApplicationNodeConfigFilename
+		_, err := os.Stat(ApplicationNodeConfigFile)
 		if err != nil {
-			log.Fatalf(
-				"Error reading application-node-config-yaml file: %v",
-				err,
-			)
+			return applicationNodeConfig, nil
 		}
+	} else {
+		ApplicationNodeConfigFile = applicationNodeConfigFile
+	}
+	seedFileAppNodeConfig, err := getFile(ApplicationNodeConfigFile)
+	if err != nil {
+		return applicationNodeConfig, fmt.Errorf(
+			"error reading application-node-config-yaml because %v",
+			v.GetString("application-node-config-yaml"),
+		)
+	}
 
-		log.Printf(
-			"Using application node config: %s\n",
+	log.Printf(
+		"Using application node config: %s\n",
+		seedFileAppNodeConfig,
+	)
+	err = files.ReadYAMLConfig(
+		seedFileAppNodeConfig,
+		&applicationNodeConfig,
+	)
+	if err != nil {
+		return applicationNodeConfig, fmt.Errorf(
+			"unable to parse application-node-config file [%s] because %v",
 			seedFileAppNodeConfig,
+			err,
 		)
-		err = files.ReadYAMLConfig(
-			seedFileAppNodeConfig,
-			&applicationNodeConfig,
-		)
-		if err != nil {
-			log.Fatalf(
-				"Unable to parse application-node-config file: %s\nError: %v",
-				seedFileAppNodeConfig,
-				err,
-			)
-		}
 	}
 
 	// Normalize application node config
-	if err := applicationNodeConfig.Normalize(); err != nil {
-		log.Fatalf(
-			"Failed to normalize application node config. Error: %s",
+	if err = applicationNodeConfig.Normalize(); err != nil {
+		return applicationNodeConfig, fmt.Errorf(
+			"failed to normalize application node config because %v",
 			err,
 		)
 	}
 
 	// Validate Application node config
-	if err := applicationNodeConfig.Validate(); err != nil {
-		log.Fatalf(
-			"Failed to validate application node config. Error: %s",
+	if err = applicationNodeConfig.Validate(); err != nil {
+		return applicationNodeConfig, fmt.Errorf(
+			"failed to validate application node config because %v",
 			err,
 		)
 	}
 
-	return applicationNodeConfig
+	return applicationNodeConfig, err
 }
 
-func collectCabinets(v *viper.Viper) []sls.CabinetGroupDetail {
+func collectCabinets(v *viper.Viper) (cabinetDetailList []sls.CabinetGroupDetail, err error) {
 	var cabDetailFile sls.CabinetDetailFile
-	if v.IsSet("cabinets-yaml") && (v.GetString("cabinets-yaml") != "") {
-		seedFileCabinets, err := getFile(v.GetString("cabinets-yaml"))
-		if err != nil {
-			log.Fatalf(
-				"Error reading cabinets-yaml file: %v",
-				err,
+	if v.IsSet("cabinets-yaml") {
+		cabinetsFile := v.GetString("cabinets-yaml")
+		if cabinetsFile == "" {
+			CabinetsFile = DefaultCabinetsFilename
+		} else {
+			CabinetsFile = cabinetsFile
+			seedFileCabinets, err := getFile(v.GetString("cabinets-yaml"))
+			if err != nil {
+				return nil, fmt.Errorf(
+					"error reading cabinets-yaml file because %v",
+					err,
+				)
+			}
+			err = files.ReadYAMLConfig(
+				seedFileCabinets,
+				&cabDetailFile,
 			)
-		}
-		err = files.ReadYAMLConfig(
-			seedFileCabinets,
-			&cabDetailFile,
-		)
-		if err != nil {
-			log.Fatalf(
-				"Unable to parse cabinets-yaml file: %s\nError: %v",
-				v.GetString("cabinets-yaml"),
-				err,
-			)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"unable to parse cabinets-yaml file [%s] because %v",
+					v.GetString("cabinets-yaml"),
+					err,
+				)
+			}
 		}
 	}
 
@@ -233,7 +310,7 @@ func collectCabinets(v *viper.Viper) []sls.CabinetGroupDetail {
 			),
 		}
 	}
-	cabinetDetailList := buildCabinetDetails(
+	cabinetDetailList = buildCabinetDetails(
 		cabDefinitions,
 		cabDetailFile,
 	)
@@ -243,8 +320,8 @@ func collectCabinets(v *viper.Viper) []sls.CabinetGroupDetail {
 	for _, cabinetGroupDetail := range cabinetDetailList {
 		for _, id := range cabinetGroupDetail.CabinetIDs() {
 			if knownCabinetIDs[id] {
-				log.Fatalf(
-					"Found duplicate cabinet id: %v",
+				return nil, fmt.Errorf(
+					"found duplicate cabinet id: %v",
 					id,
 				)
 			}
@@ -253,12 +330,16 @@ func collectCabinets(v *viper.Viper) []sls.CabinetGroupDetail {
 		}
 	}
 
-	return cabinetDetailList
+	return cabinetDetailList, err
 }
 
 func collectInput(v *viper.Viper) (
-	[]shcdParser.HMNRow, []*LogicalNCN, []*networking.ManagementSwitch, slsInit.GeneratorApplicationNodeConfig,
-	[]sls.CabinetGroupDetail,
+	hmnRows []shcdParser.HMNRow,
+	ncns []*LogicalNCN,
+	switches []*networking.ManagementSwitch,
+	applicationNodeConfig slsInit.GeneratorApplicationNodeConfig,
+	cabinetDetailList []sls.CabinetGroupDetail,
+	errs []error,
 ) {
 	// The installation requires a set of information in order to proceed
 	// First, we need some kind of representation of the physical hardware
@@ -269,27 +350,57 @@ func collectInput(v *viper.Viper) (
 	// From the hmn_connections file, we can create a set of HMNRow objects
 	// to use for populating
 	// this seedfile should be in the same place as the config, so use that to craft the path
-	hmnRows := collectHMNRows(v)
+	hmnRows, err := collectHMNRows(v)
+	if err != nil {
+		errs = append(
+			errs,
+			err,
+		)
+	}
 
 	// This is technically sufficient to generate an SLSState object, but to do so now
 	// would not include extended information about the NCNs and Network Switches.
 	//
 	// The first step in building the NCN map is to read the NCN Metadata file
-	ncns := collectNCNMeta(v)
+	ncns, err = collectNCNMeta(v)
+	if err != nil {
+		errs = append(
+			errs,
+			err,
+		)
+	}
 
 	// SLS also needs to know about our networking configuration. In order to do that,
 	// we need to load the switches
-	switches := collectSwitches(v)
+	switches, err = collectSwitches(v)
+	if err != nil {
+		errs = append(
+			errs,
+			err,
+		)
+	}
 
 	// Application Node configuration for SLS Config Generator
 	// This is an optional input file
-	applicationNodeConfig := collectApplicationNodeConfig(v)
+	applicationNodeConfig, err = collectApplicationNodeConfig(v)
+	if err != nil {
+		errs = append(
+			errs,
+			err,
+		)
+	}
 
 	// Cabinet Map Configuration
 	// This is an optional input file
-	cabinetDetailList := collectCabinets(v)
+	cabinetDetailList, err = collectCabinets(v)
+	if err != nil {
+		errs = append(
+			errs,
+			err,
+		)
+	}
 
-	return hmnRows, ncns, switches, applicationNodeConfig, cabinetDetailList
+	return hmnRows, ncns, switches, applicationNodeConfig, cabinetDetailList, errs
 }
 
 func validateSwitchInput(switches []*networking.ManagementSwitch) error {
@@ -311,7 +422,7 @@ func validateSwitchInput(switches []*networking.ManagementSwitch) error {
 	}
 
 	if mustFail {
-		return fmt.Errorf("switch_metadata.csv contains invalid switch data")
+		return fmt.Errorf("switch_metadata.csv contains invalid switch Data")
 	}
 
 	return nil
@@ -337,7 +448,7 @@ func validateNCNInput(ncns []*LogicalNCN) error {
 	}
 
 	if mustFail {
-		return fmt.Errorf("ncn_metadata.csv contains invalid NCN data")
+		return fmt.Errorf("ncn_metadata.csv contains invalid NCN Data")
 	}
 
 	return nil
@@ -372,7 +483,7 @@ func buildCabinetDetails(
 func loadHMNConnectionsFile(path string) (
 	rows []shcdParser.HMNRow, err error,
 ) {
-	err = csiFiles.ReadJSONConfig(
+	err = files.ReadJSONConfig(
 		path,
 		&rows,
 	)

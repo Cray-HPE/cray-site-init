@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+// (C) Copyright 2022,2025 Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -27,7 +27,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -73,10 +72,10 @@ func (sc *SLSClient) GetDumpState(ctx context.Context) (sls_common.SLSState, err
 
 	// Perform the request!
 	response, err := sc.client.Do(request)
+	defer base.DrainAndCloseResponseBody(response)
 	if err != nil {
 		return sls_common.SLSState{}, err
 	}
-	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
 		return sls_common.SLSState{}, fmt.Errorf("unexpected status code %d expected 200", response.StatusCode)
@@ -101,10 +100,10 @@ func (sc *SLSClient) GetAllHardware(ctx context.Context) ([]sls_common.GenericHa
 
 	// Perform the request!
 	response, err := sc.client.Do(request)
+	defer base.DrainAndCloseResponseBody(response)
 	if err != nil {
 		return nil, err
 	}
-	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status code %d expected 200", response.StatusCode)
@@ -138,14 +137,9 @@ func (sc *SLSClient) PutHardware(ctx context.Context, hardware sls_common.Generi
 
 	// Perform the request!
 	response, err := sc.client.Do(request)
+	defer base.DrainAndCloseResponseBody(response)
 	if err != nil {
 		return err
-	}
-
-	// If SLS sends back a response, then we should read the contents of the body so the Istio sidecar doesn't fill up
-	if response.Body != nil {
-		_, _ = ioutil.ReadAll(response.Body)
-		defer response.Body.Close()
 	}
 
 	// PUT can either create or update objects.
@@ -180,14 +174,9 @@ func (sc *SLSClient) PutNetwork(ctx context.Context, network sls_common.Network)
 
 	// Perform the request!
 	response, err := sc.client.Do(request)
+	defer base.DrainAndCloseResponseBody(response)
 	if err != nil {
 		return err
-	}
-
-	// If SLS sends back a response, then we should read the contents of the body so the Istio sidecar doesn't fill up
-	if response.Body != nil {
-		_, _ = ioutil.ReadAll(response.Body)
-		defer response.Body.Close()
 	}
 
 	// PUT can either create or update objects.
@@ -209,10 +198,10 @@ func (sc *SLSClient) GetNetworks(ctx context.Context) ([]sls_common.Network, err
 
 	// Perform the request!
 	response, err := sc.client.Do(request)
+	defer base.DrainAndCloseResponseBody(response)
 	if err != nil {
 		return nil, err
 	}
-	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status code %d expected 200", response.StatusCode)
@@ -237,10 +226,10 @@ func (sc *SLSClient) GetNetwork(ctx context.Context, networkName string) (sls_co
 
 	// Perform the request!
 	response, err := sc.client.Do(request)
+	defer base.DrainAndCloseResponseBody(response)
 	if err != nil {
 		return sls_common.Network{}, err
 	}
-	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
 		return sls_common.Network{}, fmt.Errorf("unexpected status code %d expected 200", response.StatusCode)

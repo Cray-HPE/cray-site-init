@@ -26,13 +26,14 @@ package kubernetes
 
 import (
 	"fmt"
+	"os"
+
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
-	"os"
 )
 
 // DefaultKubeConfig is the default location for the Kubernetes config.
-const DefaultKubeConfig = "~/.kube/config"
+var DefaultKubeConfig = os.Getenv("HOME") + ".kube/config"
 
 // DefaultKubeConfigEnvVar is the default environment variable to read that contains the path to the user's active Kubernetes config.
 const DefaultKubeConfigEnvVar = "KUBECONFIG"

@@ -19,6 +19,7 @@ package printers
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"reflect"
@@ -85,7 +86,7 @@ func exists(item interface{}, indices ...interface{}) bool {
 // We indirect through pointers and empty interfaces (only) because
 // non-empty interfaces have methods we might need.
 func indirect(v reflect.Value) (rv reflect.Value, isNil bool) {
-	for ; v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface; v = v.Elem() {
+	for ; v.Kind() == reflect.Pointer || v.Kind() == reflect.Interface; v = v.Elem() {
 		if v.IsNil() {
 			return v, true
 		}
@@ -119,7 +120,7 @@ func (j *JSONPathPrinter) PrintObj(obj runtime.Object, w io.Writer) error {
 	// we need an actual value in order to retrieve the package path for an object.
 	// using reflect.Indirect indiscriminately is valid here, as all runtime.Objects are supposed to be pointers.
 	if InternalObjectPreventer.IsForbidden(reflect.Indirect(reflect.ValueOf(obj)).Type().PkgPath()) {
-		return fmt.Errorf(InternalObjectPrinterErr)
+		return errors.New(InternalObjectPrinterErr)
 	}
 
 	var queryObj interface{} = obj

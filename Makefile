@@ -1,6 +1,6 @@
 # MIT License
 #
-# (C) Copyright 2021-2024 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2021-2025 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -173,9 +173,6 @@ go_ldflags += -X github.com/Cray-HPE/cray-site-init/pkg/version.buildDate=${.BUI
 
 GO_FILES?=$$(find . -name '*.go' |grep -v vendor)
 TAG?=latest
-
-CHANGELOG_VERSION_ORIG=$(shell grep -m1 \# CHANGELOG.MD | sed -e "s/\].*\$//" |sed -e "s/^.*\[//")
-CHANGELOG_VERSION=$(shell grep -m1 \ \[[0-9]*.[0-9]*.[0-9]*\] CHANGELOG.MD | sed -e "s/\].*$$//" |sed -e "s/^.*\[//")
 
 clean:
 	go clean -i ./...

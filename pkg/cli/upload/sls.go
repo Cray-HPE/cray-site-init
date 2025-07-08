@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2025 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -32,6 +32,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/Cray-HPE/cray-site-init/pkg/cli/config/initialize/sls"
 	hmsS3 "github.com/Cray-HPE/hms-s3"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -91,7 +92,7 @@ func NewCommand() *cobra.Command {
 
 	c.Flags().String(
 		"sls-file",
-		"sls_input_file.json",
+		sls.OutputFile,
 		"Path to the SLS Input File to Upload",
 	)
 	c.Flags().Bool(
@@ -232,7 +233,7 @@ func uploadSLSInputFile(v *viper.Viper) {
 	uploadFileWithoutACL(
 		myS3Client,
 		slsFilePath,
-		"sls_input_file.json",
+		sls.OutputFile,
 	) // This key name should never change
 
 	log.Println("Successfully uploaded SLS Input File.")

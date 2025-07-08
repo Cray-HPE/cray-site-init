@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2025 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"net/netip"
 	"os"
 
 	"github.com/Cray-HPE/hms-xname/xnametypes"
@@ -41,30 +42,29 @@ import (
 // and still matches the ncn_metadata.csv file as
 // NCN xname,NCN Role,NCN Subrole,BMC MAC,BMC Switch Port,NMN MAC,NMN Switch Port
 type LogicalNCN struct {
-	Role             string         `yaml:"role" json:"role" csv:"NCN Role"`
-	Subrole          string         `yaml:"subrole" json:"subrole" csv:"NCN Subrole"`
-	BmcMac           string         `yaml:"bmc-mac" json:"bmc-mac" csv:"BMC MAC"`
-	BmcPort          string         `yaml:"bmc-port" json:"bmc-port" csv:"BMC Switch Port"`
-	NmnMac           string         `yaml:"nmn-mac" json:"nmn-mac" csv:"NMN MAC"`
-	NmnPort          string         `yaml:"nmn-port" json:"nmn-port" csv:"NMN Switch Port"`
-	NmnIP            string         `yaml:"nmn-ip" json:"nmn-ip" csv:"-"`
-	HmnIP            string         `yaml:"hmn-ip" json:"hmn-ip" csv:"-"`
-	MtlIP            string         `yaml:"mtl-ip" json:"mtl-ip" csv:"-"`
-	CmnIP            string         `yaml:"cmn-ip" json:"cmn-ip" csv:"-"`
-	CanIP            string         `yaml:"can-ip" json:"can-ip" csv:"-"`
-	Xname            string         `yaml:"xname" json:"xname" csv:"NCN xname"`
-	Hostname         string         `yaml:"hostname" json:"hostname" csv:"-"`
-	InstanceID       string         `yaml:"instance-id" json:"instance-id" csv:"-"` // should be unique for the life of the image
-	Region           string         `yaml:"region" json:"region" csv:"-"`
-	AvailabilityZone string         `yaml:"availability-zone" json:"availability-zone" csv:"-"`
-	ShastaRole       string         `yaml:"shasta-role" json:"shasta-role" csv:"-"` // map to HSM Subrole
-	Aliases          []string       `yaml:"aliases" json:"aliases" csv:"-"`
-	Networks         []NCNNetwork   `yaml:"networks" json:"networks" csv:"-"`
-	Interfaces       []NCNInterface `yaml:"interfaces" json:"interfaces" csv:"-"`
-	BmcIP            string         `yaml:"bmc-ip" json:"bmc-ip" csv:"-"`
-	Bond0Mac0        string         `yaml:"bond0-mac0" json:"bond0-mac0" csv:"-"`
-	Bond0Mac1        string         `yaml:"bond0-mac1" json:"bond0-mac1" csv:"-"`
-	Cabinet          string         `yaml:"cabinet" json:"cabinet" csv:"-"` // Use to establish availability zone
+	Role             string       `yaml:"role" json:"role" csv:"NCN Role"`
+	Subrole          string       `yaml:"subrole" json:"subrole" csv:"NCN Subrole"`
+	BmcMac           string       `yaml:"bmc-mac" json:"bmc-mac" csv:"BMC MAC"`
+	BmcPort          string       `yaml:"bmc-port" json:"bmc-port" csv:"BMC Switch Port"`
+	NmnMac           string       `yaml:"nmn-mac" json:"nmn-mac" csv:"NMN MAC"`
+	NmnPort          string       `yaml:"nmn-port" json:"nmn-port" csv:"NMN Switch Port"`
+	NmnIP            string       `yaml:"nmn-ip" json:"nmn-ip" csv:"-"`
+	HmnIP            string       `yaml:"hmn-ip" json:"hmn-ip" csv:"-"`
+	MtlIP            string       `yaml:"mtl-ip" json:"mtl-ip" csv:"-"`
+	CmnIP            string       `yaml:"cmn-ip" json:"cmn-ip" csv:"-"`
+	CanIP            string       `yaml:"can-ip" json:"can-ip" csv:"-"`
+	Xname            string       `yaml:"xname" json:"xname" csv:"NCN xname"`
+	Hostname         string       `yaml:"hostname" json:"hostname" csv:"-"`
+	InstanceID       string       `yaml:"instance-id" json:"instance-id" csv:"-"` // should be unique for the life of the image
+	Region           string       `yaml:"region" json:"region" csv:"-"`
+	AvailabilityZone string       `yaml:"availability-zone" json:"availability-zone" csv:"-"`
+	ShastaRole       string       `yaml:"shasta-role" json:"shasta-role" csv:"-"` // map to HSM Subrole
+	Aliases          []string     `yaml:"aliases" json:"aliases" csv:"-"`
+	Networks         []NCNNetwork `yaml:"networks" json:"networks" csv:"-"`
+	BmcIP            string       `yaml:"bmc-ip" json:"bmc-ip" csv:"-"`
+	Bond0Mac0        string       `yaml:"bond0-mac0" json:"bond0-mac0" csv:"-"`
+	Bond0Mac1        string       `yaml:"bond0-mac1" json:"bond0-mac1" csv:"-"`
+	Cabinet          string       `yaml:"cabinet" json:"cabinet" csv:"-"` // Use to establish availability zone
 }
 
 // NewBootstrapNCNMetadata is a type that matches the updated ncn_metadata.csv file as
@@ -91,8 +91,24 @@ type LogicalUAN struct {
 	Aliases  []string `yaml:"aliases" json:"aliases" csv:"-"`
 }
 
+// NCNNetwork holds information about networks in the NCN context
+type NCNNetwork struct {
+	NetworkName         string       `json:"network-name"`
+	FullName            string       `json:"full-name"`
+	IPv4Address         netip.Addr   `json:"ipv4-address"`
+	IPv6Address         netip.Addr   `json:"ipv6-address,omitempty"`
+	InterfaceName       string       `json:"net-device"`
+	InterfaceMac        string       `json:"mac-address"`
+	ParentInterfaceName string       `json:"parent-interface-name"`
+	Vlan                int          `json:"vlan"`
+	CIDR4               netip.Prefix `json:"cidr4"`
+	CIDR6               netip.Prefix `json:"cidr6,omitempty"`
+	Gateway4            netip.Addr   `json:"gateway4"`
+	Gateway6            netip.Addr   `json:"gateway6,omitempty"`
+}
+
 // Validate is a validator that checks for a minimum set of info
-func (lncn *LogicalNCN) Validate() error {
+func (lncn *LogicalNCN) Validate() (err error) {
 	xname := lncn.Xname
 
 	// First off verify that this is a valid xname
@@ -120,7 +136,7 @@ func (lncn *LogicalNCN) Validate() error {
 		// TODO Verify the role against the listing of valid SubRoles
 		return fmt.Errorf("empty sub-role")
 	}
-	return nil
+	return err
 }
 
 // GetHostname returns an explicit hostname if possible, otherwise the Xname, otherwise an empty string
@@ -140,58 +156,39 @@ func (lncn *LogicalNCN) Normalize() error {
 }
 
 // GetIP takes in a netname and returns an IP address for that netname
-func (lncn *LogicalNCN) GetIP(netName string) net.IP {
+func (lncn *LogicalNCN) GetIP(netName string) (addr netip.Addr) {
 	for _, inet := range lncn.Networks {
 		if inet.NetworkName == netName {
-			return net.ParseIP(inet.IPAddress)
+			addr = inet.IPv4Address
+			break
 		}
 	}
-	return net.IP{}
+	return addr
 }
 
 // GenerateInstanceID creates an instance-id fit for use in the instance metadata
-func GenerateInstanceID() string {
+func GenerateInstanceID() (id string) {
 	b := make(
 		[]byte,
 		4,
 	)
-	rand.Read(b)
-	return fmt.Sprintf(
+	_, err := rand.Read(b)
+	if err != nil {
+		return id
+	}
+	id = fmt.Sprintf(
 		"i-%X",
 		b,
 	)
-}
-
-// NCNNetwork holds information about networks in the NCN context
-type NCNNetwork struct {
-	NetworkName         string `json:"network-name"`
-	FullName            string `json:"full-name"`
-	IPAddress           string `json:"ip-address"`
-	InterfaceName       string `json:"net-device"`
-	InterfaceMac        string `json:"mac-address"`
-	ParentInterfaceName string `json:"parent-interface-name"`
-	Vlan                int    `json:"vlan"`
-	CIDR                string `json:"cidr"`
-	Mask                string `json:"mask"`
-	Gateway             net.IP `json:"gateway"`
-}
-
-// NCNInterface holds information for all MAC addresses in all NCNs. CSV definitions are the lshw fields
-type NCNInterface struct {
-	InterfaceType string `json:"product" csv:"product"`
-	PCIAddress    string `json:"pci-address" csv:"bus info"`
-	DeviceName    string `json:"device-name" csv:"logical name"`
-	MacAddress    string `json:"mac-address" csv:"serial"`
-	IPAddress     string `json:"ip-address" csv:"_"`
-	Usage         string `json:"usage" csv:"-"`
+	return id
 }
 
 // ReadNodeCSV parses a CSV file into a list of NCN_bootstrap nodes for use by the installer
 func ReadNodeCSV(filename string) (
 	[]*LogicalNCN, error,
 ) {
-	nodes := []*LogicalNCN{}
-	newNodes := []*NewBootstrapNCNMetadata{}
+	var nodes []*LogicalNCN
+	var newNodes []*NewBootstrapNCNMetadata
 
 	ncnMetadataFile, err := os.OpenFile(
 		filename,
@@ -209,7 +206,6 @@ func ReadNodeCSV(filename string) (
 	)
 	if newErr == nil {
 		for _, node := range newNodes {
-			// log.Println("Appending ", node)
 			nodes = append(
 				nodes,
 				&LogicalNCN{
@@ -226,7 +222,6 @@ func ReadNodeCSV(filename string) (
 		return nodes, nil
 	}
 
-	// Be Kind Rewind https://www.imdb.com/title/tt0799934/
 	ncnMetadataFile.Seek(
 		0,
 		io.SeekStart,
