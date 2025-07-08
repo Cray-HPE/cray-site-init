@@ -27,6 +27,7 @@ package shcd
 import (
 	"encoding/csv"
 	"errors"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -43,16 +44,16 @@ func TestCreateHMNConnections(t *testing.T) {
 	t.Parallel()
 	shcdFile, err := ioutil.ReadFile("../../../../testdata/fixtures/valid_shcd.json")
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 	shcd, err := shcd.ParseSHCD(shcdFile)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 	// Create hmn_connections.json
 	err = createHMNSeed(&shcd)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 	defer syscall.Unlink(
 		filepath.Join(
@@ -110,7 +111,7 @@ func TestCreateHMNConnections(t *testing.T) {
 func TestCreateSwitchMetadata(t *testing.T) {
 	jsonFilePath := "../../../../testdata/fixtures/valid_shcd.json"
 	// Open the file without validating it since we know it is valid
-	shcdFile, err := ioutil.ReadFile(jsonFilePath)
+	shcdFile, err := os.ReadFile(jsonFilePath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -400,7 +401,7 @@ func TestCreateNCNMetadata(t *testing.T) {
 func TestCreateApplicationNodeConfig(t *testing.T) {
 	t.Parallel()
 	// Open the file without validating it since we know it is valid
-	shcdFile, err := ioutil.ReadFile("../../../../testdata/fixtures/odin_valid_ccj.json")
+	shcdFile, err := os.ReadFile("../../../../testdata/fixtures/odin_valid_ccj.json")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -435,7 +436,7 @@ func TestCreateApplicationNodeConfig(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// Read the yaml and validate it's contents
+	// Read the yaml and validate its contents
 	ancGenerated, err := os.Open(
 		filepath.Join(
 			".",
@@ -458,11 +459,11 @@ func TestCreateApplicationNodeConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer ancExpected.Close()
-	ancActual, err := ioutil.ReadAll(ancGenerated)
+	ancActual, err := io.ReadAll(ancGenerated)
 	if err != nil {
 		t.Fatal(err)
 	}
-	appNodeConfig, err := ioutil.ReadAll(ancExpected)
+	appNodeConfig, err := io.ReadAll(ancExpected)
 	if err != nil {
 		t.Fatal(err)
 	}

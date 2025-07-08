@@ -32,7 +32,9 @@ import (
 
 // EncodeYAML encodes object to writer
 func EncodeYAML(f io.Writer, v interface{}) error {
-	return yaml.NewEncoder(f).Encode(v)
+	newEncoder := yaml.NewEncoder(f)
+	newEncoder.SetIndent(2)
+	return newEncoder.Encode(v)
 }
 
 // DecodeYAML decodes object from reader

@@ -38,6 +38,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/Cray-HPE/cray-site-init/internal/files"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
@@ -649,19 +650,10 @@ func createANCSeed(topology []shcd.ID) error {
 			&aliases,
 		},
 	}
-	ancFile, err := os.Create(ApplicationNodeConfig)
-	if err != nil {
-		return err
-	}
-	defer ancFile.Close()
-	_, err = ancFile.WriteString("---\n")
-	if err != nil {
-		return err
-	}
-	e := yaml.NewEncoder(ancFile)
-	defer e.Close()
-	e.SetIndent(4)
-	err = e.Encode(ancYaml)
+	err := files.WriteYAMLConfig(
+		ApplicationNodeConfig,
+		ancYaml,
+	)
 	if err != nil {
 		return err
 	}
