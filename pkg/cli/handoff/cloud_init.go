@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2025 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -36,12 +36,6 @@ import (
 )
 
 var ciData bssTypes.CloudInit
-
-// "raw" to distiguish it from the purely string-based paramTuple used elsewhere
-type rawParamTuple struct {
-	key   string
-	value interface{}
-}
 
 // NewHandoffCloudInitCommand creates the bss-update-cloud-init subcommand.
 func NewHandoffCloudInitCommand() *cobra.Command {

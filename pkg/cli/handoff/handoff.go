@@ -35,7 +35,6 @@ import (
 	"github.com/Cray-HPE/cray-site-init/pkg/csm"
 	"github.com/Cray-HPE/cray-site-init/pkg/csm/hms/smd"
 	"github.com/Cray-HPE/hms-bss/pkg/bssTypes"
-	hmsS3 "github.com/Cray-HPE/hms-s3"
 	slsClient "github.com/Cray-HPE/hms-sls/v2/pkg/sls-client"
 	slsCommon "github.com/Cray-HPE/hms-sls/v2/pkg/sls-common"
 	"github.com/spf13/cobra"
@@ -67,17 +66,10 @@ var (
 	limitToXnames  []string
 	userDataJSON   string
 
-	desiredKubernetesVersion string
-	desiredCephVersion       string
-
 	bssAPI *bss.UtilsClient
 	slsAPI *slsClient.SLSClient
 
 	verboseLogging bool
-
-	s3Client *hmsS3.S3Client
-
-	s3SecretName string
 )
 
 // NewCommand creates the handoff command.
