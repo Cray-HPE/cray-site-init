@@ -32,5 +32,5 @@ echo "Differences since ${PREV_RELEASE}..."
 echo "$THIS_VER"
 echo "-----------------------"
 
-git log --no-merges "${PREV_RELEASE}..${THIS_VER}" --oneline --no-decorate | \
-    awk '{print "- " substr($0, index($0, $2))}'
+git log --no-merges "${PREV_RELEASE}..${THIS_VER}" --oneline --no-decorate \
+  | awk '{print "- " substr($0, index($0, $2))}'

@@ -32,10 +32,8 @@ dev_size=0
 usb=""
 iso_file=""
 
-
-
-usage () {
-    cat << EOF
+usage() {
+  cat << EOF
 Usage $name USB-DEVICE ISO-FILE [COW-SIZE]
 
 where:
@@ -50,84 +48,83 @@ where:
 EOF
 }
 
-error () {
-    mesg ERROR "$@"
+error() {
+  mesg ERROR "$@"
 }
 
-warning () {
-    mesg WARNING "$@"
+warning() {
+  mesg WARNING "$@"
 }
 
-info () {
-    mesg INFO "$@"
+info() {
+  mesg INFO "$@"
 }
 
-mesg () {
-    LEVEL=$1
-    shift 1
-    echo "$LEVEL: $*"
+mesg() {
+  LEVEL=$1
+  shift 1
+  echo "$LEVEL: $*"
 }
 
-create_partition () {
-    local part=$1
-    local label=$2
-    local dev=$3
-    local start=$4
-    local size=$5
+create_partition() {
+  local part=$1
+  local label=$2
+  local dev=$3
+  local start=$4
+  local size=$5
 
-    local dev_part=${dev}${part}
-    local end_num=0
+  local dev_part=${dev}${part}
+  local end_num=0
 
+  if [[ $size -gt 0 ]]; then
+    # Use specified size
+    ((end_num = start + size))
+  else
+    # Use all remaining space on device
+    ((end_num = dev_size - 1))
+  fi
 
-    if [[ $size -gt 0 ]]; then
-        # Use specified size
-        ((end_num=start+size))
-    else
-        # Use all remaining space on device
-        ((end_num=dev_size - 1 ))
-    fi
+  if [[ $end_num -ge $dev_size ]]; then
+    error "Not enough space to create ${dev_part} of size {$size}MB"
+    exit 1
+  fi
 
-    if [[ $end_num -ge $dev_size ]]; then
-        error "Not enough space to create ${dev_part} of size {$size}MB"
-        exit 1
-    fi
+  info "Creating partition ${dev_part} for ${label} data: ${start}MB to ${end_num}MB"
+  parted --wipesignatures -m --align=opt -s $dev unit MB mkpart primary ext4 ${start}MB ${end_num}MB
+  [[ $? -ne 0 ]] && error "Failed to create partition ${dev_part}" && exit 1
 
-    info "Creating partition ${dev_part} for ${label} data: ${start}MB to ${end_num}MB"
-    parted --wipesignatures -m --align=opt -s $dev unit MB mkpart primary ext4 ${start}MB ${end_num}MB
-    [[ $? -ne 0 ]] && error "Failed to create partition ${dev_part}" && exit 1
+  # Wait for the partitioning and device file creation to complete.
+  # Spin until file command is successful or too many atttempts.
+  retcode=1
+  tries=5
+  while [[ $retcode -ne 0 ]]; do
+    file ${dev_part} > /dev/null
+    retcode=$?
+    ((tries--))
+    [[ $tries -eq 0 ]] && error "Failed to access partition ${dev_part}." && exit 1
+    info "Waiting on ${dev_part} creation to complete"
+    sleep 1
+  done
 
-    # Wait for the partitioning and device file creation to complete.
-    # Spin until file command is successful or too many atttempts.
-    retcode=1
-    tries=5
-    while [[ $retcode -ne 0 ]]; do
-        file ${dev_part} > /dev/null
-        retcode=$?
-        ((tries--))
-        [[ $tries -eq 0 ]] && error "Failed to access partition ${dev_part}." && exit 1
-        info "Waiting on ${dev_part} creation to complete"
-        sleep 1
+  info "Making ext4 filesystem on partition ${dev_part}"
+  mke2fs -L ${label} -t ext4 ${dev_part}
+  [[ $? -ne 0 ]] && error "Failed to make filesystem on ${dev_part}" && exit 1
+}
+
+unmount_partitions() {
+  local dev=$1
+
+  # Check for device partitions that are mounted
+  readarray -t mount_list < <(mount | egrep "${dev}[0-9]+" | awk '{print $1,$3}')
+  if [[ ${#mount_list[@]} != 0 ]]; then
+    echo "The following partition on ${dev} are mounted:"
+    #shellcheck disable=SC2068
+    for i in ${!mount_list[@]}; do
+      echo "    ${mount_list[$i]}"
     done
-
-    info "Making ext4 filesystem on partition ${dev_part}"
-    mke2fs -L ${label} -t ext4 ${dev_part}
-    [[ $? -ne 0 ]] && error "Failed to make filesystem on ${dev_part}" && exit 1
-}
-
-unmount_partitions () {
-    local dev=$1
-
-    # Check for device partitions that are mounted
-    readarray -t mount_list < <(mount | egrep "${dev}[0-9]+" | awk '{print $1,$3}')
-    if [[ ${#mount_list[@]} != 0 ]]; then
-        echo "The following partition on ${dev} are mounted:"
-        #shellcheck disable=SC2068
-        for i in ${!mount_list[@]}; do
-            echo "    ${mount_list[$i]}"
-        done
-        error "Please unmount before attempting to run this format script again."
-        exit 5
-    fi
+    error "Please unmount before attempting to run this format script again."
+    exit 5
+  fi
 }
 
 [[ $# -lt 2 ]] && usage && exit 1
@@ -137,27 +134,26 @@ shift 1
 iso_file=$1
 shift 1
 if [[ $# -eq 0 ]]; then
-    cow_size=500
+  cow_size=500
 else
-    cow_size=$1
-    shift 1
+  cow_size=$1
+  shift 1
 fi
 
 # Validate the cow size is an integer > 1
 if [[ $cow_size =~ [^0-9] ]]; then
-    error "COW partition size was not specified as a number."
+  error "COW partition size was not specified as a number."
+  echo ""
+  usage
+  exit 1
+else
+  if [[ $cow_size -lt 1 ]]; then
+    error "COW partition must be at least 1MB in size."
     echo ""
     usage
     exit 1
-else
-    if [[ $cow_size -lt 1 ]]; then
-        error "COW partition must be at least 1MB in size."
-        echo ""
-        usage
-        exit 1
-    fi
+  fi
 fi
-
 
 info "USB-DEVICE: $usb"
 info "ISO-FILE:   $iso_file"
@@ -166,14 +162,14 @@ info "COW-SIZE:   ${cow_size}MB"
 # Check to ensure the device exists
 disk=${usb##*/}
 if [[ $(lsblk | egrep "^${disk} " | wc -l) == 0 ]]; then
-    error "Device ${usb} not found via lsblk."
-    exit 1
+  error "Device ${usb} not found via lsblk."
+  exit 1
 fi
 
 # check to ensure the ISO file exists
-if [[ ! -r "$iso_file" ]]; then
-    error "File ${iso_file} does not exist or is not readable."
-    exit 1
+if [[ ! -r $iso_file ]]; then
+  error "File ${iso_file} does not exist or is not readable."
+  exit 1
 fi
 
 unmount_partitions $usb
@@ -209,35 +205,34 @@ end_num=0
 part_num=0
 for i in "${!parted_line[@]}"; do
 
-    # Parse the line into fields
-    IFS=":" read -r -a fields <<< ${parted_line[$i]}
+  # Parse the line into fields
+  IFS=":" read -r -a fields <<< ${parted_line[$i]}
 
-    # Line beginning with USB device name gives total size of drive
-    if [[ "${fields[0]}" == "${usb}" ]]; then
-        # Get disk dev size
-        dev_size=${fields[1]%%MB*}
+  # Line beginning with USB device name gives total size of drive
+  if [[ ${fields[0]} == "${usb}" ]]; then
+    # Get disk dev size
+    dev_size=${fields[1]%%MB*}
 
+  # Error if three partitions found, no space for cow
+  # and install data partitions
+  elif [[ ${fields[0]} == 3 ]]; then
+    error "Found 3 partitions, no partition left for install data"
+    exit 1
 
-    # Error if three partitions found, no space for cow
-    # and install data partitions
-    elif [[ ${fields[0]} == 3 ]]; then
-        error "Found 3 partitions, no partition left for install data"
-        exit 1
+  # Find end of each existing partition, install data partition will
+  # begin after the end of the last partition.
+  elif [[ ${fields[0]} == [12] ]]; then
 
-    # Find end of each existing partition, install data partition will
-    # begin after the end of the last partition.
-    elif [[ ${fields[0]} == [12] ]]; then
+    # Get end of partition
+    start_num=${fields[2]%%MB*}
 
-        # Get end of partition
-        start_num=${fields[2]%%MB*}
+    # Start partition after end of last found partition
+    ((start_num++))
 
-        # Start partition after end of last found partition
-        ((start_num++))
-
-        # Track what number next partition will be
-        part_num=${fields[0]}
-        ((part_num++))
-    fi
+    # Track what number next partition will be
+    part_num=${fields[0]}
+    ((part_num++))
+  fi
 done
 
 # Create cow partition for liveCD
@@ -248,15 +243,15 @@ mount ${usb}3 $temp_mount
 LABEL=$(blkid -s LABEL -o value ${usb}1)
 USB_ISO_UUID=$(blkid -s UUID -o value /dev/disk/by-label/$LABEL)
 mkdir -v -m 0755 -p \
-    "${temp_mount}/LiveOS/overlay-${LABEL}-${USB_ISO_UUID}" \
-    "${temp_mount}//LiveOS/overlay-${LABEL}-${USB_ISO_UUID}/../ovlwork"
+  "${temp_mount}/LiveOS/overlay-${LABEL}-${USB_ISO_UUID}" \
+  "${temp_mount}//LiveOS/overlay-${LABEL}-${USB_ISO_UUID}/../ovlwork"
 umount $temp_mount
 rmdir $temp_mount
 
 # Create the install data partition for configuration data using
 # remaining space
 ((part_num++))
-((start_num=start_num+cow_size+1))
+((start_num = start_num + cow_size + 1))
 create_partition $part_num "PITDATA" $usb $start_num 0
 
 info "Partition table for $usb"
