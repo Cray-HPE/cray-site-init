@@ -1,30 +1,23 @@
 ---
 date: 2025-07-10T15:00:19-05:00
-title: "csi pit validate"
+title: "csi patch pit"
 layout: default
 ---
-## csi pit validate
+## csi patch pit
 
-Runs unit tests
+Patch aspects of the Pre-Install Toolkit (PIT) environment.
 
 ### Synopsis
 
-Runs unit tests and validates a working livecd and NCN deployment.
 
-```
-csi pit validate [flags]
-```
+Patch commands targeting the Pre-Install Toolkit (PIT) environment's generated data files or services
+
 
 ### Options
 
 ```
-  -C, --ceph                  Validate that Ceph is working
-  -h, --help                  help for validate
-  -k, --k8s                   Validate that Kubernetes is working
-  -l, --livecd-preflight      Run LiveCD pre-flight tests
-  -p, --livecd-provisioning   Run LiveCD provisioning tests
-  -n, --ncn-preflight         Run NCN pre-flight tests
-      --postgres              Validate that Postgres clusters are healthy
+      --cloud-init-seed-file string   Path to cloud-init metadata seed file
+  -h, --help                          help for pit
 ```
 
 ### Options inherited from parent commands
@@ -39,5 +32,7 @@ csi pit validate [flags]
 
 ### SEE ALSO
 
-* [csi pit](/commands/csi_pit/)	 - Manipulate or Create a LiveCD (Pre-Install Toolkit)
+* [csi patch](/commands/csi_patch/)	 - Patch commands for modifying system contexts.
+* [csi patch pit ca](/commands/csi_patch_pit_ca/)	 - Patch CA certificates into the PIT's cloud-init meta-data.
+* [csi patch pit packages](/commands/csi_patch_pit_packages/)	 - Patch packages and repositories into the PIT's cloud-init meta-data.
 

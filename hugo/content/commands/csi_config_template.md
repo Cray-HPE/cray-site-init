@@ -1,30 +1,20 @@
 ---
 date: 2025-07-10T15:00:19-05:00
-title: "csi pit validate"
+title: "csi config template"
 layout: default
 ---
-## csi pit validate
+## csi config template
 
-Runs unit tests
+Process file templates
 
 ### Synopsis
 
-Runs unit tests and validates a working livecd and NCN deployment.
-
-```
-csi pit validate [flags]
-```
+An alternative to the initialize sub-command that outputs only requested templated files to disk.
 
 ### Options
 
 ```
-  -C, --ceph                  Validate that Ceph is working
-  -h, --help                  help for validate
-  -k, --k8s                   Validate that Kubernetes is working
-  -l, --livecd-preflight      Run LiveCD pre-flight tests
-  -p, --livecd-provisioning   Run LiveCD provisioning tests
-  -n, --ncn-preflight         Run NCN pre-flight tests
-      --postgres              Validate that Postgres clusters are healthy
+  -h, --help   help for template
 ```
 
 ### Options inherited from parent commands
@@ -39,5 +29,6 @@ csi pit validate [flags]
 
 ### SEE ALSO
 
-* [csi pit](/commands/csi_pit/)	 - Manipulate or Create a LiveCD (Pre-Install Toolkit)
+* [csi config](/commands/csi_config/)	 - HPC configuration
+* [csi config template cloud-init](/commands/csi_config_template_cloud-init/)	 - Process cloud-init templates
 

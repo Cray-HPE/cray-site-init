@@ -1,30 +1,22 @@
 ---
 date: 2025-07-10T15:00:19-05:00
-title: "csi pit validate"
+title: "csi patch csm"
 layout: default
 ---
-## csi pit validate
+## csi patch csm
 
-Runs unit tests
+Patch aspects of Cray System Management (CSM).
 
 ### Synopsis
 
-Runs unit tests and validates a working livecd and NCN deployment.
 
-```
-csi pit validate [flags]
-```
+Patch commands targeting the Cray System Management's' (CSM) runtime.
+
 
 ### Options
 
 ```
-  -C, --ceph                  Validate that Ceph is working
-  -h, --help                  help for validate
-  -k, --k8s                   Validate that Kubernetes is working
-  -l, --livecd-preflight      Run LiveCD pre-flight tests
-  -p, --livecd-provisioning   Run LiveCD provisioning tests
-  -n, --ncn-preflight         Run NCN pre-flight tests
-      --postgres              Validate that Postgres clusters are healthy
+  -h, --help   help for csm
 ```
 
 ### Options inherited from parent commands
@@ -39,5 +31,6 @@ csi pit validate [flags]
 
 ### SEE ALSO
 
-* [csi pit](/commands/csi_pit/)	 - Manipulate or Create a LiveCD (Pre-Install Toolkit)
+* [csi patch](/commands/csi_patch/)	 - Patch commands for modifying system contexts.
+* [csi patch csm ipv6](/commands/csi_patch_csm_ipv6/)	 - Retroactively adds IPv6 data to CSM.
 
