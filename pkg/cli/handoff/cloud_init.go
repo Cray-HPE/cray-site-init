@@ -26,9 +26,9 @@ package handoff
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/Cray-HPE/hms-bss/pkg/bssTypes"
@@ -50,7 +50,7 @@ func NewHandoffCloudInitCommand() *cobra.Command {
 			log.Println("Updating NCN cloud-init parameters...")
 			// Are we reading json from a file or the cli?
 			if userDataJSON != "" {
-				userDataFile, _ := ioutil.ReadFile(userDataJSON)
+				userDataFile, _ := os.ReadFile(userDataJSON)
 				err := json.Unmarshal(
 					userDataFile,
 					&ciData,
@@ -112,19 +112,20 @@ func getFinalJSONObject(
 	)
 
 	var object map[string]interface{}
-	if keyParts[0] == "user-data" {
+	switch keyParts[0] {
+		case "user-data":
 		if bssEntry.CloudInit.UserData == nil {
 			bssEntry.CloudInit.UserData = make(map[string]interface{})
 		}
 
 		object = bssEntry.CloudInit.UserData
-	} else if keyParts[0] == "meta-data" {
+	case "meta-data":
 		if bssEntry.CloudInit.MetaData == nil {
 			bssEntry.CloudInit.MetaData = make(map[string]interface{})
 		}
 
 		object = bssEntry.CloudInit.MetaData
-	} else {
+	default:
 		log.Fatalf(
 			"Unknown root key: %s",
 			keyParts[0],
