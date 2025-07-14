@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2025 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -29,7 +29,7 @@ import (
 	"net"
 	"testing"
 
-	slsCommon "github.com/Cray-HPE/hms-sls/pkg/sls-common"
+	slsCommon "github.com/Cray-HPE/hms-sls/v2/pkg/sls-common"
 
 	"github.com/stretchr/testify/suite"
 
@@ -221,8 +221,8 @@ func (suite *GenSLSTestSuite) TestConvertManagementSwitchToSLS_InvalidSwitchType
 }
 
 func (suite *GenSLSTestSuite) TestExtractSwitchesfromReservations() {
-	subnet := &networking.IPV4Subnet{
-		IPReservations: []networking.IPReservation{
+	subnet := &slsCommon.IPSubnet{
+		IPReservations: []slsCommon.IPReservation{
 			{
 				Comment:   "x3000c0w14",
 				Name:      "sw-leaf-bmc-001",

@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2025 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -40,7 +40,7 @@ func NewCommand() *cobra.Command {
 	c := &cobra.Command{
 		Use:               "version",
 		DisableAutoGenTag: true,
-		Short:             "version",
+		Short:             "Displays the program's version fingerprint.",
 		Run: func(c *cobra.Command, args []string) {
 			v := viper.GetViper()
 			v.BindPFlags(c.Flags())

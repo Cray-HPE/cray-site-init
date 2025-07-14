@@ -1,38 +1,37 @@
 ---
-date: 2024-06-06T09:39:24-05:00
+date: 2025-07-10T15:00:19-05:00
 title: "csi patch"
 layout: default
 ---
 ## csi patch
 
-Apply patch operations
+Patch commands for modifying system contexts.
 
 ### Synopsis
 
 
-Runs patch operations against the CRAY.
+Commands for patching data and/or services in various system contexts.
 
-
-```
-csi patch [flags]
-```
 
 ### Options
 
 ```
-      --cloud-init-seed-file string   Path to cloud-init metadata seed file
-  -h, --help                          help for patch
+  -h, --help   help for patch
 ```
 
 ### Options inherited from parent commands
 
 ```
-  -c, --config string   CSI config file
+  -c, --config string            Path to a CSI config file (default is $PWD/system_config.yaml).
+      --csm-api-url string       (for use against a completed CSM installation) The URL to a CSM API. (default "https://api-gw-service-nmn.local")
+  -i, --input-dir string         A directory to read input files from (--config will take precedence, but only for system_config.yaml).
+      --k8s-namespace string     (for use against a completed CSM installation) The namespace that the --k8s-secret-name belongs to. (default "default")
+      --k8s-secret-name string   (for use against a completed CSM installation) The name of the Kubernetes secret to look for an OpenID credential in for CSM APIs (a.k.a. TOKEN=). (default "admin-client-auth")
 ```
 
 ### SEE ALSO
 
-* [csi](/commands/csi/)	 - Cray Site Init. For new sites, re-installs, and upgrades.
-* [csi patch ca](/commands/csi_patch_ca/)	 - Patch cloud-init metadata with CA certs
-* [csi patch packages](/commands/csi_patch_packages/)	 - Patch cloud-init metadata with repositories and packages
+* [csi](/commands/csi/)	 - Cray Site Initializer (csi)
+* [csi patch csm](/commands/csi_patch_csm/)	 - Patch aspects of Cray System Management (CSM).
+* [csi patch pit](/commands/csi_patch_pit/)	 - Patch aspects of the Pre-Install Toolkit (PIT) environment.
 

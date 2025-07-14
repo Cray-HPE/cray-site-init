@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2024 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2024-2025 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -27,10 +27,15 @@ package csi
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"path/filepath"
 	"reflect"
 	"strings"
+	"time"
 
+	"github.com/Cray-HPE/cray-site-init/pkg/cli"
+	"github.com/Cray-HPE/cray-site-init/pkg/cli/config/initialize"
+	"github.com/Cray-HPE/cray-site-init/pkg/csm"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -45,28 +50,30 @@ import (
 )
 
 const (
-	defaultConfigFilename      = "system_config"
+	DefaultConfigFilename      = "system_config"
 	envPrefix                  = "csi"
 	replaceHyphenWithCamelCase = false
+	DefaultConfigSuffix        = "yaml"
 )
 
-var cfgFile string
+var (
+	cfgFile  string
+	inputDir string
+)
 
 // NewCommand represents the base command.
 func NewCommand() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "csi",
-		Short: "Cray Site Init. For new sites, re-installs, and upgrades.",
+		Short: "Cray Site Initializer (csi)",
 		Long: `
-	CSI creates, validates, installs, and upgrades a CRAY supercomputer or HPCaaS platform.
-
-	It supports initializing a set of configuration files from a variety of inputs including
-	flags and Shasta 1.3 configuration files. It can also validate that a set of
-	configuration details are accurate before attempting to use them for installation.
-
-	Configs aside, this will prepare USB sticks for deploying on baremetal or for recovery and
-	triage.`,
+Tooling for the initial configuration and deployment of a Cray-HPE
+Exascale High-Performance Computer (HPC) or an HPCaaS (e.g. VShasta).
+`,
 		PersistentPreRunE: func(c *cobra.Command, args []string) error {
+			cli.Runtime = time.Now().UTC()
+			cli.RuntimeTimestamp = cli.Runtime.Format(time.RFC3339Nano)
+			cli.RuntimeTimestampShort = cli.Runtime.Format("20060102150405")
 			return initializeConfig(c)
 		},
 	}
@@ -75,9 +82,47 @@ func NewCommand() *cobra.Command {
 		"config",
 		"c",
 		"",
-		"CSI config file",
+		fmt.Sprintf(
+			"Path to a CSI config file (default is $PWD/%s.%s).",
+			DefaultConfigFilename,
+			DefaultConfigSuffix,
+		),
 	)
 	_ = c.MarkPersistentFlagFilename("config")
+
+	c.PersistentFlags().StringVarP(
+		&inputDir,
+		"input-dir",
+		"i",
+		"",
+		fmt.Sprintf(
+			"A directory to read input files from (--config will take precedence, but only for %s.%s).",
+			DefaultConfigFilename,
+			DefaultConfigSuffix,
+		),
+	)
+	_ = c.MarkPersistentFlagFilename("input-dir")
+
+	c.PersistentFlags().StringVar(
+		&csm.AdminTokenSecretName,
+		"k8s-secret-name",
+		csm.DefaultAdminTokenSecretName,
+		`(for use against a completed CSM installation) The name of the Kubernetes secret to look for an OpenID credential in for CSM APIs (a.k.a. TOKEN=).`,
+	)
+
+	c.PersistentFlags().StringVar(
+		&csm.AdminTokenSecretNamespace,
+		"k8s-namespace",
+		csm.DefaultAdminTokenSecretNamespace,
+		"(for use against a completed CSM installation) The namespace that the --k8s-secret-name belongs to.",
+	)
+
+	c.PersistentFlags().StringVar(
+		&csm.BaseAPIURL,
+		"csm-api-url",
+		csm.DefaultBaseAPIURL,
+		"(for use against a completed CSM installation) The URL to a CSM API.",
+	)
 
 	c.AddCommand(
 		automation.NewCommand(),
@@ -98,14 +143,26 @@ func initializeConfig(c *cobra.Command) error {
 	configFile := c.Flag("config").Value.String()
 	if configFile == "" {
 		// Set the base name of the config file, without the file extension.
-		v.SetConfigName(defaultConfigFilename)
-
+		v.SetConfigName(DefaultConfigFilename)
+		v.SetConfigType(DefaultConfigSuffix)
 		// Set as many paths as you like where viper should look for the
 		// config file. We are only looking in the current working directory.
 		v.AddConfigPath(".")
+		cli.ConfigFilename = fmt.Sprintf(
+			"%s.%s",
+			DefaultConfigFilename,
+			DefaultConfigSuffix,
+		)
 	} else {
 		configFileAbs, _ := filepath.Abs(configFile)
 		v.SetConfigFile(configFileAbs)
+		configFileSuffix := filepath.Ext(configFileAbs)
+		configFileSuffix = strings.TrimPrefix(
+			configFileSuffix,
+			".",
+		)
+		v.SetConfigType(filepath.Ext(configFileSuffix))
+		cli.ConfigFilename = filepath.Base(configFileAbs)
 	}
 
 	// Attempt to read the config file, gracefully ignoring errors
@@ -145,7 +202,6 @@ func initializeConfig(c *cobra.Command) error {
 		c,
 		v,
 	)
-
 	return nil
 }
 
@@ -153,79 +209,161 @@ func initializeConfig(c *cobra.Command) error {
 func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 	cmd.Flags().VisitAll(
 		func(f *pflag.Flag) {
-
-			// Determine the naming convention of the flags when represented in the config file
-			configName := f.Name
-			// If using camelCase in the config file, replace hyphens with a camelCased string.
-			// Since viper does case-insensitive comparisons, we don't need to bother fixing the case, and only need to remove the hyphens.
-			if replaceHyphenWithCamelCase {
-				configName = strings.ReplaceAll(
-					f.Name,
-					"-",
-					"",
-				)
-			}
-
-			// Apply the viper config value to the flag when the flag is not set and viper has a value
-			if !f.Changed && v.IsSet(configName) {
-
-				val := v.Get(configName)
-				kind := reflect.TypeOf(val).Kind()
-
-				if kind == reflect.Slice {
-
-					// Cast Slices to real Slice types.
-					values := reflect.ValueOf(val).Interface().([]interface{})
-					var newSlice []string
-					for _, v := range values {
-						newSlice = append(
-							newSlice,
-							v.(string),
-						)
-					}
-					cmd.Flags().Set(
-						f.Name,
-						strings.Join(
-							newSlice,
-							",",
-						),
-					)
-
-				} else if kind == reflect.String || kind == reflect.Int || kind == reflect.Bool || kind == reflect.Float32 || kind == reflect.Float64 {
-					cmd.Flags().Set(
-						f.Name,
-						fmt.Sprintf(
-							"%v",
-							val,
-						),
-					)
-				} else {
-					fmt.Printf(
-						"No handling for type %s from %s\nAssuming it can be handled as a string.\n",
-						kind,
-						f.Name,
-					)
-					cmd.Flags().Set(
-						f.Name,
-						fmt.Sprintf(
-							"%v",
-							val,
-						),
-					)
-				}
-			}
+			mergeFlags(
+				cmd,
+				v,
+				f,
+			)
 		},
 	)
 }
 
-// stringInSlice is shorthand
-func stringInSlice(a string, list []string) bool {
-	for _, b := range list {
-		if b == a {
-			return true
+func mergeFlags(cmd *cobra.Command, v *viper.Viper, f *pflag.Flag) {
+
+	// Determine the naming convention of the flags when represented in the config file
+	flagName := f.Name
+
+	// If using camelCase in the config file, replace hyphens with a camelCased string.
+	// Since viper does case-insensitive comparisons, we don't need to bother fixing the case, and only need to remove the hyphens.
+	if replaceHyphenWithCamelCase {
+		flagName = strings.ReplaceAll(
+			f.Name,
+			"-",
+			"",
+		)
+	}
+
+	// Cobra won't print the deprecation warning if the flag comes in through a config file. Here, we'll force print
+	// the deprecation message for a flag (if it exists) when we're reading config files.
+	if f.Deprecated != "" {
+		// Only notify the user if the deprecated flag exists in a Viper config. Cobra will automatically notify them
+		// for any usage on the CLi.
+		if v.IsSet(flagName) {
+			fmt.Printf(
+				"Flag --%s has been deprecated, %s\n",
+				flagName,
+				f.Deprecated,
+			)
+		}
+
+		// The deprecated message must have the new flag in it somewhere for this to work.
+		var newFlag *pflag.Flag
+		for _, word := range strings.Split(
+			f.Deprecated,
+			" ",
+		) {
+			// Trim any leading --.
+			poleLess := strings.TrimLeft(
+				word,
+				"-",
+			)
+			periodLess := strings.TrimRight(
+				poleLess,
+				".",
+			)
+			newFlag = cmd.Flags().Lookup(periodLess)
+			if newFlag != nil {
+				break
+			}
+		}
+		if v.Get(flagName) != nil && v.Get(newFlag.Name) == nil {
+			fmt.Printf(
+				"Updating flag %s\n",
+				newFlag.Name,
+			)
+			// Rewrite the value to update any other aliases.
+			v.Set(
+				flagName,
+				v.Get(flagName),
+			)
+			err := cmd.Flags().Set(
+				newFlag.Name,
+				v.GetString(flagName),
+			)
+			if err != nil {
+				log.Fatalf(
+					"Failed to set non-deprecated flag %s from %s because %v\n",
+					newFlag.Name,
+					flagName,
+					err,
+				)
+			}
+		}
+
+		initialize.DeprecatedKeys = append(
+			initialize.DeprecatedKeys,
+			flagName,
+		)
+		return
+	}
+	// Apply the viper config value to the flag when the flag is not set and viper has a value
+	if !f.Changed && v.IsSet(flagName) {
+		val := v.Get(flagName)
+		kind := reflect.TypeOf(val).Kind()
+		switch kind {
+		case reflect.Slice:
+
+			// Cast Slices to real Slice types.
+			values := reflect.ValueOf(val).Interface().([]interface{})
+			var newSlice []string
+			for _, v := range values {
+				newSlice = append(
+					newSlice,
+					v.(string),
+				)
+			}
+			err := cmd.Flags().Set(
+				f.Name,
+				strings.Join(
+					newSlice,
+					",",
+				),
+			)
+			if err != nil {
+				log.Fatalf(
+					"Failed to parse flag %s because %v",
+					f.Name,
+					err,
+				)
+			}
+
+		case reflect.String, reflect.Int, reflect.Bool, reflect.Float32, reflect.Float64:
+			err := cmd.Flags().Set(
+				f.Name,
+				fmt.Sprintf(
+					"%v",
+					val,
+				),
+			)
+			if err != nil {
+				log.Fatalf(
+					"Failed to parse flag %s because %v",
+					f.Name,
+					err,
+				)
+			}
+		default:
+			fmt.Printf(
+				"No handling for type %s from %s\nAssuming it can be handled as a string.\n",
+				kind,
+				f.Name,
+			)
+			err := cmd.Flags().Set(
+				f.Name,
+				fmt.Sprintf(
+					"%v",
+					val,
+				),
+			)
+			if err != nil {
+				log.Fatalf(
+					"Failed to parse flag %s because %v",
+					f.Name,
+					err,
+				)
+			}
 		}
 	}
-	return false
 }
 
 // ExecuteCommandC runs a cobra command

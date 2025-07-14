@@ -29,7 +29,7 @@ import (
 	"os"
 	"path/filepath"
 
-	csiFiles "github.com/Cray-HPE/cray-site-init/internal/files"
+	"github.com/Cray-HPE/cray-site-init/internal/files"
 	"github.com/spf13/cobra"
 )
 
@@ -92,18 +92,39 @@ func WriteDiskTemplates() {
 	for path, data := range userDataMaps {
 		if cloudInitDir, err := filepath.Abs(filepath.Dir(path)); err == nil {
 			if _, err = os.Stat(cloudInitDir); os.IsNotExist(err) {
-				if err = os.MkdirAll(cloudInitDir, 0755); err != nil {
-					log.Printf("Error creating %s: %v", cloudInitDir, err)
+				if err = os.MkdirAll(
+					cloudInitDir,
+					0755,
+				); err != nil {
+					log.Printf(
+						"Error creating %s: %v",
+						cloudInitDir,
+						err,
+					)
 				}
 			} else if err != nil {
-				log.Printf("%s", err)
+				log.Printf(
+					"%s",
+					err,
+				)
 			}
 		} else {
-			log.Printf("Error getting absolute path for %s: %v", path, err)
+			log.Printf(
+				"Error getting absolute path for %s: %v",
+				path,
+				err,
+			)
 		}
 
-		if err := csiFiles.WriteJSONConfig(path, data); err != nil {
-			log.Printf("Error writing %s: %v", path, err)
+		if err := files.WriteJSONConfig(
+			path,
+			data,
+		); err != nil {
+			log.Printf(
+				"Error writing %s: %v",
+				path,
+				err,
+			)
 		}
 	}
 }

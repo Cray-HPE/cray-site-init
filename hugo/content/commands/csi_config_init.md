@@ -1,5 +1,5 @@
 ---
-date: 2024-06-06T09:39:24-05:00
+date: 2025-07-10T15:00:19-05:00
 title: "csi config init"
 layout: default
 ---
@@ -56,15 +56,19 @@ csi config init [flags]
       --can-dynamic-pool string               Overall IPv4 CIDR for dynamic Customer Access load balancer addresses
       --can-gateway string                    Gateway for NCNs on the CAN (User)
       --can-static-pool string                Overall IPv4 CIDR for static Customer Access load balancer addresses
-      --chn-cidr string                       Overall IPv4 CIDR for all Customer High-Speed subnets
+      --chn-cidr4 string                      Overall IPv4 CIDR for all Customer High-Speed subnets
+      --chn-cidr6 string                      Overall IPv6 CIDR for all Customer High-Speed subnets
       --chn-dynamic-pool string               Overall IPv4 CIDR for dynamic Customer High-Speed load balancer addresses
-      --chn-gateway string                    Gateway for NCNs on the CHN (User)
+      --chn-gateway4 string                   IPv4 Gateway for NCNs on the CHN (User)
+      --chn-gateway6 string                   IPv6 Gateway for NCNs on the CHN (User)
       --chn-static-pool string                Overall IPv4 CIDR for static Customer High-Speed load balancer addresses
       --cmn-bootstrap-vlan int                Bootstrap VLAN for the CMN (default 7)
-      --cmn-cidr string                       Overall IPv4 CIDR for all Customer Management subnets
+      --cmn-cidr4 string                      Overall IPv4 CIDR for all Customer Management subnets
+      --cmn-cidr6 string                      Overall IPv6 CIDR for all Customer Management subnets
       --cmn-dynamic-pool string               Overall IPv4 CIDR for dynamic Customer Management load balancer addresses
       --cmn-external-dns string               IP Address in the cmn-static-pool for the external dns service "site-to-system lookups"
-      --cmn-gateway string                    Gateway for NCNs on the CMN (Administrative/Management)
+      --cmn-gateway4 string                   IPv4 Gateway for NCNs on the CMN (Administrative/Management)
+      --cmn-gateway6 string                   IPv6 Gateway for NCNs on the CMN (Administrative/Management)
       --cmn-static-pool string                Overall IPv4 CIDR for static Customer Management load balancer addresses
       --csm-version string                    Version of CSM being installed (e.g. <major>.<minor> such as "1.5" or "v1.5").
       --first-master-hostname string          Hostname of the first master node (default "ncn-m002")
@@ -78,14 +82,12 @@ csi config init [flags]
       --hmn-rvr-cidr string                   IPv4 CIDR for grouped River Hardware Management subnets (default "10.107.0.0/17")
       --hmn-static-pool string                Overall IPv4 CIDR for static Hardware Management load balancer addresses
       --hsn-cidr string                       Overall IPv4 CIDR for all HSN subnets (default "10.253.0.0/16")
-      --hsn-dynamic-pool string               Overall IPv4 CIDR for dynamic High Speed load balancer addresses
-      --hsn-static-pool string                Overall IPv4 CIDR for static High Speed load balancer addresses
       --install-ncn string                    Hostname of the node to be used for installation (default "ncn-m001")
       --install-ncn-bond-members string       List of devices to use to form a bond on the install ncn (default "p1p1,p1p2")
       --k8s-api-auditing-enabled              Enable the kubernetes auditing API
       --management-net-ips int                Additional number of IP addresses to reserve in each vlan for network equipment
       --mountain-cabinets int                 Number of Mountain Cabinets (default 4)
-      --mtl-cidr string                       Overall IPv4 CIDR for all Provisioning subnets (default "10.1.1.0/16")
+      --mtl-cidr string                       Overall IPv4 CIDR for all Provisioning subnets (default "10.1.0.0/16")
       --ncn-metadata string                   CSV for mapping the mac addresses of the NCNs to their xnames (default "ncn_metadata.csv")
       --ncn-mgmt-node-auditing-enabled        Enable management node auditing
       --nmn-bootstrap-vlan int                Bootstrap VLAN for the NMN (default 2)
@@ -105,7 +107,7 @@ csi config init [flags]
       --secondary-servers string              Comma-separated list of FQDN/IP for all DNS servers to notify when zone changes are made
       --site-dns string                       Site Network DNS Server
       --site-domain string                    Site Domain Name
-      --site-gw string                        Site Network IPv4 Gateway
+      --site-gw string                        Site Network IPv4 Gateway4
       --site-ip string                        Site Network Information in the form ipaddress/prefix like 192.168.1.1/24
       --site-nic string                       Network Interface on install-ncn that will be connected to the site network (default "em1")
       --starting-hill-cabinet int             Starting ID number for Hill Cabinets (default 9000)
@@ -121,11 +123,15 @@ csi config init [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --config string   CSI config file
+  -c, --config string            Path to a CSI config file (default is $PWD/system_config.yaml).
+      --csm-api-url string       (for use against a completed CSM installation) The URL to a CSM API. (default "https://api-gw-service-nmn.local")
+  -i, --input-dir string         A directory to read input files from (--config will take precedence, but only for system_config.yaml).
+      --k8s-namespace string     (for use against a completed CSM installation) The namespace that the --k8s-secret-name belongs to. (default "default")
+      --k8s-secret-name string   (for use against a completed CSM installation) The name of the Kubernetes secret to look for an OpenID credential in for CSM APIs (a.k.a. TOKEN=). (default "admin-client-auth")
 ```
 
 ### SEE ALSO
 
-* [csi config](/commands/csi_config/)	 - Interact with a Shasta config
-* [csi config init empty](/commands/csi_config_init_empty/)	 - Write a empty config file.
+* [csi config](/commands/csi_config/)	 - HPC configuration
+* [csi config init empty](/commands/csi_config_init_empty/)	 - Write an empty config file.
 

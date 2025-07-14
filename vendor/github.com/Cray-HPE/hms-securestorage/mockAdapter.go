@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2019, 2021] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2019-2022] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -39,6 +39,11 @@ type OutputStore struct {
 type MockStore struct {
 	Input  InputStore
 	Output OutputStore
+}
+
+type MockStoreWithData struct {
+	Input  InputStore
+	Output OutputLookup
 }
 
 type InputLookup struct {
@@ -85,6 +90,8 @@ type MockLookupKeys struct {
 type MockAdapter struct {
 	StoreNum       int
 	StoreData      []MockStore
+	StoreWDataNum  int
+	StoreWData     []MockStoreWithData
 	LookupNum      int
 	LookupData     []MockLookup
 	DeleteNum      int
@@ -107,6 +114,21 @@ func (ss *MockAdapter) Store(key string, value interface{}) error {
 	ss.StoreData[i].Input.Key = key
 	ss.StoreData[i].Input.Value = value
 	return ss.StoreData[i].Output.Err
+}
+
+func (ss *MockAdapter) StoreWithData(key string, value interface{}, output interface{}) error {
+	i := ss.StoreWDataNum
+	if len(ss.StoreWData) <= i {
+		return fmt.Errorf("Unexpected call to MockStoreWithData")
+	}
+	ss.StoreWDataNum++
+	ss.StoreWData[i].Input.Key = key
+	ss.StoreWData[i].Input.Value = value
+	err := mapstructure.Decode(ss.StoreWData[i].Output.Output, output)
+	if err != nil {
+		return err
+	}
+	return ss.StoreWData[i].Output.Err
 }
 
 func (ss *MockAdapter) Lookup(key string, output interface{}) error {

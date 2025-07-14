@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [2.3.0] - 2025-04-18
+
+### Fixed
+
+- Drained/closed response bodies in DoHTTPAction() for all edge cases
+- Added APIs to drain/close response/request bodies for all users of hms-base
+- Updated Go to v1.24
+- Updated module dependencies to latest versions
+
 ## [2.2.0] - 2025-01-28
 
 ### Security

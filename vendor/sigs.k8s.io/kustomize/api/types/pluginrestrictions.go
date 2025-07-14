@@ -46,8 +46,6 @@ const (
 type FnPluginLoadingOptions struct {
 	// Allow to run executables
 	EnableExec bool
-	// Allow to run starlark
-	EnableStar bool
 	// Allow container access to network
 	Network     bool
 	NetworkName string
@@ -57,4 +55,6 @@ type FnPluginLoadingOptions struct {
 	Env []string
 	// Run as uid and gid of the command executor
 	AsCurrentUser bool
+	// Run in this working directory
+	WorkingDir string
 }

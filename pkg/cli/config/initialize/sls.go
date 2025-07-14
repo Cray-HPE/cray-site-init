@@ -28,7 +28,7 @@ package initialize
 This package bridges the gap between the SLS view of the CRAY System and one that is useful
 for administrators who are trying to install and upgrade a system. Where possible, we'd like
 to reuse datastructures, but that's not practical, at least initially because of the very
-ways the two tools use the data.
+ways the two tools use the Data.
 
 This is important so we can consume from the dumpstate endpoint of SLS and subsequently
 generate a payload suitable for loadstate without forcing users to interact directly with
@@ -38,11 +38,17 @@ the SLS structure.
 import (
 	"errors"
 	"fmt"
-	"github.com/mitchellh/mapstructure"
 	"log"
 	"regexp"
+	"strings"
 
-	slsCommon "github.com/Cray-HPE/hms-sls/pkg/sls-common"
+	slsInit "github.com/Cray-HPE/cray-site-init/pkg/cli/config/initialize/sls"
+	"github.com/Cray-HPE/cray-site-init/pkg/csm/hms/sls"
+	"github.com/Cray-HPE/cray-site-init/pkg/networking"
+	"github.com/mitchellh/mapstructure"
+	"github.com/spf13/viper"
+
+	slsCommon "github.com/Cray-HPE/hms-sls/v2/pkg/sls-common"
 )
 
 // ExtractUANs pulls the information needed to assign CAN addresses to the UAN xnames
@@ -98,8 +104,6 @@ func ExtractSLSNCNs(sls *slsCommon.SLSState) (
 				return ncns, err
 			}
 			if extra.Role == "Management" {
-				// log.Printf("Adding %v to the list with Parent = %v", key, node.Parent)
-				// log.Printf("Node = %v and Extra = %v", node, extra)
 				mgmtSwitch, port, err := portForXname(
 					sls.Hardware,
 					node.Parent,
@@ -178,7 +182,7 @@ func CabinetForXname(xname string) (
 func GetSLSCabinets(
 	state slsCommon.SLSState, class slsCommon.CabinetType,
 ) []slsCommon.GenericHardware {
-	cabinets := []slsCommon.GenericHardware{}
+	var cabinets []slsCommon.GenericHardware
 	for _, hardware := range state.Hardware {
 		if hardware.Type == slsCommon.Cabinet && hardware.Class == class {
 			cabinets = append(
@@ -189,4 +193,217 @@ func GetSLSCabinets(
 	}
 
 	return cabinets
+}
+
+// GenerateDefaultNetworkConfigs generates a map containing every network that could be used on the system, initialized
+// with default values.
+func GenerateDefaultNetworkConfigs(
+	switches []*networking.ManagementSwitch,
+	logicalNCNs []*LogicalNCN,
+	cabinetDetailList []sls.CabinetGroupDetail,
+) (defaultNetConfigs map[string]slsInit.NetworkLayoutConfiguration) {
+	v := viper.GetViper()
+	var riverCabinetCount, mountainCabinetCount, hillCabinetCount int
+	for _, cab := range cabinetDetailList {
+		switch class, _ := cab.Kind.Class(); class {
+		case slsCommon.ClassRiver:
+			riverCabinetCount += len(cab.CabinetIDs())
+		case slsCommon.ClassMountain:
+			mountainCabinetCount += len(cab.CabinetIDs())
+		case slsCommon.ClassHill:
+			hillCabinetCount += len(cab.CabinetIDs())
+		}
+	}
+	defaultNetConfigs = make(map[string]slsInit.NetworkLayoutConfiguration)
+	// Prepare the network layout configs for generating the networks
+	defaultNetConfigs["BICAN"] = slsInit.GenDefaultBICANConfig(v.GetString("bican-user-network-name"))
+	defaultNetConfigs["CMN"] = slsInit.GenDefaultCMNConfig(
+		len(logicalNCNs),
+		len(switches),
+	)
+	defaultNetConfigs["HMN"] = slsInit.GenDefaultHMNConfig()
+	defaultNetConfigs["HSN"] = slsInit.GenDefaultHSNConfig()
+	defaultNetConfigs["MTL"] = slsInit.GenDefaultMTLConfig()
+	defaultNetConfigs["NMN"] = slsInit.GenDefaultNMNConfig()
+	if v.GetString("bican-user-network-name") == "CAN" || v.GetBool("retain-unused-user-network") {
+		defaultNetConfigs["CAN"] = slsInit.GenDefaultCANConfig()
+	}
+	if v.GetString("bican-user-network-name") == "CHN" || v.GetBool("retain-unused-user-network") {
+		defaultNetConfigs["CHN"] = slsInit.GenDefaultCHNConfig()
+	}
+
+	if defaultNetConfigs["HMN"].GroupNetworksByCabinetType {
+		if mountainCabinetCount > 0 || hillCabinetCount > 0 {
+			tmpHmnMtn := slsInit.GenDefaultHMNConfig()
+			tmpHmnMtn.Template.Name = "HMN_MTN"
+			tmpHmnMtn.Template.FullName = "Mountain Compute Hardware Management Network"
+			tmpHmnMtn.Template.VlanRange = []int16{
+				3000,
+				3999,
+			}
+			tmpHmnMtn.Template.CIDR4 = networking.DefaultHMNMTNString
+			tmpHmnMtn.SubdivideByCabinet = true
+			tmpHmnMtn.IncludeBootstrapDHCP = false
+			tmpHmnMtn.SuperNetHack = false
+			tmpHmnMtn.IncludeNetworkingHardwareSubnet = false
+			defaultNetConfigs["HMN_MTN"] = tmpHmnMtn
+		}
+		if riverCabinetCount > 0 {
+			tmpHmnRvr := slsInit.GenDefaultHMNConfig()
+			tmpHmnRvr.Template.Name = "HMN_RVR"
+			tmpHmnRvr.Template.FullName = "River Compute Hardware Management Network"
+			tmpHmnRvr.Template.VlanRange = []int16{
+				1513,
+				1769,
+			}
+			tmpHmnRvr.Template.CIDR4 = networking.DefaultHMNRVRString
+			tmpHmnRvr.SubdivideByCabinet = true
+			tmpHmnRvr.IncludeBootstrapDHCP = false
+			tmpHmnRvr.SuperNetHack = false
+			tmpHmnRvr.IncludeNetworkingHardwareSubnet = false
+			defaultNetConfigs["HMN_RVR"] = tmpHmnRvr
+		}
+
+	}
+
+	if defaultNetConfigs["NMN"].GroupNetworksByCabinetType {
+		if mountainCabinetCount > 0 || hillCabinetCount > 0 {
+			tmpNmnMtn := slsInit.GenDefaultNMNConfig()
+			tmpNmnMtn.Template.Name = "NMN_MTN"
+			tmpNmnMtn.Template.FullName = "Mountain Compute Node Management Network"
+			tmpNmnMtn.Template.VlanRange = []int16{
+				2000,
+				2999,
+			}
+			tmpNmnMtn.Template.CIDR4 = networking.DefaultNMNMTNString
+			tmpNmnMtn.SubdivideByCabinet = true
+			tmpNmnMtn.IncludeBootstrapDHCP = false
+			tmpNmnMtn.SuperNetHack = false
+			tmpNmnMtn.IncludeNetworkingHardwareSubnet = false
+			tmpNmnMtn.IncludeUAISubnet = false
+			defaultNetConfigs["NMN_MTN"] = tmpNmnMtn
+		}
+		if riverCabinetCount > 0 {
+			tmpNmnRvr := slsInit.GenDefaultNMNConfig()
+			tmpNmnRvr.Template.Name = "NMN_RVR"
+			tmpNmnRvr.Template.FullName = "River Compute Node Management Network"
+			tmpNmnRvr.Template.VlanRange = []int16{
+				1770,
+				1999,
+			}
+			tmpNmnRvr.Template.CIDR4 = networking.DefaultNMNRVRString
+			tmpNmnRvr.SubdivideByCabinet = true
+			tmpNmnRvr.IncludeBootstrapDHCP = false
+			tmpNmnRvr.SuperNetHack = false
+			tmpNmnRvr.IncludeNetworkingHardwareSubnet = false
+			tmpNmnRvr.IncludeUAISubnet = false
+			defaultNetConfigs["NMN_RVR"] = tmpNmnRvr
+		}
+
+	}
+	return defaultNetConfigs
+}
+
+// GenerateNetworkConfigs creates a network configuration map of all networks for the system.
+func GenerateNetworkConfigs(netconfig map[string]slsInit.NetworkLayoutConfiguration) (internalNetConfigs map[string]slsInit.NetworkLayoutConfiguration, err error) {
+	v := viper.GetViper()
+	internalNetConfigs = make(map[string]slsInit.NetworkLayoutConfiguration)
+	for name, layout := range netconfig {
+		myLayout := layout
+
+		// Update with flags
+		normalizedName := strings.ReplaceAll(
+			strings.ToLower(name),
+			"_",
+			"-",
+		)
+		cidr4Key := fmt.Sprintf(
+			"%s-cidr4",
+			normalizedName,
+		)
+		cidrKey := fmt.Sprintf(
+			"%s-cidr",
+			normalizedName,
+		)
+		cidr6Key := fmt.Sprintf(
+			"%s-cidr6",
+			normalizedName,
+		)
+
+		// Handle IPv4 CIDRs, networks with IPv6 will use a different key for their cidr4.
+		if v.IsSet(cidr4Key) {
+			myLayout.Template.CIDR4 = v.GetString(cidr4Key)
+		} else if v.IsSet(cidrKey) {
+			myLayout.Template.CIDR4 = v.GetString(cidrKey)
+		}
+		if v.IsSet(cidr6Key) {
+			myLayout.Template.CIDR6 = v.GetString(cidr6Key)
+		}
+
+		// Use CLI/file input values if available, otherwise defaults
+		baseVlanName := fmt.Sprintf(
+			"%v-bootstrap-vlan",
+			normalizedName,
+		)
+		if v.IsSet(baseVlanName) {
+			baseVlan := int16(v.GetInt(baseVlanName))
+			myLayout.BaseVlan = baseVlan
+			myLayout.Template.VlanRange[0] = baseVlan
+		} else {
+			myLayout.BaseVlan = layout.Template.VlanRange[0]
+		}
+
+		// Check VLAN allocations for re-use and overlaps
+		if len(layout.Template.VlanRange) == 2 {
+			err := networking.AllocateVlanRange(
+				myLayout.Template.VlanRange[0],
+				myLayout.Template.VlanRange[1],
+			)
+			if err != nil {
+				log.Fatalln(
+					"Unable to allocate VLAN range for",
+					myLayout.Template.Name,
+					err,
+				)
+			} else {
+				log.Println(
+					"Allocating VLANs",
+					myLayout.Template.Name,
+					myLayout.Template.VlanRange[0],
+					myLayout.Template.VlanRange[1],
+				)
+			}
+		} else {
+			err := networking.AllocateVLAN(
+				uint16(myLayout.Template.VlanRange[0]),
+			)
+			if err != nil {
+				log.Fatalln(
+					"Unable to allocate single VLAN for",
+					myLayout.Template.Name,
+					myLayout.Template.VlanRange[0],
+					err,
+				)
+			} else {
+				log.Println(
+					"Allocating VLAN ",
+					myLayout.Template.Name,
+					myLayout.Template.VlanRange[0],
+				)
+			}
+		}
+
+		allocated, err := networking.IsVLANAllocated(uint16(myLayout.BaseVlan))
+		if !allocated {
+			log.Fatalln(
+				"VLAN for",
+				layout.Template.Name,
+				"has not been initialized by defaults or input values:",
+				err,
+			)
+		}
+		myLayout.AdditionalNetworkingSpace = v.GetInt("management-net-ips")
+		internalNetConfigs[name] = myLayout
+	}
+	return internalNetConfigs, err
 }

@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2025 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -29,9 +29,9 @@ import (
 	"log"
 	"testing"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 
-	"github.com/Cray-HPE/cray-site-init/pkg/sls"
+	"github.com/Cray-HPE/cray-site-init/pkg/csm/hms/sls"
 )
 
 var cabinetsWithHill = `

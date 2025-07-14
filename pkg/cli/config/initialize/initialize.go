@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2025 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -28,26 +28,29 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/netip"
 	"os"
+	"path"
 	"path/filepath"
+	"slices"
+	"sort"
 	"strings"
 
+	"github.com/Cray-HPE/cray-site-init/pkg/cli"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/mod/semver"
 
 	shcdParser "github.com/Cray-HPE/hms-shcd-parser/pkg/shcd-parser"
-	slsCommon "github.com/Cray-HPE/hms-sls/pkg/sls-common"
+	slsCommon "github.com/Cray-HPE/hms-sls/v2/pkg/sls-common"
 
-	csiFiles "github.com/Cray-HPE/cray-site-init/internal/files"
+	"github.com/Cray-HPE/cray-site-init/internal/files"
 	slsInit "github.com/Cray-HPE/cray-site-init/pkg/cli/config/initialize/sls"
 	"github.com/Cray-HPE/cray-site-init/pkg/csm"
+	"github.com/Cray-HPE/cray-site-init/pkg/csm/hms/sls"
 	"github.com/Cray-HPE/cray-site-init/pkg/networking"
-	"github.com/Cray-HPE/cray-site-init/pkg/sls"
 	"github.com/Cray-HPE/cray-site-init/pkg/version"
 )
-
-var appVersion string
 
 // NewCommand represents the init command
 func NewCommand() *cobra.Command {
@@ -83,16 +86,13 @@ func NewCommand() *cobra.Command {
 			// Initialize the global viper
 			v := viper.GetViper()
 
-			clientVersion := version.Get()
-			appVersion = clientVersion.Version
-
 			err := v.BindPFlags(c.Flags())
 			if err != nil {
 				log.Fatalln(err)
 			}
 			flagErrors := validateFlags()
 			if len(flagErrors) > 0 {
-				c.Usage()
+				_ = c.Usage()
 				for _, e := range flagErrors {
 					log.Println(e)
 				}
@@ -105,7 +105,7 @@ func NewCommand() *cobra.Command {
 					"/",
 				),
 			) != 2 {
-				c.Usage()
+				_ = c.Usage()
 				log.Fatalf(
 					"FATAL ERROR: Unable to parse %s as --site-ip. Must be in the format \"192.168.0.1/24\"",
 					v.GetString("site-ip"),
@@ -123,7 +123,7 @@ func NewCommand() *cobra.Command {
 
 			for network, asn := range bgp {
 				if asn > 65534 || asn < 64512 {
-					c.Usage()
+					_ = c.Usage()
 					log.Fatalln(
 						"FATAL ERROR: BGP ASNs must be within the private range 64512-65534, fix the value for:",
 						network,
@@ -132,197 +132,23 @@ func NewCommand() *cobra.Command {
 			}
 
 			// Read and validate our three input files
-			hmnRows, logicalNcns, switches, applicationNodeConfig, cabinetDetailList := collectInput(v)
-
-			var riverCabinetCount, mountainCabinetCount, hillCabinetCount int
-			for _, cab := range cabinetDetailList {
-				switch class, _ := cab.Kind.Class(); class {
-				case slsCommon.ClassRiver:
-					riverCabinetCount += len(cab.CabinetIDs())
-				case slsCommon.ClassMountain:
-					mountainCabinetCount += len(cab.CabinetIDs())
-				case slsCommon.ClassHill:
-					hillCabinetCount += len(cab.CabinetIDs())
-				}
-			}
-
-			// Prepare the network layout configs for generating the networks
-			var internalNetConfigs = make(map[string]slsInit.NetworkLayoutConfiguration)
-			internalNetConfigs["BICAN"] = slsInit.GenDefaultBICANConfig(v.GetString("bican-user-network-name"))
-			internalNetConfigs["CMN"] = slsInit.GenDefaultCMNConfig(
-				len(logicalNcns),
-				len(switches),
-			)
-			internalNetConfigs["HMN"] = slsInit.GenDefaultHMNConfig()
-			internalNetConfigs["HSN"] = slsInit.GenDefaultHSNConfig()
-			internalNetConfigs["MTL"] = slsInit.GenDefaultMTLConfig()
-			internalNetConfigs["NMN"] = slsInit.GenDefaultNMNConfig()
-			if v.GetString("bican-user-network-name") == "CAN" || v.GetBool("retain-unused-user-network") {
-				internalNetConfigs["CAN"] = slsInit.GenDefaultCANConfig()
-			}
-			if v.GetString("bican-user-network-name") == "CHN" || v.GetBool("retain-unused-user-network") {
-				internalNetConfigs["CHN"] = slsInit.GenDefaultCHNConfig()
-			}
-
-			if internalNetConfigs["HMN"].GroupNetworksByCabinetType {
-				if mountainCabinetCount > 0 || hillCabinetCount > 0 {
-					tmpHmnMtn := slsInit.GenDefaultHMNConfig()
-					tmpHmnMtn.Template.Name = "HMN_MTN"
-					tmpHmnMtn.Template.FullName = "Mountain Compute Hardware Management Network"
-					tmpHmnMtn.Template.VlanRange = []int16{
-						3000,
-						3999,
-					}
-					tmpHmnMtn.Template.CIDR = networking.DefaultHMNMTNString
-					tmpHmnMtn.SubdivideByCabinet = true
-					tmpHmnMtn.IncludeBootstrapDHCP = false
-					tmpHmnMtn.SuperNetHack = false
-					tmpHmnMtn.IncludeNetworkingHardwareSubnet = false
-					internalNetConfigs["HMN_MTN"] = tmpHmnMtn
-				}
-				if riverCabinetCount > 0 {
-					tmpHmnRvr := slsInit.GenDefaultHMNConfig()
-					tmpHmnRvr.Template.Name = "HMN_RVR"
-					tmpHmnRvr.Template.FullName = "River Compute Hardware Management Network"
-					tmpHmnRvr.Template.VlanRange = []int16{
-						1513,
-						1769,
-					}
-					tmpHmnRvr.Template.CIDR = networking.DefaultHMNRVRString
-					tmpHmnRvr.SubdivideByCabinet = true
-					tmpHmnRvr.IncludeBootstrapDHCP = false
-					tmpHmnRvr.SuperNetHack = false
-					tmpHmnRvr.IncludeNetworkingHardwareSubnet = false
-					internalNetConfigs["HMN_RVR"] = tmpHmnRvr
-				}
-
-			}
-
-			if internalNetConfigs["NMN"].GroupNetworksByCabinetType {
-				if mountainCabinetCount > 0 || hillCabinetCount > 0 {
-					tmpNmnMtn := slsInit.GenDefaultNMNConfig()
-					tmpNmnMtn.Template.Name = "NMN_MTN"
-					tmpNmnMtn.Template.FullName = "Mountain Compute Node Management Network"
-					tmpNmnMtn.Template.VlanRange = []int16{
-						2000,
-						2999,
-					}
-					tmpNmnMtn.Template.CIDR = networking.DefaultNMNMTNString
-					tmpNmnMtn.SubdivideByCabinet = true
-					tmpNmnMtn.IncludeBootstrapDHCP = false
-					tmpNmnMtn.SuperNetHack = false
-					tmpNmnMtn.IncludeNetworkingHardwareSubnet = false
-					tmpNmnMtn.IncludeUAISubnet = false
-					internalNetConfigs["NMN_MTN"] = tmpNmnMtn
-				}
-				if riverCabinetCount > 0 {
-					tmpNmnRvr := slsInit.GenDefaultNMNConfig()
-					tmpNmnRvr.Template.Name = "NMN_RVR"
-					tmpNmnRvr.Template.FullName = "River Compute Node Management Network"
-					tmpNmnRvr.Template.VlanRange = []int16{
-						1770,
-						1999,
-					}
-					tmpNmnRvr.Template.CIDR = networking.DefaultNMNRVRString
-					tmpNmnRvr.SubdivideByCabinet = true
-					tmpNmnRvr.IncludeBootstrapDHCP = false
-					tmpNmnRvr.SuperNetHack = false
-					tmpNmnRvr.IncludeNetworkingHardwareSubnet = false
-					tmpNmnRvr.IncludeUAISubnet = false
-					internalNetConfigs["NMN_RVR"] = tmpNmnRvr
-				}
-
-			}
-
-			// Remember a loop over a map is random ordered in Go
-			for name, layout := range internalNetConfigs {
-				myLayout := layout
-
-				// Update with flags
-				normalizedName := strings.ReplaceAll(
-					strings.ToLower(name),
-					"_",
-					"-",
+			hmnRows, logicalNCNs, switches, applicationNodeConfig, cabinetDetailList, errs := collectInput(v)
+			if errs != nil {
+				log.Fatalf(
+					"FATAL ERROR: Failed to collect one or more input files: %v",
+					errs,
 				)
-
-				// Use CLI/file input values if available, otherwise defaults
-				baseVlanName := fmt.Sprintf("%v-bootstrap-vlan", normalizedName)
-				if v.IsSet(baseVlanName) {
-					baseVlan := int16(v.GetInt(baseVlanName))
-					myLayout.BaseVlan = baseVlan
-					myLayout.Template.VlanRange[0] = baseVlan
-				} else {
-					myLayout.BaseVlan = layout.Template.VlanRange[0]
-				}
-
-				// Check VLAN allocations for re-use and overlaps
-				if len(layout.Template.VlanRange) == 2 {
-					err := networking.AllocateVlanRange(
-						myLayout.Template.VlanRange[0],
-						myLayout.Template.VlanRange[1],
-					)
-					if err != nil {
-						log.Fatalln(
-							"Unable to allocate VLAN range for",
-							myLayout.Template.Name,
-							err,
-						)
-					} else {
-						log.Println(
-							"Allocating VLANs",
-							myLayout.Template.Name,
-							myLayout.Template.VlanRange[0],
-							myLayout.Template.VlanRange[1],
-						)
-					}
-				} else {
-					err := networking.AllocateVlan(
-						myLayout.Template.VlanRange[0],
-					)
-					if err != nil {
-						log.Fatalln(
-							"Unable to allocate single VLAN for",
-							myLayout.Template.Name,
-							myLayout.Template.VlanRange[0],
-							err,
-						)
-					} else {
-						log.Println(
-							"Allocating VLAN ",
-							myLayout.Template.Name,
-							myLayout.Template.VlanRange[0],
-						)
-					}
-				}
-
-				allocated, err := networking.IsVlanAllocated(myLayout.BaseVlan)
-				if !allocated {
-					log.Fatalln(
-						"VLAN for",
-						layout.Template.Name,
-						"has not been initialized by defaults or input values:",
-						err,
-					)
-				}
-
-				if v.IsSet(
-					fmt.Sprintf(
-						"%v-cidr",
-						normalizedName,
-					),
-				) {
-					myLayout.Template.CIDR = v.GetString(
-						fmt.Sprintf(
-							"%v-cidr",
-							normalizedName,
-						),
-					)
-				}
-
-				myLayout.AdditionalNetworkingSpace = v.GetInt("management-net-ips")
-				internalNetConfigs[name] = myLayout
 			}
 
+			defaultNetConfigs := GenerateDefaultNetworkConfigs(
+				switches,
+				logicalNCNs,
+				cabinetDetailList,
+			)
+			internalNetConfigs, err := GenerateNetworkConfigs(defaultNetConfigs)
+			if err != nil {
+				log.Fatal(err)
+			}
 			// Build a set of networks we can use
 			shastaNetworks, err := slsInit.BuildCSMNetworks(
 				internalNetConfigs,
@@ -330,14 +156,14 @@ func NewCommand() *cobra.Command {
 				switches,
 			)
 			if err != nil {
-				log.Panic(err)
+				log.Fatal(err)
 			}
 
 			// Use our new networks and our list of logicalNCNs to distribute ips
-			AllocateIps(
-				logicalNcns,
+			AllocateIPs(
+				logicalNCNs,
 				shastaNetworks,
-			) // This function has no return because it is working with lists of pointers.
+			)
 
 			// Now we can finally generate the slsState
 			slsState := prepareAndGenerateSLS(
@@ -356,7 +182,7 @@ func NewCommand() *cobra.Command {
 
 			// Merge the SLS NCN list with the NCN list we got at the beginning
 			err = mergeNCNs(
-				logicalNcns,
+				logicalNCNs,
 				slsNcns,
 			)
 			if err != nil {
@@ -373,53 +199,95 @@ func NewCommand() *cobra.Command {
 			if v.GetString("bican-user-network-name") == "CAN" || v.GetBool("retain-unused-user-network") {
 				canSubnet, _ := shastaNetworks["CAN"].LookUpSubnet("bootstrap_dhcp")
 				for _, uan := range slsUans {
-					canSubnet.AddReservation(
+					_, err := networking.AddReservation(
+						canSubnet,
 						uan.Hostname,
 						uan.Xname,
 					)
+					if err != nil {
+						return
+					}
 				}
 			}
 			// Only add UANs if there actually is a CHN network
 			if v.GetString("bican-user-network-name") == "CHN" || v.GetBool("retain-unused-user-network") {
 				chnSubnet, _ := shastaNetworks["CHN"].LookUpSubnet("bootstrap_dhcp")
 				for _, uan := range slsUans {
-					chnSubnet.AddReservation(
+					_, err := networking.AddReservation(
+						chnSubnet,
 						uan.Hostname,
 						uan.Xname,
 					)
+					if err != nil {
+						return
+					}
 				}
 			}
 
 			// Cycle through the main networks and update the reservations, masks and dhcp ranges as necessary
-			for _, netName := range networking.ValidNetNames {
-				if shastaNetworks[netName] != nil {
+			for _, network := range networking.ValidNetNames {
+				if shastaNetworks[network] != nil {
 					// Grab the supernet details for use in HACK substitution
-					tempSubnet, err := shastaNetworks[netName].LookUpSubnet("bootstrap_dhcp")
 					if err == nil {
 						// Loop the reservations and update the NCN reservations with hostnames
 						// we likely didn't have when we registered the reservation
-						updateReservations(
-							tempSubnet,
-							logicalNcns,
+						subnet, err := updateReservations(
+							shastaNetworks[network],
+							"bootstrap_dhcp",
+							logicalNCNs,
 						)
-						if netName == "CAN" || netName == "CMN" || netName == "CHN" {
-							netNameLower := strings.ToLower(netName)
+						if err != nil {
+							continue
+						}
+						if network == "CAN" || network == "CMN" || network == "CHN" {
+							netNameLower := strings.ToLower(network)
 
-							// Do not use supernet hack for the CAN/CMN/CHN
-							tempSubnet.UpdateDHCPRange(false)
+							// Do not use supernet hack for the CAN/CMN/CHN, these should reflect the abstracted subnets.
+							err := networking.UpdateDHCPRange(
+								subnet,
+								false,
+							)
+							if err != nil {
+								log.Fatalf(
+									"Error updating DHCP range: %v\n",
+									err,
+								)
+							}
 
-							myNetName := fmt.Sprintf(
+							cidr4Key := fmt.Sprintf(
+								"%s-cidr4",
+								netNameLower,
+							)
+							cidrKey := fmt.Sprintf(
 								"%s-cidr",
 								netNameLower,
 							)
-							myNetCIDR := v.GetString(myNetName)
-							if myNetCIDR == "" {
+
+							// Handle IPv4 CIDRs, networks with IPv6 will use a different key for their cidr4.
+							var cidr4 string
+							if v.IsSet(cidr4Key) {
+								cidr4 = v.GetString(cidr4Key)
+							} else if v.IsSet(cidrKey) {
+								cidr4 = v.GetString(cidrKey)
+							}
+
+							if cidr4 == "" {
 								continue
 							}
-							_, myNet, _ := net.ParseCIDR(myNetCIDR)
+							myPrefix, err := netip.ParsePrefix(cidr4)
+							if err != nil {
+								log.Fatalf(
+									"Unable to parse CIDR '%s': %v",
+									cidr4,
+									err,
+								)
+							}
 
 							// If neither static nor dynamic pool is defined we can use the last available IP in the subnet
-							poolStartIP := networking.Broadcast(*myNet)
+							poolStartIP, err := networking.Broadcast(myPrefix)
+							if err != nil {
+								log.Fatal(err)
+							}
 
 							// Do not overlap the static or dynamic pools
 							myStaticPoolName := fmt.Sprintf(
@@ -438,60 +306,87 @@ func NewCommand() *cobra.Command {
 								// Both pools are defined so find the start of whichever pool comes first
 								_, myStaticPool, _ := net.ParseCIDR(myStaticPoolCIDR)
 								_, myDynamicPool, _ := net.ParseCIDR(myDynPoolCIDR)
-								if networking.IPLessThan(
-									myStaticPool.IP,
-									myDynamicPool.IP,
-								) {
-									poolStartIP = myStaticPool.IP
+								myStaticPoolPrefix, parseErr := netip.ParsePrefix(myStaticPoolCIDR)
+								myDynamicPoolPrefix, parseDynamicErr := netip.ParsePrefix(myDynPoolCIDR)
+								if parseErr != nil || parseDynamicErr != nil {
+									log.Fatalln(
+										parseErr,
+										parseDynamicErr,
+									)
+								}
+								if myStaticPoolPrefix.Addr().Compare(myDynamicPoolPrefix.Addr()) == -1 {
+									poolStartIP, err = netip.ParseAddr(myStaticPool.IP.String())
 								} else {
-									poolStartIP = myDynamicPool.IP
+									poolStartIP, err = netip.ParseAddr(myDynamicPool.IP.String())
 								}
 							} else if len(myStaticPoolCIDR) > 0 && len(myDynPoolCIDR) == 0 {
 								// Only the static pool is defined so use the first IP of that pool
 								_, myStaticPool, _ := net.ParseCIDR(myStaticPoolCIDR)
-								poolStartIP = myStaticPool.IP
+								poolStartIP, err = netip.ParseAddr(myStaticPool.IP.String())
 							} else if len(myStaticPoolCIDR) == 0 && len(myDynPoolCIDR) > 0 {
 								// Only the dynamic pool is defined so use the first IP of that pool
 								_, myDynamicPool, _ := net.ParseCIDR(myDynPoolCIDR)
-								poolStartIP = myDynamicPool.IP
+								poolStartIP, err = netip.ParseAddr(myDynamicPool.IP.String())
+							}
+							if err != nil {
+								log.Fatalf(
+									"Failed to parse a static or dynamic pool because %v\n",
+									err,
+								)
 							}
 
 							// Guidance has changed on whether the CAN gw should be at the start or end of the
 							// range. Here we account for it being at the end of the range.
 							// Leaving this check in place for CMN because it is harmless to do so.
-							if tempSubnet.Gateway.String() == networking.Add(
-								poolStartIP,
-								-1,
-							).String() {
-								// The gw *is* at the end, so shorten the range to accommodate
-								tempSubnet.DHCPEnd = networking.Add(
-									poolStartIP,
-									-2,
-								)
-							} else {
-								// The gw is not at the end
-								tempSubnet.DHCPEnd = networking.Add(
-									poolStartIP,
-									-1,
+							subnetGateway, err := netip.ParseAddr(subnet.Gateway.String())
+							if err != nil {
+								log.Fatalf(
+									"Failed to parse subnet gateway because %v\n",
+									err,
 								)
 							}
+							if subnetGateway == poolStartIP.Prev() {
+								// The gw *is* at the end, so shorten the range to accommodate
+								subnet.DHCPEnd = poolStartIP.Prev().Prev().AsSlice()
+							} else {
+								// The gw is not at the end
+								subnet.DHCPEnd = poolStartIP.Prev().AsSlice()
+							}
 						} else {
-							tempSubnet.UpdateDHCPRange(v.GetBool("supernet"))
+							err := networking.UpdateDHCPRange(
+								subnet,
+								v.GetBool("supernet"),
+							)
+							if err != nil {
+								log.Fatalf(
+									"Error updating DHCP range: %v\n",
+									err,
+								)
+							}
 						}
 					}
 
 					// We expect a bootstrap_dhcp in every net, but uai_macvlan is only in
 					// the NMN range for today
-					if netName == "NMN" {
-						tempSubnet, err = shastaNetworks[netName].LookUpSubnet("uai_macvlan")
-						if err != nil {
-							log.Panic(err)
-						}
-						updateReservations(
-							tempSubnet,
-							logicalNcns,
+					if strings.ToUpper(network) == "NMN" {
+						subnet, err := updateReservations(
+							shastaNetworks[network],
+							"uai_macvlan",
+							logicalNCNs,
 						)
-						tempSubnet.UpdateDHCPRange(false)
+						if err != nil {
+							continue
+						}
+						err = networking.UpdateDHCPRange(
+							subnet,
+							false,
+						)
+						if err != nil {
+							log.Fatalf(
+								"Error updating DHCP range: %v\n",
+								subnet.Name,
+							)
+						}
 					}
 
 				}
@@ -502,7 +397,7 @@ func NewCommand() *cobra.Command {
 
 			// Switch from a list of pointers to a list of things before we write it out
 			var ncns []LogicalNCN
-			for _, ncn := range logicalNcns {
+			for _, ncn := range logicalNCNs {
 				ncns = append(
 					ncns,
 					*ncn,
@@ -522,7 +417,7 @@ func NewCommand() *cobra.Command {
 					err,
 				)
 			}
-			writeOutput(
+			err = writeOutput(
 				v,
 				shastaNetworks,
 				slsState,
@@ -530,6 +425,12 @@ func NewCommand() *cobra.Command {
 				switches,
 				globals,
 			)
+			if err != nil {
+				log.Fatalf(
+					"unable to write one or more output files: %v",
+					err,
+				)
+			}
 
 			// Gather SLS information for summary
 			slsMountainCabinets := GetSLSCabinets(
@@ -556,79 +457,159 @@ func NewCommand() *cobra.Command {
 
 			// Print Summary
 			fmt.Printf(
-				"\n===== %v Installation Summary =====\n\n",
+				"\n===== %s Installation Summary =====\n\n",
 				v.GetString("system-name"),
 			)
 			fmt.Printf(
-				"Installation Node: %v\n",
+				"%-20s: %s\n",
+				"Installation Node",
 				v.GetString("install-ncn"),
 			)
+
 			fmt.Printf(
-				"Customer Management: %v GW: %v\n",
-				v.GetString("cmn-cidr"),
-				v.GetString("cmn-gateway"),
-			)
-			if v.GetString("bican-user-network-name") == "CHN" {
-				fmt.Printf(
-					"Customer Management: %v GW: %v\n",
-					v.GetString("can-cidr"),
-					v.GetString("can-gateway"),
-				)
-			} else {
-				fmt.Printf(
-					"Customer Management: %v GW: %v\n",
-					v.GetString("can-cidr"),
-					v.GetString("can-gateway"),
-				)
-			}
-			fmt.Printf(
-				"\tUpstream DNS: %v\n",
+				"%-20s: %s\n",
+				"Upstream DNS",
 				v.GetString("site-dns"),
 			)
 			fmt.Printf(
-				"\tMetalLB Peers: %v\n",
+				"%-20s: %v\n",
+				"MetalLB Peers",
 				v.GetStringSlice("bgp-peer-types"),
 			)
-			fmt.Println("Networking")
 			fmt.Printf(
-				"\tBICAN user network toggle set to %v\n",
+				"\n----- %s Network Summary -----\n\n",
+				v.GetString("system-name"),
+			)
+			fmt.Printf(
+				"%-20s: %s\n",
+				"BICAN user network",
 				v.GetString("bican-user-network-name"),
 			)
+			fmt.Printf(
+				"%-20s: ",
+				"Supernet",
+			)
 			if v.GetBool("supernet") {
-				fmt.Printf("\tSupernet enabled!  Using the supernet gateway for some management subnets\n")
+				fmt.Printf("Enabled (Network gateway used for all SLS subnets)\n")
+			} else {
+				fmt.Printf("Disabled (SLS subnets use their own gateway)\n")
 			}
-			for _, tempNet := range shastaNetworks {
-				fmt.Printf(
-					"\t* %v %v with %d subnets \n",
-					tempNet.FullName,
-					tempNet.CIDR,
-					len(tempNet.Subnets),
+
+			fmt.Printf("\nDefined networks:\n\n")
+			sortedNetworks := make(
+				networking.IPNetworks,
+				0,
+				len(shastaNetworks),
+			)
+			for shastaNetwork := range shastaNetworks {
+				sortedNetworks = append(
+					sortedNetworks,
+					shastaNetworks[shastaNetwork],
 				)
 			}
-			fmt.Printf("System Information\n")
+			sort.Sort(sortedNetworks)
+			for _, network := range sortedNetworks {
+				prefix4, err := netip.ParsePrefix(network.CIDR4)
+				if err != nil || prefix4.Addr().IsUnspecified() {
+					continue
+				}
+				fmt.Printf(
+					"    * %-65s (subnets: %3d) %s\n",
+					network.FullName,
+					len(network.AllocatedIPv4Subnets()),
+					network.CIDR4,
+				)
+				if network.CIDR6 != "" {
+					prefix6, err := netip.ParsePrefix(network.CIDR4)
+					if err != nil || prefix6.Addr().IsUnspecified() {
+						continue
+					}
+					fmt.Printf(
+						"    * %-65s (subnets: %3d) %s\n",
+						fmt.Sprintf(
+							"%s (IPv6)",
+							network.FullName,
+						),
+						len(network.AllocatedIPv6Subnets()),
+						network.CIDR6,
+					)
+				}
+			}
 			fmt.Printf(
-				"\tNCNs: %v\n",
+				"\n----- %s System Summary -----\n\n",
+				v.GetString("system-name"),
+			)
+			fmt.Printf(
+				"%-30s: %-3d\n",
+				"NCNs",
 				len(ncns),
 			)
 			fmt.Printf(
-				"\tMountain Compute Cabinets: %v\n",
+				"%-30s: %-3d\n",
+				"UANs",
+				len(slsUans),
+			)
+			fmt.Printf(
+				"%-30s: %-3d\n",
+				"Switches",
+				len(switches),
+			)
+			fmt.Printf(
+				"%-30s: %-3d\n",
+				"Mountain Compute Cabinets",
 				len(slsMountainCabinets),
 			)
 			fmt.Printf(
-				"\tHill Compute Cabinets: %v\n",
+				"%-30s: %-3d\n",
+				"Hill Compute Cabinets",
 				len(slsHillCabinets),
 			)
 			fmt.Printf(
-				"\tRiver Compute Cabinets: %v\n",
+				"%-30s: %-3d\n",
+				"River Compute Cabinets",
 				len(slsRiverCabinets),
 			)
 			fmt.Printf(
-				"CSI Version Information\n\t%s\n\t%s\n\n",
-				version.Get().GitCommit,
+				"%-30s: %s\n",
+				"CSI Version Information",
 				version.Get(),
+			)
+			fmt.Printf(
+				"\n%s\n********** CONFIG INITIALIZED **********\n%s\n",
+				strings.Repeat(
+					"*",
+					40,
+				),
+				strings.Repeat(
+					"*",
+					40,
+				),
+			)
+			fmt.Printf(
+				"\nNEW %s file!\n\nReplace any offline copies\nof %s with:\n\n%s\n\n",
+				cli.ConfigFilename,
+				cli.ConfigFilename,
+				path.Join(
+					"./",
+					v.GetString("system-name"),
+					cli.ConfigFilename,
+				),
+			)
+			fmt.Println(
+				strings.Repeat(
+					"*",
+					40,
+				),
+			)
+			fmt.Println(
+				strings.Repeat(
+					"*",
+					40,
+				),
 			)
 		},
 	}
+	var flagErr error
 
 	// System Configuration Flags based on previous system_config.yml and networks_derived.yml
 	c.Flags().String(
@@ -707,7 +688,7 @@ func NewCommand() *cobra.Command {
 	c.Flags().String(
 		"site-gw",
 		"",
-		"Site Network IPv4 Gateway",
+		"Site Network IPv4 Gateway4",
 	)
 	c.Flags().String(
 		"site-ip",
@@ -834,6 +815,49 @@ func NewCommand() *cobra.Command {
 		"",
 		"Gateway for NCNs on the CHN (User)",
 	)
+	flagErr = c.Flags().MarkDeprecated(
+		"chn-cidr",
+		"Please use --chn-cidr4 instead",
+	)
+	if flagErr != nil {
+		log.Fatalf(
+			"Failed to mark flag as deprecated because %v",
+			flagErr,
+		)
+		return nil
+	}
+
+	flagErr = c.Flags().MarkDeprecated(
+		"chn-gateway",
+		"Please use --chn-gateway4 instead",
+	)
+	if flagErr != nil {
+		log.Fatalf(
+			"Failed to mark flag as deprecated because %v",
+			flagErr,
+		)
+		return nil
+	}
+	c.Flags().String(
+		"chn-cidr4",
+		"",
+		"Overall IPv4 CIDR for all Customer High-Speed subnets",
+	)
+	c.Flags().String(
+		"chn-gateway4",
+		"",
+		"IPv4 Gateway for NCNs on the CHN (User)",
+	)
+	c.Flags().String(
+		"chn-cidr6",
+		"",
+		"Overall IPv6 CIDR for all Customer High-Speed subnets",
+	)
+	c.Flags().String(
+		"chn-gateway6",
+		"",
+		"IPv6 Gateway for NCNs on the CHN (User)",
+	)
 	c.Flags().String(
 		"chn-static-pool",
 		"",
@@ -844,23 +868,99 @@ func NewCommand() *cobra.Command {
 		"",
 		"Overall IPv4 CIDR for dynamic Customer High-Speed load balancer addresses",
 	)
+
 	c.MarkFlagsRequiredTogether(
 		"chn-cidr",
 		"chn-gateway",
+	)
+	c.MarkFlagsRequiredTogether(
+		"chn-cidr4",
+		"chn-gateway4",
+	)
+	c.MarkFlagsRequiredTogether(
+		"chn-cidr6",
+		"chn-gateway6",
+	)
+	RegisterAlias(
+		"chn-cidr",
+		"chn-cidr4",
+	)
+	RegisterAlias(
+		"chn-gateway",
+		"chn-gateway4",
+	)
+	c.MarkFlagsMutuallyExclusive(
+		"chn-gateway",
+		"chn-gateway4",
+	)
+	c.MarkFlagsMutuallyExclusive(
+		"chn-cidr",
+		"chn-cidr4",
+	)
+	RegisterAlias(
+		"chn-cidr",
+		"chn-cidr4",
+	)
+	RegisterAlias(
+		"chn-gateway",
+		"chn-gateway4",
+	)
+	c.MarkFlagsRequiredTogether(
 		"chn-static-pool",
 		"chn-dynamic-pool",
 	)
-
 	// Customer management network.
 	c.Flags().String(
 		"cmn-cidr",
 		"",
 		"Overall IPv4 CIDR for all Customer Management subnets",
 	)
+	flagErr = c.Flags().MarkDeprecated(
+		"cmn-cidr",
+		"Please use --cmn-cidr4 instead",
+	)
+	if flagErr != nil {
+		log.Fatalf(
+			"Failed to mark flag as deprecated because %v",
+			flagErr,
+		)
+		return nil
+	}
 	c.Flags().String(
 		"cmn-gateway",
 		"",
 		"Gateway for NCNs on the CMN (Administrative/Management)",
+	)
+	flagErr = c.Flags().MarkDeprecated(
+		"cmn-gateway",
+		"Please use --cmn-gateway4 instead",
+	)
+	if flagErr != nil {
+		log.Fatalf(
+			"Failed to mark flag as deprecated because %v",
+			flagErr,
+		)
+		return nil
+	}
+	c.Flags().String(
+		"cmn-cidr4",
+		"",
+		"Overall IPv4 CIDR for all Customer Management subnets",
+	)
+	c.Flags().String(
+		"cmn-gateway4",
+		"",
+		"IPv4 Gateway for NCNs on the CMN (Administrative/Management)",
+	)
+	c.Flags().String(
+		"cmn-cidr6",
+		"",
+		"Overall IPv6 CIDR for all Customer Management subnets",
+	)
+	c.Flags().String(
+		"cmn-gateway6",
+		"",
+		"IPv6 Gateway for NCNs on the CMN (Administrative/Management)",
 	)
 	c.Flags().String(
 		"cmn-static-pool",
@@ -880,6 +980,34 @@ func NewCommand() *cobra.Command {
 	c.MarkFlagsRequiredTogether(
 		"cmn-cidr",
 		"cmn-gateway",
+	)
+	c.MarkFlagsRequiredTogether(
+		"cmn-cidr4",
+		"cmn-gateway4",
+	)
+	c.MarkFlagsRequiredTogether(
+		"cmn-cidr6",
+		"cmn-gateway6",
+	)
+
+	RegisterAlias(
+		"cmn-cidr",
+		"cmn-cidr4",
+	)
+	RegisterAlias(
+		"cmn-gateway",
+		"cmn-gateway4",
+	)
+	c.MarkFlagsMutuallyExclusive(
+		"cmn-cidr",
+		"cmn-cidr4",
+	)
+	c.MarkFlagsMutuallyExclusive(
+		"cmn-gateway",
+		"cmn-gateway4",
+	)
+
+	c.MarkFlagsRequiredTogether(
 		"cmn-static-pool",
 		"cmn-dynamic-pool",
 		"cmn-external-dns",
@@ -1008,6 +1136,13 @@ func NewCommand() *cobra.Command {
 		"bgp-peers",
 		"Use --bgp-peer-types.",
 	)
+	if flagErr != nil {
+		log.Fatalf(
+			"Failed to mark flag as deprecated because %v",
+			flagErr,
+		)
+		return nil
+	}
 	c.Flags().StringSlice(
 		"bgp-peer-types",
 		[]string{"spine"},
@@ -1037,12 +1172,20 @@ func NewCommand() *cobra.Command {
 		"",
 		"Username for connecting to the BMC on the initial NCNs",
 	)
-	err := c.MarkFlagRequired("bootstrap-ncn-bmc-pass")
-	if err != nil {
+	flagErr = c.MarkFlagRequired("bootstrap-ncn-bmc-pass")
+	if flagErr != nil {
+		log.Fatalf(
+			"Failed to mark flag as required because %v",
+			flagErr,
+		)
 		return nil
 	}
-	err = c.MarkFlagRequired("bootstrap-ncn-bmc-user")
-	if err != nil {
+	flagErr = c.MarkFlagRequired("bootstrap-ncn-bmc-user")
+	if flagErr != nil {
+		log.Fatalf(
+			"Failed to mark flag as required because %v",
+			flagErr,
+		)
 		return nil
 	}
 	c.MarkFlagsRequiredTogether(
@@ -1093,14 +1236,13 @@ func NewCommand() *cobra.Command {
 		"",
 		"Comma-separated list of the zones to be allowed transfer",
 	)
-
 	c.AddCommand(emptyCommand())
 
 	return c
 }
 
 func setupDirectories(systemName string, v *viper.Viper) (string, error) {
-	// Set up the path for our base directory using our systemname
+	// Set up the path for our base directory using our system name.
 	basepath, err := filepath.Abs(filepath.Clean(systemName))
 	if err != nil {
 		return basepath, err
@@ -1157,8 +1299,6 @@ func mergeNCNs(logicalNcns []*LogicalNCN, slsNCNs []LogicalNCN) error {
 				ncn.Hostname = slsNCN.Hostname
 				ncn.Aliases = slsNCN.Aliases
 				ncn.BmcPort = slsNCN.BmcPort
-				// log.Println("Updated to be :", ncn)
-				// ncn.InstanceID = GenerateInstanceID()
 
 				found = true
 				break
@@ -1177,11 +1317,11 @@ func mergeNCNs(logicalNcns []*LogicalNCN, slsNCNs []LogicalNCN) error {
 	return nil
 }
 
-func prepareNetworkSLS(shastaNetworks map[string]*networking.IPV4Network) (
-	[]networking.IPV4Network, map[string]slsCommon.Network,
+func prepareNetworkSLS(shastaNetworks map[string]*networking.IPNetwork) (
+	[]networking.IPNetwork, map[string]slsCommon.Network,
 ) {
 	// Fix up the network names & create the SLS friendly version of the shasta networks
-	var networks []networking.IPV4Network
+	var networks []networking.IPNetwork
 	for name, network := range shastaNetworks {
 		if network.Name == "" {
 			network.Name = name
@@ -1191,12 +1331,12 @@ func prepareNetworkSLS(shastaNetworks map[string]*networking.IPV4Network) (
 			*network,
 		)
 	}
-	return networks, slsInit.ConvertIPV4NetworksToSLS(&networks)
+	return networks, slsInit.ConvertIPNetworksToSLS(&networks)
 }
 
 func prepareAndGenerateSLS(
 	cd []sls.CabinetGroupDetail,
-	shastaNetworks map[string]*networking.IPV4Network,
+	shastaNetworks map[string]*networking.IPNetwork,
 	hmnRows []shcdParser.HMNRow,
 	inputSwitches []*networking.ManagementSwitch,
 	applicationNodeConfig slsInit.GeneratorApplicationNodeConfig,
@@ -1215,7 +1355,7 @@ func prepareAndGenerateSLS(
 	for _, mySwitch := range reservedSwitches {
 		xname := mySwitch.Xname
 
-		// Extract Switch brand from data stored in switch_metadata.csv
+		// Extract Switch brand from Data stored in switch_metadata.csv
 		for _, inputSwitch := range inputSwitches {
 			if inputSwitch.Xname == xname {
 				mySwitch.Brand = inputSwitch.Brand
@@ -1287,10 +1427,14 @@ func prepareAndGenerateSLS(
 	return slsState
 }
 
-func updateReservations(tempSubnet *networking.IPV4Subnet, logicalNcns []*LogicalNCN) {
+func updateReservations(network *networking.IPNetwork, subnetName string, logicalNcns []*LogicalNCN) (subnet *slsCommon.IPSubnet, err error) {
+	subnet, err = network.LookUpSubnet(subnetName)
+	if err != nil {
+		return subnet, err
+	}
 	// Loop the reservations and update the NCN reservations with hostnames
 	// we likely didn't have when we registered the reservation
-	for index, reservation := range tempSubnet.IPReservations {
+	for index, reservation := range subnet.IPReservations {
 		for _, ncn := range logicalNcns {
 			if reservation.Comment == ncn.Xname {
 				reservation.Name = ncn.Hostname
@@ -1299,37 +1443,37 @@ func updateReservations(tempSubnet *networking.IPV4Subnet, logicalNcns []*Logica
 					fmt.Sprintf(
 						"%v-%v",
 						ncn.Hostname,
-						strings.ToLower(tempSubnet.NetName),
+						strings.ToLower(network.Name),
 					),
 				)
 				reservation.Aliases = append(
 					reservation.Aliases,
 					fmt.Sprintf(
 						"time-%v",
-						strings.ToLower(tempSubnet.NetName),
+						strings.ToLower(network.Name),
 					),
 				)
 				reservation.Aliases = append(
 					reservation.Aliases,
 					fmt.Sprintf(
 						"time-%v.local",
-						strings.ToLower(tempSubnet.NetName),
+						strings.ToLower(network.Name),
 					),
 				)
-				if strings.ToLower(ncn.Subrole) == "storage" && strings.ToLower(tempSubnet.NetName) == "hmn" {
+				if strings.ToLower(ncn.Subrole) == "storage" && strings.ToLower(network.Name) == "hmn" {
 					reservation.Aliases = append(
 						reservation.Aliases,
 						"rgw-vip.hmn",
 					)
 				}
-				if strings.ToLower(tempSubnet.NetName) == "nmn" {
+				if strings.ToLower(network.Name) == "nmn" {
 					// The xname of a NCN will point to its NMN IP address
 					reservation.Aliases = append(
 						reservation.Aliases,
 						ncn.Xname,
 					)
 				}
-				tempSubnet.IPReservations[index] = reservation
+				subnet.IPReservations[index] = reservation
 			}
 			if reservation.Comment == fmt.Sprintf(
 				"%v-mgmt",
@@ -1343,10 +1487,10 @@ func updateReservations(tempSubnet *networking.IPV4Subnet, logicalNcns []*Logica
 						ncn.Hostname,
 					),
 				)
-				tempSubnet.IPReservations[index] = reservation
+				subnet.IPReservations[index] = reservation
 			}
 		}
-		if tempSubnet.NetName == "NMN" {
+		if strings.ToLower(network.Name) == "nmn" {
 			reservation.Aliases = append(
 				reservation.Aliases,
 				fmt.Sprintf(
@@ -1354,50 +1498,58 @@ func updateReservations(tempSubnet *networking.IPV4Subnet, logicalNcns []*Logica
 					reservation.Name,
 				),
 			)
-			tempSubnet.IPReservations[index] = reservation
+			subnet.IPReservations[index] = reservation
 		}
 	}
+	return subnet, err
 }
 
 func writeOutput(
 	v *viper.Viper,
-	shastaNetworks map[string]*networking.IPV4Network,
+	shastaNetworks map[string]*networking.IPNetwork,
 	slsState slsCommon.SLSState,
 	logicalNCNs []LogicalNCN,
 	switches []*networking.ManagementSwitch,
 	globals interface{},
-) {
+) (err error) {
 	basepath, _ := setupDirectories(
 		v.GetString("system-name"),
 		v,
 	)
-	err := csiFiles.WriteJSONConfig(
+
+	err = files.WriteJSONConfig(
 		filepath.Join(
 			basepath,
-			"sls_input_file.json",
+			slsInit.OutputFile,
 		),
 		&slsState,
 	)
 	if err != nil {
-		log.Fatalln(
-			"Failed to encode SLS state:",
+		return fmt.Errorf(
+			"failed to encode SLS state because %v",
 			err,
 		)
 	}
-	v.SetConfigName("system_config")
-	v.SetConfigType("yaml")
 	v.Set(
 		"VersionInfo",
 		version.Get(),
 	)
-	v.WriteConfigAs(
+
+	err = WriteConfigAs(
 		filepath.Join(
 			basepath,
-			"system_config.yaml",
+			cli.ConfigFilename,
 		),
 	)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to create %s because %v",
+			cli.ConfigFilename,
+			err,
+		)
+	}
 
-	csiFiles.WriteYAMLConfig(
+	err = files.WriteYAMLConfig(
 		filepath.Join(
 			basepath,
 			"customizations.yaml",
@@ -1408,7 +1560,13 @@ func writeOutput(
 			switches,
 		),
 	)
-
+	if err != nil {
+		return fmt.Errorf(
+			"failed to create customizations YAML because %v",
+			err,
+		)
+	}
+	var pit LogicalNCN
 	for _, ncn := range logicalNCNs {
 		// log.Println("Checking to see if we need PIT files for ", ncn.Hostname)
 		if strings.HasPrefix(
@@ -1419,39 +1577,53 @@ func writeOutput(
 				"Generating Installer Node (PIT) interface configurations for:",
 				ncn.Hostname,
 			)
-			WriteCPTNetworkConfig(
-				filepath.Join(
-					basepath,
-					"pit-files",
-				),
-				v,
-				ncn,
-				shastaNetworks,
-			)
+			pit = ncn
+			break
 		}
 	}
-	WriteDNSMasqConfig(
+	err = WriteCPTNetworkConfig(
+		filepath.Join(
+			basepath,
+			"pit-files",
+		),
+		v,
+		pit,
+		shastaNetworks,
+	)
+	if err != nil {
+		return
+	}
+	err = WriteDNSMasqConfig(
 		basepath,
 		v,
 		logicalNCNs,
 		shastaNetworks,
 	)
-	WriteConmanConfig(
+	if err != nil {
+		return err
+	}
+	err = WriteConmanConfig(
 		filepath.Join(
 			basepath,
 			"conman.conf",
 		),
 		logicalNCNs,
 	)
+	if err != nil {
+		return err
+	}
 	// The MetalLB ConfigMap is no longer used in CSM 1.7
 	_, eval := csm.CompareMajorMinor("1.7")
 	if eval == -1 {
-		WriteMetalLBConfigMap(
+		err := WriteMetalLBConfigMap(
 			basepath,
 			v,
 			shastaNetworks,
 			switches,
 		)
+		if err != nil {
+			return err
+		}
 	}
 	WriteBasecampData(
 		filepath.Join(
@@ -1462,8 +1634,9 @@ func writeOutput(
 		shastaNetworks,
 		globals,
 	)
-
+	return err
 }
+
 func validateFlags() []string {
 	var errors []string
 	v := viper.GetViper()
@@ -1472,10 +1645,12 @@ func validateFlags() []string {
 		"can-cidr",
 		"can-dynamic-pool",
 		"can-static-pool",
-		"chn-cidr",
+		"chn-cidr4",
+		"chn-cidr6",
 		"chn-dynamic-pool",
 		"chn-static-pool",
-		"cmn-cidr",
+		"cmn-cidr4",
+		"cmn-cidr6",
 		"cmn-dynamic-pool",
 		"cmn-static-pool",
 		"hmn-cidr",
@@ -1524,12 +1699,6 @@ func validateFlags() []string {
 		currentVersion,
 	)
 
-	// for _, flagName := range requiredFlags {
-	// 	if !v.IsSet(flagName) || (v.GetString(flagName) == "") {
-	// 		errors = append(errors, fmt.Sprintf("%v is required and not set through flag or config file (%s)", flagName, v.ConfigFileUsed()))
-	// 	}
-	// }
-
 	// BiCAN Validation.
 	validBican := false
 	bicanFlag := "bican-user-network-name"
@@ -1567,15 +1736,15 @@ func validateFlags() []string {
 					)
 				}
 			} else if bicanNetworkName == "CHN" {
-				if !v.IsSet("chn-gateway") || v.GetString("chn-gateway") == "" {
+				if !v.IsSet("chn-gateway4") || v.GetString("chn-gateway4") == "" {
 					errors = append(
 						errors,
-						fmt.Sprintln("chn-gateway is required because bican-user-network-name is set to CHN but chn-gateway was not set or was blank."),
+						fmt.Sprintln("chn-gateway4 is required because bican-user-network-name is set to CHN but chn-gateway4 was not set or was blank."),
 					)
 				} else {
 					ipv4Flags = append(
 						ipv4Flags,
-						"chn-gateway",
+						"chn-gateway4",
 					)
 				}
 			}
@@ -1604,7 +1773,7 @@ func validateFlags() []string {
 				errors = append(
 					errors,
 					fmt.Sprintf(
-						"%v should be a CIDR in the form 192.168.0.1/24 and is not set correctly through flag or config file (.%s)",
+						"%v should be a CIDR in the form 192.168.0.1/24 or a CIDR6 2001:db8::/32 and is not set correctly through flag or config file (.%s)",
 						flagName,
 						v.ConfigFileUsed(),
 					),
@@ -1615,17 +1784,25 @@ func validateFlags() []string {
 
 	if v.IsSet("cilium-operator-replicas") {
 		validFlag := false
-		var cor int
-		cor = v.GetInt("cilium-operator-replicas")
+		cor := v.GetInt("cilium-operator-replicas")
 		if cor > 0 {
 			validFlag = true
 		}
 		if !validFlag {
 			errors = append(
 				errors,
-				fmt.Sprintf("cilium-operator-replicas must be an integer > 0"),
+				"cilium-operator-replicas must be an integer > 0",
 			)
 		}
+	} else {
+		v.Set(
+			"cilium-operator-replicas",
+			"1",
+		)
+		NoWriteKeys = append(
+			NoWriteKeys,
+			"cilium-operator-replicas",
+		)
 	}
 
 	if v.IsSet("cilium-kube-proxy-replacement") {
@@ -1643,18 +1820,167 @@ func validateFlags() []string {
 		if !validFlag {
 			errors = append(
 				errors,
-				fmt.Sprintf("cilium-kube-proxy-replacement must be set to strict, partial, or disabled"),
+				"cilium-kube-proxy-replacement must be set to strict, partial, or disabled",
 			)
 		}
+	} else {
+		v.Set(
+			"cilium-kube-proxy-replacement",
+			"disabled",
+		)
+		NoWriteKeys = append(
+			NoWriteKeys,
+			"cilium-kube-proxy-replacement",
+		)
 	}
 
 	if v.IsSet("k8s-primary-cni") {
 		validFlag := false
-		for _, value := range [3]string{
-			"weave",
-			"cilium",
+		_, eval := csm.CompareMajorMinor("1.7")
+		var allowedValues []string
+		if eval != -1 {
+			allowedValues = []string{"cilium"}
+		} else {
+			allowedValues = []string{"cilium", "weave"}
+		}
+		if slices.Contains(
+			allowedValues,
+			v.GetString("k8s-primary-cni"),
+		) {
+			validFlag = true
+		}
+		if !validFlag {
+			errors = append(
+				errors,
+				fmt.Sprintf(
+					"k8s-primary-cni must be set to one of [%s]",
+					strings.Join(
+						allowedValues,
+						",",
+					),
+				),
+			)
+		}
+	} else {
+		currentVersion, eval := csm.CompareMajorMinor("1.7")
+		if eval != -1 {
+			log.Printf(
+				"Detected CSM %s, setting k8s-primary-cni to Cilium",
+				currentVersion,
+			)
+			v.Set(
+				"k8s-primary-cni",
+				"cilium",
+			)
+		} else {
+			v.Set(
+				"k8s-primary-cni",
+				"weave",
+			)
+			NoWriteKeys = append(
+				NoWriteKeys,
+				"k8s-primary-cni",
+			)
+		}
+	}
+
+	if v.IsSet("kubernetes-max-pods-per-node") {
+		validFlag := false
+		if v.GetInt("kubernetes-max-pods-per-node") > 0 {
+			validFlag = true
+		}
+		if !validFlag {
+			errors = append(
+				errors,
+				"kubernetes-max-pods-per-node must be set an integer (>0)",
+			)
+		}
+	} else {
+		v.Set(
+			"kubernetes-max-pods-per-node",
+			"200",
+		)
+		NoWriteKeys = append(
+			NoWriteKeys,
+			"kubernetes-max-pods-per-node",
+		)
+	}
+
+	if v.IsSet("kubernetes-pods-cidr") {
+		validFlag := false
+		_, err := netip.ParsePrefix(v.GetString("kubernetes-pods-cidr"))
+		if err == nil {
+			validFlag = true
+		}
+		if !validFlag {
+			errors = append(
+				errors,
+				"kubernetes-pods-cidr was set to an invalid IP",
+			)
+		}
+	} else {
+		v.Set(
+			"kubernetes-pods-cidr",
+			"10.32.0.0/12",
+		)
+		NoWriteKeys = append(
+			NoWriteKeys,
+			"kubernetes-pods-cidr",
+		)
+	}
+
+	if v.IsSet("kubernetes-services-cidr") {
+		validFlag := false
+		_, err := netip.ParsePrefix(v.GetString("kubernetes-services-cidr"))
+		if err == nil {
+			validFlag = true
+		}
+		if !validFlag {
+			errors = append(
+				errors,
+				"kubernetes-services-cidr was set to an invalid IP",
+			)
+		}
+	} else {
+		v.Set(
+			"kubernetes-services-cidr",
+			"10.16.0.0/12",
+		)
+		NoWriteKeys = append(
+			NoWriteKeys,
+			"kubernetes-services-cidr",
+		)
+	}
+
+	if v.IsSet("kubernetes-weave-mtu") {
+		validFlag := false
+		if v.GetInt("kubernetes-weave-mtu") > 0 {
+			validFlag = true
+		}
+		if !validFlag {
+			errors = append(
+				errors,
+				"kubernetes-weave-mtu must be set an integer (>0)",
+			)
+		}
+	} else {
+		v.Set(
+			"kubernetes-weave-mtu",
+			"1376",
+		)
+		NoWriteKeys = append(
+			NoWriteKeys,
+			"kubernetes-weave-mtu",
+		)
+	}
+
+	if v.IsSet("wipe-ceph-osds") {
+		validFlag := false
+		for _, value := range []string{
+			"yes",
+			"no",
 		} {
-			if v.GetString("k8s-primary-cni") == value {
+			if v.GetString("wipe-ceph-osds") == value {
 				validFlag = true
 				break
 			}
@@ -1662,44 +1988,72 @@ func validateFlags() []string {
 		if !validFlag {
 			errors = append(
 				errors,
-				fmt.Sprintf("k8s-primary-cni must be set to weave or cilium"),
+				"wipe-ceph-osds must be set to yes or no",
 			)
 		}
+	} else {
+		v.Set(
+			"wipe-ceph-osds",
+			"yes",
+		)
+		NoWriteKeys = append(
+			NoWriteKeys,
+			"wipe-ceph-osds",
+		)
+	}
+
+	if v.IsSet("domain") {
+		validFlag := false
+		if v.GetString("domain") != "" {
+			validFlag = true
+		}
+		if !validFlag {
+			errors = append(
+				errors,
+				"domain must be set a string (delimited by spaces) of search domains.",
+			)
+		}
+	} else {
+		v.Set(
+			"domain",
+			"nmn mtl hmn",
+		)
+		NoWriteKeys = append(
+			NoWriteKeys,
+			"domain",
+		)
 	}
 
 	return errors
 }
 
-// AllocateIps distributes IP reservations for each of the NCNs within the networks
-func AllocateIps(ncns []*LogicalNCN, networks map[string]*networking.IPV4Network) {
-	// log.Printf("I'm here in AllocateIps with %d ncns to work with and %d networks", len(ncns), len(networks))
-	lookup := func(name string, subnetName string, networks map[string]*networking.IPV4Network) (
-		*networking.IPV4Subnet, error,
+// AllocateIPs distributes IP reservations for each of the NCNs within the networks
+func AllocateIPs(ncns []*LogicalNCN, networks map[string]*networking.IPNetwork) {
+	lookup := func(name string, subnetName string, networks map[string]*networking.IPNetwork) (
+		subnet *slsCommon.IPSubnet, err error,
 	) {
 		tempNetwork := networks[name]
-		subnet, err := tempNetwork.LookUpSubnet(subnetName)
+		subnet, err = tempNetwork.LookUpSubnet(subnetName)
 		if err != nil {
-			// log.Printf("couldn't find a %v subnet in the %v network \n", subnetName, name)
 			return subnet, fmt.Errorf(
 				"couldn't find a %v subnet in the %v network",
 				subnetName,
 				name,
 			)
 		}
-		// log.Printf("found a %v subnet in the %v network", subnetName, name)
-		return subnet, nil
+		return subnet, err
 	}
 
 	// Build a map of networks based on their names
-	subnets := make(map[string]*networking.IPV4Subnet)
-	for name := range networks {
+	subnets := make(map[string]*slsCommon.IPSubnet)
+	for network := range networks {
 		bootstrapNet, err := lookup(
-			name,
+			network,
 			"bootstrap_dhcp",
 			networks,
 		)
 		if err == nil {
-			subnets[name] = bootstrapNet
+			subnets[network] = bootstrapNet
 		}
 	}
 
@@ -1708,10 +2062,11 @@ func AllocateIps(ncns []*LogicalNCN, networks map[string]*networking.IPV4Network
 		ncn.InstanceID = GenerateInstanceID()
 		for netName, subnet := range subnets {
 			// reserve the bmc ip
-			if netName == "HMN" {
+			if strings.ToLower(netName) == "hmn" {
 				// The bmc xname is the ncn xname without the final two characters
 				// NCN Xname = x3000c0s9b0n0  BMC Xname = x3000c0s9b0
-				ncn.BmcIP = subnet.AddReservation(
+				reservation, err := networking.AddReservation(
+					subnet,
 					fmt.Sprintf(
 						"%v",
 						strings.TrimSuffix(
@@ -1723,39 +2078,105 @@ func AllocateIps(ncns []*LogicalNCN, networks map[string]*networking.IPV4Network
 						"%v-mgmt",
 						ncn.Xname,
 					),
-				).IPAddress.String()
+				)
+				if err != nil {
+					log.Fatalf(
+						"failed to allocate hmn reservation %v because %v",
+						ncn.Xname,
+						err,
+					)
+				}
+				ncn.BmcIP = reservation.IPAddress.String()
 			}
-			// Hostname is not available a the point AllocateIPs should be called.
-			reservation := subnet.AddReservation(
+			reservation, err := networking.AddReservation(
+				subnet,
 				ncn.Xname,
 				ncn.Xname,
 			)
-			// log.Printf("Adding %v %v reservation for %v(%v) at %v \n", netName, subnet.Name, ncn.Xname, ncn.Xname, reservation.IPAddress.String())
-			prefixLen := strings.Split(
-				subnet.CIDR.String(),
-				"/",
-			)[1]
-			err := subnet.GenInterfaceName()
 			if err != nil {
-				// pass
+				log.Fatalf(
+					"Failed to allocate reservation for %s: %v",
+					ncn.Xname,
+					err,
+				)
+			}
+			reservationAddr, _ := netip.ParseAddr(reservation.IPAddress.String())
+			prefix, _ := netip.ParsePrefix(subnet.CIDR)
+
+			interfaceName, err := networks[netName].GenInterfaceName(subnet)
+			if err != nil {
+				log.Fatalf(
+					"Couldn't generate interface name for %v on subnet %v\n",
+					ncn.Xname,
+					subnet.CIDR,
+				)
+			}
+			addr4, err := netip.ParseAddr(reservation.IPAddress.String())
+			if err != nil {
+				log.Fatalf(
+					"Failed to parse network IP address %v because %v",
+					reservation.IPAddress.String(),
+					err,
+				)
+			}
+			gw4, err := netip.ParseAddr(subnet.Gateway.String())
+			if err != nil {
+				log.Fatalf(
+					"Failed to parse gateway IP address %v because %v",
+					subnet.Gateway.String(),
+					err,
+				)
 			}
 			tempNetwork := NCNNetwork{
-				NetworkName: netName,
-				IPAddress:   reservation.IPAddress.String(),
+				NetworkName: networks[netName].Name,
+				IPv4Address: addr4,
 				Vlan:        int(subnet.VlanID),
 				FullName:    subnet.FullName,
-				CIDR: strings.Join(
-					[]string{
-						reservation.IPAddress.String(),
-						prefixLen,
-					},
-					"/",
+				CIDR4: netip.PrefixFrom(
+					reservationAddr,
+					prefix.Bits(),
 				),
-				Mask:                prefixLen,
-				InterfaceName:       subnet.InterfaceName,
-				ParentInterfaceName: subnet.ParentDevice,
-				Gateway:             subnet.Gateway,
+				InterfaceName:       interfaceName,
+				ParentInterfaceName: networks[netName].ParentDevice,
+				Gateway4:            gw4,
 			}
+
+			if reservation.IPAddress6 != nil {
+				addr6, err := netip.ParseAddr(reservation.IPAddress6.String())
+				if err != nil {
+					log.Fatalf(
+						"Host %s had an unparseable address for IPv6: %v",
+						ncn.Hostname,
+						reservation.IPAddress6.String(),
+					)
+				}
+
+				prefix6, err := netip.ParsePrefix(subnet.CIDR6)
+				if err != nil {
+					log.Fatalf(
+						"Unparseable subnet IPv6 CIDR for %s: %v",
+						subnet.Name,
+						subnet.CIDR6,
+					)
+				}
+
+				gw6, err := netip.ParseAddr(subnet.Gateway6.String())
+				if err != nil {
+					log.Fatalf(
+						"Unparseable subnet Gateway IPv6 CIDR for %s: %v",
+						subnet.Name,
+						subnet.Gateway6,
+					)
+				}
+				tempNetwork.IPv6Address = addr6
+				tempNetwork.CIDR6 = netip.PrefixFrom(
+					addr6,
+					prefix6.Bits(),
+				)
+				tempNetwork.Gateway6 = gw6
+
+			}
+
 			ncn.Networks = append(
 				ncn.Networks,
 				tempNetwork,

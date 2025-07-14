@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2025 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -28,15 +28,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math/rand"
 	"os"
-	"time"
 
 	"github.com/Cray-HPE/cray-site-init/pkg/csi"
 )
 
 func main() {
-	rand.Seed(time.Now().UTC().UnixNano())
+
 	c := csi.NewCommand()
 	err := c.Execute()
 	if err != nil {
@@ -44,11 +42,14 @@ func main() {
 			err,
 			context.Canceled,
 		) {
-			fmt.Fprintf(
+			_, err := fmt.Fprintf(
 				os.Stderr,
 				"An error occurred: %v\n",
 				err,
 			)
+			if err != nil {
+				return
+			}
 		}
 		os.Exit(1)
 	}

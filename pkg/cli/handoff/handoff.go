@@ -26,20 +26,21 @@ package handoff
 
 import (
 	"crypto/tls"
-	"github.com/Cray-HPE/cray-site-init/pkg/csm"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 
+	"github.com/Cray-HPE/cray-site-init/pkg/csm"
+	"github.com/Cray-HPE/cray-site-init/pkg/csm/hms/smd"
 	"github.com/Cray-HPE/hms-bss/pkg/bssTypes"
-	hmsS3 "github.com/Cray-HPE/hms-s3"
-	slsCommon "github.com/Cray-HPE/hms-sls/pkg/sls-common"
+	slsClient "github.com/Cray-HPE/hms-sls/v2/pkg/sls-client"
+	slsCommon "github.com/Cray-HPE/hms-sls/v2/pkg/sls-common"
 	"github.com/spf13/cobra"
 
-	"github.com/Cray-HPE/cray-site-init/pkg/bss"
-	"github.com/Cray-HPE/cray-site-init/pkg/sls"
+	"github.com/Cray-HPE/cray-site-init/pkg/csm/hms/bss"
+	"github.com/Cray-HPE/cray-site-init/pkg/csm/hms/sls"
 )
 
 const s3Prefix = "s3://boot-images"
@@ -65,17 +66,10 @@ var (
 	limitToXnames  []string
 	userDataJSON   string
 
-	desiredKubernetesVersion string
-	desiredCephVersion       string
-
-	bssClient *bss.UtilsClient
-	slsClient *sls.UtilsClient
+	bssAPI *bss.UtilsClient
+	slsAPI *slsClient.SLSClient
 
 	verboseLogging bool
-
-	s3Client *hmsS3.S3Client
-
-	s3SecretName string
 )
 
 // NewCommand creates the handoff command.
@@ -103,10 +97,7 @@ func setupEnvs() {
 	if token == "" {
 		log.Println("TOKEN was not set. Attempting to read API token from Kubernetes directly ... ")
 		var err error
-		token, err = csm.GetToken(
-			csm.DefaultNameSpace,
-			csm.DefaultAdminTokenSecretName,
-		)
+		token, err = csm.GetToken()
 		if err != nil {
 			log.Panicf(
 				"Neither the environment variable [TOKEN] or Kubernetes %s provided a useful token!",
@@ -117,17 +108,17 @@ func setupEnvs() {
 
 	bssBaseURL = os.Getenv("BSS_BASE_URL")
 	if bssBaseURL == "" {
-		bssBaseURL = csm.DefaultBSSBaseURL
+		bssBaseURL = bss.GetBSSBaseURL()
 	}
 
 	hsmBaseURL = os.Getenv("HSM_BASE_URL")
 	if hsmBaseURL == "" {
-		hsmBaseURL = csm.DefaultSMDBaseURL
+		hsmBaseURL = smd.GetSMDBaseURL()
 	}
 
 	slsBaseURL = os.Getenv("SLS_BASE_URL")
 	if slsBaseURL == "" {
-		slsBaseURL = csm.DefaultSLSBaseURL
+		slsBaseURL = sls.GetSLSBaseURL()
 	}
 }
 
@@ -145,16 +136,16 @@ func SetupClients() {
 	setupEnvs()
 	setupHTTPClient()
 
-	bssClient = bss.NewBSSClient(
-		bssBaseURL,
+	bssAPI = bss.NewBSSClient(
+		bss.GetBSSBaseURL(),
 		httpClient,
 		token,
 	)
-	slsClient = sls.NewSLSClient(
-		slsBaseURL,
+	slsAPI = slsClient.NewSLSClient(
+		sls.GetSLSBaseURL(),
 		httpClient,
-		token,
-	)
+		"",
+	).WithAPIToken(token)
 }
 
 // setupCommon - These are steps that every handoff function have in common.
@@ -175,13 +166,13 @@ func setupCommon() {
 func GetManagementNCNsFromSLS() (
 	managementNCNs []slsCommon.GenericHardware, err error,
 ) {
-	return slsClient.GetManagementNCNs()
+	return sls.GetManagementNCNs(*slsAPI)
 }
 
 func uploadEntryToBSS(
 	bssEntry bssTypes.BootParams, method string,
 ) {
-	uploadedBSSEntry, err := bssClient.UploadEntryToBSS(
+	uploadedBSSEntry, err := bssAPI.UploadEntryToBSS(
 		bssEntry,
 		method,
 	)
@@ -207,7 +198,7 @@ func uploadEntryToBSS(
 }
 
 func getBSSBootparametersForXname(xname string) bssTypes.BootParams {
-	bootParams, err := bssClient.GetBSSBootparametersForXname(xname)
+	bootParams, err := bssAPI.GetBSSBootparametersForXname(xname)
 	if err != nil {
 		log.Panicf(
 			"Failed to get BSS bootparameters for %s: %s",

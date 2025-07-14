@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2025 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -27,640 +27,755 @@
 package networking
 
 import (
-	"bytes"
-	"encoding/binary"
-	"errors"
 	"fmt"
+	"log"
 	"math"
-	"math/bits"
+	"math/big"
 	"net"
-	"reflect"
-	"sort"
+	"net/netip"
+	"slices"
+	"strings"
+
+	slsCommon "github.com/Cray-HPE/hms-sls/v2/pkg/sls-common"
+	"github.com/spf13/viper"
 )
 
-// IPRange defines a pair of IPs, over a range.
-type IPRange struct {
-	start net.IP
-	end   net.IP
-}
+const (
 
-// Networks - The networks that need IPAM.
-var Networks = [...]string{
-	"cmn",
-	"hmn",
-	"mtl",
-	"nmn",
-}
+	// IPv4Size is the size of an IPv4 address in bits.
+	IPv4Size = 32
 
-// IPNets is a helper type for sorting net.IPNets.
-type IPNets []net.IPNet
+	// IPv6Size is the size of an IPv6 address in bits.
+	IPv6Size = 128
 
-func (s IPNets) Len() int {
-	return len(s)
-}
+	// IPv6MinimumSize is the largest prefix that a network may be in bits.
+	IPv6MinimumSize = 64
+)
 
-func (s IPNets) Less(i, j int) bool {
-	return ipToDecimal(s[i].IP) < ipToDecimal(s[j].IP)
-}
-
-func (s IPNets) Swap(i, j int) {
-	s[i], s[j] = s[j], s[i]
-}
-
-// CalculateSubnetMask calculates new subnet mask to accommodate n subnets.
-func CalculateSubnetMask(
-	networkMask net.IPMask, n uint,
-) (
-	net.IPMask, error,
-) {
-	if n == 0 {
-		return nil, errors.New("divide by zero")
-	}
-
-	// Calculate amount of bits needed to accommodate at least N subnets.
-	subnetBitsNeeded := bits.Len(n - 1)
-
-	maskOnes, maskBits := networkMask.Size()
-	if subnetBitsNeeded > maskBits-maskOnes {
-		return nil, fmt.Errorf(
-			"no room in network mask %s to accommodate %d subnets",
-			networkMask.String(),
-			n,
-		)
-	}
-
-	return net.CIDRMask(
-		maskOnes+subnetBitsNeeded,
-		maskBits,
-	), nil
-}
-
-// CanonicalizeSubnets iterates over subnets and returns deduplicated list of
-// networks that belong to networkRange. Subnets that overlap each other but
-// aren't exactly the same are not removed. Subnets are returned in the same
-// order as they appear in input.
-//
-// Example:
-//
-//	networkRange: 192.168.2.0/24
-//	subnets: [172.168.2.0/25, 192.168.2.0/25, 192.168.3.128/25, 192.168.2.0/25, 192.168.2.128/25]
-//	returned: [192.168.2.0/25, 192.168.2.128/25]
-//
-// Example 2:
-//
-//	networkRange: 10.0.0.0/8
-//	subnets: [10.1.0.0/16, 10.1.0.0/24, 10.1.1.0/24]
-//	returned: [10.1.0.0/16, 10.1.0.0/24, 10.1.1.0/24]
-func CanonicalizeSubnets(
-	networkRange net.IPNet, subnets []net.IPNet,
-) []net.IPNet {
-	// Naive deduplication as net.IPNet cannot be used as key for map. This
-	// should be ok for current foreseeable future.
-	for i := 0; i < len(subnets); i++ {
-		// Remove subnets that don't belong to our desired network.
-		if !networkRange.Contains(subnets[i].IP) {
-			subnets = append(
-				subnets[:i],
-				subnets[i+1:]...,
-			)
-			i--
-			continue
-		}
-
-		// Remove duplicates.
-		for j := i + 1; j < len(subnets); j++ {
-			if reflect.DeepEqual(
-				subnets[i],
-				subnets[j],
-			) {
-				subnets = append(
-					subnets[:j],
-					subnets[j+1:]...,
-				)
-				j--
-			}
-		}
-	}
-
-	return subnets
-}
-
-// Contains returns true when the subnet is a part of the network, false
+// ContainsSubnet returns true when the subnet is a part of the network, false
 // otherwise.
-func Contains(network, subnet net.IPNet) bool {
-	subnetRange := NewIPRange(subnet)
+func ContainsSubnet(network netip.Prefix, subnet netip.Prefix) bool {
+	subnetRange := newIPRange(subnet)
 	return network.Contains(subnetRange.start) && network.Contains(subnetRange.end)
 }
 
-// Free takes a network, a mask, and a list of subnets.
-// An available network, within the first network, is returned.
-func Free(
-	network net.IPNet, mask net.IPMask, subnets []net.IPNet,
-) (
-	net.IPNet, error,
-) {
-	if size(network.Mask) < size(mask) {
-		return net.IPNet{}, fmt.Errorf(
-			"have: %v, requested: %v",
-			network.Mask,
-			mask,
+// Add increments the given IP by the number.
+//
+// examples:
+//
+//		Add(10.0.4.0/24, 1) -> 10.0.4.1
+//		Add(10.0.4.0/24, 300) -> 10.0.4.255
+//	 Add(fdf8:413:de2c:204::/64, 18446744073709551615) -> fdf8:413:de2c:204:ffff:ffff:ffff:ffff
+//
+// Negative numbers are ignored.
+func Add(prefix netip.Prefix, number uint64) (newIP netip.Addr) {
+	if number < 1 {
+		return prefix.Addr()
+	}
+	startingIP := prefix.Addr().AsSlice()
+	ipInt := new(big.Int).SetBytes(startingIP)
+	toAdd, ok := new(big.Int).SetString(
+		fmt.Sprintf(
+			"%0d",
+			number,
+		),
+		10,
+	)
+	if !ok {
+		log.Fatalf(
+			"Error adding %s to IP address: %d",
+			prefix.String(),
+			number,
 		)
 	}
+	ipInt.Add(
+		ipInt,
+		toAdd,
+	)
+	ipBytes := ipInt.Bytes()
+	var resultIP net.IP
+	if prefix.Addr().Is4() {
+		resultIP = ipBytes
+	} else if prefix.Addr().Is6() {
+		if len(ipBytes) < net.IPv6len {
+			paddedBytes := make(
+				[]byte,
+				net.IPv6len,
+			)
+			copy(
+				paddedBytes[net.IPv6len-len(ipBytes):],
+				ipBytes,
+			)
+			ipBytes = paddedBytes
+		}
+		resultIP = ipBytes
+	}
+	if resultIP == nil {
+		log.Fatalf(
+			"Failed to resolve IP address from adding %d to %s\n",
+			number,
+			prefix.String(),
+		)
+	}
+	newIP, err := netip.ParseAddr(resultIP.String())
+	if !prefix.Contains(newIP) {
+		lastIP, err := Broadcast(prefix)
+		if err == nil {
+			log.Printf(
+				"Tried adding %d to %s but the result was out-of-range.\n Returning %s\n",
+				number,
+				prefix.String(),
+				lastIP,
+			)
+			newIP = lastIP
+		}
+	}
+	if err != nil {
+		log.Fatalf(
+			"Failed to add %v to %v because %v.\n",
+			number,
+			prefix.String(),
+			err,
+		)
+	}
+	return newIP
+}
 
-	for _, subnet := range subnets {
-		if !network.Contains(subnet.IP) {
-			return net.IPNet{}, fmt.Errorf(
-				"%v is not contained by %v",
-				subnet.IP,
-				network,
+/*
+AddReservation
+Adds and returns a new IPReservation to the given subnet. If an IPReservation exists in the given
+subnet for the given name, the existing IPReservation is returned.
+
+Both an IPv4 and IPv6 address will be reserved, IPv6 is only reserved if the given subnet has a valid IPv6 CIDR.
+*/
+func AddReservation(subnet *slsCommon.IPSubnet, name string, comment string) (IPReservation *slsCommon.IPReservation, err error) {
+	ipv4, ipv6, err4, err6 := FindFreeIPAddress(subnet)
+	if err4 != nil {
+		return IPReservation, fmt.Errorf(
+			"error finding a free IP address in %s (ipv4: %s, ipv6: %s) because %v",
+			subnet.Name,
+			subnet.CIDR,
+			subnet.CIDR6,
+			err4,
+		)
+	}
+	if err6 != nil {
+		if subnet.CIDR6 != "" {
+			return IPReservation, fmt.Errorf(
+				"error finding a free IP address in %s (ipv6: %s) because %v",
+				subnet.Name,
+				subnet.CIDR6,
+				err6,
 			)
 		}
 	}
-
-	sort.Sort(IPNets(subnets))
-
-	// Find all the free IP ranges.
-	freeIPRanges, err := freeIPRanges(
-		network,
-		subnets,
+	newIPReservation := slsCommon.IPReservation{
+		Name:    name,
+		Comment: comment,
+	}
+	if ipv4.IsValid() && !ipv4.IsUnspecified() {
+		newIPReservation.IPAddress = ipv4.AsSlice()
+	}
+	if err6 == nil && ipv6.IsValid() && !ipv6.IsUnspecified() {
+		newIPReservation.IPAddress6 = ipv6.AsSlice()
+	}
+	subnet.IPReservations = append(
+		subnet.IPReservations,
+		newIPReservation,
 	)
-	if err != nil {
-		return net.IPNet{}, err
-	}
-
-	// Attempt to find a free space, of the required size.
-	freeIP, err := space(
-		freeIPRanges,
-		mask,
-	)
-	if err != nil {
-		return net.IPNet{}, err
-	}
-
-	// Invariant: The IP of the network returned should not be nil.
-	if freeIP == nil {
-		return net.IPNet{}, errors.New("no available ips")
-	}
-
-	freeNetwork := net.IPNet{
-		IP:   freeIP,
-		Mask: mask,
-	}
-
-	// Invariant: The IP of the network returned should be contained
-	// within the network supplied.
-	if !network.Contains(freeNetwork.IP) {
-		return net.IPNet{}, fmt.Errorf(
-			"%v is not contained by %v",
-			freeNetwork.IP,
-			network,
-		)
-	}
-
-	// Invariant: The mask of the network returned should be equal to
-	// the mask supplied as an argument.
-	if !bytes.Equal(
-		mask,
-		freeNetwork.Mask,
-	) {
-		return net.IPNet{}, fmt.Errorf(
-			"have: %v, requested: %v",
-			freeNetwork.Mask,
-			mask,
-		)
-	}
-
-	return freeNetwork, nil
+	IPReservation = &subnet.IPReservations[len(subnet.IPReservations)-1]
+	return IPReservation, err
 }
 
-// Half takes a network and returns two subnets which split the network in
-// half.
-func Half(network net.IPNet) (
-	first, second net.IPNet, err error,
-) {
-	ones, parts := network.Mask.Size()
-	if ones == parts {
-		return net.IPNet{}, net.IPNet{}, fmt.Errorf(
-			"single IP mask %q is not allowed",
-			network.Mask.String(),
+/*
+FindFreeIPAddress finds the first free, usable IP addresses in a given subnet.
+Returns an IPv4 and IPv6 address, each with their own error.
+*/
+func FindFreeIPAddress(subnet *slsCommon.IPSubnet) (ipv4 netip.Addr, ipv6 netip.Addr, err4 error, err6 error) {
+	IPAddresses, IPAddresses6 := getIPAddressesFromSubnet(subnet)
+	ipv4, err4 = findFirstFreeIPv4Address(
+		subnet,
+		IPAddresses,
+	)
+	if err4 != nil && subnet.CIDR != "" {
+		err4 = fmt.Errorf(
+			"failed to find a free IPv4 address in %s because %v",
+			subnet.Name,
+			err4,
 		)
 	}
-
-	// Bit shift is dividing by 2.
-	ones++
-	mask := net.CIDRMask(
-		ones,
-		parts,
+	ipv6, err6 = findFirstFreeIPv6Address(
+		subnet,
+		IPAddresses6,
 	)
-
-	// Compute first half.
-	first, err = Free(
-		network,
-		mask,
-		nil,
-	)
-	if err != nil {
-		return net.IPNet{}, net.IPNet{}, err
+	if err6 != nil && subnet.CIDR6 != "" {
+		err6 = fmt.Errorf(
+			"failed to find a free IPv6 address in %s because %v",
+			subnet.Name,
+			err6,
+		)
 	}
-
-	// Second half is computed by getting next free.
-	second, err = Free(
-		network,
-		mask,
-		[]net.IPNet{first},
-	)
-	if err != nil {
-		return net.IPNet{}, net.IPNet{}, err
-	}
-
-	return first, second, nil
+	return ipv4, ipv6, err4, err6
 }
 
-// Split returns n subnets from network.
-func Split(
-	network net.IPNet, n uint,
-) (
-	[]net.IPNet, error,
-) {
-	mask, err := CalculateSubnetMask(
-		network.Mask,
-		n,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	var subnets []net.IPNet
-	for i := uint(0); i < n; i++ {
-		subnet, err := Free(
-			network,
-			mask,
-			subnets,
-		)
-		if err != nil {
-			return nil, err
+func getIPAddressesFromSubnet(subnet *slsCommon.IPSubnet) (IPAddresses []netip.Addr, IPAddresses6 []netip.Addr) {
+	for _, reservation := range subnet.IPReservations {
+		IPReservation, err := netip.ParseAddr(reservation.IPAddress.String())
+		if err == nil {
+			IPAddresses = append(
+				IPAddresses,
+				IPReservation,
+			)
 		}
+		IPReservation6, err := netip.ParseAddr(reservation.IPAddress6.String())
+		if err == nil {
+			IPAddresses6 = append(
+				IPAddresses6,
+				IPReservation6,
+			)
+		}
+	}
+	return IPAddresses, IPAddresses6
+}
 
-		subnets = append(
-			subnets,
-			subnet,
+func findFirstFreeIPv4Address(subnet *slsCommon.IPSubnet, addresses []netip.Addr) (address netip.Addr, err error) {
+	prefix, err := netip.ParsePrefix(subnet.CIDR)
+	if err != nil {
+		return address, fmt.Errorf(
+			"error parsing CIDR '%s' because %v",
+			subnet.CIDR,
+			err,
 		)
 	}
 
-	return subnets, nil
+	address = prefix.Addr()
+
+	/*
+		In IPv4, we will avoid leasing IPs to the
+		- Root address (e.g. 192.168.0.0 for 192.168.0.0/24)
+		- The gateway address (e.g. 192.168.0.1 for 192.168.0.0/24)
+		- The broadcast address (e.g. 192.168.0.255 for 192.168.0.0/24)
+
+		If we resolve an address that does not belong to the subnet the function returns with an error.
+	*/
+
+	subnetRoot, err := FindCIDRRootIP(prefix)
+	if err != nil {
+		return address, fmt.Errorf(
+			"error finding subnet root IP address for %s subnet because %v",
+			prefix.String(),
+			err,
+		)
+	}
+	addresses = append(
+		addresses,
+		subnetRoot,
+	)
+	gateway, err := netip.ParseAddr(subnet.Gateway.String())
+	if err != nil {
+		return address, fmt.Errorf(
+			"error reading gateway IP for %s subnet because %v",
+			subnet.Gateway.String(),
+			err,
+		)
+	}
+	addresses = append(
+		addresses,
+		gateway,
+	)
+	broadcast, err := Broadcast(prefix)
+	if err != nil {
+		return address, fmt.Errorf(
+			"error resolving broadcast address for %s subnet because %v",
+			prefix.String(),
+			err,
+		)
+	}
+	addresses = append(
+		addresses,
+		broadcast,
+	)
+	for slices.Contains(
+		addresses,
+		address,
+	) {
+		address = address.Next()
+	}
+	if !prefix.Contains(address) {
+		address = netip.IPv4Unspecified()
+		err = fmt.Errorf(
+			"%s %s subnet has exhausted its available IPv4 addresses, failed to find a free address",
+			subnet.Name,
+			prefix.String(),
+		)
+	}
+	return address, err
 }
 
-// Add increments the given IP by the number.
-// e.g: add(10.0.4.0, 1) -> 10.0.4.1.
-// Negative values are allowed for decrementing.
-func Add(
-	ip net.IP, number int,
-) net.IP {
-	return decimalToIP(ipToDecimal(ip) + number)
+func findFirstFreeIPv6Address(subnet *slsCommon.IPSubnet, addresses []netip.Addr) (address netip.Addr, err error) {
+	prefix, err := netip.ParsePrefix(subnet.CIDR6)
+	if err != nil {
+		return address, fmt.Errorf(
+			"error parsing CIDR '%s': %s",
+			subnet.CIDR6,
+			err,
+		)
+	}
+
+	address = prefix.Addr()
+
+	/*
+		In IPv6, we will avoid leasing IPs to the
+		- Root address (e.g. 192.168.0.0 for 192.168.0.0/24)
+		- The gateway address (e.g. 192.168.0.1 for 192.168.0.0/24)
+
+		If we resolve an address that does not belong to the subnet the function returns with an error.
+	*/
+	subnetRoot, err := FindCIDRRootIP(prefix)
+	addresses = append(
+		addresses,
+		subnetRoot,
+	)
+	if err != nil {
+		return address, fmt.Errorf(
+			"error finding subnet root IP address for %s subnet because %v",
+			prefix.String(),
+			err,
+		)
+	}
+	gateway, err := netip.ParseAddr(subnet.Gateway6.String())
+	if err != nil {
+		return address, fmt.Errorf(
+			"error resolving gateway address for %s subnet because %v",
+			subnet.Gateway6.String(),
+			err,
+		)
+	}
+	addresses = append(
+		addresses,
+		gateway,
+	)
+	for slices.Contains(
+		addresses,
+		address,
+	) {
+		address = address.Next()
+	}
+	if !prefix.Contains(address) {
+		address = netip.IPv6Unspecified()
+		err = fmt.Errorf(
+			"%s %s subnet has exhausted its available IPv6 addresses, failed to find a free address",
+			subnet.Name,
+			prefix.String(),
+		)
+	}
+	return address, err
 }
 
-// decimalToIP converts an int to a net.IP.
-func decimalToIP(ip int) net.IP {
-	t := make(
+/*
+UpdateReservation will modify an existing reservation. This is useful when the subnet's CIDR changes or new CIDRs
+
+If IPv6Only is set to true, only IPSubnet.IPAddress6 values are updated. This is useful when IPv6 is being added to an
+existing SLS subnet, and we do not want to change the IPv4 reservations.
+
+If the subnet does not have IPv6 defined, then IPv6Only has no effect.
+*/
+
+func UpdateReservation(subnet *slsCommon.IPSubnet, IPReservation slsCommon.IPReservation, IPv6Only bool) (newIPReservation slsCommon.IPReservation, err error) {
+	ipv4, ipv6, err4, err6 := FindFreeIPAddress(subnet)
+	if err4 != nil {
+		return newIPReservation, fmt.Errorf(
+			"error finding a free IP address in %s because %v",
+			subnet.Name,
+			err,
+		)
+	}
+	newIPReservation = slsCommon.IPReservation{
+		Name:    IPReservation.Name,
+		Comment: IPReservation.Comment,
+	}
+	if !IPv6Only && ipv4.IsValid() && !ipv4.IsUnspecified() {
+		newIPReservation.IPAddress = ipv4.AsSlice()
+	} else {
+		newIPReservation.IPAddress = IPReservation.IPAddress
+	}
+	if err6 == nil && ipv6.IsValid() && !ipv6.IsUnspecified() {
+		newIPReservation.IPAddress6 = ipv6.AsSlice()
+	} else {
+		newIPReservation.IPAddress6 = IPReservation.IPAddress6
+	}
+	return newIPReservation, err
+}
+
+// AddReservationWithIP adds a reservation with a specific ip address.
+func AddReservationWithIP(subnet *slsCommon.IPSubnet, name string, addr netip.Addr, comment string) (
+	reservation *slsCommon.IPReservation, err error,
+) {
+	if addr.Is4() {
+		prefix, err := netip.ParsePrefix(subnet.CIDR)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"error parsing CIDR '%s': %s",
+				subnet.CIDR,
+				err,
+			)
+		}
+		if prefix.Contains(addr) {
+			newReservation := slsCommon.IPReservation{
+				IPAddress: addr.AsSlice(),
+				Name:      name,
+				Comment:   comment,
+			}
+			for _, reservation := range subnet.IPReservations {
+				if reservation.IPAddress.Equal(addr.AsSlice()) {
+					return nil, fmt.Errorf(
+						"failed to reserve IPv4 address for %s, address already reserved for %s",
+						newReservation.Name,
+						reservation.Name,
+					)
+				}
+			}
+			subnet.IPReservations = append(
+				subnet.IPReservations,
+				newReservation,
+			)
+		} else {
+			return nil, fmt.Errorf(
+				"cannot add \"%v\" to %v subnet as %v. %v is not part of %v",
+				name,
+				subnet.Name,
+				addr,
+				addr,
+				prefix.String(),
+			)
+		}
+	} else if addr.Is6() {
+		prefix, err := netip.ParsePrefix(subnet.CIDR6)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"error parsing CIDR '%s': %s",
+				subnet.CIDR6,
+				err,
+			)
+		}
+		if prefix.Contains(addr) {
+			newReservation := slsCommon.IPReservation{
+				IPAddress6: addr.AsSlice(),
+				Name:       name,
+				Comment:    comment,
+			}
+			for _, reservation := range subnet.IPReservations {
+				if reservation.IPAddress6.Equal(addr.AsSlice()) {
+					return nil, fmt.Errorf(
+						"failed to reserve IPv4 address for %s, address already reserved for %s",
+						newReservation.Name,
+						reservation.Name,
+					)
+				}
+			}
+			subnet.IPReservations = append(
+				subnet.IPReservations,
+				newReservation,
+			)
+		} else {
+			return nil, fmt.Errorf(
+				"cannot add \"%v\" to %v subnet as %v. %v is not part of %v",
+				name,
+				subnet.Name,
+				addr,
+				addr,
+				prefix.String(),
+			)
+		}
+	}
+	return &subnet.IPReservations[len(subnet.IPReservations)-1], nil
+}
+
+// AddReservationWithPin adds a new IPv4 reservation to the subnet with the last octet pinned.
+func AddReservationWithPin(
+	subnet *slsCommon.IPSubnet, name string, comment string, pin uint8,
+) (*slsCommon.IPReservation, error) {
+	// Grab the "floor" of the subnet and alter the last byte to match the pinned byte
+	// modulo 4/16 bit ip addresses
+	newIP := make(
 		net.IP,
 		4,
 	)
-	binary.BigEndian.PutUint32(
-		t,
-		uint32(ip),
-	)
-
-	return t
-}
-
-// freeIPRanges takes a network, and a list of subnets.
-// It calculates available IPRanges, within the original network.
-func freeIPRanges(
-	network net.IPNet, subnets []net.IPNet,
-) (
-	[]IPRange, error,
-) {
-	freeSubnets := []IPRange{}
-	networkRange := NewIPRange(network)
-
-	if len(subnets) == 0 {
-		freeSubnets = append(
-			freeSubnets,
-			networkRange,
-		)
-		return freeSubnets, nil
+	_, cidr, err := net.ParseCIDR(subnet.CIDR)
+	if err != nil {
+		return nil, err
 	}
-
-	{
-		// Check space between start of network and first subnet.
-		firstSubnetRange := NewIPRange(subnets[0])
-
-		// Check the first subnet doesn't start at the start of the network.
-		if !networkRange.start.Equal(firstSubnetRange.start) {
-			// It doesn't, so we have a free range between the start
-			// of the network, and the start of the first subnet.
-			end := Add(
-				firstSubnetRange.start,
-				-1,
-			)
-			freeSubnets = append(
-				freeSubnets,
-				IPRange{
-					start: networkRange.start,
-					end:   end,
-				},
-			)
-		}
+	if len(cidr.IP) == 4 {
+		newIP[0] = cidr.IP[0]
+		newIP[1] = cidr.IP[1]
+		newIP[2] = cidr.IP[2]
+		newIP[3] = pin
 	}
-
-	{
-		// Check space between each subnet.
-		for i := 0; i < len(subnets)-1; i++ {
-			currentSubnetRange := NewIPRange(subnets[i])
-			nextSubnetRange := NewIPRange(subnets[i+1])
-
-			// If the two subnets are not contiguous,
-			if ipToDecimal(currentSubnetRange.end)+1 != ipToDecimal(nextSubnetRange.start) {
-				// Then there is a free range between them.
-				start := Add(
-					currentSubnetRange.end,
-					1,
-				)
-				end := Add(
-					nextSubnetRange.start,
-					-1,
-				)
-				freeSubnets = append(
-					freeSubnets,
-					IPRange{
-						start: start,
-						end:   end,
-					},
-				)
-			}
-		}
+	if len(cidr.IP) == 16 {
+		newIP[0] = cidr.IP[12]
+		newIP[1] = cidr.IP[13]
+		newIP[2] = cidr.IP[14]
+		newIP[3] = pin
 	}
-
-	{
-		// Check space between last subnet and end of network.
-		lastSubnetRange := NewIPRange(subnets[len(subnets)-1])
-
-		// Check the last subnet doesn't end at the end of the network.
-		if !lastSubnetRange.end.Equal(networkRange.end) {
-			// It doesn't, so we have a free range between the end of the
-			// last subnet, and the end of the network.
-			start := Add(
-				lastSubnetRange.end,
-				1,
-			)
-			freeSubnets = append(
-				freeSubnets,
-				IPRange{
-					start: start,
-					end:   networkRange.end,
-				},
-			)
-		}
-	}
-
-	return freeSubnets, nil
-}
-
-// ipToDecimal converts a net.IP to an int.
-func ipToDecimal(ip net.IP) int {
-	t := ip
-	if len(ip) == 16 {
-		t = ip[12:16]
-	}
-
-	return int(binary.BigEndian.Uint32(t))
-}
-
-// NewIPRange takes an IPNet, and returns the ipRange of the network.
-func NewIPRange(network net.IPNet) IPRange {
-	start := network.IP
-	end := Add(
-		network.IP,
-		size(network.Mask)-1,
-	)
-
-	return IPRange{
-		start: start,
-		end:   end,
-	}
-}
-
-// size takes a mask, and returns the number of addresses.
-func size(mask net.IPMask) int {
-	ones, _ := mask.Size()
-	size := int(
-		math.Pow(
-			2,
-			float64(32-ones),
-		),
-	)
-
-	return size
-}
-
-// Broadcast takes a net.IPNet and returns the broadcast address as net.IP
-func Broadcast(network net.IPNet) net.IP {
-	return Add(
-		network.IP,
-		size(network.Mask)-1,
-	)
-}
-
-// space takes a list of free ip ranges, and a mask,
-// and returns the start IP of the first range that could fit the mask.
-func space(
-	freeIPRanges []IPRange, mask net.IPMask,
-) (
-	net.IP, error,
-) {
-	for _, freeIPRange := range freeIPRanges {
-		start := ipToDecimal(freeIPRange.start)
-		end := ipToDecimal(freeIPRange.end)
-
-		// When subnet allocations contain various different subnet sizes, it can be
-		// that free IP range starts from smaller network than what we are finding
-		// for. Therefore we must first adjust the start IP such that it can hold the
-		// whole network that we are looking space for.
-		//
-		// Example: Free IP range starts at 10.1.2.192 and ends 10.1.255.255.
-		//          We look for next available /24 network so first suitable
-		//          start IP for this would be 10.1.3.0.
-		//
-		ones, _ := mask.Size()
-		trailingZeros := bits.TrailingZeros32(uint32(start))
-		for (start < end) && (ones < (32 - trailingZeros)) {
-			var mask uint32
-			for i := 0; i < trailingZeros; i++ {
-				mask |= 1 << uint32(i)
-			}
-
-			start = int(uint32(start) | mask)
-			start++
-			trailingZeros = bits.TrailingZeros32(uint32(start))
-		}
-
-		if end-start+1 >= size(mask) {
-			return decimalToIP(start), nil
-		}
-	}
-
-	return nil, fmt.Errorf(
-		"tried to fit: %v",
-		mask,
-	)
-}
-
-// SubnetWithin returns the smallest subnet than can contain (size) hosts
-func SubnetWithin(
-	network net.IPNet, hostNumber int,
-) (
-	net.IPNet, error,
-) {
-	var n net.IPNet
-	ip := network.IP.String()
-
-	// sort the map
-	keys := make(
-		[]int,
-		0,
-	)
-	for k := range netmasks {
-		keys = append(
-			keys,
-			k,
-		)
-	}
-	sort.Ints(keys)
-	// run through the sorted map
-	for _, k := range keys {
-		subnet := netmasks[k]
-		if k > hostNumber {
-			_, mynet, err := net.ParseCIDR(
-				fmt.Sprintf(
-					"%v%v",
-					ip,
-					subnet,
+	if comment != "" {
+		subnet.IPReservations = append(
+			subnet.IPReservations,
+			slsCommon.IPReservation{
+				IPAddress: newIP,
+				Name:      name,
+				Comment:   comment,
+				Aliases: strings.Split(
+					comment,
+					",",
 				),
+			},
+		)
+	} else {
+		subnet.IPReservations = append(
+			subnet.IPReservations,
+			slsCommon.IPReservation{
+				IPAddress: newIP,
+				Name:      name,
+			},
+		)
+	}
+	return &subnet.IPReservations[len(subnet.IPReservations)-1], nil
+}
+
+// Broadcast returns the broadcast IP of a given subnet, or 0.0.0.0, :: if unspecified.
+func Broadcast(subnet netip.Prefix) (broadcast netip.Addr, err error) {
+
+	var bits int
+	if subnet.Addr().Is4() {
+		bits = IPv4Size
+	} else if subnet.Addr().Is6() {
+		bits = IPv6Size
+	}
+	mask := net.CIDRMask(
+		subnet.Bits(),
+		bits,
+	)
+
+	binarySubnetAddr, err := subnet.Addr().MarshalBinary()
+	if err != nil {
+		return broadcast, fmt.Errorf(
+			"error serializing subnet address: %v",
+			err,
+		)
+	}
+	binarySubnetMask, err := netip.MustParseAddr(net.IP(mask).String()).MarshalBinary()
+	if err != nil {
+		return broadcast, fmt.Errorf(
+			"error parsing mashaling binary address %v",
+			err,
+		)
+	}
+
+	var binaryBrdCast []byte
+	for i, subnetOctet := range binarySubnetAddr {
+		maskOctet := binarySubnetMask[i]
+		binaryBrdCast = append(
+			binaryBrdCast,
+			subnetOctet|^maskOctet,
+		)
+	}
+	broadcast, _ = netip.AddrFromSlice(binaryBrdCast)
+	return broadcast, nil
+}
+
+// PrefixLengthToSubnetMask returns a dot-decimal subnet mask based on the given number of ones (CIDR prefix length)
+// and the total number of bits in the address.
+//
+// examples:
+//
+//   - (IPv4) 24 ones in a 32-bit address (/24) returns 255.255.255.0
+//   - (IPv6) 65 ones in a 128-bit address (/65) returns ffff:ffff:ffff:ffff:8000::
+func PrefixLengthToSubnetMask(prefixLength int, bits int) (mask netip.Addr, err error) {
+	cidrMask := net.CIDRMask(
+		prefixLength,
+		bits,
+	)
+	subnetMask := net.IP(cidrMask)
+	mask, err = netip.ParseAddr(subnetMask.String())
+	return mask, err
+}
+
+// FindCIDRRootIP returns the subnet's IP address for an IP in CIDR notation.
+//
+// examples:
+//
+//   - (IPv4) 10.120.234.45/27 returns 10.120.234.32
+//   - (IPv6) fdf8:413:de2c:205::223/64 returns fdf8:413:de2c:205::
+func FindCIDRRootIP(prefix netip.Prefix) (addr netip.Addr, err error) {
+	var subnetMask netip.Addr
+	if prefix.Addr().Is4() {
+		subnetMask, err = PrefixLengthToSubnetMask(
+			prefix.Bits(),
+			IPv4Size,
+		)
+		if err != nil {
+			return addr, err
+		}
+	} else if prefix.Addr().Is6() {
+		subnetMask, err = PrefixLengthToSubnetMask(
+			prefix.Bits(),
+			IPv6Size,
+		)
+		if err != nil {
+			return addr, err
+		}
+	}
+	binaryPrefixAddr, err := prefix.Addr().MarshalBinary()
+	if err != nil {
+		return addr, err
+	}
+	binarySubnet, err := subnetMask.MarshalBinary()
+	if err != nil {
+		return addr, err
+	}
+	var binarySubnetAddr []byte
+	for i, subnetOctet := range binarySubnet {
+		binarySubnetAddr = append(
+			binarySubnetAddr,
+			subnetOctet&binaryPrefixAddr[i],
+		)
+	}
+	addr, _ = netip.AddrFromSlice(binarySubnetAddr)
+	return addr, err
+}
+
+/*
+FindGatewayIP looks for the first usable IP in a netip.Prefix. NOTE: this is
+a GENERIC function, it does not pay any concession to the program's parameters.
+In other words, if --can-gateway is set on the command line, this function should still
+return the gateway based on the same logic. That way we can use this function for any
+network (even those without a --gateway parameter), and all we need to run the function is a
+netip.Prefix.
+
+Networks that have their own --gateway parameter handle that separately throughout the program.
+*/
+func FindGatewayIP(prefix netip.Prefix) (gateway netip.Addr) {
+	// If our subnet started at the beginning of the network, bump the IP by one.
+	subnetIP, err := FindCIDRRootIP(prefix)
+	if err != nil {
+		log.Fatalf(
+			"error finding root IP for %s because %v",
+			prefix.String(),
+			err,
+		)
+	}
+	gateway = subnetIP.Next()
+	return gateway
+}
+
+/*
+FindGatewayIP returns the specified gateway for the network if one was given. Otherwise, a gateway is assumed
+by finding the first IP in the network (using FindGatewayIP).
+*/
+func (network *IPNetwork) FindGatewayIP(prefix netip.Prefix) (gateway netip.Addr, err error) {
+	if network.CIDR4 != prefix.String() && network.CIDR6 != prefix.String() {
+		return gateway, fmt.Errorf(
+			"network gateway resolution was called on non-contained network prefix: %s",
+			prefix.String(),
+		)
+	}
+	v := viper.GetViper()
+	var gatewayString string
+	if prefix.Addr().Is4() {
+		gw4Key := fmt.Sprintf(
+			"%s-gateway4",
+			strings.ToLower(network.Name),
+		)
+		gwKey := fmt.Sprintf(
+			"%s-gateway",
+			strings.ToLower(network.Name),
+		)
+		if v.IsSet(gw4Key) {
+			gatewayString = v.GetString(gw4Key)
+		} else if v.IsSet(gw4Key) {
+			gatewayString = v.GetString(gwKey)
+		}
+
+	} else if prefix.Addr().Is6() {
+		gw6Key := fmt.Sprintf(
+			"%s-gateway6",
+			strings.ToLower(network.Name),
+		)
+		if v.IsSet(gw6Key) {
+			gatewayString = v.GetString(gw6Key)
+		}
+	}
+	if gatewayString != "" {
+		gateway, err = netip.ParseAddr(gatewayString)
+		if err != nil {
+			gateway = FindGatewayIP(prefix)
+			log.Printf(
+				"WARNING: %s had a Gateway flag present but an invalid value for %s\nDefaulting to %s\n",
+				prefix.String(),
+				gatewayString,
+				gateway.String(),
 			)
-			return *mynet, err
 		}
+	} else {
+		gateway = FindGatewayIP(prefix)
 	}
-	return n, nil
+	return gateway, err
 }
 
-// NetIPInSlice makes it easy to assess if an IP address is present in a list of ips
-func NetIPInSlice(
-	a net.IP, list []net.IP,
-) int {
-	for index, b := range list {
-		if b.Equal(a) {
-			return index
+/*
+UsableHostAddresses returns the number of usable addresses for a given CIDR. This does not take into account
+the IP of the CIDR (e.g. 10.0.0.100/24 is treated as 10.0.0.0/24).
+
+For IPv4, the "usable" addresses starts at the root and excludes the broadcast address.
+of the subnet (e.g. 192.168.0.0/24 the resulting number of addresses would be 254 ((2 ** (32 - 24)) - 2), we subtract two,
+one to move the index to 0, and another for excluding the broadcast address.
+
+For IPv6, the "usable" addresses can be very large, we accommodate this in two ways:
+
+  - We use the newer big.Int interface for handling large numbers
+  - We ignore masks smaller than 64 bits, a /63 or /20 will return the result for a /64.
+
+For example, fdf8:413:de2c:204::/64 will return 18446744073709551615 (2 ** (128 - 64) - 1), we subtract to move our index to 0.
+*/
+func UsableHostAddresses(prefix netip.Prefix) (numHosts uint64, err error) {
+	var maxBits int
+	if prefix.Addr().Is4() {
+		// var hosts float64 // can't be uint32, since 2^32 is 1 more than uint32.
+		maxBits = IPv4Size
+		if prefix.Bits() == IPv4Size-1 || prefix.Bits() == IPv4Size {
+			numHosts = 0
+		} else {
+			hostBits := maxBits - prefix.Bits()
+			// Subtract 2 because our IP addresses index at 0 and we need to exclude the broadcast IP on IPv4.
+			numHosts = uint64(
+				math.Pow(
+					2,
+					float64(hostBits),
+				) - 2,
+			)
 		}
-	}
-	return 0
-}
+	} else if prefix.Addr().Is6() {
+		maxBits = IPv6Size
+		var tempNum = big.NewInt(2)
+		var prefixBits int
 
-// IPLessThan compare two ip addresses
-// by section left-most is most significant
-func IPLessThan(a, b net.IP) bool {
-	for i := range a { // go left to right and compare each one
-		if a[i] != b[i] {
-			return a[i] < b[i]
+		// 2^64 is our largest subnet, anything more is just multiples of 2^64 (e.g. /63 is two subnets of 2^64).
+		if prefix.Bits() < IPv6MinimumSize {
+			prefixBits = IPv6MinimumSize
+		} else {
+			prefixBits = prefix.Bits()
 		}
+		hostBits := maxBits - prefixBits
+		tempHosts := tempNum.Exp(
+			big.NewInt(2),
+			big.NewInt(int64(hostBits)),
+			nil,
+		)
+		tempHosts = tempHosts.Sub(
+			tempNum,
+			big.NewInt(1),
+		)
+		numHosts = tempHosts.Uint64()
 	}
-	return false // they are equal
-}
-
-// Quick const map for mapping the number of hosts to the netmask shorthand
-// I'm bad at math.
-var netmasks = map[int]string{
-	2:     "/30",
-	6:     "/29",
-	14:    "/28",
-	30:    "/27",
-	62:    "/26",
-	126:   "/25",
-	254:   "/24",
-	510:   "/23",
-	1022:  "/22",
-	2046:  "/21",
-	4094:  "/20",
-	8190:  "/19",
-	16382: "/18",
-	32766: "/17",
-	65534: "/16",
-}
-
-// Basic VLAN management
-var vlans = [4096]bool{4095: true}
-
-// IsVlanAllocated takes an int16 and tests if a given VLAN is already allocated and managed.
-func IsVlanAllocated(vlan int16) (bool, error) {
-	if vlan > 4095 || vlan < 0 {
-		return true, errors.New("VLAN out of range")
-	}
-	return vlans[vlan], nil
-}
-
-// AllocateVlan takes an int16 and manages a single VLAN.
-func AllocateVlan(vlan int16) error {
-	allocated, err := IsVlanAllocated(vlan)
-	if allocated {
-		if err != nil {
-			return err
-		}
-		return errors.New("VLAN already used")
-	}
-	vlans[vlan] = true
-	return nil
-}
-
-// FreeVlan takes an int16 and stops managing a single VLAN.
-func FreeVlan(vlan int16) error {
-	vlans[vlan] = false
-	return nil
-}
-
-// AllocateVlanRange takes two int16 and manages a range of VLANs.
-func AllocateVlanRange(startvlan, endvlan int16) error {
-	if startvlan > endvlan {
-		return errors.New("VLAN range is bad - start is larger than end")
-	}
-	// Pre-test all VLANs for previous allocation
-	hasAllocationErrors := false
-	allocatedVlans := []int16{}
-	for vlan := startvlan; vlan <= endvlan; vlan++ {
-		allocated, err := IsVlanAllocated(vlan)
-		if err != nil {
-			return err
-		}
-		if allocated {
-			hasAllocationErrors = true
-			allocatedVlans = append(allocatedVlans, vlan)
-		}
-	}
-	if hasAllocationErrors {
-		return fmt.Errorf("VLANs already used: %v", allocatedVlans)
-	}
-
-	for vlan := startvlan; vlan <= endvlan; vlan++ {
-		AllocateVlan(vlan)
-	}
-	return nil
-}
-
-// FreeVlanRange takes two int16 and stops managing a range of VLANs.
-func FreeVlanRange(startvlan, endvlan int16) error {
-	if startvlan > endvlan {
-		return errors.New("VLAN range is bad - start is larger than end")
-	}
-	for vlan := startvlan; vlan <= endvlan; vlan++ {
-		FreeVlan(vlan)
-	}
-	return nil
+	return numHosts, err
 }

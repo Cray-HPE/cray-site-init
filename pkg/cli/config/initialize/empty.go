@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2025 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -28,10 +28,10 @@ import (
 	"log"
 	"os"
 
+	"github.com/Cray-HPE/cray-site-init/pkg/cli"
+	"github.com/Cray-HPE/cray-site-init/pkg/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	"github.com/Cray-HPE/cray-site-init/pkg/version"
 )
 
 // emptyCommand represents the empty sub-command.
@@ -54,18 +54,18 @@ func emptyCommand() *cobra.Command {
 			if err != nil {
 				log.Println(err)
 			}
-			v.SetConfigType("yaml")
 			v.Set(
 				"VersionInfo",
 				version.Get(),
 			)
-			err = v.SafeWriteConfigAs("system_config.yaml")
+			err = v.SafeWriteConfigAs(cli.ConfigFilename)
 			if err != nil {
 				log.Fatal(err)
 			}
 			log.Printf(
-				"Empty config file written to: %s/system_config.yaml\n",
+				"Empty config file written to: %s/%s\n",
 				path,
+				cli.ConfigFilename,
 			)
 		},
 	}

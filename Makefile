@@ -1,6 +1,6 @@
 # MIT License
 #
-# (C) Copyright 2021-2024 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2021-2025 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -174,9 +174,6 @@ go_ldflags += -X github.com/Cray-HPE/cray-site-init/pkg/version.buildDate=${.BUI
 GO_FILES?=$$(find . -name '*.go' |grep -v vendor)
 TAG?=latest
 
-CHANGELOG_VERSION_ORIG=$(shell grep -m1 \# CHANGELOG.MD | sed -e "s/\].*\$//" |sed -e "s/^.*\[//")
-CHANGELOG_VERSION=$(shell grep -m1 \ \[[0-9]*.[0-9]*.[0-9]*\] CHANGELOG.MD | sed -e "s/\].*$$//" |sed -e "s/^.*\[//")
-
 clean:
 	go clean -i ./...
 	rm -vf \
@@ -188,23 +185,35 @@ clean:
 
 test: tools
 	mkdir -pv $(TEST_OUTPUT_DIR)/unittest $(TEST_OUTPUT_DIR)/coverage
-	go test ./cmd/... ./internal/... ./pkg/... -v -coverprofile $(TEST_OUTPUT_DIR)/coverage.out -covermode count | tee "$(TEST_OUTPUT_DIR)/testing.out"
+	go test ./... -v -coverprofile $(TEST_OUTPUT_DIR)/coverage.out -covermode count | tee "$(TEST_OUTPUT_DIR)/testing.out"
 	cat "$(TEST_OUTPUT_DIR)/testing.out" | go-junit-report | tee "$(TEST_OUTPUT_DIR)/unittest/testing.xml" | tee "$(TEST_OUTPUT_DIR)/unittest/testing.xml"
 	gocover-cobertura < $(TEST_OUTPUT_DIR)/coverage.out > "$(TEST_OUTPUT_DIR)/coverage/coverage.xml"
 	go tool cover -html=$(TEST_OUTPUT_DIR)/coverage.out -o "$(TEST_OUTPUT_DIR)/coverage/coverage.html"
 
 tools:
-	go install golang.org/x/lint/golint@latest
 	go install github.com/t-yuki/gocover-cobertura@latest
 	go install github.com/jstemmer/go-junit-report@latest
 
 vet: version
 	go vet -v ./...
 
-lint: tools
-	golint -set_exit_status ./cmd/...
-	golint -set_exit_status ./internal/...
-	golint -set_exit_status ./pkg/...
+# With colored output (-t)
+# With preserving cache between runs
+# more information: https://golangci-lint.run/welcome/install/#docker
+LINT_CMD := docker run --rm -t -v $(shell pwd):/app -w /app \
+         		--user $(shell id -u):$(shell id -g) \
+         		-v $(shell go env GOCACHE):/.cache/go-build -e GOCACHE=/.cache/go-build \
+         		-v $(shell go env GOMODCACHE):/.cache/mod -e GOMODCACHE=/.cache/mod \
+         		-v ~/.cache/golangci-lint:/.cache/golangci-lint -e GOLANGCI_LINT_CACHE=/.cache/golangci-lint \
+         		golangci/golangci-lint:v2.2.1 golangci-lint run
+lint:
+	 $(LINT_CMD) \
+	--new-from-rev=main \
+	--max-same-issues=0
+
+lint-all:
+	 $(LINT_CMD) \
+	--max-same-issues=0
 
 fmt:
 	go fmt ./...

@@ -29,6 +29,7 @@ Version: %(echo ${VERSION})
 Release: 1
 Source: %{name}-%{version}.tar.bz2
 Vendor: Cray Inc.
+BuildRequires: upx
 Provides: %{shortname}
 
 %ifarch %ix86

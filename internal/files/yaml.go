@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2025 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -27,12 +27,14 @@ package files
 import (
 	"io"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // EncodeYAML encodes object to writer
 func EncodeYAML(f io.Writer, v interface{}) error {
-	return yaml.NewEncoder(f).Encode(v)
+	newEncoder := yaml.NewEncoder(f)
+	newEncoder.SetIndent(2)
+	return newEncoder.Encode(v)
 }
 
 // DecodeYAML decodes object from reader

@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2025 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -56,22 +56,6 @@ func (logger *kubernetesLogger) warningf(format string, args ...interface{}) {
 		case *log.Logger:
 			finalFormat := fmt.Sprintf(
 				"[Kubernetes WARNING] %s",
-				format,
-			)
-			v.Printf(
-				finalFormat,
-				args...,
-			)
-		}
-	}
-}
-
-func (logger *kubernetesLogger) printf(format string, args ...interface{}) {
-	if logger.Logger != nil {
-		switch v := logger.Logger.(type) {
-		case log.Logger:
-			finalFormat := fmt.Sprintf(
-				"[Kubernetes INFO] %s",
 				format,
 			)
 			v.Printf(

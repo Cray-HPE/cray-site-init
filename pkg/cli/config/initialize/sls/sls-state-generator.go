@@ -1,7 +1,7 @@
 /*
  MIT License
 
- (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
+ (C) Copyright 2022-2025 Hewlett Packard Enterprise Development LP
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -33,7 +33,7 @@ import (
 	"strings"
 
 	shcdParser "github.com/Cray-HPE/hms-shcd-parser/pkg/shcd-parser"
-	slsCommon "github.com/Cray-HPE/hms-sls/pkg/sls-common"
+	slsCommon "github.com/Cray-HPE/hms-sls/v2/pkg/sls-common"
 
 	"github.com/Cray-HPE/hms-xname/xnames"
 	"github.com/Cray-HPE/hms-xname/xnametypes"
@@ -1555,7 +1555,6 @@ func GenerateSLSState(inputState GeneratorInputState, hmnRows []shcdParser.HMNRo
 	atomicLevel.SetLevel(zap.InfoLevel)
 
 	logger.Info("Beginning SLS configuration generation.")
-
 	g := NewStateGenerator(
 		logger,
 		inputState,

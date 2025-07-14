@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2019, 2021] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2019-2022] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -68,14 +68,14 @@ type VaultAdapter struct {
 	AuthConfig *AuthConfig
 	BasePath   string
 	VaultRetry int
+	Role       string
 }
 
-// Create a new SecureStorage interface that uses Vault. This connects to
-// vault.
-func NewVaultAdapter(basePath string) (SecureStorage, error) {
+func NewVaultAdapterAs(basePath string, role string) (SecureStorage, error) {
 	ss := &VaultAdapter{
 		BasePath:   basePath,
 		VaultRetry: 1,
+		Role: role,
 	}
 
 	// Get k8s authentication configuration values.
@@ -113,6 +113,12 @@ func NewVaultAdapter(basePath string) (SecureStorage, error) {
 	return ss, nil
 }
 
+// Create a new SecureStorage interface that uses Vault. This connects to
+// vault.
+func NewVaultAdapter(basePath string) (SecureStorage, error) {
+	return NewVaultAdapterAs(basePath, "")
+}
+
 // Parse an error into the vault api's ErrorResponse struct.
 func getError(err error) *api.ErrorResponse {
 	parsedErr := &api.ErrorResponse{}
@@ -128,6 +134,7 @@ func (ss *VaultAdapter) loadToken() error {
 	if err != nil {
 		return err
 	}
+
 	err = ss.AuthConfig.LoadJWT()
 	if err != nil {
 		return err
@@ -136,6 +143,11 @@ func (ss *VaultAdapter) loadToken() error {
 	// We will write this payload to a special auth endpoint
 	k8AuthPath := ss.AuthConfig.GetAuthPath()
 	k8AuthArgs := ss.AuthConfig.GetAuthArgs()
+
+	// Apply role override if any
+	if ss.Role != "" {
+		k8AuthArgs["role"] = ss.Role
+	}
 
 	secret, err := ss.Client.Write(k8AuthPath, k8AuthArgs)
 	if err != nil {
@@ -189,6 +201,48 @@ func (ss *VaultAdapter) Store(key string, value interface{}) error {
 				return err
 			}
 		}
+		break
+	}
+	return err
+}
+
+// Write a struct to Vault at the location specified by key and return the response.
+// This function prepends the basePath. Retries are implemented for token renewal.
+// Note: Unlike Lookup(), this returns the entire response body. Not just secretValues.Data.
+func (ss *VaultAdapter) StoreWithData(key string, value interface{}, output interface{}) error {
+	var (
+		err  error
+		data map[string]interface{}
+	)
+
+	err = mapstructure.Decode(value, &data)
+	if err != nil {
+		return err
+	}
+	path := ss.BasePath + "/" + key
+	for i := 0; i <= ss.VaultRetry; i++ {
+		// Write the data to Vault
+		secretValues, err := ss.Client.Write(path, data)
+		if err != nil {
+			if ss.checkErrForTokenRefresh(err) {
+				// We need to renew the token and then retry
+				if err = ss.loadToken(); err != nil {
+					return err
+				} else {
+					continue
+				}
+			} else {
+
+				return err
+			}
+		}
+
+		if secretValues == nil {
+			// No data returned. 
+			break
+		}
+
+		err = mapstructure.Decode(secretValues, output)
 		break
 	}
 

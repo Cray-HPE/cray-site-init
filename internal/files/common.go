@@ -29,16 +29,7 @@ import (
 	"io"
 	"log"
 	"os"
-
-	"github.com/spf13/viper"
 )
-
-// ExportConfig converts a viper to a file on disk
-func ExportConfig(configfile string, config *viper.Viper) error {
-	// TODO: Consider doing something of value here or simply
-	// refactor it away
-	return viper.WriteConfigAs(configfile)
-}
 
 type encoder func(io.Writer, interface{}) error
 type decoder func(io.Reader, interface{}) error
@@ -56,12 +47,6 @@ func WriteConfig(enc encoder, path string, conf interface{}) error {
 		conf,
 	)
 	w.Flush()
-	info, _ := f.Stat()
-	log.Printf(
-		"wrote %d bytes to %s\n",
-		info.Size(),
-		path,
-	)
 	return nil
 }
 
