@@ -36,8 +36,11 @@ var DeprecatedKeys []string
 // NoWriteKeys are keys that shouldn't be written to a config file.
 var NoWriteKeys = []string{
 	"config",
+	"csm-api-url",
 	"help",
 	"input-dir",
+	"k8s-namespace",
+	"k8s-secret-name",
 }
 
 var Aliases []string
