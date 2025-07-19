@@ -731,7 +731,9 @@ func WriteBasecampData(
 			err,
 		)
 	}
-	global := bssTypes.CloudInit{}
+	global := bssTypes.CloudInit{
+		UserData: make(map[string]interface{}),
+	}
 	err = json.Unmarshal(
 		globalMetaDataJSON,
 		&global.MetaData,
