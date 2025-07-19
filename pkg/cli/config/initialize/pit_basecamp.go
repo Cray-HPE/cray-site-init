@@ -43,9 +43,9 @@ import (
 	"github.com/Cray-HPE/cray-site-init/pkg/networking"
 )
 
-// BaseCampGlobals is the set of information needed for an install to reach
+// BasecampGlobalMetaData is the set of information needed for an install to reach
 // the handoff point.
-type BaseCampGlobals struct {
+type BasecampGlobalMetaData struct {
 	CiliumKubeProxyReplacement string      `json:"cilium-kube-proxy-replacement"`
 	CiliumOperatorReplicas     string      `json:"cilium-operator-replicas"`
 	DNSServer                  string      `json:"dns-server"`
@@ -292,9 +292,9 @@ func MakeBasecampHostRecords(
 	return hostrecords
 }
 
-// MakeBasecampGlobals uses the defaults above to create a suitable k/v pairing for the
+// MakeBasecampGlobalMetaData uses the defaults above to create a suitable k/v pairing for the
 // Globals in data.json for basecamp
-func MakeBasecampGlobals(
+func MakeBasecampGlobalMetaData(
 	v *viper.Viper,
 	logicalNcns []LogicalNCN,
 	shastaNetworks map[string]*networking.IPNetwork,
@@ -302,10 +302,10 @@ func MakeBasecampGlobals(
 	installSubnet string,
 	installNCN string,
 ) (
-	BaseCampGlobals, error,
+	BasecampGlobalMetaData, error,
 ) {
 	// Create the map to return
-	global := BaseCampGlobals{}
+	global := BasecampGlobalMetaData{}
 
 	// First loop through and see if there's a viper flag
 	// We register a few aliases because flags don't necessarily match data.json keys
@@ -709,7 +709,7 @@ func MakeBaseCampfromNCNs(
 
 // WriteBasecampData writes basecamp data.json for the installer
 func WriteBasecampData(
-	path string, ncns []LogicalNCN, shastaNetworks map[string]*networking.IPNetwork, globals interface{},
+	path string, ncns []LogicalNCN, shastaNetworks map[string]*networking.IPNetwork, globalMetaData interface{},
 ) {
 	v := viper.GetViper()
 	basecampConfig, err := MakeBaseCampfromNCNs(
@@ -724,17 +724,17 @@ func WriteBasecampData(
 		)
 	}
 	// To write this the way we want to consume it, we need to convert it to a map of strings and interfaces
-	globalJSON, err := json.Marshal(globals)
+	globalMetaDataJSON, err := json.Marshal(globalMetaData)
 	if err != nil {
 		log.Fatalf(
 			"Failed to marshal global data because %v",
 			err,
 		)
 	}
-	globalMetadata := bssTypes.CloudInit{}
+	global := bssTypes.CloudInit{}
 	err = json.Unmarshal(
-		globalJSON,
-		&globalMetadata.MetaData,
+		globalMetaDataJSON,
+		&global.MetaData,
 	)
 	if err != nil {
 		log.Fatalf(
@@ -743,7 +743,7 @@ func WriteBasecampData(
 		)
 	}
 	data := make(bssTypes.CloudDataType)
-	data["Global"] = globalMetadata
+	data["Global"] = global
 	for k, v := range basecampConfig {
 		data[k] = v
 	}
