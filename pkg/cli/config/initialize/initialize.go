@@ -92,11 +92,11 @@ func NewCommand() *cobra.Command {
 			}
 			flagErrors := validateFlags()
 			if len(flagErrors) > 0 {
-				_ = c.Usage()
+				fmt.Println("Errors:")
 				for _, e := range flagErrors {
-					log.Println(e)
+					fmt.Println(e)
 				}
-				log.Fatal("One or more flags are invalid")
+				log.Fatalln("The program could not continue, one or more flags had invalid values.")
 			}
 
 			if len(
