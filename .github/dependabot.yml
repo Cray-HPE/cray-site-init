@@ -12,6 +12,10 @@ updates:
     labels:
       - "gomod"
       - "dependencies"
+    groups:
+      k8s-dependencies:
+        patterns:
+          - k8s.io/*
   - package-ecosystem: "github-actions"
     # Look for `.github/workflows` in the `root` directory
     directory: "/"
