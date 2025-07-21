@@ -1,8 +1,13 @@
 baseURL = "https://cray-hpe.github.io/cray-site-init/"
-languageCode = "en-us"
-title = "Cray Site Init"
-theme = "learn"
 publishDir = "../docs"
+title = "Cray Site Init"
+
+defaultContentLanguage = 'en'
+[languages]
+[languages.en]
+languageCode = 'en'
+languageName = 'English'
+weight = 1
 
 # [outputs]
 #   home = ["HTML", "RSS", "JSON"]
@@ -13,13 +18,11 @@ publishDir = "../docs"
 # See the config.toml file from this documentation site to have an example.
 editURL = "https://github.com/Cray-HPE/cray-site-init/tree/main/hugo/content/"
 # Author of the site, will be used in meta information
-author = "Cray-HPE"
-# Description of the site, will be used in meta information
-description = "Cray Site Initializer documentation"
+author.name = "Cray-HPE"
 # Shows a checkmark for visited pages on the menu
 showVisitedLinks = true
 # Disable search function. It will hide search bar
-disableSearch = false
+search.disable = false
 # Javascript and CSS cache are automatically busted when new version of site is generated.
 # Set this to true to disable this behavior (some proxies don't handle well this optimization)
 disableAssetsBusting = false
@@ -44,7 +47,13 @@ disableNextPrev = true
 ordersectionsby = "weight"
 # Change default color scheme with a variant one. Can be "red", "blue", "green".
 themeVariant = "blue"
-# Provide a list of custom css files to load relative from the `static/` folder in the site root.
-custom_css = ["css/foo.css", "css/bar.css"]
 # Change the title separator. Default to "::".
 titleSeparator = "-"
+
+[caches]
+[caches.images]
+dir = ':cacheDir/images'
+
+[module]
+[[module.imports]]
+path = 'github.com/McShelby/hugo-theme-relearn'
