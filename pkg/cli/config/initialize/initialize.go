@@ -1663,6 +1663,27 @@ func validateFlags() []error {
 		"site-gw",
 	}
 
+	// Flags that should never have overlapping values.
+	var networkCIDRFlags = []string{
+		"can-cidr",
+		"chn-cidr4",
+		"chn-cidr6",
+		"cmn-cidr4",
+		"cmn-cidr6",
+		"hmn-cidr",
+		"hmn-mtn-cidr",
+		"mtl-cidr",
+		"nmn-cidr",
+		"nmn-mtn-cidr",
+	}
+	overlapErrors := networking.CheckCIDROverlap(networkCIDRFlags)
+	if len(overlapErrors) > 0 {
+		errors = append(
+			errors,
+			overlapErrors...,
+		)
+	}
+
 	// Validate the CSM version, exiting early if there is a potential mismatch. Proper guidance for fixing parameters can't be given without aligning intentions.
 	detectedVersion, versionEnvError := csm.DetectedVersion()
 	if versionEnvError != nil {

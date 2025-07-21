@@ -30,11 +30,13 @@ import (
 	"log"
 	"net"
 	"net/netip"
+	"slices"
 	"sort"
 	"strings"
 
 	"github.com/Cray-HPE/cray-site-init/pkg/csm/hms/sls"
 	slsCommon "github.com/Cray-HPE/hms-sls/v2/pkg/sls-common"
+	"github.com/spf13/viper"
 )
 
 // VLANs accounts for all used VLANs during a run of cray-site-init.
@@ -1337,4 +1339,53 @@ func space(freeIPRanges []IPRange, mask net.IPMask) (firstFree netip.Prefix, err
 		prefixLength,
 	)
 	return firstFree, err
+}
+
+/*
+CheckCIDROverlap takes a list of CIDR flags, and verifies if their input values from the command line overlap
+with any other of the given input values.
+
+Requires a list of flags to check.
+*/
+func CheckCIDROverlap(cidrFlags []string) (errors []error) {
+	v := viper.GetViper()
+
+	for _, cidrFlag := range cidrFlags {
+		cidr, err := netip.ParsePrefix(v.GetString(cidrFlag))
+		if err != nil {
+			continue
+		}
+		var compareCIDRFlagName string
+		var compareCIDR netip.Prefix
+		hasOverlap := slices.ContainsFunc(
+			cidrFlags,
+			func(flag string) bool {
+
+				// Ignore the flag we're actively comparing to.
+				if flag == cidrFlag {
+					return false
+				}
+
+				compareCIDRFlagName = flag
+				compareCIDR, err = netip.ParsePrefix(v.GetString(flag))
+				if err != nil || !compareCIDR.IsValid() {
+					return false
+				}
+				return cidr.Overlaps(compareCIDR)
+			},
+		)
+		if hasOverlap {
+			errors = append(
+				errors,
+				fmt.Errorf(
+					"%-10s [%s] overlaps with %-10s [%s]",
+					cidrFlag,
+					cidr.String(),
+					compareCIDRFlagName,
+					compareCIDR.String(),
+				),
+			)
+		}
+	}
+	return errors
 }
