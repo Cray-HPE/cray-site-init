@@ -1,8 +1,13 @@
 baseURL = "https://cray-hpe.github.io/cray-site-init/"
-languageCode = "en-us"
-title = "Cray Site Init"
-theme = "learn"
 publishDir = "../docs"
+title = "Cray Site Init"
+
+defaultContentLanguage = 'en'
+[languages]
+[languages.en]
+languageCode = 'en'
+languageName = 'English'
+weight = 1
 
 # [outputs]
 #   home = ["HTML", "RSS", "JSON"]
@@ -48,3 +53,7 @@ themeVariant = "blue"
 custom_css = ["css/foo.css", "css/bar.css"]
 # Change the title separator. Default to "::".
 titleSeparator = "-"
+
+[caches]
+[caches.images]
+dir = ':cacheDir/images'
