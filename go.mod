@@ -6,7 +6,7 @@ require (
 	github.com/Cray-HPE/hms-s3 v1.12.0
 	github.com/Cray-HPE/hms-shcd-parser v1.11.0
 	github.com/Cray-HPE/hms-sls/v2 v2.11.0
-	github.com/Cray-HPE/hms-smd/v2 v2.38.0
+	github.com/Cray-HPE/hms-smd/v2 v2.39.0
 	github.com/Cray-HPE/hms-xname v1.4.0
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 	github.com/evanphx/json-patch v5.9.11+incompatible

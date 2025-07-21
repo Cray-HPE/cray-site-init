@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2019-2024] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2019-2025] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -2299,7 +2299,29 @@ func (p *EpProcessor) discoverRemotePhase1() {
 // under the system first, so that it is available during later steps.
 func (ps *EpProcessors) discoverLocalPhase2() error {
 	var savedError error
-	for i, p := range ps.OIDs {
+
+	// We need to iterate over the processors in a deterministic order
+	// every time we come through here so that the ordinals generated in
+	// discoverLocalPhase2() -> getProcessorOrdinal() are always consistent.
+	// Because Go doesn't guarantee the order of map iteration, we need to
+	// sort the keys of the map into a slice and then iterate over that.  Go
+	// does guarantee deterministic iteration over slices.
+	//
+	// NOTE: We could have done this in getProcessorOrdinal() similarly to
+	// what was done in other get*Ordinal() methods like
+	// getPowerSupplyOrdinal() but it seems more optimal to do it once here
+	// rather than for every single processor we iterate over.
+
+	keys := make([]string, 0, len(ps.OIDs))
+	for k := range ps.OIDs {
+		keys = append(keys, k)
+	}
+
+	sort.Strings(keys)
+
+	// Iterate over the sorted keys to access the processors in a consistent order
+	for _, i := range keys {
+		p := ps.OIDs[i]
 		p.discoverLocalPhase2()
 		if p.LastStatus == RedfishSubtypeNoSupport {
 			errlog.Printf("Key %s: RF Processor type not supported: %s",
@@ -2378,7 +2400,7 @@ func (p *EpProcessor) discoverLocalPhase2() {
 		return
 	}
 
-	errlog.Printf("Processor xname ID ('%s') and Type ('%s') for: %s\n", p.ID, p.Type, p.ProcessorURL)
+	errlog.Printf("Processor xname ID ('%s') and Type ('%s') for: %s (FRUID: %s)\n", p.ID, p.Type, p.ProcessorURL, p.FRUID)
 	p.LastStatus = DiscoverOK
 }
 
