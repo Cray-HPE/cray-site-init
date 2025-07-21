@@ -159,7 +159,6 @@ func GetMetalLBConfig(
 					}
 				}
 			}
-			fmt.Println(subnet.Name)
 			if strings.Contains(
 				subnet.Name,
 				"metallb",
@@ -171,7 +170,6 @@ func GetMetalLBConfig(
 					tmpAddPool.Addresses,
 					subnet.CIDR,
 				)
-				fmt.Println(tmpAddPool)
 				configStruct.Networks = append(
 					configStruct.Networks,
 					tmpAddPool,
