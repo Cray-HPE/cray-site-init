@@ -33,9 +33,17 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Cray-HPE/cray-site-init/pkg/cli"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 )
+
+const fmTemplate = `---
+date: %s
+title: "%s"
+layout: default
+---
+`
 
 // DocsCommand represents the makedocs subcommand.
 func DocsCommand() *cobra.Command {
@@ -63,15 +71,9 @@ func DocsCommand() *cobra.Command {
 					)
 				}
 			}
-			const fmTemplate = `---
-date: %s
-title: "%s"
-layout: default
----
-`
 
 			filePrepender := func(filename string) string {
-				now := time.Now().Format(time.RFC3339)
+				now := cli.Runtime.Format(time.RFC3339)
 				name := filepath.Base(filename)
 				base := strings.TrimSuffix(
 					name,
@@ -98,10 +100,13 @@ layout: default
 				return "/commands/" + strings.ToLower(base) + "/"
 			}
 
-			os.Mkdir(
+			err = os.Mkdir(
 				basepath,
 				0777,
 			)
+			if err != nil {
+				log.Fatal(err)
+			}
 			err = doc.GenMarkdownTreeCustom(
 				NewCommand(),
 				basepath,
