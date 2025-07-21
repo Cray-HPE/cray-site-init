@@ -1,6 +1,8 @@
 ---
 layout: default
 title: Cray Site Init
+params:
+  description: "Cray Site Initializer documentation"
 ---
 # Cray Site Initializer (`csi`)
 
