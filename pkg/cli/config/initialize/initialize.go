@@ -403,7 +403,7 @@ func NewCommand() *cobra.Command {
 					*ncn,
 				)
 			}
-			globals, err := MakeBasecampGlobals(
+			globalMetaData, err := MakeBasecampGlobalMetaData(
 				v,
 				ncns,
 				shastaNetworks,
@@ -413,7 +413,7 @@ func NewCommand() *cobra.Command {
 			)
 			if err != nil {
 				log.Fatalln(
-					"unable to generate basecamp globals: ",
+					"unable to generate basecamp globalMetaData: ",
 					err,
 				)
 			}
@@ -423,7 +423,7 @@ func NewCommand() *cobra.Command {
 				slsState,
 				ncns,
 				switches,
-				globals,
+				globalMetaData,
 			)
 			if err != nil {
 				log.Fatalf(
@@ -1510,7 +1510,7 @@ func writeOutput(
 	slsState slsCommon.SLSState,
 	logicalNCNs []LogicalNCN,
 	switches []*networking.ManagementSwitch,
-	globals interface{},
+	globalMetaData interface{},
 ) (err error) {
 	basepath, _ := setupDirectories(
 		v.GetString("system-name"),
@@ -1632,7 +1632,7 @@ func writeOutput(
 		),
 		logicalNCNs,
 		shastaNetworks,
-		globals,
+		globalMetaData,
 	)
 	return err
 }
