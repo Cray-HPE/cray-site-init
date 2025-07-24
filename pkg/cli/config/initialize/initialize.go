@@ -92,11 +92,11 @@ func NewCommand() *cobra.Command {
 			}
 			flagErrors := validateFlags()
 			if len(flagErrors) > 0 {
-				_ = c.Usage()
+				fmt.Println("Errors:")
 				for _, e := range flagErrors {
-					log.Println(e)
+					fmt.Println(e)
 				}
-				log.Fatal("One or more flags are invalid")
+				log.Fatalln("The program could not continue, one or more flags had invalid values.")
 			}
 
 			if len(
@@ -1637,8 +1637,8 @@ func writeOutput(
 	return err
 }
 
-func validateFlags() []string {
-	var errors []string
+func validateFlags() []error {
+	var errors []error
 	v := viper.GetViper()
 
 	var cidrFlags = []string{
@@ -1663,7 +1663,6 @@ func validateFlags() []string {
 		"site-gw",
 	}
 
-	// Validate the CSM version, exiting early if there is a potential mismatch. Proper guidance for fixing parameters can't be given without aligning intentions.
 	detectedVersion, versionEnvError := csm.DetectedVersion()
 	if versionEnvError != nil {
 		// non-fatal; csi config init can be called without the csm.APIEnvName set, but the user should be notified that the env is CSM release-less.
@@ -1716,7 +1715,7 @@ func validateFlags() []string {
 	if !validBican {
 		errors = append(
 			errors,
-			fmt.Sprintf(
+			fmt.Errorf(
 				"%v must be set to CAN, CHN or HSN. (HSN requires NAT device)",
 				bicanFlag,
 			),
@@ -1727,7 +1726,7 @@ func validateFlags() []string {
 				if !v.IsSet("can-gateway") || v.GetString("can-gateway") == "" {
 					errors = append(
 						errors,
-						fmt.Sprintln("can-gateway is required because bican-user-network-name is set to CAN but can-gateway was not set or was blank."),
+						fmt.Errorf("can-gateway is required because bican-user-network-name is set to CAN but can-gateway was not set or was blank"),
 					)
 				} else {
 					ipv4Flags = append(
@@ -1739,7 +1738,7 @@ func validateFlags() []string {
 				if !v.IsSet("chn-gateway4") || v.GetString("chn-gateway4") == "" {
 					errors = append(
 						errors,
-						fmt.Sprintln("chn-gateway4 is required because bican-user-network-name is set to CHN but chn-gateway4 was not set or was blank."),
+						fmt.Errorf("chn-gateway4 is required because bican-user-network-name is set to CHN but chn-gateway4 was not set or was blank"),
 					)
 				} else {
 					ipv4Flags = append(
@@ -1756,7 +1755,7 @@ func validateFlags() []string {
 			if net.ParseIP(v.GetString(flagName)) == nil {
 				errors = append(
 					errors,
-					fmt.Sprintf(
+					fmt.Errorf(
 						"%v should be an ip address and is not set correctly through flag or config file (.%s)",
 						flagName,
 						v.ConfigFileUsed(),
@@ -1772,7 +1771,7 @@ func validateFlags() []string {
 			if err != nil {
 				errors = append(
 					errors,
-					fmt.Sprintf(
+					fmt.Errorf(
 						"%v should be a CIDR in the form 192.168.0.1/24 or a CIDR6 2001:db8::/32 and is not set correctly through flag or config file (.%s)",
 						flagName,
 						v.ConfigFileUsed(),
@@ -1791,7 +1790,7 @@ func validateFlags() []string {
 		if !validFlag {
 			errors = append(
 				errors,
-				"cilium-operator-replicas must be an integer > 0",
+				fmt.Errorf("cilium-operator-replicas must be an integer > 0"),
 			)
 		}
 	} else {
@@ -1820,7 +1819,7 @@ func validateFlags() []string {
 		if !validFlag {
 			errors = append(
 				errors,
-				"cilium-kube-proxy-replacement must be set to strict, partial, or disabled",
+				fmt.Errorf("cilium-kube-proxy-replacement must be set to strict, partial, or disabled"),
 			)
 		}
 	} else {
@@ -1852,7 +1851,7 @@ func validateFlags() []string {
 		if !validFlag {
 			errors = append(
 				errors,
-				fmt.Sprintf(
+				fmt.Errorf(
 					"k8s-primary-cni must be set to one of [%s]",
 					strings.Join(
 						allowedValues,
@@ -1892,7 +1891,7 @@ func validateFlags() []string {
 		if !validFlag {
 			errors = append(
 				errors,
-				"kubernetes-max-pods-per-node must be set an integer (>0)",
+				fmt.Errorf("kubernetes-max-pods-per-node must be set an integer (>0)"),
 			)
 		}
 	} else {
@@ -1915,7 +1914,7 @@ func validateFlags() []string {
 		if !validFlag {
 			errors = append(
 				errors,
-				"kubernetes-pods-cidr was set to an invalid IP",
+				fmt.Errorf("kubernetes-pods-cidr was set to an invalid IP"),
 			)
 		}
 	} else {
@@ -1938,7 +1937,7 @@ func validateFlags() []string {
 		if !validFlag {
 			errors = append(
 				errors,
-				"kubernetes-services-cidr was set to an invalid IP",
+				fmt.Errorf("kubernetes-services-cidr was set to an invalid IP"),
 			)
 		}
 	} else {
@@ -1960,7 +1959,7 @@ func validateFlags() []string {
 		if !validFlag {
 			errors = append(
 				errors,
-				"kubernetes-weave-mtu must be set an integer (>0)",
+				fmt.Errorf("kubernetes-weave-mtu must be set an integer (>0)"),
 			)
 		}
 	} else {
@@ -1988,7 +1987,7 @@ func validateFlags() []string {
 		if !validFlag {
 			errors = append(
 				errors,
-				"wipe-ceph-osds must be set to yes or no",
+				fmt.Errorf("wipe-ceph-osds must be set to yes or no"),
 			)
 		}
 	} else {
@@ -2010,7 +2009,7 @@ func validateFlags() []string {
 		if !validFlag {
 			errors = append(
 				errors,
-				"domain must be set a string (delimited by spaces) of search domains.",
+				fmt.Errorf("domain must be set a string (delimited by spaces) of search domains"),
 			)
 		}
 	} else {
