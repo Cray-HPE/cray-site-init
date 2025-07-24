@@ -28,8 +28,10 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"net/netip"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"time"
 
@@ -74,7 +76,21 @@ Exascale High-Performance Computer (HPC) or an HPCaaS (e.g. VShasta).
 			cli.Runtime = time.Now().UTC()
 			cli.RuntimeTimestamp = cli.Runtime.Format(time.RFC3339Nano)
 			cli.RuntimeTimestampShort = cli.Runtime.Format("20060102150405")
-			return initializeConfig(c)
+			v, err := initializeConfig(c)
+			if err != nil {
+				return err
+			}
+
+			overlapErrors := checkCIDROverlap(v)
+			if len(overlapErrors) > 0 {
+				c.SilenceUsage = true
+				fmt.Println("Errors:")
+				for _, e := range overlapErrors {
+					fmt.Println(e)
+				}
+				return fmt.Errorf("overlapping CIDRs in configuration, can not continue")
+			}
+			return nil
 		},
 	}
 	c.PersistentFlags().StringVarP(
@@ -137,7 +153,7 @@ Exascale High-Performance Computer (HPC) or an HPCaaS (e.g. VShasta).
 	return c
 }
 
-func initializeConfig(c *cobra.Command) error {
+func initializeConfig(c *cobra.Command) (*viper.Viper, error) {
 	v := viper.New()
 
 	configFile := c.Flag("config").Value.String()
@@ -171,9 +187,9 @@ func initializeConfig(c *cobra.Command) error {
 	if err := v.ReadInConfig(); err != nil {
 		// It's okay if there isn't a config file unless one was given.
 		if configFile != "" {
-			return err
+			return v, err
 		} else if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			return err
+			return v, err
 		}
 	}
 
@@ -202,7 +218,7 @@ func initializeConfig(c *cobra.Command) error {
 		c,
 		v,
 	)
-	return nil
+	return v, nil
 }
 
 // Bind each cobra flag to its associated viper configuration (config file and environment variable)
@@ -364,6 +380,70 @@ func mergeFlags(cmd *cobra.Command, v *viper.Viper, f *pflag.Flag) {
 			}
 		}
 	}
+}
+
+/*
+checkCIDROverlap takes a list of CIDR flags, and verifies if their input values from the command line overlap
+with any other of the given input values.
+
+Requires a list of flags to check.
+*/
+func checkCIDROverlap(v *viper.Viper) (errors []error) {
+	for _, cidrFlag := range initialize.UniqueCIDRKeys {
+		cidr, err := netip.ParsePrefix(v.GetString(cidrFlag))
+		if err != nil {
+			continue
+		}
+		var compareCIDRFlagName string
+		var compareCIDR netip.Prefix
+		hasOverlap := slices.ContainsFunc(
+			initialize.UniqueCIDRKeys,
+			func(flag string) bool {
+
+				// Ignore the flag we're actively comparing to.
+				if flag == cidrFlag {
+					return false
+				}
+
+				compareCIDRFlagName = flag
+				compareCIDR, err = netip.ParsePrefix(v.GetString(flag))
+				if err != nil || !compareCIDR.IsValid() {
+					return false
+				}
+				return cidr.Overlaps(compareCIDR)
+			},
+		)
+		if hasOverlap {
+			flagErr := fmt.Sprintf(
+				"%-10s conflicts with %-10s",
+				cidrFlag,
+				compareCIDRFlagName,
+			)
+			var overlapErr string
+			if cidr.Addr().Is4() {
+				overlapErr = fmt.Sprintf(
+					"%-18s overlaps %-18s",
+					cidr.String(),
+					compareCIDR.String(),
+				)
+			} else if cidr.Addr().Is6() {
+				overlapErr = fmt.Sprintf(
+					"%-32s overlaps %-32s",
+					cidr.String(),
+					compareCIDR.String(),
+				)
+			}
+			errors = append(
+				errors,
+				fmt.Errorf(
+					"%-40s [%s]",
+					flagErr,
+					overlapErr,
+				),
+			)
+		}
+	}
+	return errors
 }
 
 // ExecuteCommandC runs a cobra command

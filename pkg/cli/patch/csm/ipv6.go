@@ -54,8 +54,6 @@ var (
 	force           bool
 	forceAlert      = false
 	toPatch         NetworkParams
-	cidrFlagNames   []string
-	gwFlagNames     []string
 	remove          bool
 	subnetsToPatch  = defaultSubnetsToPatch
 	bssSession      bss.UtilsClient
@@ -141,22 +139,6 @@ the force flag is given.`,
 					)
 				}
 				backupDirectory = wd
-			}
-
-			var errors []error
-			overlapErrors := networking.CheckCIDROverlap(cidrFlagNames)
-			if len(overlapErrors) > 0 {
-				errors = append(
-					errors,
-					overlapErrors...,
-				)
-			}
-			if len(errors) > 0 {
-				fmt.Println("Errors:")
-				for _, e := range overlapErrors {
-					fmt.Println(e)
-				}
-				log.Fatalln("The program could not continue, one or more flags had invalid values.")
 			}
 
 			err = getBSSClient(&bssSession)
@@ -266,16 +248,11 @@ the force flag is given.`,
 	)
 	toPatch = make(NetworkParams)
 	for _, network := range networksToPatch {
-		flag := fmt.Sprintf(
-			"%s-cidr6",
-			strings.ToLower(network),
-		)
-		cidrFlagNames = append(
-			cidrFlagNames,
-			flag,
-		)
 		cidr := c.Flags().String(
-			flag,
+			fmt.Sprintf(
+				"%s-cidr6",
+				strings.ToLower(network),
+			),
 			"",
 			fmt.Sprintf(
 				"Overall IPv6 CIDR for all %s subnets.",

@@ -30,6 +30,20 @@ import (
 	"github.com/spf13/viper"
 )
 
+// UniqueCIDRKeys are unique CIDRs, they should never overlap.
+var UniqueCIDRKeys = []string{
+	"can-cidr",
+	"chn-cidr4",
+	"chn-cidr6",
+	"cmn-cidr4",
+	"cmn-cidr6",
+	"hmn-cidr",
+	"hmn-mtn-cidr",
+	"mtl-cidr",
+	"nmn-cidr",
+	"nmn-mtn-cidr",
+}
+
 // DeprecatedKeys is a list of every key that is deprecated in Cobra.
 var DeprecatedKeys []string
 
