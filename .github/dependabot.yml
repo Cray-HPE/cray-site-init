@@ -16,6 +16,9 @@ updates:
       k8s-dependencies:
         patterns:
           - k8s.io/*
+      etcd-dependencies:
+        patterns:
+          - go.etcd.io/etcd/*
   - package-ecosystem: "github-actions"
     # Look for `.github/workflows` in the `root` directory
     directory: "/"
