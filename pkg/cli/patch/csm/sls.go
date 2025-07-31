@@ -348,7 +348,7 @@ func allocateIPReservations(slsProperties *slsCommon.NetworkExtraProperties) (er
 		fmt.Printf(
 			"%-40s : %-3d\n",
 			"** new reservations",
-			totalReservations,
+			uint(totalReservations)-skippedReservations,
 		)
 		if skippedReservations > 0 {
 			fmt.Printf(
