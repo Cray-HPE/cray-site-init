@@ -390,19 +390,12 @@ func UpdateReservation(subnet *slsCommon.IPSubnet, IPReservation slsCommon.IPRes
 			err,
 		)
 	}
-	newIPReservation = slsCommon.IPReservation{
-		Name:    IPReservation.Name,
-		Comment: IPReservation.Comment,
-	}
+	newIPReservation = IPReservation
 	if !IPv6Only && ipv4.IsValid() && !ipv4.IsUnspecified() {
 		newIPReservation.IPAddress = ipv4.AsSlice()
-	} else {
-		newIPReservation.IPAddress = IPReservation.IPAddress
 	}
 	if err6 == nil && ipv6.IsValid() && !ipv6.IsUnspecified() {
 		newIPReservation.IPAddress6 = ipv6.AsSlice()
-	} else {
-		newIPReservation.IPAddress6 = IPReservation.IPAddress6
 	}
 	return newIPReservation, err
 }
