@@ -174,7 +174,7 @@ func createIPv6BSSBootParametersForXName(network *slsCommon.Network, networkProp
 		)
 	}
 	for ipamEntry, ipamConfig := range metaData.IPAM {
-		if strings.EqualFold(
+		if !strings.EqualFold(
 			network.Name,
 			ipamEntry,
 		) {
@@ -184,40 +184,40 @@ func createIPv6BSSBootParametersForXName(network *slsCommon.Network, networkProp
 			fmt.Printf(
 				"%s already had an IPv6 address in its BSS bootparameters for the %s network of %s.\n",
 				reservation.Name,
-				network.Name,
-				reservation.IPAddress6,
+				ipamEntry,
+				ipamConfig.IP6,
 			)
 			forceAlert = true
-			continue
-		}
-		addr6, parseErr := netip.ParseAddr(reservation.IPAddress6.String())
-		if parseErr != nil {
-			err = fmt.Errorf(
-				"failed to parse %s's IPAddress6 string because %v",
-				reservation.Name,
-				parseErr,
+		} else {
+			addr6, parseErr := netip.ParseAddr(reservation.IPAddress6.String())
+			if parseErr != nil {
+				err = fmt.Errorf(
+					"failed to parse %s's IPAddress6 string because %v",
+					reservation.Name,
+					parseErr,
+				)
+				return bootParams, err
+			}
+			prefix6 := netip.PrefixFrom(
+				addr6,
+				networkCIDR6.Bits(),
 			)
-			return bootParams, err
+			ipamConfig.IP6 = prefix6.String()
+			metaData.IPAM[ipamEntry] = ipamConfig
 		}
-		prefix6 := netip.PrefixFrom(
-			addr6,
-			networkCIDR6.Bits(),
-		)
-		ipamConfig.IP6 = prefix6.String()
-		metaData.IPAM[ipamEntry] = ipamConfig
 
 		if !force && ipamConfig.Gateway6 != "" {
 			fmt.Printf(
-				"%s already had an IPv6 address in its BSS bootparameters for the %s network of %s.\n",
+				"%s already had an IPv6 gateway in its BSS bootparameters for the %s network of %s.\n",
 				reservation.Name,
-				network.Name,
-				reservation.IPAddress6,
+				ipamEntry,
+				ipamConfig.Gateway6,
 			)
 			forceAlert = true
-			continue
+		} else {
+			ipamConfig.Gateway6 = subnet.Gateway6.String()
+			metaData.IPAM[ipamEntry] = ipamConfig
 		}
-		ipamConfig.Gateway6 = subnet.Gateway6.String()
-		metaData.IPAM[ipamEntry] = ipamConfig
 	}
 	err = setBSSMetaData(
 		bootParams,
