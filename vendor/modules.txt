@@ -24,7 +24,7 @@ github.com/Cray-HPE/hms-shcd-parser/pkg/shcd-parser
 ## explicit; go 1.24.0
 github.com/Cray-HPE/hms-sls/v2/pkg/sls-client
 github.com/Cray-HPE/hms-sls/v2/pkg/sls-common
-# github.com/Cray-HPE/hms-smd/v2 v2.39.0
+# github.com/Cray-HPE/hms-smd/v2 v2.40.0
 ## explicit; go 1.24.0
 github.com/Cray-HPE/hms-smd/v2/pkg/redfish
 github.com/Cray-HPE/hms-smd/v2/pkg/sm
