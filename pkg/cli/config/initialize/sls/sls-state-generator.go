@@ -963,6 +963,43 @@ func (g *StateGenerator) getNodeHardwareFromRow(row shcdParser.HMNRow) (hardware
 		g.currentManagementNID++
 	} else if strings.HasPrefix(
 		sourceLowerCase,
+		"fmn",
+	) {
+		role = "Management"
+		subRole = "Fabric"
+
+		indexString := strings.TrimPrefix(
+			sourceLowerCase,
+			"fmn",
+		)
+
+		indexNumber, err := strconv.Atoi(indexString)
+		if err != nil {
+			logger.Fatal(
+				"Failed to parse index number string to integer!",
+				zap.Error(err),
+				zap.String(
+					"indexString",
+					indexString,
+				),
+			)
+		}
+
+		managementAlias := fmt.Sprintf(
+			"fmn%03d",
+			indexNumber,
+		)
+
+		thisNodeExtraProperties.NID = g.currentManagementNID
+		thisNodeExtraProperties.Aliases = append(
+			thisNodeExtraProperties.Aliases,
+			managementAlias,
+		)
+
+		g.currentManagementNID++
+
+	} else if strings.HasPrefix(
+		sourceLowerCase,
 		"nid",
 	) || strings.HasPrefix(
 		sourceLowerCase,
