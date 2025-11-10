@@ -20,7 +20,7 @@ github.com/Cray-HPE/hms-securestorage
 # github.com/Cray-HPE/hms-shcd-parser v1.11.0
 ## explicit; go 1.24.0
 github.com/Cray-HPE/hms-shcd-parser/pkg/shcd-parser
-# github.com/Cray-HPE/hms-sls/v2 v2.11.0
+# github.com/Cray-HPE/hms-sls/v2 v2.12.0
 ## explicit; go 1.24.0
 github.com/Cray-HPE/hms-sls/v2/pkg/sls-client
 github.com/Cray-HPE/hms-sls/v2/pkg/sls-common
