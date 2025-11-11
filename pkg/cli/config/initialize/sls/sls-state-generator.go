@@ -966,7 +966,7 @@ func (g *StateGenerator) getNodeHardwareFromRow(row shcdParser.HMNRow) (hardware
 		"fmn",
 	) {
 		role = "Management"
-		subRole = "Fabric"
+		subRole = "FabricManager"
 
 		indexString := strings.TrimPrefix(
 			sourceLowerCase,
