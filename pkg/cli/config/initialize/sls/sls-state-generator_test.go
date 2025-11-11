@@ -32,6 +32,7 @@ import (
 	slsCommon "github.com/Cray-HPE/hms-sls/v2/pkg/sls-common"
 	"github.com/Cray-HPE/hms-xname/xnames"
 	"github.com/Cray-HPE/hms-xname/xnametypes"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -5077,6 +5078,86 @@ func (suite *GetNodeHardwareFromRowTestSuite) TestEX2500_LNETRouter() {
 	)
 	suite.Equal(
 		[]string{"lnet-50"},
+		hardwareExtraProperties.Aliases,
+	)
+}
+
+func (suite *GetNodeHardwareFromRowTestSuite) TestFabricManager_CSM16_Filtered() {
+	// Set CSM version 1.6 and clean up after test
+	viper.Set("csm-version", "1.6")
+	defer viper.Set("csm-version", nil)
+
+	row := shcdParser.HMNRow{
+		Source:              "fmn01",
+		SourceRack:          "x5004",
+		SourceLocation:      "u22",
+		DestinationRack:     "x3001",
+		DestinationLocation: "u42",
+		DestinationPort:     "j21",
+	}
+
+	// Process the row - should return empty hardware for CSM < 1.7
+	hardware := suite.generator.getNodeHardwareFromRow(row)
+	suite.Empty(hardware, "FabricManager node should return empty hardware for CSM < 1.7")
+}
+
+func (suite *GetNodeHardwareFromRowTestSuite) TestFabricManager_CSM17_Included() {
+	// Set CSM version 1.7 and clean up after test
+	viper.Set("csm-version", "1.7")
+	defer viper.Set("csm-version", nil)
+
+	row := shcdParser.HMNRow{
+		Source:              "fmn01",
+		SourceRack:          "x5004",
+		SourceLocation:      "u22",
+		DestinationRack:     "x3001",
+		DestinationLocation: "u42",
+		DestinationPort:     "j21",
+	}
+
+	// Process the row - should return hardware for CSM >= 1.7
+	hardware := suite.generator.getNodeHardwareFromRow(row)
+	suite.NotEmpty(hardware, "FabricManager node should return valid hardware for CSM >= 1.7")
+
+	expectedXname := "x5004c4s22b0n0"
+	suite.Equal(
+		"x5004c4s22b0",
+		hardware.Parent,
+	)
+	suite.Equal(
+		expectedXname,
+		hardware.Xname,
+	)
+	suite.Equal(
+		slsCommon.Node,
+		hardware.Type,
+	)
+	suite.Equal(
+		slsCommon.ClassRiver,
+		hardware.Class,
+	)
+	suite.Equal(
+		xnametypes.Node,
+		hardware.TypeString,
+	)
+
+	hardwareExtraProperties, ok := hardware.ExtraPropertiesRaw.(slsCommon.ComptypeNode)
+	suite.True(
+		ok,
+		"ExtraProperties type is not expected type.",
+	)
+
+	suite.Equal(
+		"Management",
+		hardwareExtraProperties.Role,
+	)
+	suite.Equal(
+		"FabricManager",
+		hardwareExtraProperties.SubRole,
+	)
+	// FabricManager nodes should have aliases
+	suite.Equal(
+		[]string{"fmn001"},
 		hardwareExtraProperties.Aliases,
 	)
 }

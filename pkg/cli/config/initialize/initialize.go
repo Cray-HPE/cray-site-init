@@ -182,7 +182,7 @@ func NewCommand() *cobra.Command {
 
 			// Merge the SLS NCN list with the NCN list we got at the beginning
 			err = mergeNCNs(
-				logicalNCNs,
+				&logicalNCNs,
 				slsNcns,
 			)
 			if err != nil {
@@ -1289,13 +1289,13 @@ func setupDirectories(systemName string, v *viper.Viper) (string, error) {
 	return basepath, nil
 }
 
-func mergeNCNs(logicalNcns []*LogicalNCN, slsNCNs []LogicalNCN) error {
+func mergeNCNs(logicalNcns *[]*LogicalNCN, slsNCNs []LogicalNCN) error {
 	// Check CSM version for FabricManager node filtering
 	_, oneSevenCSM := csm.CompareMajorMinor("1.7")
 	
-	// Merge the SLS NCN list with the NCN list from ncn-metadata
-	for _, ncn := range logicalNcns {
-		// Skip FabricManager nodes if CSM < 1.7 (they won't be in SLS)
+	// First, filter out FabricManager nodes if CSM < 1.7
+	filteredNCNs := []*LogicalNCN{}
+	for _, ncn := range *logicalNcns {
 		if ncn.Subrole == "FabricManager" && oneSevenCSM == -1 {
 			log.Printf(
 				"Skipping FabricManager node %s (%s) from merge - FabricManager nodes require CSM 1.7 or later",
@@ -1304,7 +1304,11 @@ func mergeNCNs(logicalNcns []*LogicalNCN, slsNCNs []LogicalNCN) error {
 			)
 			continue
 		}
-		
+		filteredNCNs = append(filteredNCNs, ncn)
+	}
+	
+	// Merge the SLS NCN list with the filtered NCN list from ncn-metadata
+	for _, ncn := range filteredNCNs {
 		found := false
 		for _, slsNCN := range slsNCNs {
 			if ncn.Xname == slsNCN.Xname {
@@ -1326,6 +1330,9 @@ func mergeNCNs(logicalNcns []*LogicalNCN, slsNCNs []LogicalNCN) error {
 			)
 		}
 	}
+
+	// Replace the original slice with filtered nodes
+	*logicalNcns = filteredNCNs
 
 	return nil
 }
