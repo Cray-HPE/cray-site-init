@@ -181,8 +181,8 @@ func NewCommand() *cobra.Command {
 			}
 
 			// Merge the SLS NCN list with the NCN list we got at the beginning
-			err = mergeNCNs(
-				&logicalNCNs,
+			logicalNCNs, err = mergeNCNs(
+				logicalNCNs,
 				slsNcns,
 			)
 			if err != nil {
@@ -1289,13 +1289,13 @@ func setupDirectories(systemName string, v *viper.Viper) (string, error) {
 	return basepath, nil
 }
 
-func mergeNCNs(logicalNcns *[]*LogicalNCN, slsNCNs []LogicalNCN) error {
+func mergeNCNs(logicalNcns []*LogicalNCN, slsNCNs []LogicalNCN) ([]*LogicalNCN, error) {
 	// Check CSM version for FabricManager node filtering
 	_, oneSevenCSM := csm.CompareMajorMinor("1.7")
 	
 	// First, filter out FabricManager nodes if CSM < 1.7
 	filteredNCNs := []*LogicalNCN{}
-	for _, ncn := range *logicalNcns {
+	for _, ncn := range logicalNcns {
 		if ncn.Subrole == "FabricManager" && oneSevenCSM == -1 {
 			log.Printf(
 				"Skipping FabricManager node %s (%s) from merge - FabricManager nodes require CSM 1.7 or later",
@@ -1324,17 +1324,14 @@ func mergeNCNs(logicalNcns *[]*LogicalNCN, slsNCNs []LogicalNCN) error {
 
 		// All NCNs from ncn-metadata need to appear in the generated SLS state
 		if !found {
-			return fmt.Errorf(
+			return nil, fmt.Errorf(
 				"failed to find NCN from ncn-metadata in generated SLS State: %s",
 				ncn.Xname,
 			)
 		}
 	}
 
-	// Replace the original slice with filtered nodes
-	*logicalNcns = filteredNCNs
-
-	return nil
+	return filteredNCNs, nil
 }
 
 func prepareNetworkSLS(shastaNetworks map[string]*networking.IPNetwork) (

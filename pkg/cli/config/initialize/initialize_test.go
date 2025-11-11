@@ -325,8 +325,8 @@ func (suite *InitCmdTestSuite) TestMergeNCNs_HappyPath() {
 		},
 	}
 
-	err := mergeNCNs(
-		&ncns,
+	ncns, err := mergeNCNs(
+		ncns,
 		slsNCNs,
 	)
 	suite.NoError(err)
@@ -371,8 +371,8 @@ func (suite *InitCmdTestSuite) TestMergeNCNs_MissingXnameInSLS() {
 		},
 	}
 
-	err := mergeNCNs(
-		&ncns,
+	_, err := mergeNCNs(
+		ncns,
 		slsNCNs,
 	)
 	suite.Equal(
@@ -445,8 +445,8 @@ func (suite *InitCmdTestSuite) TestMergeNCNs_FabricManagerCSM16_Filtered() {
 		// FabricManager node should NOT be included in result
 	}
 
-	err := mergeNCNs(
-		&ncns,
+	ncns, err := mergeNCNs(
+		ncns,
 		slsNCNs,
 	)
 	suite.NoError(err)
@@ -530,8 +530,8 @@ func (suite *InitCmdTestSuite) TestMergeNCNs_FabricManagerCSM17_Included() {
 		},
 	}
 
-	err := mergeNCNs(
-		&ncns,
+	ncns, err := mergeNCNs(
+		ncns,
 		slsNCNs,
 	)
 	suite.NoError(err)
