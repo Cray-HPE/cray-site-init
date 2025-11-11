@@ -758,6 +758,24 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (network *networ
 				if err != nil {
 					return nil, err
 				}
+				_, err = networking.AddReservation(
+					subnet,
+					"fmn-vip",
+					"fmn-virtual-ip",
+				)
+				if err != nil {
+					return nil, err
+				}
+			}
+			if tempNet.Name == "HMN" {
+				_, err = networking.AddReservation(
+					subnet,
+					"fmn-vip",
+					"fmn-virtual-ip",
+				)
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
 	}

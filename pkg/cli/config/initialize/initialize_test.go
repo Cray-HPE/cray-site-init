@@ -324,7 +324,7 @@ func (suite *InitCmdTestSuite) TestMergeNCNs_HappyPath() {
 		},
 	}
 
-	err := mergeNCNs(
+	mergedNCNs, err := mergeNCNs(
 		ncns,
 		slsNCNs,
 	)
@@ -332,7 +332,7 @@ func (suite *InitCmdTestSuite) TestMergeNCNs_HappyPath() {
 
 	suite.Equal(
 		expectedMergeList,
-		ncns,
+		mergedNCNs,
 	)
 }
 
@@ -370,7 +370,7 @@ func (suite *InitCmdTestSuite) TestMergeNCNs_MissingXnameInSLS() {
 		},
 	}
 
-	err := mergeNCNs(
+	_, err := mergeNCNs(
 		ncns,
 		slsNCNs,
 	)

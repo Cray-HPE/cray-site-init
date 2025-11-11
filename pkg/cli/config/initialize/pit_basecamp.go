@@ -106,6 +106,13 @@ var cephWorkerRunCMD = []string{
 	"touch /etc/cloud/cloud-init.disabled",
 }
 
+var fmnRunCMD = []string{
+	"/srv/cray/scripts/metal/net-init.sh",
+	"/srv/cray/scripts/common/update_ca_certs.py",
+	"/srv/cray/scripts/metal/install.sh",
+	"touch /etc/cloud/cloud-init.disabled",
+}
+
 var chronyTemplate = `## template: jinja
 # csm-generated config for {{ local_hostname }}. Do not modify--changes can be overwritten
 {% for pool in pools | sort -%}
@@ -500,6 +507,7 @@ func MakeBaseCampfromNCNs(
 		shastaNetworks,
 	)
 	_, oneSixCloudInit := csm.CompareMajorMinor("1.6")
+	_, oneSevenCSM := csm.CompareMajorMinor("1.7")
 	for _, ncn := range ncns {
 		mac0Interface := networking.MAC0Interface{}
 		mac0Interface.IP = uaiReservations[ncn.Hostname].IPAddress
@@ -591,6 +599,24 @@ func MakeBaseCampfromNCNs(
 				userData.BootCMD = cloudInitTemplates.WorkerBootCMD
 				userData.FSSetup = cloudInitTemplates.WorkerFileSystems
 				userData.Mounts = cloudInitTemplates.WorkerMounts
+			}
+		case "FabricManager":
+			// FabricManager nodes are only supported in CSM 1.7 and later
+			if oneSevenCSM == -1 {
+				log.Printf(
+					"Skipping FabricManager node %s (%s) - FabricManager nodes require CSM 1.7 or later",
+					ncn.Hostname,
+					ncn.Xname,
+				)
+				continue
+			}
+			userData.RunCMD = fmnRunCMD
+			if oneSixCloudInit != -1 {
+				// Add disk configuration to cloud-init user-data if csm >= 1.6
+				// prior to csm 1.6, the disk configuration was baked into the image
+				userData.BootCMD = cloudInitTemplates.FabricManagerBootCMD
+				userData.FSSetup = cloudInitTemplates.FabricManagerFileSystems
+				userData.Mounts = cloudInitTemplates.FabricManagerMounts
 			}
 		}
 
