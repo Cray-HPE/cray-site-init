@@ -1290,8 +1290,21 @@ func setupDirectories(systemName string, v *viper.Viper) (string, error) {
 }
 
 func mergeNCNs(logicalNcns []*LogicalNCN, slsNCNs []LogicalNCN) error {
+	// Check CSM version for FabricManager node filtering
+	_, oneSevenCSM := csm.CompareMajorMinor("1.7")
+	
 	// Merge the SLS NCN list with the NCN list from ncn-metadata
 	for _, ncn := range logicalNcns {
+		// Skip FabricManager nodes if CSM < 1.7 (they won't be in SLS)
+		if ncn.Subrole == "FabricManager" && oneSevenCSM == -1 {
+			log.Printf(
+				"Skipping FabricManager node %s (%s) from merge - FabricManager nodes require CSM 1.7 or later",
+				ncn.Hostname,
+				ncn.Xname,
+			)
+			continue
+		}
+		
 		found := false
 		for _, slsNCN := range slsNCNs {
 			if ncn.Xname == slsNCN.Xname {

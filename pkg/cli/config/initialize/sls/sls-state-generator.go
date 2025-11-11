@@ -40,6 +40,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
+	"github.com/Cray-HPE/cray-site-init/pkg/csm"
 	"github.com/Cray-HPE/cray-site-init/pkg/networking"
 )
 
@@ -965,6 +966,16 @@ func (g *StateGenerator) getNodeHardwareFromRow(row shcdParser.HMNRow) (hardware
 		sourceLowerCase,
 		"fmn",
 	) {
+		// FabricManager nodes are only supported in CSM 1.7 and later
+		_, oneSevenCSM := csm.CompareMajorMinor("1.7")
+		if oneSevenCSM == -1 {
+			logger.Info(
+				"Skipping FabricManager node - requires CSM 1.7 or later",
+				zap.String("source", row.Source),
+			)
+			return hardware
+		}
+
 		role = "Management"
 		subRole = "FabricManager"
 

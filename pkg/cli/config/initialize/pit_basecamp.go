@@ -507,6 +507,7 @@ func MakeBaseCampfromNCNs(
 		shastaNetworks,
 	)
 	_, oneSixCloudInit := csm.CompareMajorMinor("1.6")
+	_, oneSevenCSM := csm.CompareMajorMinor("1.7")
 	for _, ncn := range ncns {
 		mac0Interface := networking.MAC0Interface{}
 		mac0Interface.IP = uaiReservations[ncn.Hostname].IPAddress
@@ -600,6 +601,15 @@ func MakeBaseCampfromNCNs(
 				userData.Mounts = cloudInitTemplates.WorkerMounts
 			}
 		case "FabricManager":
+			// FabricManager nodes are only supported in CSM 1.7 and later
+			if oneSevenCSM == -1 {
+				log.Printf(
+					"Skipping FabricManager node %s (%s) - FabricManager nodes require CSM 1.7 or later",
+					ncn.Hostname,
+					ncn.Xname,
+				)
+				continue
+			}
 			userData.RunCMD = fmnRunCMD
 			if oneSixCloudInit != -1 {
 				// Add disk configuration to cloud-init user-data if csm >= 1.6
