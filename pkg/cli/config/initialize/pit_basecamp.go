@@ -106,6 +106,13 @@ var cephWorkerRunCMD = []string{
 	"touch /etc/cloud/cloud-init.disabled",
 }
 
+var fmnRunCMD = []string{
+	"/srv/cray/scripts/metal/net-init.sh",
+	"/srv/cray/scripts/common/update_ca_certs.py",
+	"/srv/cray/scripts/metal/install.sh",
+	"touch /etc/cloud/cloud-init.disabled",
+}
+
 var chronyTemplate = `## template: jinja
 # csm-generated config for {{ local_hostname }}. Do not modify--changes can be overwritten
 {% for pool in pools | sort -%}
@@ -591,6 +598,15 @@ func MakeBaseCampfromNCNs(
 				userData.BootCMD = cloudInitTemplates.WorkerBootCMD
 				userData.FSSetup = cloudInitTemplates.WorkerFileSystems
 				userData.Mounts = cloudInitTemplates.WorkerMounts
+			}
+		case "FabricManager":
+			userData.RunCMD = fmnRunCMD
+			if oneSixCloudInit != -1 {
+				// Add disk configuration to cloud-init user-data if csm >= 1.6
+				// prior to csm 1.6, the disk configuration was baked into the image
+				userData.BootCMD = cloudInitTemplates.FabricManagerBootCMD
+				userData.FSSetup = cloudInitTemplates.FabricManagerFileSystems
+				userData.Mounts = cloudInitTemplates.FabricManagerMounts
 			}
 		}
 

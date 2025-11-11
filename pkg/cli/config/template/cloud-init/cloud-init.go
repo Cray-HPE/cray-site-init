@@ -87,6 +87,13 @@ func WriteDiskTemplates() {
 				"mounts":   CephMounts,
 			},
 		},
+		"ncn-fabric/cloud-init/user-data.json": {
+			"user-data": {
+				"bootcmd":  FabricManagerBootCMD,
+				"fs_setup": FabricManagerFileSystems,
+				"mounts":   FabricManagerMounts,
+			},
+		},
 	}
 
 	for path, data := range userDataMaps {
