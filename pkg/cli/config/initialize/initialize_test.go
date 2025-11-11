@@ -28,6 +28,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Cray-HPE/cray-site-init/pkg/networking"
@@ -324,7 +325,7 @@ func (suite *InitCmdTestSuite) TestMergeNCNs_HappyPath() {
 		},
 	}
 
-	err := mergeNCNs(
+	ncns, err := mergeNCNs(
 		ncns,
 		slsNCNs,
 	)
@@ -370,13 +371,176 @@ func (suite *InitCmdTestSuite) TestMergeNCNs_MissingXnameInSLS() {
 		},
 	}
 
-	err := mergeNCNs(
+	_, err := mergeNCNs(
 		ncns,
 		slsNCNs,
 	)
 	suite.Equal(
 		errors.New("failed to find NCN from ncn-metadata in generated SLS State: x3000c0s7b0n0"),
 		err,
+	)
+}
+
+func (suite *InitCmdTestSuite) TestMergeNCNs_FabricManagerCSM16_Filtered() {
+	// Set CSM version 1.6 and clean up after test
+	viper.Set("csm-version", "1.6")
+	defer viper.Set("csm-version", nil)
+
+	ncns := []*LogicalNCN{
+		{
+			Xname:   "x3000c0s1b0n0",
+			Role:    "Management",
+			Subrole: "Master",
+		},
+		{
+			Xname:   "x3000c0s4b0n0",
+			Role:    "Management",
+			Subrole: "Worker", 
+		},
+		{
+			Xname:   "x3000c0s7b0n0",
+			Role:    "Management",
+			Subrole: "FabricManager", // This should be filtered out
+		},
+	}
+
+	slsNCNs := []LogicalNCN{
+		{
+			Xname:    "x3000c0s1b0n0",
+			Hostname: "ncn-m001",
+			Aliases:  []string{"ncn-m001"},
+			BmcPort:  "x3000c0w14:1/1/31",
+		},
+		{
+			Xname:    "x3000c0s4b0n0",
+			Hostname: "ncn-w001",
+			Aliases:  []string{"ncn-w001"},
+			BmcPort:  "x3000c0w14:1/1/32",
+		},
+		{
+			Xname:    "x3000c0s7b0n0",
+			Hostname: "ncn-f001",
+			Aliases:  []string{"ncn-f001"},
+			BmcPort:  "x3000c0w14:1/1/33",
+		},
+	}
+
+	expectedMergeList := []*LogicalNCN{
+		{
+			Xname:    "x3000c0s1b0n0",
+			Role:     "Management",
+			Subrole:  "Master",
+			Hostname: "ncn-m001",
+			Aliases:  []string{"ncn-m001"},
+			BmcPort:  "x3000c0w14:1/1/31",
+		},
+		{
+			Xname:    "x3000c0s4b0n0",
+			Role:     "Management",
+			Subrole:  "Worker",
+			Hostname: "ncn-w001",
+			Aliases:  []string{"ncn-w001"},
+			BmcPort:  "x3000c0w14:1/1/32",
+		},
+		// FabricManager node should NOT be included in result
+	}
+
+	ncns, err := mergeNCNs(
+		ncns,
+		slsNCNs,
+	)
+	suite.NoError(err)
+
+	// Should only have 2 nodes (FabricManager filtered out)
+	suite.Len(ncns, 2)
+	suite.Equal(
+		expectedMergeList,
+		ncns,
+	)
+}
+
+func (suite *InitCmdTestSuite) TestMergeNCNs_FabricManagerCSM17_Included() {
+	// Set CSM version 1.7 and clean up after test
+	viper.Set("csm-version", "1.7")
+	defer viper.Set("csm-version", nil)
+
+	ncns := []*LogicalNCN{
+		{
+			Xname:   "x3000c0s1b0n0",
+			Role:    "Management",
+			Subrole: "Master",
+		},
+		{
+			Xname:   "x3000c0s4b0n0",
+			Role:    "Management",
+			Subrole: "Worker",
+		},
+		{
+			Xname:   "x3000c0s7b0n0",
+			Role:    "Management",
+			Subrole: "FabricManager", // This should be included
+		},
+	}
+
+	slsNCNs := []LogicalNCN{
+		{
+			Xname:    "x3000c0s1b0n0",
+			Hostname: "ncn-m001",
+			Aliases:  []string{"ncn-m001"},
+			BmcPort:  "x3000c0w14:1/1/31",
+		},
+		{
+			Xname:    "x3000c0s4b0n0",
+			Hostname: "ncn-w001",
+			Aliases:  []string{"ncn-w001"},
+			BmcPort:  "x3000c0w14:1/1/32",
+		},
+		{
+			Xname:    "x3000c0s7b0n0",
+			Hostname: "ncn-f001",
+			Aliases:  []string{"ncn-f001"},
+			BmcPort:  "x3000c0w14:1/1/33",
+		},
+	}
+
+	expectedMergeList := []*LogicalNCN{
+		{
+			Xname:    "x3000c0s1b0n0",
+			Role:     "Management",
+			Subrole:  "Master",
+			Hostname: "ncn-m001",
+			Aliases:  []string{"ncn-m001"},
+			BmcPort:  "x3000c0w14:1/1/31",
+		},
+		{
+			Xname:    "x3000c0s4b0n0",
+			Role:     "Management",
+			Subrole:  "Worker",
+			Hostname: "ncn-w001",
+			Aliases:  []string{"ncn-w001"},
+			BmcPort:  "x3000c0w14:1/1/32",
+		},
+		{
+			Xname:    "x3000c0s7b0n0",
+			Role:     "Management",
+			Subrole:  "FabricManager",
+			Hostname: "ncn-f001",
+			Aliases:  []string{"ncn-f001"},
+			BmcPort:  "x3000c0w14:1/1/33",
+		},
+	}
+
+	ncns, err := mergeNCNs(
+		ncns,
+		slsNCNs,
+	)
+	suite.NoError(err)
+
+	// Should have all 3 nodes (including FabricManager)
+	suite.Len(ncns, 3)
+	suite.Equal(
+		expectedMergeList,
+		ncns,
 	)
 }
 

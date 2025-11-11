@@ -331,3 +331,59 @@ var CephMounts = [][]string{
 		"defaults",
 	},
 }
+
+// FabricManagerBootCMD (cloud-init user-data)
+var FabricManagerBootCMD = [][]string{
+	{
+		"cloud-init-per",
+		"once",
+		"create_PV",
+		"pvcreate",
+		"-ff",
+		"-y",
+		"-M",
+		"lvm2",
+		raidArray,
+	},
+	{
+		"cloud-init-per",
+		"once",
+		"create_VG",
+		"vgcreate",
+		volumeGroup,
+		raidArray,
+	},
+	{
+		"cloud-init-per",
+		"once",
+		fmt.Sprintf("create_LV_%s", crays3cache),
+		"lvcreate",
+		"-L",
+		"200GB",
+		"-n",
+		crays3cache,
+		"-y",
+		volumeGroup,
+	},
+}
+
+// FabricManagerFileSystems (cloud-init user-data)
+var FabricManagerFileSystems = []map[string]interface{}{
+	{
+		"label":      crays3cache,
+		"filesystem": "ext4",
+		"device":     fmt.Sprintf("/dev/disk/by-id/dm-name-%s-%s", volumeGroup, crays3cache),
+		"partition":  "auto",
+		"overwrite":  true,
+	},
+}
+
+// FabricManagerMounts (cloud-init user-data)
+var FabricManagerMounts = [][]string{
+	{
+		fmt.Sprintf("LABEL=%s", crays3cache),
+		"/var/lib/s3fs_cache",
+		"ext4",
+		"defaults,nofail",
+	},
+}
