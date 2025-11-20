@@ -280,6 +280,32 @@ func MakeBasecampHostRecords(
 		},
 	)
 
+	// Add fmn-vip if fabric manager nodes exist
+	hasFabricManager := false
+	for _, ncn := range ncns {
+		if ncn.Subrole == "FabricManager" {
+			hasFabricManager = true
+			break
+		}
+	}
+	if hasFabricManager {
+		if fmnres, exists := nmnNetwork.ReservationsByName()["fmn-vip"]; exists {
+			hostrecords = append(
+				hostrecords,
+				BasecampHostRecord{
+					fmnres.IPAddress.String(),
+					[]string{
+						fmnres.Name,
+						fmt.Sprintf(
+							"%s.nmn",
+							fmnres.Name,
+						),
+					},
+				},
+			)
+		}
+	}
+
 	// Add entries for the switches
 	hmnNetNetwork, _ := shastaNetworks["HMN"].LookUpSubnet("network_hardware")
 	for _, tmpReservation := range hmnNetNetwork.IPReservations {
