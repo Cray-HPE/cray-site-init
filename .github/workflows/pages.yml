@@ -47,7 +47,7 @@ jobs:
           tar -xf ${{ runner.temp }}/dart-sass.tar.gz --directory ${{ runner.temp }}
           mv ${{ runner.temp }}/dart-sass/ /usr/local/bin
           echo "/usr/local/bin/dart-sass" >> $GITHUB_PATH
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           submodules: recursive  # Fetch Hugo themes (true OR recursive)
           fetch-depth: 0    # Fetch all history for .GitInfo and .Lastmod
