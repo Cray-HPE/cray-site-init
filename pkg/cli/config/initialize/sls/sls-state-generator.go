@@ -40,6 +40,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
+	"github.com/Cray-HPE/cray-site-init/pkg/csm"
 	"github.com/Cray-HPE/cray-site-init/pkg/networking"
 )
 
@@ -961,6 +962,53 @@ func (g *StateGenerator) getNodeHardwareFromRow(row shcdParser.HMNRow) (hardware
 		)
 
 		g.currentManagementNID++
+	} else if strings.HasPrefix(
+		sourceLowerCase,
+		"fmn",
+	) {
+		// FabricManager nodes are only supported in CSM 1.7 and later
+		_, oneSevenCSM := csm.CompareMajorMinor("1.7")
+		if oneSevenCSM == -1 {
+			logger.Info(
+				"Skipping FabricManager node - requires CSM 1.7 or later",
+				zap.String("source", row.Source),
+			)
+			return hardware
+		}
+
+		role = "Management"
+		subRole = "FabricManager"
+
+		indexString := strings.TrimPrefix(
+			sourceLowerCase,
+			"fmn",
+		)
+
+		indexNumber, err := strconv.Atoi(indexString)
+		if err != nil {
+			logger.Fatal(
+				"Failed to parse index number string to integer!",
+				zap.Error(err),
+				zap.String(
+					"indexString",
+					indexString,
+				),
+			)
+		}
+
+		managementAlias := fmt.Sprintf(
+			"fmn%03d",
+			indexNumber,
+		)
+
+		thisNodeExtraProperties.NID = g.currentManagementNID
+		thisNodeExtraProperties.Aliases = append(
+			thisNodeExtraProperties.Aliases,
+			managementAlias,
+		)
+
+		g.currentManagementNID++
+
 	} else if strings.HasPrefix(
 		sourceLowerCase,
 		"nid",

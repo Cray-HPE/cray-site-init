@@ -35,6 +35,7 @@ import (
 	slsCommon "github.com/Cray-HPE/hms-sls/v2/pkg/sls-common"
 	"github.com/spf13/viper"
 
+	"github.com/Cray-HPE/cray-site-init/pkg/csm"
 	"github.com/Cray-HPE/cray-site-init/pkg/csm/hms/sls"
 	"github.com/Cray-HPE/cray-site-init/pkg/networking"
 )
@@ -757,6 +758,32 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (network *networ
 				)
 				if err != nil {
 					return nil, err
+				}
+				// FabricManager VIP is only supported in CSM 1.7 and later
+				_, oneSevenCSM := csm.CompareMajorMinor("1.7")
+				if oneSevenCSM != -1 {
+					_, err = networking.AddReservation(
+						subnet,
+						"fmn-vip",
+						"fmn-virtual-ip",
+					)
+					if err != nil {
+						return nil, err
+					}
+				}
+			}
+			if tempNet.Name == "HMN" {
+				// FabricManager VIP is only supported in CSM 1.7 and later
+				_, oneSevenCSM := csm.CompareMajorMinor("1.7")
+				if oneSevenCSM != -1 {
+					_, err = networking.AddReservation(
+						subnet,
+						"fmn-vip",
+						"fmn-virtual-ip",
+					)
+					if err != nil {
+						return nil, err
+					}
 				}
 			}
 		}

@@ -35,6 +35,8 @@ const (
 	cephetc     = "CEPHETC"
 	cephvar     = "CEPHVAR"
 	contain     = "CONTAIN"
+	slingshot   = "SLINGSHOT"
+	scfirmware = "SCFIRMWARE"
 	volumeGroup = "metalvg0"
 	raidArray   = "/dev/md/AUX"
 )
@@ -329,5 +331,86 @@ var CephMounts = [][]string{
 		"/var/lib/containers",
 		"auto",
 		"defaults",
+	},
+}
+
+// FabricManagerBootCMD (cloud-init user-data)
+var FabricManagerBootCMD = [][]string{
+	{
+		"cloud-init-per",
+		"once",
+		"create_PV",
+		"pvcreate",
+		"-ff",
+		"-y",
+		"-M",
+		"lvm2",
+		raidArray,
+	},
+	{
+		"cloud-init-per",
+		"once",
+		"create_VG",
+		"vgcreate",
+		volumeGroup,
+		raidArray,
+	},
+	{
+		"cloud-init-per",
+		"once",
+		fmt.Sprintf("create_LV_%s", scfirmware),
+		"lvcreate",
+		"-L",
+		"80GB",
+		"-n",
+		scfirmware,
+		"-y",
+		volumeGroup,
+	},
+	{
+		"cloud-init-per",
+		"once",
+		fmt.Sprintf("create_LV_%s", slingshot),
+		"lvcreate",
+		"-L",
+		"120GB",
+		"-n",
+		slingshot,
+		"-y",
+		volumeGroup,
+	},
+}
+
+// FabricManagerFileSystems (cloud-init user-data)
+var FabricManagerFileSystems = []map[string]interface{}{
+	{
+		"label":      scfirmware,
+		"filesystem": "ext4",
+		"device":     fmt.Sprintf("/dev/disk/by-id/dm-name-%s-%s", volumeGroup, scfirmware),
+		"partition":  "auto",
+		"overwrite":  false,
+	},
+	{
+		"label":      slingshot,
+		"filesystem": "ext4",
+		"device":     fmt.Sprintf("/dev/disk/by-id/dm-name-%s-%s", volumeGroup, slingshot),
+		"partition":  "auto",
+		"overwrite":  false,
+	},
+}
+
+// FabricManagerMounts (cloud-init user-data)
+var FabricManagerMounts = [][]string{
+	{
+		fmt.Sprintf("LABEL=%s", scfirmware),
+		"/opt/cray/FW/sc-firmware",
+		"ext4",
+		"defaults,nofail",
+	},
+	{
+		fmt.Sprintf("LABEL=%s", slingshot),
+		"/opt/slingshot",
+		"ext4",
+		"defaults,nofail",
 	},
 }
