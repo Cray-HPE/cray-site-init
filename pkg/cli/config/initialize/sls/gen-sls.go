@@ -117,7 +117,7 @@ func GenCabinetMap(
 							id,
 						),
 					)
-					if subnet.CIDR != "<nil>" {
+					if subnet.CIDR != "" {
 						networks[strings.TrimSuffix(
 							strings.TrimSuffix(
 								netName,
