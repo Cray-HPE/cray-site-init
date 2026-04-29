@@ -214,6 +214,16 @@ func GenerateDefaultNetworkConfigs(
 			hillCabinetCount += len(cab.CabinetIDs())
 		}
 	}
+
+	// Check if any FabricManager nodes exist in the system
+	hasFabricManagerNodes := false
+	for _, ncn := range logicalNCNs {
+		if ncn.Subrole == "FabricManager" {
+			hasFabricManagerNodes = true
+			break
+		}
+	}
+
 	defaultNetConfigs = make(map[string]slsInit.NetworkLayoutConfiguration)
 	// Prepare the network layout configs for generating the networks
 	defaultNetConfigs["BICAN"] = slsInit.GenDefaultBICANConfig(v.GetString("bican-user-network-name"))
@@ -221,10 +231,14 @@ func GenerateDefaultNetworkConfigs(
 		len(logicalNCNs),
 		len(switches),
 	)
-	defaultNetConfigs["HMN"] = slsInit.GenDefaultHMNConfig()
+	hmnConfig := slsInit.GenDefaultHMNConfig()
+	hmnConfig.HasFabricManagerNodes = hasFabricManagerNodes
+	defaultNetConfigs["HMN"] = hmnConfig
 	defaultNetConfigs["HSN"] = slsInit.GenDefaultHSNConfig()
 	defaultNetConfigs["MTL"] = slsInit.GenDefaultMTLConfig()
-	defaultNetConfigs["NMN"] = slsInit.GenDefaultNMNConfig()
+	nmnConfig := slsInit.GenDefaultNMNConfig()
+	nmnConfig.HasFabricManagerNodes = hasFabricManagerNodes
+	defaultNetConfigs["NMN"] = nmnConfig
 	if v.GetString("bican-user-network-name") == "CAN" || v.GetBool("retain-unused-user-network") {
 		defaultNetConfigs["CAN"] = slsInit.GenDefaultCANConfig()
 	}

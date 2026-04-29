@@ -57,6 +57,7 @@ type NetworkLayoutConfiguration struct {
 	CabinetDetails                  []sls.CabinetGroupDetail
 	CabinetCIDR                     net.IPMask
 	ManagementSwitches              []*networking.ManagementSwitch
+	HasFabricManagerNodes           bool
 }
 
 // GenDefaultBICANConfig returns the set of defaults for mapping the BICAN toggle
@@ -759,9 +760,9 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (network *networ
 				if err != nil {
 					return nil, err
 				}
-				// FabricManager VIP is only supported in CSM 1.7 and later
+				// FabricManager VIP is only supported in CSM 1.7 and later AND requires FabricManager nodes
 				_, oneSevenCSM := csm.CompareMajorMinor("1.7")
-				if oneSevenCSM != -1 {
+				if oneSevenCSM != -1 && conf.HasFabricManagerNodes {
 					_, err = networking.AddReservation(
 						subnet,
 						"fmn-vip",
@@ -773,9 +774,9 @@ func createNetFromLayoutConfig(conf NetworkLayoutConfiguration) (network *networ
 				}
 			}
 			if tempNet.Name == "HMN" {
-				// FabricManager VIP is only supported in CSM 1.7 and later
+				// FabricManager VIP is only supported in CSM 1.7 and later AND requires FabricManager nodes
 				_, oneSevenCSM := csm.CompareMajorMinor("1.7")
-				if oneSevenCSM != -1 {
+				if oneSevenCSM != -1 && conf.HasFabricManagerNodes {
 					_, err = networking.AddReservation(
 						subnet,
 						"fmn-vip",
