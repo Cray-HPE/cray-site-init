@@ -6,7 +6,7 @@ require (
 	github.com/Cray-HPE/hms-s3 v1.12.0
 	github.com/Cray-HPE/hms-shcd-parser v1.11.0
 	github.com/Cray-HPE/hms-sls/v2 v2.11.0
-	github.com/Cray-HPE/hms-smd/v2 v2.40.0
+	github.com/Cray-HPE/hms-smd/v2 v2.45.0
 	github.com/Cray-HPE/hms-xname v1.4.0
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 	github.com/evanphx/json-patch v5.9.11+incompatible
@@ -66,7 +66,7 @@ require (
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
-	github.com/Cray-HPE/hms-certs v1.7.0 // indirect
+	github.com/Cray-HPE/hms-certs v1.7.1 // indirect
 	github.com/Cray-HPE/hms-securestorage v1.17.0 // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
