@@ -4,8 +4,8 @@ github.com/Cray-HPE/hms-base/v2 v2.3.0 h1:BjUWnxHplxg+YqjHaEcFH6TvsFb6cqYN3WI2JA
 github.com/Cray-HPE/hms-base/v2 v2.3.0/go.mod h1:vE93SJ+Dptk1Y5+C/DKJPt/tjCZs3HzZUbZaEnfgnug=
 github.com/Cray-HPE/hms-bss v1.34.0 h1:1HOMgSoD3bGzJG9EQSNCJGtM1q6t2qblQ+HQyJ/6tRg=
 github.com/Cray-HPE/hms-bss v1.34.0/go.mod h1:GUGAMmOE+7ISgJzDXhNWeOujdMKjeCPbDhjYWMmDMv8=
-github.com/Cray-HPE/hms-certs v1.7.0 h1:iNzKUJMRImKC+2IVx8vYiPD6ii95AQoZx9Y+DAbJgtk=
-github.com/Cray-HPE/hms-certs v1.7.0/go.mod h1:OJ1pVX7rnA7fwBcucbFLq00Cf/2k4V6lDyOuROh8Hs4=
+github.com/Cray-HPE/hms-certs v1.7.1 h1:dsSE/iL8N9rNgROEVRb2zzjYUHNOoqMoDa+kpHFda64=
+github.com/Cray-HPE/hms-certs v1.7.1/go.mod h1:M3bzIfQwblOXZ3DGZoeXYqvY9t9YTVaqFOlO5FoQEfg=
 github.com/Cray-HPE/hms-s3 v1.12.0 h1:JuiqD0EyJxEvdNlz7P44M2QHF3+9/70VogZfT5F0t2I=
 github.com/Cray-HPE/hms-s3 v1.12.0/go.mod h1:HtsZVFlXggANPMNYVS1WdJxpnvRTCJ0OBTGRN4IQvyY=
 github.com/Cray-HPE/hms-securestorage v1.17.0 h1:9Dr96LITvt9hqs+/CIDFNOauUPSTobU8TC3jEfd8I/A=
@@ -14,8 +14,8 @@ github.com/Cray-HPE/hms-shcd-parser v1.11.0 h1:aTi+0BNIthOMFm8NavYHKgdfNVDk7DpWr
 github.com/Cray-HPE/hms-shcd-parser v1.11.0/go.mod h1:8j5oz1ObrP1WYO4xlN+Z6v9x0wuJ8q794qCvLDmtZIE=
 github.com/Cray-HPE/hms-sls/v2 v2.11.0 h1:vfpaM68+EsHCP3j094alIGG+KXNdGsIRlFY5Njp6uP8=
 github.com/Cray-HPE/hms-sls/v2 v2.11.0/go.mod h1:HM73R+hGmMz00RW954VWhLVTGpBof6ABjBdWTB83P9k=
-github.com/Cray-HPE/hms-smd/v2 v2.40.0 h1:mQpnQ9DrHRtO2xzsrziB+dq2+hyoSrLglUNeZgqkC6s=
-github.com/Cray-HPE/hms-smd/v2 v2.40.0/go.mod h1:Ycj7uV/QQJX1MFlBFLkrHoQrVlL25n2Ol5IBclXz2QY=
+github.com/Cray-HPE/hms-smd/v2 v2.45.0 h1:LM1QkP7D9FYacNAt8FvhQlvIFCjT+OwjahAqsIbeiGQ=
+github.com/Cray-HPE/hms-smd/v2 v2.45.0/go.mod h1:z9iC/pyxXzDlAPMTW3H+KN4zRhuiiu+p/eGJb4t8+as=
 github.com/Cray-HPE/hms-xname v1.4.0 h1:i47YmE8rbSfJ64simKCCC6ZVcGid3rDIX6/jfVbISAM=
 github.com/Cray-HPE/hms-xname v1.4.0/go.mod h1:wH7t1UXYck0VdHSWjrMsxZmaCK5W1lmwgNnsYAFPTus=
 github.com/MakeNowJust/heredoc v1.0.0 h1:cXCdzVdstXyiTqTvfqk9SDHpKNjxuom+DOlyEeQ4pzQ=
