@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"unicode"
 
 	"github.com/go-jose/go-jose/v4/json"
 )
@@ -89,12 +90,12 @@ func ParseSigned(
 	signature string,
 	signatureAlgorithms []SignatureAlgorithm,
 ) (*JSONWebSignature, error) {
-	signature = stripWhitespace(signature)
-	if strings.HasPrefix(signature, "{") {
+	trimmed := strings.TrimLeftFunc(signature, unicode.IsSpace)
+	if strings.HasPrefix(trimmed, "{") {
 		return ParseSignedJSON(signature, signatureAlgorithms)
 	}
 
-	return parseSignedCompact(signature, nil, signatureAlgorithms)
+	return parseSignedCompact(stripWhitespace(signature), nil, signatureAlgorithms)
 }
 
 // ParseSignedCompact parses a message in JWS Compact Serialization. Validation fails if the JWS is
@@ -186,6 +187,10 @@ func ParseSignedJSON(
 	input string,
 	signatureAlgorithms []SignatureAlgorithm,
 ) (*JSONWebSignature, error) {
+	if len(input) == 0 {
+		return nil, errEmptyInput
+	}
+
 	var parsed rawJSONWebSignature
 	err := json.Unmarshal([]byte(input), &parsed)
 	if err != nil {
@@ -270,15 +275,16 @@ func (parsed *rawJSONWebSignature) sanitized(signatureAlgorithms []SignatureAlgo
 			Signature: parsed.Signature,
 		}
 
-		var err error
-		signature.Header, err = signature.mergedHeaders().sanitized()
-		if err != nil {
-			return nil, err
-		}
-
-		alg := SignatureAlgorithm(signature.Header.Algorithm)
+		mergedHeaders := signature.mergedHeaders()
+		alg := mergedHeaders.getSignatureAlgorithm()
 		if !containsSignatureAlgorithm(signatureAlgorithms, alg) {
 			return nil, newErrUnexpectedSignatureAlgorithm(alg, signatureAlgorithms)
+		}
+
+		var err error
+		signature.Header, err = mergedHeaders.sanitized()
+		if err != nil {
+			return nil, err
 		}
 
 		if signature.header != nil {
@@ -318,15 +324,18 @@ func (parsed *rawJSONWebSignature) sanitized(signatureAlgorithms []SignatureAlgo
 			return nil, ErrUnprotectedNonce
 		}
 
-		var err error
-		obj.Signatures[i].Header, err = obj.Signatures[i].mergedHeaders().sanitized()
-		if err != nil {
-			return nil, err
-		}
+		obj.Signatures[i].header = sig.Header
 
-		alg := SignatureAlgorithm(obj.Signatures[i].Header.Algorithm)
+		mergedHeaders := obj.Signatures[i].mergedHeaders()
+		alg := mergedHeaders.getSignatureAlgorithm()
 		if !containsSignatureAlgorithm(signatureAlgorithms, alg) {
 			return nil, newErrUnexpectedSignatureAlgorithm(alg, signatureAlgorithms)
+		}
+
+		var err error
+		obj.Signatures[i].Header, err = mergedHeaders.sanitized()
+		if err != nil {
+			return nil, err
 		}
 
 		if obj.Signatures[i].header != nil {
@@ -354,12 +363,13 @@ func (parsed *rawJSONWebSignature) sanitized(signatureAlgorithms []SignatureAlgo
 		// Copy value of sig
 		original := sig
 
-		obj.Signatures[i].header = sig.Header
 		obj.Signatures[i].original = &original
 	}
 
 	return obj, nil
 }
+
+const tokenDelim = "."
 
 // parseSignedCompact parses a message in compact format.
 func parseSignedCompact(
@@ -367,29 +377,39 @@ func parseSignedCompact(
 	payload []byte,
 	signatureAlgorithms []SignatureAlgorithm,
 ) (*JSONWebSignature, error) {
-	// Three parts is two separators
-	if strings.Count(input, ".") != 2 {
+	if len(input) == 0 {
+		return nil, errEmptyInput
+	}
+
+	protected, s, ok := strings.Cut(input, tokenDelim)
+	if !ok { // no period found
 		return nil, fmt.Errorf("go-jose/go-jose: compact JWS format must have three parts")
 	}
-	parts := strings.SplitN(input, ".", 3)
+	claims, sig, ok := strings.Cut(s, tokenDelim)
+	if !ok { // only one period found
+		return nil, fmt.Errorf("go-jose/go-jose: compact JWS format must have three parts")
+	}
+	if strings.ContainsRune(sig, '.') { // too many periods found
+		return nil, fmt.Errorf("go-jose/go-jose: compact JWS format must have three parts")
+	}
 
-	if parts[1] != "" && payload != nil {
+	if claims != "" && payload != nil {
 		return nil, fmt.Errorf("go-jose/go-jose: payload is not detached")
 	}
 
-	rawProtected, err := base64.RawURLEncoding.DecodeString(parts[0])
+	rawProtected, err := base64.RawURLEncoding.DecodeString(protected)
 	if err != nil {
 		return nil, err
 	}
 
 	if payload == nil {
-		payload, err = base64.RawURLEncoding.DecodeString(parts[1])
+		payload, err = base64.RawURLEncoding.DecodeString(claims)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	signature, err := base64.RawURLEncoding.DecodeString(parts[2])
+	signature, err := base64.RawURLEncoding.DecodeString(sig)
 	if err != nil {
 		return nil, err
 	}
